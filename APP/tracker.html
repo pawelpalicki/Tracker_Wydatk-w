@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tracker Wydatków</title>
+    <meta name="description" content="Aplikacja do śledzenia wydatków z AI">
+    <meta name="theme-color" content="#2563eb">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .expense-item { animation: slideIn 0.3s ease-out; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        .loading-spinner { border: 3px solid #f3f4f6; border-top: 3px solid #2563eb; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div id="app">
+        <!-- Header -->
+        <header class="bg-blue-600 text-white p-4 shadow-lg">
+            <div class="max-w-4xl mx-auto flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                    <h1 class="text-xl font-bold">Tracker Wydatków</h1>
+                </div>
+                <div class="text-right">
+                    <div class="text-sm opacity-90" id="monthly-balance-label">Wydatki</div>
+                    <div class="text-lg font-bold" id="monthlyBalance">0.00 zł</div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="bg-white border-b border-gray-200">
+            <div class="max-w-4xl mx-auto px-4">
+                <div class="flex space-x-8">
+                    <button class="nav-btn active py-4 px-2 border-b-2 border-blue-600 text-blue-600 font-medium" data-tab="add">Dodaj wydatek</button>
+                    <button class="nav-btn py-4 px-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700" data-tab="list">Lista wydatków</button>
+                    <button class="nav-btn py-4 px-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700" data-tab="stats">Statystyki</button>
+                </div>
+            </div>
+        </nav>
+
+        <main class="max-w-4xl mx-auto p-4">
+            <!-- Add Expense Tab -->
+            <div id="add-tab" class="tab-content">
+                <div class="bg-white rounded-lg shadow p-6">
+                    <div id="scan-section">
+                        <h2 class="text-xl font-semibold mb-6">Zeskanuj paragon</h2>
+                        <div class="camera-container mb-4 relative">
+                            <video id="camera" class="w-full h-64 object-cover rounded-lg hidden" autoplay muted playsinline></video>
+                            <canvas id="canvas" class="w-full h-64 object-cover rounded-lg hidden"></canvas>
+                            <div id="camera-placeholder" class="w-full h-64 bg-gray-100 rounded-lg flex items-center justify-center"><div class="text-center"><svg class="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg><p class="text-gray-600">Uruchom kamerę</p></div></div>
+                        </div>
+                        <div class="flex space-x-4">
+                            <button id="startCamera" class="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition">📷 Uruchom kamerę</button>
+                            <button id="capturePhoto" class="flex-1 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition hidden">📸 Zrób zdjęcie</button>
+                            <input type="file" id="fileInput" accept="image/*" class="hidden"><button id="uploadFile" class="flex-1 bg-gray-600 text-white py-2 px-4 rounded-lg hover:bg-gray-700 transition">📁 Wybierz plik</button>
+                        </div>
+                    </div>
+                    <div id="ai-results" class="my-6 hidden"><h3 class="text-lg font-medium mb-4">Wyniki analizy AI</h3><div class="bg-blue-50 border border-blue-200 rounded-lg p-4"><div id="ai-loading" class="flex items-center justify-center py-4"><div class="loading-spinner mr-3"></div><span>Analizuję paragon...</span></div><div id="ai-data" class="hidden"><div class="mb-4"><label class="block text-sm font-medium text-gray-700 mb-1">Produkty z paragonu</label><div id="ai-items" class="bg-white rounded border p-2 max-h-48 overflow-y-auto"></div></div><button id="acceptAI" class="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition">✓ Zaakceptuj i dodaj wydatki</button></div></div></div>
+                    <div id="manual-form" class="mt-6"><h3 class="text-lg font-medium mb-4">Dodaj lub edytuj wydatek</h3><form id="expense-form"><div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4"><div><label class="block text-sm font-medium text-gray-700 mb-1">Opis</label><input type="text" id="description" class="w-full p-2 border rounded-lg" placeholder="Np. Zakupy spożywcze" required></div><div><label class="block text-sm font-medium text-gray-700 mb-1">Kwota (zł)</label><input type="number" id="amount" class="w-full p-2 border rounded-lg" placeholder="0.00" step="0.01" required></div></div><div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4"><div><label class="block text-sm font-medium text-gray-700 mb-1">Kategoria</label><select id="category" class="w-full p-2 border rounded-lg" required></select></div><div><label class="block text-sm font-medium text-gray-700 mb-1">Data</label><input type="date" id="date" class="w-full p-2 border rounded-lg" required></div></div><button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition">💾 Dodaj wydatek</button></form></div>
+                </div>
+            </div>
+            <!-- List Tab -->
+            <div id="list-tab" class="tab-content hidden"><div class="bg-white rounded-lg shadow"><div class="p-6 border-b"><h2 class="text-xl font-semibold mb-4">Lista wydatków</h2><div class="flex flex-wrap gap-4"><select id="filter-category" class="p-2 border rounded-lg"></select><select id="filter-month" class="p-2 border rounded-lg"></select><button id="clear-filters" class="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 transition">Wyczyść filtry</button></div></div><div id="expenses-list" class="divide-y divide-gray-200"></div></div></div>
+            <!-- Stats Tab -->
+            <div id="stats-tab" class="tab-content hidden">
+                <div class="bg-white rounded-lg shadow p-6 mb-6">
+                    <h2 class="text-xl font-semibold mb-4">Statystyki</h2>
+                    <div class="flex items-center gap-4">
+                        <label for="stats-month-select" class="text-sm font-medium text-gray-700">Wybierz miesiąc:</label>
+                        <select id="stats-month-select" class="p-2 border rounded-lg"></select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-white rounded-lg shadow p-6"><h3 class="text-lg font-semibold mb-4">Podsumowanie miesiąca</h3><div id="monthly-stats" class="space-y-4"></div></div>
+                    <div class="bg-white rounded-lg shadow p-6"><h3 class="text-lg font-semibold mb-4">Wydatki według kategorii</h3><div id="category-chart" class="space-y-3"></div></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // --- STAN APLIKACJI ---
+        let expenses = []; // Teraz to tylko pamięć podręczna, dane żyją w bazie danych
+        let stream = null;
+        let lastAIAnalysis = null;
+        const expenseForm = document.getElementById('expense-form');
+        const expensesList = document.getElementById('expenses-list');
+
+        // --- INICJALIZACJA ---
+        document.addEventListener('DOMContentLoaded', init);
+
+        async function init() {
+            document.getElementById('date').valueAsDate = new Date();
+            setupEventListeners();
+            await fetchExpenses(); // Pobierz dane z serwera przy starcie
+        }
+
+        function setupEventListeners() {
+            document.querySelectorAll('.nav-btn').forEach(tab => tab.addEventListener('click', () => switchTab(tab.dataset.tab)));
+            expenseForm.addEventListener('submit', handleFormSubmit);
+            document.getElementById('startCamera').addEventListener('click', startCamera);
+            document.getElementById('capturePhoto').addEventListener('click', capturePhoto);
+            document.getElementById('uploadFile').addEventListener('click', () => document.getElementById('fileInput').click());
+            document.getElementById('fileInput').addEventListener('change', handleFileUpload);
+            document.getElementById('acceptAI').addEventListener('click', acceptAIData);
+            document.getElementById('filter-category').addEventListener('change', renderAll);
+            document.getElementById('filter-month').addEventListener('change', renderAll);
+            document.getElementById('clear-filters').addEventListener('click', clearFilters);
+            document.getElementById('stats-month-select').addEventListener('change', renderAll);
+            expensesList.addEventListener('click', handleListAction);
+        }
+        
+        // --- KOMUNIKACJA Z API ---
+
+        async function fetchExpenses() {
+            try {
+                const response = await fetch('/api/expenses');
+                expenses = await response.json();
+                renderAll();
+            } catch (error) {
+                console.error("Błąd pobierania wydatków:", error);
+                alert("Nie udało się załadować danych. Sprawdź połączenie i spróbuj odświeżyć stronę.");
+            }
+        }
+
+        async function handleFormSubmit(event) {
+            event.preventDefault();
+            const editingId = expenseForm.dataset.editingId;
+            const expenseData = {
+                description: document.getElementById('description').value,
+                amount: parseFloat(document.getElementById('amount').value),
+                category: document.getElementById('category').value,
+                date: document.getElementById('date').value,
+            };
+
+            try {
+                let response;
+                if (editingId) {
+                    // Edycja
+                    response = await fetch(`/api/expenses/${editingId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(expenseData),
+                    });
+                } else {
+                    // Dodawanie
+                    response = await fetch('/api/expenses', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(expenseData),
+                    });
+                }
+                if (!response.ok) throw new Error('Błąd zapisu danych na serwerze.');
+                
+                await fetchExpenses(); // Odśwież dane z serwera
+                resetMainForm();
+
+            } catch (error) {
+                console.error("Błąd zapisu wydatku:", error);
+                alert("Nie udało się zapisać wydatku.");
+            }
+        }
+
+        async function deleteExpense(id) {
+            if (confirm('Czy na pewno chcesz usunąć ten wydatek?')) {
+                try {
+                    const response = await fetch(`/api/expenses/${id}`, { method: 'DELETE' });
+                    if (!response.ok) throw new Error('Błąd usuwania na serwerze.');
+                    await fetchExpenses(); // Odśwież
+                } catch (error) {
+                    console.error("Błąd usuwania:", error);
+                    alert("Nie udało się usunąć wydatku.");
+                }
+            }
+        }
+
+        async function acceptAIData() {
+            if (!lastAIAnalysis || !lastAIAnalysis.items || lastAIAnalysis.items.length === 0) return;
+            
+            const newExpenses = lastAIAnalysis.items.map(item => ({
+                description: item.name,
+                amount: parseFloat(item.price),
+                category: item.category,
+                date: lastAIAnalysis.date,
+            }));
+
+            try {
+                // Wysyłamy każdy nowy wydatek do API
+                await Promise.all(newExpenses.map(exp => fetch('/api/expenses', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(exp),
+                })));
+                
+                alert(`Dodano ${newExpenses.length} nowych wydatków!`);
+                await fetchExpenses(); // Odśwież
+                resetCameraAndForm();
+
+            } catch (error) {
+                console.error("Błąd dodawania wydatków z AI:", error);
+                alert("Wystąpił błąd podczas zapisywania wydatków.");
+            }
+        }
+
+        // --- RENDEROWANIE I UI ---
+
+        function renderAll() {
+            renderExpenses();
+            updateStats();
+            updateMonthlyBalance();
+            updateFilterOptions();
+            updateCategoryDropdown();
+        }
+
+        function handleListAction(event) {
+            const button = event.target.closest('button');
+            if (!button) return;
+            const id = button.dataset.id; // ID jest teraz stringiem z Firestore
+            if (button.classList.contains('delete-btn')) deleteExpense(id);
+            else if (button.classList.contains('edit-btn')) showEditForm(id);
+        }
+
+        function showEditForm(id) {
+            const expense = expenses.find(e => e.id === id);
+            if (!expense) return;
+            switchTab('add');
+            document.getElementById('description').value = expense.description;
+            document.getElementById('amount').value = expense.amount;
+            document.getElementById('category').value = expense.category;
+            document.getElementById('date').value = expense.date;
+            expenseForm.dataset.editingId = id;
+            expenseForm.querySelector('button[type="submit"]').textContent = '💾 Zapisz zmiany';
+            document.querySelector('#manual-form h3').textContent = 'Edytuj wydatek';
+            expenseForm.scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        function resetMainForm() {
+            expenseForm.reset();
+            delete expenseForm.dataset.editingId;
+            document.getElementById('date').valueAsDate = new Date();
+            expenseForm.querySelector('button[type="submit"]').textContent = '💾 Dodaj wydatek';
+            document.querySelector('#manual-form h3').textContent = 'Dodaj lub edytuj wydatek';
+        }
+
+        function renderExpenses() {
+            const categoryFilter = document.getElementById('filter-category').value;
+            const monthFilter = document.getElementById('filter-month').value;
+            const filtered = expenses.filter(e => (!categoryFilter || e.category === categoryFilter) && (!monthFilter || (e.date && e.date.startsWith(monthFilter))));
+            expensesList.innerHTML = filtered.length === 0 ? '<div class="p-6 text-center text-gray-500">Brak wydatków do wyświetlenia</div>' : filtered.sort((a, b) => new Date(b.date) - new Date(a.date)).map(expense => `
+                <div class="expense-item p-4 hover:bg-gray-50 flex items-center justify-between">
+                    <div class="flex items-center space-x-3 flex-grow"><div class="text-2xl">${getCategoryIcon(expense.category)}</div><div><div class="font-medium">${expense.description}</div><div class="text-sm text-gray-500">${expense.date} • ${expense.category}</div></div></div>
+                    <div class="text-right flex items-center space-x-2">
+                        <div class="font-semibold text-red-600">-${expense.amount.toFixed(2)} zł</div>
+                        <button data-id="${expense.id}" class="edit-btn p-1 text-gray-400 hover:text-blue-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.536L16.732 3.732z"></path></svg></button>
+                        <button data-id="${expense.id}" class="delete-btn p-1 text-gray-400 hover:text-red-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
+                    </div>
+                </div>`).join('');
+        }
+        
+        function switchTab(tabName) {
+            document.querySelectorAll('.nav-btn').forEach(tab => {
+                const isActive = tab.dataset.tab === tabName;
+                tab.classList.toggle('active', isActive);
+                tab.classList.toggle('border-blue-600', isActive);
+                tab.classList.toggle('text-blue-600', isActive);
+                tab.classList.toggle('border-transparent', !isActive);
+                tab.classList.toggle('text-gray-500', !isActive);
+            });
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.toggle('hidden', content.id !== `${tabName}-tab`);
+            });
+            if (tabName === 'add') resetMainForm();
+            renderAll();
+        }
+
+        function updateStats() {
+            const monthlyStatsContainer = document.getElementById('monthly-stats');
+            const categoryChartContainer = document.getElementById('category-chart');
+            const selectedMonth = document.getElementById('stats-month-select').value || new Date().toISOString().substring(0, 7);
+            const monthExpenses = expenses.filter(e => e.date && e.date.startsWith(selectedMonth));
+
+            if (monthExpenses.length === 0) {
+                monthlyStatsContainer.innerHTML = '<p class="text-gray-500">Brak wydatków w wybranym miesiącu.</p>';
+                categoryChartContainer.innerHTML = '<p class="text-gray-500">Brak danych do statystyk.</p>';
+                return;
+            }
+
+            const monthlyTotal = monthExpenses.reduce((sum, e) => sum + e.amount, 0);
+            const daysInMonth = new Date(selectedMonth.substring(0,4), selectedMonth.substring(5,7), 0).getDate();
+            const dailyAvg = monthlyTotal / daysInMonth;
+            const highestExpense = monthExpenses.reduce((max, e) => e.amount > max.amount ? e : max, {amount: 0});
+            const categoryCounts = monthExpenses.reduce((acc, e) => { acc[e.category] = (acc[e.category] || 0) + 1; return acc; }, {});
+            const mostFrequentCategory = Object.keys(categoryCounts).length ? Object.keys(categoryCounts).reduce((a, b) => categoryCounts[a] > categoryCounts[b] ? a : b) : 'Brak';
+
+            monthlyStatsContainer.innerHTML = `
+                <div class="flex justify-between items-center"><span class="text-gray-600">Suma w tym miesiącu:</span><span class="font-semibold text-lg text-red-600">${monthlyTotal.toFixed(2)} zł</span></div>
+                <div class="flex justify-between items-center"><span class="text-gray-600">Średnio dziennie:</span><span class="font-semibold">${dailyAvg.toFixed(2)} zł</span></div>
+                <div class="flex justify-between items-center"><span class="text-gray-600">Najwyższy wydatek:</span><span class="font-semibold">${highestExpense.amount.toFixed(2)} zł</span></div>
+                <div class="flex justify-between items-center"><span class="text-gray-600">Najczęstsza kategoria:</span><span class="font-semibold">${getCategoryIcon(mostFrequentCategory)} ${mostFrequentCategory}</span></div>`;
+
+            const categoryTotals = monthExpenses.reduce((acc, e) => { if(e.category && e.amount) acc[e.category] = (acc[e.category] || 0) + e.amount; return acc; }, {});
+            const totalForPercentage = Object.values(categoryTotals).reduce((a, b) => a + b, 0);
+            categoryChartContainer.innerHTML = Object.entries(categoryTotals).length ? Object.entries(categoryTotals).sort(([,a], [,b]) => b - a).map(([category, amount]) => {
+                const percentage = totalForPercentage > 0 ? (amount / totalForPercentage * 100).toFixed(1) : 0;
+                return `<div class="flex items-center justify-between"><div class="flex items-center space-x-2"><span class="text-lg">${getCategoryIcon(category)}</span><span class="capitalize">${category}</span></div><div class="text-right"><div class="font-semibold">${amount.toFixed(2)} zł</div><div class="text-sm text-gray-500">${percentage}%</div></div></div>`;
+            }).join('') : '<p class="text-gray-500">Brak danych do statystyk.</p>';
+        }
+
+        function updateMonthlyBalance() {
+            const date = new Date();
+            const monthName = date.toLocaleString('pl-PL', { month: 'long' });
+            document.getElementById('monthly-balance-label').textContent = `Wydatki w ${monthName.charAt(0).toUpperCase() + monthName.slice(1)}`;
+            const currentMonthStr = date.toISOString().substring(0, 7);
+            const currentMonthTotal = expenses.filter(e => e.date && e.date.startsWith(currentMonthStr)).reduce((sum, e) => sum + e.amount, 0);
+            document.getElementById('monthlyBalance').textContent = `-${currentMonthTotal.toFixed(2)} zł`;
+        }
+        
+        // --- POZOSTAŁE FUNKCJE (AI, UI, itp.) ---
+        // (bez zmian)
+        // async function startCamera() { /* ... */ }
+        function capturePhoto() { /* ... */ }
+        function handleFileUpload(event) { /* ... */ }
+        async function analyzeImage(imageBlob) { /* ... */ }
+        // function displayAIResults(data) { /* ... */ }
+        // function resetCameraAndForm() { /* ... */ }
+        // function updateCategoryDropdown() { /* ... */ }
+        // function updateFilterOptions() { /* ... */ }
+        // function clearFilters() { /* ... */ }
+        // function getCategoryIcon(category) { /* ... */ }
+
+        // --- POZOSTAŁE FUNKCJE (AI, UI, itp.) ---
+        async function analyzeImage(imageBlob) {
+            const aiLoading = document.getElementById('ai-loading');
+            const aiData = document.getElementById('ai-data');
+            const aiResults = document.getElementById('ai-results');
+            
+            aiLoading.classList.remove('hidden');
+            aiData.classList.add('hidden');
+            aiResults.classList.remove('hidden');
+
+            try {
+                const formData = new FormData();
+                formData.append('receipt', imageBlob, 'receipt.jpg');
+                
+                const response = await fetch('/api/analyze-receipt', {
+                    method: 'POST',
+                    body: formData
+                });
+                const result = await response.json();
+                
+                if (!response.ok || !result.success) throw new Error(result.error || result.details || 'Błąd analizy na serwerze');
+                
+                lastAIAnalysis = result.analysis;
+                displayAIResults(result.analysis);
+            } catch (error) {
+                console.error('Błąd analizy:', error);
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'bg-red-50 border border-red-200 rounded-lg p-4 text-red-700';
+                errorDiv.innerHTML = `<h4 class="font-semibold mb-2">Błąd analizy</h4><p class="text-sm">${error.message}</p>`;
+                aiResults.appendChild(errorDiv);
+            } finally {
+                document.getElementById('ai-loading').classList.add('hidden');
+                document.getElementById('ai-data').classList.remove('hidden');
+            }
+        }
+
+        function displayAIResults(data) {
+            const itemsContainer = document.getElementById('ai-items');
+            itemsContainer.innerHTML = data.items && data.items.length > 0 ? data.items.map(item =>
+                `<div class="flex justify-between items-center py-1 px-2 border-b last:border-b-0">
+                    <span class="flex-1">${item.name || 'Brak nazwy'}</span>
+                    <span class="bg-blue-100 text-blue-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded">${item.category}</span>
+                    <span class="font-medium w-20 text-right">${(item.price || 0).toFixed(2)} zł</span>
+                </div>`
+            ).join('') : '<p class="text-gray-500 p-2">Nie znaleziono produktów.</p>';
+        }
+
+        function acceptAIData() {
+            if (!lastAIAnalysis || !lastAIAnalysis.items || lastAIAnalysis.items.length === 0) return;
+            
+            const newExpenses = lastAIAnalysis.items.map(item => ({
+                id: Date.now() + Math.random(),
+                description: item.name,
+                amount: parseFloat(item.price),
+                category: item.category,
+                date: lastAIAnalysis.date
+            }));
+            
+            expenses.push(...newExpenses);
+            saveAndRender();
+            alert(`Dodano ${newExpenses.length} nowych wydatków!`);
+            resetCameraAndForm();
+        }
+
+        function resetCameraAndForm() {
+            document.getElementById('ai-results').classList.add('hidden');
+            document.getElementById('startCamera').classList.remove('hidden');
+            const canvasEl = document.getElementById('canvas');
+            if (canvasEl) canvasEl.getContext('2d').clearRect(0, 0, canvasEl.width, canvasEl.height);
+            lastAIAnalysis = null;
+        }
+
+        function updateCategoryDropdown() {
+            const allCategories = [...new Set([
+                ...['jedzenie', 'transport', 'rozrywka', 'zdrowie', 'ubrania', 'rachunki', 'inne'],
+                ...expenses.map(e => e.category).filter(Boolean)
+            ])].sort();
+            
+            document.querySelectorAll('#category, #filter-category').forEach(select => {
+                const selectedValue = select.value;
+                select.innerHTML = `<option value="">${select.id === 'category' ? 'Wybierz kategorię' : 'Wszystkie kategorie'}</option>` +
+                    allCategories.map(cat => `<option value="${cat}">${getCategoryIcon(cat)} ${cat}</option>`).join('');
+                select.value = selectedValue;
+            });
+        }
+
+        function updateFilterOptions() {
+            updateCategoryDropdown();
+            const months = [...new Set(expenses.map(e => e.date && e.date.substring(0, 7)))].filter(Boolean);
+            const monthFilters = document.querySelectorAll('#filter-month, #stats-month-select');
+            
+            monthFilters.forEach(monthFilter => {
+                const selectedMonth = monthFilter.value;
+                monthFilter.innerHTML = '<option value="">Wszystkie miesiące</option>' + 
+                    months.sort().reverse().map(month => `<option value="${month}">${month}</option>`).join('');
+                monthFilter.value = selectedMonth;
+            });
+        }
+
+        function clearFilters() {
+            document.getElementById('filter-category').value = '';
+            document.getElementById('filter-month').value = '';
+            renderAll();
+        }
+
+        function getCategoryIcon(category) {
+            const icons = {
+                'jedzenie': '🍕',
+                'transport': '🚗',
+                'rozrywka': '🎬',
+                'zdrowie': '🏥',
+                'ubrania': '👕',
+                'rachunki': '💡',
+                'inne': '📦'
+            };
+            return icons[category] || '🧾';
+        }
+
+        // --- POZOSTAŁE FUNKCJE (AI, UI, itp.) ---
+        async function startCamera() {
+            try {
+                const video = document.getElementById('camera');
+                const placeholder = document.getElementById('camera-placeholder');
+                
+                // Prośba o dostęp do kamery
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        facingMode: 'environment', // Użyj tylnej kamery
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    },
+                    audio: false 
+                });
+
+                video.srcObject = stream;
+                video.classList.remove('hidden');
+                placeholder.classList.add('hidden');
+                document.getElementById('capturePhoto').classList.remove('hidden');
+            } catch (error) {
+                console.error("Błąd kamery:", error);
+                alert("Nie udało się uruchomić kamery. Sprawdź uprawnienia.");
+            }
+        }
+
+        function capturePhoto() {
+            const video = document.getElementById('camera');
+            const canvas = document.getElementById('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            canvas.classList.remove('hidden');
+            video.classList.add('hidden');
+            
+            // Automatyczna analiza zdjęcia
+            canvas.toBlob(analyzeImage, 'image/jpeg', 0.9);
+        }
+
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.getElementById('canvas');
+                    const ctx = canvas.getContext('2d');
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    ctx.drawImage(img, 0, 0);
+                    
+                    canvas.classList.remove('hidden');
+                    document.getElementById('camera-placeholder').classList.add('hidden');
+                    canvas.toBlob(analyzeImage, 'image/jpeg', 0.9);
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function resetCameraAndForm() {
+        // Zatrzymaj strumień wideo
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+            stream = null;
+        }
+        
+        // Ukryj elementy kamery
+        document.getElementById('camera').classList.add('hidden');
+        document.getElementById('canvas').classList.add('hidden');
+        document.getElementById('camera-placeholder').classList.remove('hidden');
+        document.getElementById('capturePhoto').classList.add('hidden');
+        document.getElementById('ai-results').classList.add('hidden');
+        document.getElementById('startCamera').classList.remove('hidden');
+        
+        // Wyczyść canvas
+        const canvas = document.getElementById('canvas');
+        if (canvas) canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+        
+        lastAIAnalysis = null;
+    }
+
+    </script>
+</body>
+</html>
