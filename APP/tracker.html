@@ -102,6 +102,9 @@
                             <button id="start-camera-btn" class="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 whitespace-nowrap">Użyj aparatu</button>
                         </div>
                     </div>
+                    <div id="image-preview-container" class="hidden mt-4">
+                        <img id="image-preview" class="max-h-48 mx-auto rounded-lg" />
+                    </div>
                     <div id="analysis-spinner" class="hidden text-center mt-4">
                         <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
                         <p class="text-gray-600">Analizuję dane z paragonu, proszę czekać...</p>
@@ -221,6 +224,8 @@
     const receiptFileInput = document.getElementById('receipt-file-input');
     const analyzeReceiptBtn = document.getElementById('analyze-receipt-btn');
     const analysisSpinner = document.getElementById('analysis-spinner');
+    const imagePreviewContainer = document.getElementById('image-preview-container');
+    const imagePreview = document.getElementById('image-preview');
     const startCameraBtn = document.getElementById('start-camera-btn');
     const cameraView = document.getElementById('camera-view');
     const cameraStreamEl = document.getElementById('camera-stream');
@@ -398,7 +403,7 @@
 
         categoriesList.addEventListener('click', handleCategoryActions);
         analyzeReceiptBtn.addEventListener('click', handleAnalyzeReceipt);
-        receiptFileInput.addEventListener('change', (e) => currentFile = e.target.files[0]);
+        receiptFileInput.addEventListener('change', handleFileSelect);
         startCameraBtn.addEventListener('click', startCamera);
         cancelCameraBtn.addEventListener('click', stopCamera);
         capturePhotoBtn.addEventListener('click', capturePhoto);
@@ -450,7 +455,7 @@
         itemRow.className = 'item-row grid grid-cols-1 md:grid-cols-10 gap-2 items-center';
         
         const categoryOptions = allCategories.map(cat => `<option value="${cat}" ${item.category === cat ? 'selected' : ''}>${cat.charAt(0).toUpperCase() + cat.slice(1)}</option>`).join('');
-
+        
         const priceValue = item.price ? Number(item.price).toFixed(2) : '';
 
         itemRow.innerHTML = `
@@ -500,7 +505,7 @@
         const newCategory = newCategoryInput.value.trim().toLowerCase();
         if (newCategory && !allCategories.includes(newCategory)) {
             allCategories.push(newCategory);
-allCategories.sort();
+            allCategories.sort();
             updateAllCategorySelects(newCategory);
         }
         newCategoryInput.value = '';
@@ -676,6 +681,16 @@ allCategories.sort();
     }
 
     // --- Logika Skanowania i Aparatu ---
+    function handleFileSelect(event) {
+        currentFile = event.target.files[0];
+        if (currentFile) {
+            imagePreview.src = URL.createObjectURL(currentFile);
+            imagePreviewContainer.classList.remove('hidden');
+        } else {
+            imagePreviewContainer.classList.add('hidden');
+        }
+    }
+
     async function handleAnalyzeReceipt() {
         if (!currentFile) {
             alert('Najpierw wybierz plik z paragonem.');
@@ -683,6 +698,7 @@ allCategories.sort();
         }
         analysisSpinner.classList.remove('hidden');
         analyzeReceiptBtn.disabled = true;
+        imagePreviewContainer.classList.add('hidden');
         try {
             const { analysis } = await apiCallWithFile('/api/analyze-receipt', currentFile);
             fillFormWithAnalysis(analysis);
@@ -734,14 +750,21 @@ allCategories.sort();
         shopInput.value = analysis.shop || '';
         dateInput.value = analysis.date || new Date().toISOString().split('T')[0];
         itemsContainer.innerHTML = '';
-        (analysis.items || []).forEach(item => {
-            if (!allCategories.includes(item.category)) {
+        
+        const processedItems = (analysis.items || []).map(item => ({
+            ...item,
+            price: item.price ? parseFloat(item.price.toString().replace(',', '.')) : 0
+        }));
+
+        processedItems.forEach(item => {
+            if (item.category && !allCategories.includes(item.category)) {
                 allCategories.push(item.category);
                 allCategories.sort();
             }
             addItemRow(item);
         });
-        if ((analysis.items || []).length === 0) {
+
+        if (processedItems.length === 0) {
             addItemRow();
         }
         updateAllCategorySelects();
