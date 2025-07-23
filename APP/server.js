@@ -107,9 +107,10 @@ async function extractAndCategorizePurchase(file, categories) {
 
         KROK 2: Analiza i Przypisanie Rabatów
         - Zidentyfikuj wszystkie rabaty na paragonie (np. "Rabat", "Upust", "Promocja", "-X.XX", gwiazdki (*) przy produkcie, lub rabaty sumaryczne na dole paragonu).
-        - Priorytet 1: Jeśli rabat jest przypisany do konkretnego produktu (np. "Upust Nudle Knorr -2.00 zł" lub gwiazdka przy produkcie), odejmij wartość rabatu od ceny tego produktu i zapisz ją jako "price".
-        - Priorytet 2: Jeśli rabat jest ogólny (np. "Suma rabatów -5.00 zł") i nie można go przypisać do konkretnego produktu, rozłóż go proporcjonalnie na wszystkie produkty na podstawie ich oryginalnych cen. Oblicz nową cenę ("price") dla każdego produktu.
-        - Priorytet 3: Jeśli nie można zidentyfikować żadnych rabatów, ustaw "price" równe "originalPrice".
+        - Priorytet 1: Jeśli rabat jest pod konkretnym produktem, odejmij wartość rabatu od ceny tego produktu i zapisz ją jako "price".
+        - Priorytet 2: Jeśli rabat jest przypisany do konkretnego produktu (np. "Upust Nudle Knorr -2.00 zł" lub gwiazdka przy produkcie), odejmij wartość rabatu od ceny tego produktu i zapisz ją jako "price".
+        - Priorytet 3: Jeśli rabat jest ogólny (np. "Suma rabatów -5.00 zł") i nie można go przypisać do konkretnego produktu, rozłóż go proporcjonalnie na wszystkie produkty na podstawie ich oryginalnych cen. Oblicz nową cenę ("price") dla każdego produktu.
+        - Priorytet 4: Jeśli nie można zidentyfikować żadnych rabatów, ustaw "price" równe "originalPrice".
         - Upewnij się, że ceny po rabatach ("price") są dodatnie i zaokrąglone do dwóch miejsc po przecinku.
 
         KROK 3: Kategoryzacja Produktów
