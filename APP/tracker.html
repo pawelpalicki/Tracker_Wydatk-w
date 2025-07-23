@@ -451,12 +451,14 @@
         
         const categoryOptions = allCategories.map(cat => `<option value="${cat}" ${item.category === cat ? 'selected' : ''}>${cat.charAt(0).toUpperCase() + cat.slice(1)}</option>`).join('');
 
+        const priceValue = item.price ? Number(item.price).toFixed(2) : '';
+
         itemRow.innerHTML = `
             <div class="md:col-span-4">
                 <input type="text" class="item-name mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm" placeholder="Nazwa produktu" value="${item.name || ''}" required>
             </div>
             <div class="md:col-span-2">
-                <input type="number" step="0.01" class="item-price mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm" placeholder="Cena" value="${item.price || ''}" required>
+                <input type="number" step="0.01" class="item-price mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm" placeholder="Cena" value="${priceValue}" required>
             </div>
             <div class="md:col-span-3">
                 <select class="item-category-select mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm">
