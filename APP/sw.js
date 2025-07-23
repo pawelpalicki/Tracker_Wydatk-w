@@ -1,5 +1,10 @@
-const CACHE_NAME = 'expense-tracker-v1';
-const urlsToCache = ['/', '/tracker.html'];
+const CACHE_NAME = 'tracker-wydatkow-cache-v2';
+const urlsToCache = [
+    '/',
+    '/tracker.html',
+    '/icon.svg',
+    '/manifest.json'
+];
 
 self.addEventListener('install', event => {
   event.waitUntil(

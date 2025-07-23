@@ -1,0 +1,16 @@
+{
+  "hosting": {
+    "public": "APP",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/tracker.html"
+      }
+    ]
+  }
+}

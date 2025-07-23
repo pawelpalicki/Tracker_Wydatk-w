@@ -4,538 +4,754 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tracker Wydatków</title>
-    <meta name="description" content="Aplikacja do śledzenia wydatków z AI">
-    <meta name="theme-color" content="#2563eb">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <meta name="theme-color" content="#4F46E5"/>
+    <link rel="apple-touch-icon" href="icon.svg">
     <style>
-        .expense-item { animation: slideIn 0.3s ease-out; }
-        @keyframes slideIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-        .loading-spinner { border: 3px solid #f3f4f6; border-top: 3px solid #2563eb; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; }
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .active { border-bottom-width: 2px; border-color: #4F46E5; color: #4F46E5; }
+        .hidden { display: none; }
+        .item-row:not(:last-child) { border-bottom: 1px solid #e5e7eb; }
+        .category-tag {
+            display: inline-block;
+            padding: 0.1rem 0.5rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            margin-left: 0.5rem;
+            color: white;
+        }
     </style>
 </head>
-<body class="bg-gray-50 min-h-screen">
-    <div id="app">
-        <!-- Header -->
-        <header class="bg-blue-600 text-white p-4 shadow-lg">
-            <div class="max-w-4xl mx-auto flex items-center justify-between">
-                <div class="flex items-center space-x-2">
-                    <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
-                    <h1 class="text-xl font-bold">Tracker Wydatków</h1>
+<body class="bg-gray-100">
+
+    <!-- Sekcja Uwierzytelniania -->
+    <div id="auth-section">
+        <div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+            <div class="max-w-md w-full space-y-8">
+                <div>
+                    <h2 id="auth-title" class="mt-6 text-center text-3xl font-extrabold text-gray-900">Zaloguj się</h2>
                 </div>
-                <div class="text-right">
-                    <div class="text-sm opacity-90" id="monthly-balance-label">Wydatki</div>
-                    <div class="text-lg font-bold" id="monthlyBalance">0.00 zł</div>
+                <form id="login-form" class="mt-8 space-y-6">
+                    <div class="rounded-md shadow-sm -space-y-px">
+                        <div><input id="login-email" name="email" type="email" autocomplete="email" required class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="Adres email"></div>
+                        <div><input id="login-password" name="password" type="password" autocomplete="current-password" required class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="Hasło"></div>
+                    </div>
+                    <div><button type="submit" class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">Zaloguj się</button></div>
+                </form>
+                <form id="register-form" class="mt-8 space-y-6 hidden">
+                     <div class="rounded-md shadow-sm -space-y-px">
+                        <div><input id="register-email" name="email" type="email" autocomplete="email" required class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="Adres email"></div>
+                        <div><input id="register-password" name="password" type="password" autocomplete="new-password" required class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="Hasło"></div>
+                    </div>
+                     <div><button type="submit" class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">Zarejestruj się</button></div>
+                </form>
+                <div class="text-sm text-center">
+                    <a href="#" id="toggle-auth-mode" class="font-medium text-indigo-600 hover:text-indigo-500">Nie masz konta? Zarejestruj się</a>
                 </div>
+                 <div id="auth-error" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Główna Aplikacja -->
+    <div id="app-section" class="hidden">
+        <header class="bg-white shadow-md sticky top-0 z-10">
+            <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center py-4">
+                    <h1 class="text-2xl font-bold text-gray-800">Tracker Zakupów</h1>
+                    <div class="text-right">
+                        <div id="monthly-balance-label" class="text-sm text-gray-500">Wydatki w tym miesiącu</div>
+                        <div id="monthlyBalance" class="text-2xl font-bold text-red-600">-0.00 zł</div>
+                    </div>
+                    <button id="logout-btn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded">Wyloguj</button>
+                </div>
+                <nav class="border-b border-gray-200">
+                    <div class="flex -mb-px">
+                        <button data-tab="add" class="nav-btn py-4 px-6">Dodaj Zakup</button>
+                        <button data-tab="list" class="nav-btn py-4 px-6">Lista Zakupów</button>
+                        <button data-tab="categories" class="nav-btn py-4 px-6">Kategorie</button>
+                        <button data-tab="stats" class="nav-btn py-4 px-6">Statystyki</button>
+                    </div>
+                </nav>
             </div>
         </header>
 
-        <!-- Navigation -->
-        <nav class="bg-white border-b border-gray-200">
-            <div class="max-w-4xl mx-auto px-4">
-                <div class="flex space-x-8">
-                    <button class="nav-btn active py-4 px-2 border-b-2 border-blue-600 text-blue-600 font-medium" data-tab="add">Dodaj wydatek</button>
-                    <button class="nav-btn py-4 px-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700" data-tab="list">Lista wydatków</button>
-                    <button class="nav-btn py-4 px-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700" data-tab="stats">Statystyki</button>
-                </div>
-            </div>
-        </nav>
-
-        <main class="max-w-4xl mx-auto p-4">
-            <!-- Add Expense Tab -->
+        <main class="max-w-4xl mx-auto py-6 sm:px-6 lg:px-8">
             <div id="add-tab" class="tab-content">
-                <div class="bg-white rounded-lg shadow p-6">
-                    <div id="scan-section">
-                        <h2 class="text-xl font-semibold mb-6">Zeskanuj paragon</h2>
-                        <div class="camera-container mb-4 relative">
-                            <video id="camera" class="w-full h-64 object-cover rounded-lg hidden" autoplay muted playsinline></video>
-                            <canvas id="canvas" class="w-full h-64 object-cover rounded-lg hidden"></canvas>
-                            <div id="camera-placeholder" class="w-full h-64 bg-gray-100 rounded-lg flex items-center justify-center"><div class="text-center"><svg class="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg><p class="text-gray-600">Uruchom kamerę</p></div></div>
-                        </div>
-                        <div class="flex space-x-4">
-                            <button id="startCamera" class="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition">📷 Uruchom kamerę</button>
-                            <button id="capturePhoto" class="flex-1 bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition hidden">📸 Zrób zdjęcie</button>
-                            <input type="file" id="fileInput" accept="image/*" class="hidden"><button id="uploadFile" class="flex-1 bg-gray-600 text-white py-2 px-4 rounded-lg hover:bg-gray-700 transition">📁 Wybierz plik</button>
+                <div class="bg-white rounded-lg shadow p-6 mb-6">
+                    <h3 class="text-lg font-semibold mb-4">Dodaj paragon skanując go</h3>
+                    <div class="flex items-center space-x-4">
+                        <input type="file" id="receipt-file-input" accept="image/*" class="hidden">
+                        <button id="file-upload-btn" class="py-2 px-5 bg-gray-600 text-white rounded-md hover:bg-gray-700 whitespace-nowrap">Wybierz plik</button>
+                        <button id="camera-btn" class="py-2 px-5 bg-blue-600 text-white rounded-md hover:bg-blue-700 whitespace-nowrap">Użyj aparatu</button>
+                    </div>
+                    <div id="camera-container" class="hidden mt-4">
+                        <video id="camera-stream" class="w-full rounded-md" autoplay></video>
+                        <canvas id="camera-canvas" class="hidden"></canvas>
+                        <div class="flex justify-center mt-2 space-x-4">
+                            <button id="capture-btn" class="py-2 px-5 bg-green-600 text-white rounded-md hover:bg-green-700">Zrób zdjęcie</button>
+                            <button id="cancel-camera-btn" class="py-2 px-5 bg-red-600 text-white rounded-md hover:bg-red-700">Anuluj</button>
                         </div>
                     </div>
-                    <div id="ai-results" class="my-6 hidden"><h3 class="text-lg font-medium mb-4">Wyniki analizy AI</h3><div class="bg-blue-50 border border-blue-200 rounded-lg p-4"><div id="ai-loading" class="flex items-center justify-center py-4"><div class="loading-spinner mr-3"></div><span>Analizuję paragon...</span></div><div id="ai-data" class="hidden"><div class="mb-4"><label class="block text-sm font-medium text-gray-700 mb-1">Produkty z paragonu</label><div id="ai-items" class="bg-white rounded border p-2 max-h-48 overflow-y-auto"></div></div><button id="acceptAI" class="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition">✓ Zaakceptuj i dodaj wydatki</button></div></div></div>
-                    <div id="manual-form" class="mt-6"><h3 class="text-lg font-medium mb-4">Dodaj lub edytuj wydatek</h3><form id="expense-form"><div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4"><div><label class="block text-sm font-medium text-gray-700 mb-1">Opis</label><input type="text" id="description" class="w-full p-2 border rounded-lg" placeholder="Np. Zakupy spożywcze" required></div><div><label class="block text-sm font-medium text-gray-700 mb-1">Kwota (zł)</label><input type="number" id="amount" class="w-full p-2 border rounded-lg" placeholder="0.00" step="0.01" required></div></div><div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4"><div><label class="block text-sm font-medium text-gray-700 mb-1">Kategoria</label><select id="category" class="w-full p-2 border rounded-lg" required></select></div><div><label class="block text-sm font-medium text-gray-700 mb-1">Data</label><input type="date" id="date" class="w-full p-2 border rounded-lg" required></div></div><button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition">💾 Dodaj wydatek</button></form></div>
+                    <div id="image-preview-container" class="hidden mt-4 text-center">
+                        <img id="image-preview" class="max-w-xs mx-auto rounded-lg" />
+                        <button id="analyze-receipt-btn" class="mt-2 py-2 px-5 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 whitespace-nowrap">Analizuj paragon</button>
+                    </div>
+                    <div id="analysis-spinner" class="hidden text-center mt-4">
+                        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
+                        <p class="text-gray-600">Analizuję dane z paragonu, proszę czekać...</p>
+                    </div>
+                </div>
+                <div class="bg-white rounded-lg shadow p-6 mb-6">
+                    <h3 id="form-title" class="text-lg font-semibold mb-4">Dodaj nowy zakup ręcznie</h3>
+                    <form id="purchase-form">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                            <div>
+                                <label for="shop" class="block text-sm font-medium text-gray-700">Sklep</label>
+                                <input type="text" id="shop" required class="mt-1 block w-full rounded-md p-2 border-gray-300 shadow-sm"></div>
+                            <div>
+                                <label for="date" class="block text-sm font-medium text-gray-700">Data</label>
+                                <input type="date" id="date" required class="mt-1 block w-full rounded-md p-2 border-gray-300 shadow-sm"></div>
+                        </div>
+                        <h4 class="text-md font-semibold mb-2">Pozycje na paragonie</h4>
+                        <div id="items-container" class="space-y-2"></div>
+                        <div id="total-amount-container" class="hidden mt-4 pt-4 border-t-2 border-dashed">
+                            <div class="flex justify-end items-center">
+                                <span class="text-lg font-bold text-gray-700 mr-2">Suma:</span>
+                                <span id="total-amount-value" class="text-xl font-bold text-indigo-600">0.00 zł</span>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center mt-4">
+                            <button type="button" id="add-item-btn" class="py-2 px-4 bg-blue-500 text-white rounded-md hover:bg-blue-600">Dodaj pozycję</button>
+                            <div>
+                                <button type="button" id="cancel-edit-btn" class="py-2 px-4 bg-gray-500 text-white rounded-md hover:bg-gray-600 mr-2 hidden">Anuluj</button>
+                                <button type="submit" id="purchase-form-submit-btn" class="py-2 px-4 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">Zapisz cały zakup</button>
+                            </div>
+                        </div>
+                    </form>
                 </div>
             </div>
-            <!-- List Tab -->
-            <div id="list-tab" class="tab-content hidden"><div class="bg-white rounded-lg shadow"><div class="p-6 border-b"><h2 class="text-xl font-semibold mb-4">Lista wydatków</h2><div class="flex flex-wrap gap-4"><select id="filter-category" class="p-2 border rounded-lg"></select><select id="filter-month" class="p-2 border rounded-lg"></select><button id="clear-filters" class="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 transition">Wyczyść filtry</button></div></div><div id="expenses-list" class="divide-y divide-gray-200"></div></div></div>
-            <!-- Stats Tab -->
-            <div id="stats-tab" class="tab-content hidden">
-                <div class="bg-white rounded-lg shadow p-6 mb-6">
-                    <h2 class="text-xl font-semibold mb-4">Statystyki</h2>
-                    <div class="flex items-center gap-4">
-                        <label for="stats-month-select" class="text-sm font-medium text-gray-700">Wybierz miesiąc:</label>
-                        <select id="stats-month-select" class="p-2 border rounded-lg"></select>
+            <div id="list-tab" class="tab-content"><div id="purchases-list" class="space-y-4"></div></div>
+            <div id="categories-tab" class="tab-content hidden bg-white rounded-lg shadow p-6">
+                 <h3 class="text-lg font-semibold mb-4">Zarządzaj Kategoriami</h3>
+                 <div id="categories-list" class="space-y-2"></div>
+            </div>
+            <div id="stats-tab" class="tab-content hidden space-y-6">
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-lg font-semibold mb-4">Wydatki w wybranym miesiącu</h3>
+                    <div class="flex items-center space-x-4 mb-4">
+                        <select id="stats-month-select" class="block w-full rounded-md p-2 border-gray-300 shadow-sm"></select>
                     </div>
+                    <div id="category-chart-container" class="max-w-md mx-auto hidden">
+                         <canvas id="category-chart"></canvas>
+                    </div>
+                     <p id="no-data-pie-chart" class="text-center text-gray-500 hidden">Brak danych dla wybranego miesiąca.</p>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="bg-white rounded-lg shadow p-6"><h3 class="text-lg font-semibold mb-4">Podsumowanie miesiąca</h3><div id="monthly-stats" class="space-y-4"></div></div>
-                    <div class="bg-white rounded-lg shadow p-6"><h3 class="text-lg font-semibold mb-4">Wydatki według kategorii</h3><div id="category-chart" class="space-y-3"></div></div>
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-lg font-semibold mb-4">Porównanie wydatków miesięcznych</h3>
+                    <div id="comparison-chart-container" class="hidden">
+                        <canvas id="comparison-chart"></canvas>
+                    </div>
+                    <p id="no-data-bar-chart" class="text-center text-gray-500 hidden">Brak danych do porównania.</p>
                 </div>
             </div>
         </main>
     </div>
 
-    <script>
-        // --- STAN APLIKACJI ---
-        let expenses = []; // Teraz to tylko pamięć podręczna, dane żyją w bazie danych
-        let stream = null;
-        let lastAIAnalysis = null;
-        const expenseForm = document.getElementById('expense-form');
-        const expensesList = document.getElementById('expenses-list');
+    <datalist id="category-suggestions"></datalist>
 
-        // --- INICJALIZACJA ---
-        document.addEventListener('DOMContentLoaded', init);
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // --- Stan Aplikacji ---
+    let allPurchases = [];
+    let allCategories = [];
+    let editMode = { active: false, purchaseId: null };
+    let currentFile = null;
+    let cameraStream = null;
+    let categoryChart = null;
+    let comparisonChart = null;
 
-        async function init() {
-            document.getElementById('date').valueAsDate = new Date();
-            setupEventListeners();
-            await fetchExpenses(); // Pobierz dane z serwera przy starcie
+    // --- Elementy DOM ---
+    const authSection = document.getElementById('auth-section');
+    const appSection = document.getElementById('app-section');
+    const loginForm = document.getElementById('login-form');
+    const registerForm = document.getElementById('register-form');
+    const toggleAuthLink = document.getElementById('toggle-auth-mode');
+    const authTitle = document.getElementById('auth-title');
+    const authErrorDiv = document.getElementById('auth-error');
+    const logoutBtn = document.getElementById('logout-btn');
+    const purchaseForm = document.getElementById('purchase-form');
+    const formTitle = document.getElementById('form-title');
+    const purchaseFormSubmitBtn = document.getElementById('purchase-form-submit-btn');
+    const addItemBtn = document.getElementById('add-item-btn');
+    const purchasesList = document.getElementById('purchases-list');
+    const monthlyBalanceEl = document.getElementById('monthlyBalance');
+    const monthlyBalanceLabel = document.getElementById('monthly-balance-label');
+    const navBtns = document.querySelectorAll('.nav-btn');
+    const itemsContainer = document.getElementById('items-container');
+    const shopInput = document.getElementById('shop');
+    const dateInput = document.getElementById('date');
+    const categoriesList = document.getElementById('categories-list');
+    const receiptFileInput = document.getElementById('receipt-file-input');
+    const fileUploadBtn = document.getElementById('file-upload-btn');
+    const cameraBtn = document.getElementById('camera-btn');
+    const analyzeReceiptBtn = document.getElementById('analyze-receipt-btn');
+    const analysisSpinner = document.getElementById('analysis-spinner');
+    const imagePreviewContainer = document.getElementById('image-preview-container');
+    const imagePreview = document.getElementById('image-preview');
+    const cameraContainer = document.getElementById('camera-container');
+    const cameraStreamEl = document.getElementById('camera-stream');
+    const cameraCanvas = document.getElementById('camera-canvas');
+    const captureBtn = document.getElementById('capture-btn');
+    const cancelCameraBtn = document.getElementById('cancel-camera-btn');
+    const totalAmountContainer = document.getElementById('total-amount-container');
+    const totalAmountValue = document.getElementById('total-amount-value');
+    const statsMonthSelect = document.getElementById('stats-month-select');
+    const noDataPieChart = document.getElementById('no-data-pie-chart');
+    const noDataBarChart = document.getElementById('no-data-bar-chart');
+    const categoryChartContainer = document.getElementById('category-chart-container');
+    const comparisonChartContainer = document.getElementById('comparison-chart-container');
+
+    // --- Funkcje Pomocnicze ---
+    const categoryColors = {};
+    const colorPalette = ['#3b82f6', '#10b981', '#ef4444', '#f97316', '#8b5cf6', '#ec4899', '#f59e0b', '#14b8a6', '#64748b', '#06b6d4'];
+    let colorIndex = 0;
+
+    function getCategoryColor(category) {
+        if (!category) return '#6b7280';
+        if (!categoryColors[category]) {
+            categoryColors[category] = colorPalette[colorIndex % colorPalette.length];
+            colorIndex++;
         }
-
-        function setupEventListeners() {
-            document.querySelectorAll('.nav-btn').forEach(tab => tab.addEventListener('click', () => switchTab(tab.dataset.tab)));
-            expenseForm.addEventListener('submit', handleFormSubmit);
-            document.getElementById('startCamera').addEventListener('click', startCamera);
-            document.getElementById('capturePhoto').addEventListener('click', capturePhoto);
-            document.getElementById('uploadFile').addEventListener('click', () => document.getElementById('fileInput').click());
-            document.getElementById('fileInput').addEventListener('change', handleFileUpload);
-            document.getElementById('acceptAI').addEventListener('click', acceptAIData);
-            document.getElementById('filter-category').addEventListener('change', renderAll);
-            document.getElementById('filter-month').addEventListener('change', renderAll);
-            document.getElementById('clear-filters').addEventListener('click', clearFilters);
-            document.getElementById('stats-month-select').addEventListener('change', renderAll);
-            expensesList.addEventListener('click', handleListAction);
-        }
-        
-        // --- KOMUNIKACJA Z API ---
-
-        async function fetchExpenses() {
-            try {
-                const response = await fetch('/api/expenses');
-                expenses = await response.json();
-                renderAll();
-            } catch (error) {
-                console.error("Błąd pobierania wydatków:", error);
-                alert("Nie udało się załadować danych. Sprawdź połączenie i spróbuj odświeżyć stronę.");
-            }
-        }
-
-        async function handleFormSubmit(event) {
-            event.preventDefault();
-            const editingId = expenseForm.dataset.editingId;
-            const expenseData = {
-                description: document.getElementById('description').value,
-                amount: parseFloat(document.getElementById('amount').value),
-                category: document.getElementById('category').value,
-                date: document.getElementById('date').value,
-            };
-
-            try {
-                let response;
-                if (editingId) {
-                    // Edycja
-                    response = await fetch(`/api/expenses/${editingId}`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(expenseData),
-                    });
-                } else {
-                    // Dodawanie
-                    response = await fetch('/api/expenses', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(expenseData),
-                    });
-                }
-                if (!response.ok) throw new Error('Błąd zapisu danych na serwerze.');
-                
-                await fetchExpenses(); // Odśwież dane z serwera
-                resetMainForm();
-
-            } catch (error) {
-                console.error("Błąd zapisu wydatku:", error);
-                alert("Nie udało się zapisać wydatku.");
-            }
-        }
-
-        async function deleteExpense(id) {
-            if (confirm('Czy na pewno chcesz usunąć ten wydatek?')) {
-                try {
-                    const response = await fetch(`/api/expenses/${id}`, { method: 'DELETE' });
-                    if (!response.ok) throw new Error('Błąd usuwania na serwerze.');
-                    await fetchExpenses(); // Odśwież
-                } catch (error) {
-                    console.error("Błąd usuwania:", error);
-                    alert("Nie udało się usunąć wydatku.");
-                }
-            }
-        }
-
-        async function acceptAIData() {
-            if (!lastAIAnalysis || !lastAIAnalysis.items || lastAIAnalysis.items.length === 0) return;
-            
-            const newExpenses = lastAIAnalysis.items.map(item => ({
-                description: item.name,
-                amount: parseFloat(item.price),
-                category: item.category,
-                date: lastAIAnalysis.date,
-            }));
-
-            try {
-                // Wysyłamy każdy nowy wydatek do API
-                await Promise.all(newExpenses.map(exp => fetch('/api/expenses', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(exp),
-                })));
-                
-                alert(`Dodano ${newExpenses.length} nowych wydatków!`);
-                await fetchExpenses(); // Odśwież
-                resetCameraAndForm();
-
-            } catch (error) {
-                console.error("Błąd dodawania wydatków z AI:", error);
-                alert("Wystąpił błąd podczas zapisywania wydatków.");
-            }
-        }
-
-        // --- RENDEROWANIE I UI ---
-
-        function renderAll() {
-            renderExpenses();
-            updateStats();
-            updateMonthlyBalance();
-            updateFilterOptions();
-            updateCategoryDropdown();
-        }
-
-        function handleListAction(event) {
-            const button = event.target.closest('button');
-            if (!button) return;
-            const id = button.dataset.id; // ID jest teraz stringiem z Firestore
-            if (button.classList.contains('delete-btn')) deleteExpense(id);
-            else if (button.classList.contains('edit-btn')) showEditForm(id);
-        }
-
-        function showEditForm(id) {
-            const expense = expenses.find(e => e.id === id);
-            if (!expense) return;
-            switchTab('add');
-            document.getElementById('description').value = expense.description;
-            document.getElementById('amount').value = expense.amount;
-            document.getElementById('category').value = expense.category;
-            document.getElementById('date').value = expense.date;
-            expenseForm.dataset.editingId = id;
-            expenseForm.querySelector('button[type="submit"]').textContent = '💾 Zapisz zmiany';
-            document.querySelector('#manual-form h3').textContent = 'Edytuj wydatek';
-            expenseForm.scrollIntoView({ behavior: 'smooth' });
-        }
-        
-        function resetMainForm() {
-            expenseForm.reset();
-            delete expenseForm.dataset.editingId;
-            document.getElementById('date').valueAsDate = new Date();
-            expenseForm.querySelector('button[type="submit"]').textContent = '💾 Dodaj wydatek';
-            document.querySelector('#manual-form h3').textContent = 'Dodaj lub edytuj wydatek';
-        }
-
-        function renderExpenses() {
-            const categoryFilter = document.getElementById('filter-category').value;
-            const monthFilter = document.getElementById('filter-month').value;
-            const filtered = expenses.filter(e => (!categoryFilter || e.category === categoryFilter) && (!monthFilter || (e.date && e.date.startsWith(monthFilter))));
-            expensesList.innerHTML = filtered.length === 0 ? '<div class="p-6 text-center text-gray-500">Brak wydatków do wyświetlenia</div>' : filtered.sort((a, b) => new Date(b.date) - new Date(a.date)).map(expense => `
-                <div class="expense-item p-4 hover:bg-gray-50 flex items-center justify-between">
-                    <div class="flex items-center space-x-3 flex-grow"><div class="text-2xl">${getCategoryIcon(expense.category)}</div><div><div class="font-medium">${expense.description}</div><div class="text-sm text-gray-500">${expense.date} • ${expense.category}</div></div></div>
-                    <div class="text-right flex items-center space-x-2">
-                        <div class="font-semibold text-red-600">-${expense.amount.toFixed(2)} zł</div>
-                        <button data-id="${expense.id}" class="edit-btn p-1 text-gray-400 hover:text-blue-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.536L16.732 3.732z"></path></svg></button>
-                        <button data-id="${expense.id}" class="delete-btn p-1 text-gray-400 hover:text-red-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
-                    </div>
-                </div>`).join('');
-        }
-        
-        function switchTab(tabName) {
-            document.querySelectorAll('.nav-btn').forEach(tab => {
-                const isActive = tab.dataset.tab === tabName;
-                tab.classList.toggle('active', isActive);
-                tab.classList.toggle('border-blue-600', isActive);
-                tab.classList.toggle('text-blue-600', isActive);
-                tab.classList.toggle('border-transparent', !isActive);
-                tab.classList.toggle('text-gray-500', !isActive);
-            });
-            document.querySelectorAll('.tab-content').forEach(content => {
-                content.classList.toggle('hidden', content.id !== `${tabName}-tab`);
-            });
-            if (tabName === 'add') resetMainForm();
-            renderAll();
-        }
-
-        function updateStats() {
-            const monthlyStatsContainer = document.getElementById('monthly-stats');
-            const categoryChartContainer = document.getElementById('category-chart');
-            const selectedMonth = document.getElementById('stats-month-select').value || new Date().toISOString().substring(0, 7);
-            const monthExpenses = expenses.filter(e => e.date && e.date.startsWith(selectedMonth));
-
-            if (monthExpenses.length === 0) {
-                monthlyStatsContainer.innerHTML = '<p class="text-gray-500">Brak wydatków w wybranym miesiącu.</p>';
-                categoryChartContainer.innerHTML = '<p class="text-gray-500">Brak danych do statystyk.</p>';
-                return;
-            }
-
-            const monthlyTotal = monthExpenses.reduce((sum, e) => sum + e.amount, 0);
-            const daysInMonth = new Date(selectedMonth.substring(0,4), selectedMonth.substring(5,7), 0).getDate();
-            const dailyAvg = monthlyTotal / daysInMonth;
-            const highestExpense = monthExpenses.reduce((max, e) => e.amount > max.amount ? e : max, {amount: 0});
-            const categoryCounts = monthExpenses.reduce((acc, e) => { acc[e.category] = (acc[e.category] || 0) + 1; return acc; }, {});
-            const mostFrequentCategory = Object.keys(categoryCounts).length ? Object.keys(categoryCounts).reduce((a, b) => categoryCounts[a] > categoryCounts[b] ? a : b) : 'Brak';
-
-            monthlyStatsContainer.innerHTML = `
-                <div class="flex justify-between items-center"><span class="text-gray-600">Suma w tym miesiącu:</span><span class="font-semibold text-lg text-red-600">${monthlyTotal.toFixed(2)} zł</span></div>
-                <div class="flex justify-between items-center"><span class="text-gray-600">Średnio dziennie:</span><span class="font-semibold">${dailyAvg.toFixed(2)} zł</span></div>
-                <div class="flex justify-between items-center"><span class="text-gray-600">Najwyższy wydatek:</span><span class="font-semibold">${highestExpense.amount.toFixed(2)} zł</span></div>
-                <div class="flex justify-between items-center"><span class="text-gray-600">Najczęstsza kategoria:</span><span class="font-semibold">${getCategoryIcon(mostFrequentCategory)} ${mostFrequentCategory}</span></div>`;
-
-            const categoryTotals = monthExpenses.reduce((acc, e) => { if(e.category && e.amount) acc[e.category] = (acc[e.category] || 0) + e.amount; return acc; }, {});
-            const totalForPercentage = Object.values(categoryTotals).reduce((a, b) => a + b, 0);
-            categoryChartContainer.innerHTML = Object.entries(categoryTotals).length ? Object.entries(categoryTotals).sort(([,a], [,b]) => b - a).map(([category, amount]) => {
-                const percentage = totalForPercentage > 0 ? (amount / totalForPercentage * 100).toFixed(1) : 0;
-                return `<div class="flex items-center justify-between"><div class="flex items-center space-x-2"><span class="text-lg">${getCategoryIcon(category)}</span><span class="capitalize">${category}</span></div><div class="text-right"><div class="font-semibold">${amount.toFixed(2)} zł</div><div class="text-sm text-gray-500">${percentage}%</div></div></div>`;
-            }).join('') : '<p class="text-gray-500">Brak danych do statystyk.</p>';
-        }
-
-        function updateMonthlyBalance() {
-            const date = new Date();
-            const monthName = date.toLocaleString('pl-PL', { month: 'long' });
-            document.getElementById('monthly-balance-label').textContent = `Wydatki w ${monthName.charAt(0).toUpperCase() + monthName.slice(1)}`;
-            const currentMonthStr = date.toISOString().substring(0, 7);
-            const currentMonthTotal = expenses.filter(e => e.date && e.date.startsWith(currentMonthStr)).reduce((sum, e) => sum + e.amount, 0);
-            document.getElementById('monthlyBalance').textContent = `-${currentMonthTotal.toFixed(2)} zł`;
-        }
-        
-        // --- POZOSTAŁE FUNKCJE (AI, UI, itp.) ---
-        // (bez zmian)
-        // async function startCamera() { /* ... */ }
-        function capturePhoto() { /* ... */ }
-        function handleFileUpload(event) { /* ... */ }
-        async function analyzeImage(imageBlob) { /* ... */ }
-        // function displayAIResults(data) { /* ... */ }
-        // function resetCameraAndForm() { /* ... */ }
-        // function updateCategoryDropdown() { /* ... */ }
-        // function updateFilterOptions() { /* ... */ }
-        // function clearFilters() { /* ... */ }
-        // function getCategoryIcon(category) { /* ... */ }
-
-        // --- POZOSTAŁE FUNKCJE (AI, UI, itp.) ---
-        async function analyzeImage(imageBlob) {
-            const aiLoading = document.getElementById('ai-loading');
-            const aiData = document.getElementById('ai-data');
-            const aiResults = document.getElementById('ai-results');
-            
-            aiLoading.classList.remove('hidden');
-            aiData.classList.add('hidden');
-            aiResults.classList.remove('hidden');
-
-            try {
-                const formData = new FormData();
-                formData.append('receipt', imageBlob, 'receipt.jpg');
-                
-                const response = await fetch('/api/analyze-receipt', {
-                    method: 'POST',
-                    body: formData
-                });
-                const result = await response.json();
-                
-                if (!response.ok || !result.success) throw new Error(result.error || result.details || 'Błąd analizy na serwerze');
-                
-                lastAIAnalysis = result.analysis;
-                displayAIResults(result.analysis);
-            } catch (error) {
-                console.error('Błąd analizy:', error);
-                const errorDiv = document.createElement('div');
-                errorDiv.className = 'bg-red-50 border border-red-200 rounded-lg p-4 text-red-700';
-                errorDiv.innerHTML = `<h4 class="font-semibold mb-2">Błąd analizy</h4><p class="text-sm">${error.message}</p>`;
-                aiResults.appendChild(errorDiv);
-            } finally {
-                document.getElementById('ai-loading').classList.add('hidden');
-                document.getElementById('ai-data').classList.remove('hidden');
-            }
-        }
-
-        function displayAIResults(data) {
-            const itemsContainer = document.getElementById('ai-items');
-            itemsContainer.innerHTML = data.items && data.items.length > 0 ? data.items.map(item =>
-                `<div class="flex justify-between items-center py-1 px-2 border-b last:border-b-0">
-                    <span class="flex-1">${item.name || 'Brak nazwy'}</span>
-                    <span class="bg-blue-100 text-blue-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded">${item.category}</span>
-                    <span class="font-medium w-20 text-right">${(item.price || 0).toFixed(2)} zł</span>
-                </div>`
-            ).join('') : '<p class="text-gray-500 p-2">Nie znaleziono produktów.</p>';
-        }
-
-        function acceptAIData() {
-            if (!lastAIAnalysis || !lastAIAnalysis.items || lastAIAnalysis.items.length === 0) return;
-            
-            const newExpenses = lastAIAnalysis.items.map(item => ({
-                id: Date.now() + Math.random(),
-                description: item.name,
-                amount: parseFloat(item.price),
-                category: item.category,
-                date: lastAIAnalysis.date
-            }));
-            
-            expenses.push(...newExpenses);
-            saveAndRender();
-            alert(`Dodano ${newExpenses.length} nowych wydatków!`);
-            resetCameraAndForm();
-        }
-
-        function resetCameraAndForm() {
-            document.getElementById('ai-results').classList.add('hidden');
-            document.getElementById('startCamera').classList.remove('hidden');
-            const canvasEl = document.getElementById('canvas');
-            if (canvasEl) canvasEl.getContext('2d').clearRect(0, 0, canvasEl.width, canvasEl.height);
-            lastAIAnalysis = null;
-        }
-
-        function updateCategoryDropdown() {
-            const allCategories = [...new Set([
-                ...['jedzenie', 'transport', 'rozrywka', 'zdrowie', 'ubrania', 'rachunki', 'inne'],
-                ...expenses.map(e => e.category).filter(Boolean)
-            ])].sort();
-            
-            document.querySelectorAll('#category, #filter-category').forEach(select => {
-                const selectedValue = select.value;
-                select.innerHTML = `<option value="">${select.id === 'category' ? 'Wybierz kategorię' : 'Wszystkie kategorie'}</option>` +
-                    allCategories.map(cat => `<option value="${cat}">${getCategoryIcon(cat)} ${cat}</option>`).join('');
-                select.value = selectedValue;
-            });
-        }
-
-        function updateFilterOptions() {
-            updateCategoryDropdown();
-            const months = [...new Set(expenses.map(e => e.date && e.date.substring(0, 7)))].filter(Boolean);
-            const monthFilters = document.querySelectorAll('#filter-month, #stats-month-select');
-            
-            monthFilters.forEach(monthFilter => {
-                const selectedMonth = monthFilter.value;
-                monthFilter.innerHTML = '<option value="">Wszystkie miesiące</option>' + 
-                    months.sort().reverse().map(month => `<option value="${month}">${month}</option>`).join('');
-                monthFilter.value = selectedMonth;
-            });
-        }
-
-        function clearFilters() {
-            document.getElementById('filter-category').value = '';
-            document.getElementById('filter-month').value = '';
-            renderAll();
-        }
-
-        function getCategoryIcon(category) {
-            const icons = {
-                'jedzenie': '🍕',
-                'transport': '🚗',
-                'rozrywka': '🎬',
-                'zdrowie': '🏥',
-                'ubrania': '👕',
-                'rachunki': '💡',
-                'inne': '📦'
-            };
-            return icons[category] || '🧾';
-        }
-
-        // --- POZOSTAŁE FUNKCJE (AI, UI, itp.) ---
-        async function startCamera() {
-            try {
-                const video = document.getElementById('camera');
-                const placeholder = document.getElementById('camera-placeholder');
-                
-                // Prośba o dostęp do kamery
-                stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { 
-                        facingMode: 'environment', // Użyj tylnej kamery
-                        width: { ideal: 1280 },
-                        height: { ideal: 720 }
-                    },
-                    audio: false 
-                });
-
-                video.srcObject = stream;
-                video.classList.remove('hidden');
-                placeholder.classList.add('hidden');
-                document.getElementById('capturePhoto').classList.remove('hidden');
-            } catch (error) {
-                console.error("Błąd kamery:", error);
-                alert("Nie udało się uruchomić kamery. Sprawdź uprawnienia.");
-            }
-        }
-
-        function capturePhoto() {
-            const video = document.getElementById('camera');
-            const canvas = document.getElementById('canvas');
-            const ctx = canvas.getContext('2d');
-            
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            
-            canvas.classList.remove('hidden');
-            video.classList.add('hidden');
-            
-            // Automatyczna analiza zdjęcia
-            canvas.toBlob(analyzeImage, 'image/jpeg', 0.9);
-        }
-
-        function handleFileUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const img = new Image();
-                img.onload = function() {
-                    const canvas = document.getElementById('canvas');
-                    const ctx = canvas.getContext('2d');
-                    canvas.width = img.width;
-                    canvas.height = img.height;
-                    ctx.drawImage(img, 0, 0);
-                    
-                    canvas.classList.remove('hidden');
-                    document.getElementById('camera-placeholder').classList.add('hidden');
-                    canvas.toBlob(analyzeImage, 'image/jpeg', 0.9);
-                };
-                img.src = e.target.result;
-            };
-            reader.readAsDataURL(file);
-        }
-
-        function resetCameraAndForm() {
-        // Zatrzymaj strumień wideo
-        if (stream) {
-            stream.getTracks().forEach(track => track.stop());
-            stream = null;
-        }
-        
-        // Ukryj elementy kamery
-        document.getElementById('camera').classList.add('hidden');
-        document.getElementById('canvas').classList.add('hidden');
-        document.getElementById('camera-placeholder').classList.remove('hidden');
-        document.getElementById('capturePhoto').classList.add('hidden');
-        document.getElementById('ai-results').classList.add('hidden');
-        document.getElementById('startCamera').classList.remove('hidden');
-        
-        // Wyczyść canvas
-        const canvas = document.getElementById('canvas');
-        if (canvas) canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
-        
-        lastAIAnalysis = null;
+        return categoryColors[category];
     }
 
-    </script>
+    // --- Funkcje API ---
+    async function apiCall(endpoint, method = 'GET', body = null) {
+        const token = localStorage.getItem('authToken');
+        const headers = { 'Content-Type': 'application/json' };
+        if (token) headers['X-Auth-Token'] = token;
+        const config = { method, headers };
+        if (body) config.body = JSON.stringify(body);
+        const response = await fetch(endpoint, config);
+        if (response.status === 401) throw new Error('Nieprawidłowy token.');
+        if (response.status === 204) return null;
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Błąd serwera');
+        return data;
+    }
+
+    async function apiCallWithFile(endpoint, file) {
+        const token = localStorage.getItem('authToken');
+        const formData = new FormData();
+        formData.append('image', file);
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'X-Auth-Token': token },
+            body: formData
+        });
+        if (response.status === 401) throw new Error('Nieprawidłowy token.');
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Błąd serwera');
+        return data;
+    }
+
+    // --- Logika Uwierzytelniania ---
+    function setupAuthEventListeners() {
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            authErrorDiv.classList.add('hidden');
+            try {
+                const data = await apiCall('/auth/login', 'POST', { email: loginForm.email.value, password: loginForm.password.value });
+                localStorage.setItem('authToken', data.token);
+                main();
+            } catch (error) {
+                authErrorDiv.textContent = error.message;
+                authErrorDiv.classList.remove('hidden');
+            }
+        });
+        registerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            authErrorDiv.classList.add('hidden');
+            try {
+                await apiCall('/auth/register', 'POST', { email: registerForm.email.value, password: registerForm.password.value });
+                alert('Rejestracja pomyślna! Możesz się teraz zalogować.');
+                toggleAuthForms();
+            } catch (error) {
+                authErrorDiv.textContent = error.message;
+                authErrorDiv.classList.remove('hidden');
+            }
+        });
+        toggleAuthLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            toggleAuthForms();
+        });
+    }
+
+    function showLoginScreen() {
+        localStorage.removeItem('authToken');
+        authSection.classList.remove('hidden');
+        appSection.classList.add('hidden');
+        setupAuthEventListeners();
+    }
+
+    function toggleAuthForms() {
+        const isLoginHidden = loginForm.classList.toggle('hidden');
+        registerForm.classList.toggle('hidden');
+        authTitle.textContent = isLoginHidden ? 'Stwórz nowe konto' : 'Zaloguj się';
+        toggleAuthLink.textContent = isLoginHidden ? 'Masz już konto? Zaloguj się' : 'Nie masz konta? Zarejestruj się';
+    }
+
+    // --- Logika Aparatu ---
+    async function startCamera() {
+        try {
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+                cameraStreamEl.srcObject = cameraStream;
+                cameraContainer.classList.remove('hidden');
+                imagePreviewContainer.classList.add('hidden');
+            } else {
+                alert('Twoja przeglądarka nie wspiera dostępu do aparatu.');
+            }
+        } catch (error) {
+            console.error("Błąd uruchamiania kamery:", error);
+            alert('Nie udało się uruchomić kamery. Sprawdź uprawnienia w przeglądarce.');
+        }
+    }
+
+    function stopCamera() {
+        if (cameraStream) {
+            cameraStream.getTracks().forEach(track => track.stop());
+        }
+        cameraContainer.classList.add('hidden');
+    }
+
+    function takePicture() {
+        const video = cameraStreamEl;
+        const canvas = cameraCanvas;
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const context = canvas.getContext('2d');
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        
+        canvas.toBlob(blob => {
+            currentFile = new File([blob], "paragon.jpg", { type: "image/jpeg" });
+            imagePreview.src = URL.createObjectURL(currentFile);
+            imagePreviewContainer.classList.remove('hidden');
+            stopCamera();
+        }, 'image/jpeg');
+    }
+
+    // --- Główna Logika Aplikacji ---
+    function setupAppEventListeners() {
+        logoutBtn.addEventListener('click', showLoginScreen);
+        navBtns.forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
+        purchaseForm.addEventListener('submit', handlePurchaseFormSubmit);
+        addItemBtn.addEventListener('click', () => addItemRow());
+        document.getElementById('cancel-edit-btn').addEventListener('click', () => {
+            exitEditMode();
+            switchTab('list');
+        });
+
+        fileUploadBtn.addEventListener('click', () => receiptFileInput.click());
+        receiptFileInput.addEventListener('change', (event) => {
+            if (event.target.files && event.target.files[0]) {
+                currentFile = event.target.files[0];
+                imagePreview.src = URL.createObjectURL(currentFile);
+                imagePreviewContainer.classList.remove('hidden');
+                stopCamera();
+            }
+        });
+        
+        cameraBtn.addEventListener('click', startCamera);
+        captureBtn.addEventListener('click', takePicture);
+        cancelCameraBtn.addEventListener('click', stopCamera);
+
+        analyzeReceiptBtn.addEventListener('click', handleAnalyzeReceipt);
+        statsMonthSelect.addEventListener('change', updateCategoryPieChart);
+
+        purchasesList.addEventListener('click', async (e) => {
+            const purchaseId = e.target.closest('[data-purchase-id]')?.dataset.purchaseId;
+            if (!purchaseId) return;
+            if (e.target.closest('.edit-purchase-btn')) enterEditMode(purchaseId);
+            else if (e.target.closest('.delete-purchase-btn')) {
+                if (confirm('Czy na pewno chcesz usunąć ten zakup? Operacja jest nieodwracalna.')) {
+                    try {
+                        await apiCall(`/api/purchases/${purchaseId}`, 'DELETE');
+                        await fetchInitialData(false);
+                    } catch (error) {
+                        alert('Nie udało się usunąć zakupu: ' + error.message);
+                    }
+                }
+            }
+        });
+
+        categoriesList.addEventListener('click', async (e) => {
+            const categoryDiv = e.target.closest('[data-category-name]');
+            if (!categoryDiv) return;
+            const categoryName = categoryDiv.dataset.categoryName;
+            if (e.target.closest('.rename-cat-btn')) {
+                const newName = prompt(`Wprowadź nową nazwę dla kategorii "${categoryName}":`, categoryName);
+                if (newName && newName.trim() !== '' && newName !== categoryName) {
+                    try {
+                        await apiCall(`/api/categories/${categoryName}`, 'PUT', { newName: newName.trim().toLowerCase() });
+                        await fetchInitialData(false);
+                    } catch (error) {
+                        alert('Nie udało się zmienić nazwy: ' + error.message);
+                    }
+                }
+            } else if (e.target.closest('.delete-cat-btn')) {
+                if (confirm(`Czy na pewno chcesz usunąć kategorię "${categoryName}"? Wszystkie produkty z tą kategorią zostaną oznaczone jako "inne".`)) {
+                    try {
+                        await apiCall(`/api/categories/${categoryName}`, 'DELETE');
+                        await fetchInitialData(false);
+                    } catch (error) {
+                        alert('Nie udało się usunąć kategorii: ' + error.message);
+                    }
+                }
+            }
+        });
+    }
+
+    function switchTab(tabName) {
+        navBtns.forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tabName));
+        document.querySelectorAll('.tab-content').forEach(content => {
+            content.classList.toggle('hidden', content.id !== `${tabName}-tab`);
+        });
+        if (tabName !== 'add') exitEditMode();
+        if (tabName === 'categories') renderCategoriesList();
+        if (tabName === 'stats') renderStatistics();
+    }
+
+    async function fetchInitialData(shouldSwitchToList = true) {
+        const [purchases, categories] = await Promise.all([apiCall('/api/purchases'), apiCall('/api/categories')]);
+        allPurchases = purchases;
+        allCategories = categories.sort();
+        renderAll();
+        if (shouldSwitchToList) switchTab('list');
+    }
+
+    function renderAll() {
+        renderPurchasesList();
+        updateMonthlyBalance();
+        if (!document.getElementById('categories-tab').classList.contains('hidden')) renderCategoriesList();
+    }
+
+    function updateAllCategorySelects(newlySelected = null) {
+        const categoryOptions = allCategories.map(cat => `<option value="${cat}">${cat.charAt(0).toUpperCase() + cat.slice(1)}</option>`).join('');
+        const fullHtml = `<option value="" disabled>Wybierz kategorię</option>${categoryOptions}<option value="__add_new__" class="font-bold text-indigo-600">+ Dodaj nową</option>`;
+        document.querySelectorAll('.item-category-select').forEach(select => {
+            const currentValue = select.value;
+            select.innerHTML = fullHtml;
+            select.value = newlySelected || currentValue;
+        });
+    }
+
+    function addItemRow(item = { name: '', price: '', category: '' }) {
+        const itemRow = document.createElement('div');
+        itemRow.className = 'item-row grid grid-cols-1 md:grid-cols-4 gap-2 items-center py-2';
+        const categoryOptions = allCategories.map(cat => `<option value="${cat}">${cat.charAt(0).toUpperCase() + cat.slice(1)}</option>`).join('');
+        itemRow.innerHTML = `
+            <div class="md:col-span-2"><input type="text" placeholder="Opis produktu" required class="item-name w-full rounded-md p-2 border-gray-300 shadow-sm" value="${item.name}"></div>
+            <div><input type="number" step="0.01" placeholder="Kwota" required class="item-price w-full rounded-md p-2 border-gray-300 shadow-sm" value="${item.price}"></div>
+            <div class="flex items-center gap-2">
+                <div class="category-wrapper w-full">
+                    <select class="item-category-select w-full rounded-md p-2 border-gray-300 shadow-sm">
+                        <option value="" disabled ${!item.category ? 'selected' : ''}>Wybierz kategorię</option>
+                        ${categoryOptions}
+                        <option value="__add_new__" class="font-bold text-indigo-600">+ Dodaj nową</option>
+                    </select>
+                    <input type="text" placeholder="Nowa kategoria" class="item-category-new w-full rounded-md p-2 border-gray-300 shadow-sm hidden">
+                </div>
+                <button type="button" class="remove-item-btn text-red-500 hover:text-red-700">✖</button>
+            </div>`;
+        itemsContainer.appendChild(itemRow);
+        const categorySelect = itemRow.querySelector('.item-category-select');
+        const newCategoryInput = itemRow.querySelector('.item-category-new');
+        if (item.category && allCategories.includes(item.category)) categorySelect.value = item.category;
+        categorySelect.addEventListener('change', () => {
+            if (categorySelect.value === '__add_new__') {
+                categorySelect.classList.add('hidden');
+                newCategoryInput.classList.remove('hidden');
+                newCategoryInput.focus();
+            }
+        });
+        newCategoryInput.addEventListener('blur', () => {
+            const newCategory = newCategoryInput.value.trim().toLowerCase();
+            if (newCategory && !allCategories.includes(newCategory)) {
+                allCategories.push(newCategory);
+                allCategories.sort();
+                updateAllCategorySelects(newCategory);
+            }
+            newCategoryInput.classList.add('hidden');
+            categorySelect.classList.remove('hidden');
+            if (newCategory) categorySelect.value = newCategory;
+        });
+        itemRow.querySelector('.remove-item-btn').addEventListener('click', () => itemRow.remove());
+    }
+
+    async function handlePurchaseFormSubmit(e) {
+        e.preventDefault();
+        const purchaseData = {
+            shop: shopInput.value,
+            date: dateInput.value,
+            items: Array.from(document.querySelectorAll('.item-row')).map(row => ({
+                name: row.querySelector('.item-name').value,
+                price: parseFloat(row.querySelector('.item-price').value),
+                category: row.querySelector('.item-category-select').value || 'inne'
+            }))
+        };
+        try {
+            if (editMode.active) {
+                await apiCall(`/api/purchases/${editMode.purchaseId}`, 'PUT', purchaseData);
+            } else {
+                await apiCall('/api/purchases', 'POST', purchaseData);
+            }
+            exitEditMode();
+            await fetchInitialData();
+        } catch(error) {
+            alert('Błąd zapisu: ' + error.message);
+            if (error.message === 'Nieprawidłowy token.') showLoginScreen();
+        }
+    }
+
+    function enterEditMode(purchaseId) {
+        const purchase = allPurchases.find(p => p.id === purchaseId);
+        if (!purchase) return;
+        editMode.active = true;
+        editMode.purchaseId = purchaseId;
+        shopInput.value = purchase.shop;
+        dateInput.value = purchase.date;
+        itemsContainer.innerHTML = '';
+        purchase.items.forEach(item => addItemRow(item));
+        formTitle.textContent = 'Edytuj istniejący zakup';
+        purchaseFormSubmitBtn.textContent = 'Zaktualizuj zakup';
+        purchaseFormSubmitBtn.classList.replace('bg-indigo-600', 'bg-green-600');
+        purchaseFormSubmitBtn.classList.replace('hover:bg-indigo-700', 'hover:bg-green-700');
+        document.getElementById('cancel-edit-btn').classList.remove('hidden');
+        switchTab('add');
+    }
+
+    function exitEditMode() {
+        editMode.active = false;
+        editMode.purchaseId = null;
+        purchaseForm.reset();
+        itemsContainer.innerHTML = '';
+        dateInput.value = new Date().toISOString().split('T')[0];
+        addItemRow();
+        formTitle.textContent = 'Dodaj nowy zakup ręcznie';
+        purchaseFormSubmitBtn.textContent = 'Zapisz cały zakup';
+        purchaseFormSubmitBtn.classList.replace('bg-green-600', 'bg-indigo-600');
+        purchaseFormSubmitBtn.classList.replace('hover:bg-green-700', 'hover:bg-indigo-700');
+        document.getElementById('cancel-edit-btn').classList.add('hidden');
+        totalAmountContainer.classList.add('hidden');
+    }
+
+    function renderPurchasesList() {
+        purchasesList.innerHTML = allPurchases.length === 0 ? '<p class="text-center text-gray-500">Brak zapisanych zakupów.</p>' :
+            allPurchases.map(p => `
+            <div class="bg-white rounded-lg shadow" data-purchase-id="${p.id}">
+                <div class="p-4 flex justify-between items-center">
+                    <div class="cursor-pointer flex-grow" onclick="this.parentElement.nextElementSibling.classList.toggle('hidden')">
+                        <p class="font-bold text-lg">${ p.shop || 'Brak nazwy sklepu' }</p>
+                        <p class="text-sm text-gray-600">${ p.date ? new Date(p.date).toLocaleDateString('pl-PL') : 'Brak daty' }</p>
+                    </div>
+                    <div class="text-right mr-4">
+                        <p class="font-bold text-xl">${(p.totalAmount || 0).toFixed(2)} zł</p>
+                        <p class="text-xs text-gray-500">${(p.items || []).length} poz.</p>
+                    </div>
+                    <div class="flex items-center">
+                        <button class="edit-purchase-btn p-2 text-blue-500 hover:text-blue-700" title="Edytuj"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" /><path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd" /></svg></button>
+                        <button class="delete-purchase-btn p-2 text-red-500 hover:text-red-700" title="Usuń"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" /></svg></button>
+                    </div>
+                </div>
+                <div class="purchase-items hidden border-t p-4 space-y-2">
+                    ${(p.items || []).map(item => `
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <span>${item.name || 'Brak nazwy produktu'}</span>
+                                <span class="category-tag" style="background-color: ${getCategoryColor(item.category)}">${item.category || 'brak'}</span>
+                            </div>
+                            <span class="font-medium">${(item.price || 0).toFixed(2)} zł</span>
+                        </div>`).join('')}
+                </div>
+            </div>`).join('');
+    }
+
+    function renderCategoriesList() {
+        categoriesList.innerHTML = allCategories.map(cat => `
+            <div class="flex justify-between items-center p-2 border-b" data-category-name="${cat}">
+                <span class="category-text">${cat.charAt(0).toUpperCase() + cat.slice(1)}</span>
+                <div class="category-actions">
+                    <button class="rename-cat-btn p-1 text-blue-500 hover:text-blue-700" title="Zmień nazwę"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" /><path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd" /></svg></button>
+                    <button class="delete-cat-btn p-1 text-red-500 hover:text-red-700" title="Usuń"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" /></svg></button>
+                </div>
+            </div>`).join('');
+    }
+
+    function updateMonthlyBalance() {
+        const monthName = new Date().toLocaleString('pl-PL', { month: 'long' });
+        monthlyBalanceLabel.textContent = `Wydatki w ${monthName.charAt(0).toUpperCase() + monthName.slice(1)}`;
+        const currentMonthStr = new Date().toISOString().substring(0, 7);
+        const total = allPurchases
+            .filter(p => p.date && p.date.startsWith(currentMonthStr))
+            .reduce((sum, p) => sum + (p.totalAmount || 0), 0);
+        monthlyBalanceEl.textContent = `-${total.toFixed(2)} zł`;
+    }
+
+    async function handleAnalyzeReceipt() {
+        if (!currentFile) {
+            alert('Najpierw wybierz plik lub zrób zdjęcie paragonu.');
+            return;
+        }
+        analysisSpinner.classList.remove('hidden');
+        analyzeReceiptBtn.disabled = true;
+        try {
+            const result = await apiCallWithFile('/api/analyze-receipt', currentFile);
+            fillFormWithAnalysis(result.analysis);
+        } catch (error) {
+            alert('Błąd analizy paragonu: ' + error.message);
+            if (error.message === 'Nieprawidłowy token.') showLoginScreen();
+        } finally {
+            analysisSpinner.classList.add('hidden');
+            analyzeReceiptBtn.disabled = false;
+        }
+    }
+
+    function fillFormWithAnalysis(data) {
+        shopInput.value = data.shop || '';
+        dateInput.value = data.date || new Date().toISOString().split('T')[0];
+        itemsContainer.innerHTML = '';
+        let total = 0;
+        if (data.items && data.items.length > 0) {
+            data.items.forEach(item => {
+                addItemRow(item);
+                total += item.price || 0;
+            });
+        } else {
+            addItemRow();
+        }
+        totalAmountValue.textContent = `${total.toFixed(2)} zł`;
+        totalAmountContainer.classList.remove('hidden');
+        alert('Formularz został wypełniony danymi z paragonu. Sprawdź dane przed zapisem.');
+    }
+    
+    async function renderStatistics() {
+        try {
+            const initialStats = await apiCall('/api/statistics'); // Fetch initial data for current month and available months
+            populateMonthSelector(initialStats.availableMonths);
+            updateCategoryPieChart(initialStats);
+            renderComparisonBarChart();
+        } catch (error) {
+            console.error("Błąd ładowania statystyk:", error);
+        }
+    }
+
+    function populateMonthSelector(availableMonths) {
+        statsMonthSelect.innerHTML = '';
+        if (!availableMonths || availableMonths.length === 0) {
+            statsMonthSelect.innerHTML = '<option>Brak danych</option>';
+            return;
+        }
+        availableMonths.forEach(monthStr => {
+            const option = document.createElement('option');
+            option.value = monthStr;
+            const [y, m] = monthStr.split('-');
+            option.textContent = new Date(y, m - 1).toLocaleString('pl-PL', { month: 'long', year: 'numeric' });
+            statsMonthSelect.appendChild(option);
+        });
+    }
+
+    async function updateCategoryPieChart() {
+        const selectedMonth = statsMonthSelect.value;
+        if (!selectedMonth) {
+            noDataPieChart.classList.remove('hidden');
+            categoryChartContainer.classList.add('hidden');
+            return;
+        };
+        
+        const [year, month] = selectedMonth.split('-');
+        const stats = await apiCall(`/api/statistics?year=${year}&month=${month}`);
+        
+        const ctx = document.getElementById('category-chart').getContext('2d');
+        const labels = Object.keys(stats.spendingByCategory);
+        const data = Object.values(stats.spendingByCategory);
+        const backgroundColors = labels.map(label => getCategoryColor(label));
+
+        if (categoryChart) categoryChart.destroy();
+
+        if (labels.length === 0) {
+            noDataPieChart.classList.remove('hidden');
+            categoryChartContainer.classList.add('hidden');
+        } else {
+            noDataPieChart.classList.add('hidden');
+            categoryChartContainer.classList.remove('hidden');
+            categoryChart = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: labels.map(l => l.charAt(0).toUpperCase() + l.slice(1)),
+                    datasets: [{ data, backgroundColor: backgroundColors }]
+                },
+                options: { responsive: true, plugins: { legend: { position: 'top' } } }
+            });
+        }
+    }
+
+    async function renderComparisonBarChart() {
+        const stats = await apiCall('/api/statistics/comparison');
+        const ctx = document.getElementById('comparison-chart').getContext('2d');
+        
+        if (comparisonChart) comparisonChart.destroy();
+
+        if (!stats.monthlyTotals || stats.monthlyTotals.length === 0) {
+            noDataBarChart.classList.remove('hidden');
+            comparisonChartContainer.classList.add('hidden');
+        } else {
+            noDataBarChart.classList.add('hidden');
+            comparisonChartContainer.classList.remove('hidden');
+            const labels = stats.monthlyTotals.map(item => {
+                const [y, m] = item.month.split('-');
+                return new Date(y, m - 1).toLocaleString('pl-PL', { month: 'short', year: 'numeric' });
+            });
+            const data = stats.monthlyTotals.map(item => item.total);
+
+            comparisonChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'Suma wydatków',
+                        data,
+                        backgroundColor: '#4F46E5'
+                    }]
+                },
+                options: { responsive: true, plugins: { legend: { display: false } } }
+            });
+        }
+    }
+
+    // --- Inicjalizacja Aplikacji ---
+    async function main() {
+        if (!localStorage.getItem('authToken')) {
+            showLoginScreen();
+            return;
+        }
+        try {
+            setupAppEventListeners();
+            await fetchInitialData();
+            authSection.classList.add('hidden');
+            appSection.classList.remove('hidden');
+            dateInput.value = new Date().toISOString().split('T')[0];
+            addItemRow();
+        } catch (error) {
+            console.error("Błąd inicjalizacji:", error.message);
+            if (error.message === 'Nieprawidłowy token.') showLoginScreen();
+        }
+    }
+
+    main();
+});
+</script>
 </body>
 </html>

@@ -46,3 +46,4 @@ venv/venv/
 # Python virtual environment
 venv/
 config/firebase-credentials.json
+Rozmowa.md
