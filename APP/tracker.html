@@ -456,7 +456,7 @@
         
         const categoryOptions = allCategories.map(cat => `<option value="${cat}" ${item.category === cat ? 'selected' : ''}>${cat.charAt(0).toUpperCase() + cat.slice(1)}</option>`).join('');
         
-        const priceValue = item.price ? Number(item.price).toFixed(2) : '';
+        const priceValue = typeof item.price === 'number' ? item.price.toFixed(2) : '';
 
         itemRow.innerHTML = `
             <div class="md:col-span-4">
@@ -751,10 +751,14 @@
         dateInput.value = analysis.date || new Date().toISOString().split('T')[0];
         itemsContainer.innerHTML = '';
         
-        const processedItems = (analysis.items || []).map(item => ({
-            ...item,
-            price: item.price ? parseFloat(item.price.toString().replace(',', '.')) : 0
-        }));
+        const processedItems = (analysis.items || []).map(item => {
+            const rawPrice = item.price ? item.price.toString().replace(',', '.') : '0';
+            const parsedPrice = parseFloat(rawPrice);
+            return {
+                ...item,
+                price: isNaN(parsedPrice) ? 0 : parseFloat(parsedPrice.toFixed(2))
+            };
+        });
 
         processedItems.forEach(item => {
             if (item.category && !allCategories.includes(item.category)) {
