@@ -96,95 +96,58 @@ function validateDate(dateStr) {
 
 async function extractAndCategorizePurchase(file, categories) {
     const imagePart = { inlineData: { data: file.buffer.toString("base64"), mimeType: file.mimetype } };
-    const prompt = 
-`Twoim zadaniem jest dokładna analiza paragonu i zwrócenie danych w formacie JSON. Zwróć szczególną uwagę na rabaty. Postępuj zgodnie z poniższymi krokami:
+    const prompt = `
+        Twoim zadaniem jest ekstremalnie dokładna analiza tego paragonu i zwrócenie danych w formacie JSON. Postępuj według poniższych kroków:
 
-KROK 1: Ekstrakcja Danych Podstawowych
-- Nazwa sklepu ("shop") - jeśli nie ma, ustaw "Nieznany sklep"
-- Data transakcji ("date") w formacie YYYY-MM-DD
-- Lista produktów ("items") z:
-  * nazwą ("name")
-  * ceną przed rabatem ("originalPrice")
-  * uwzględnionym rabatem ("price")
-  * kategorią ("category")
+        KROK 1: Ekstrakcja Danych Podstawowych
+        - Wyodrębnij nazwę sklepu ("shop").
+        - Wyodrębnij datę transakcji ("date") w formacie YYYY-MM-DD.
+        - Wyodrębnij listę wszystkich zakupionych produktów ("items"). Dla każdego produktu zidentyfikuj jego nazwę ("name") i cenę jednostkową ("price").
+        - Zignoruj pozycje, które nie są produktami (np. "SUMA", "DO ZAPŁATY", "RESZTA", "opakowanie").
 
-KROK 2: Szczegółowa Analiza Rabatów
-- Szukaj wyraźnych oznaczeń rabatów: "Rabat", "Upust", "Promocja", "-X.XX", "*"
-- Jeśli rabat jest w osobnej linijce pod produktem (np. "Rabat -1,01"), przypisz go do produktu powyżej
-- Jeśli rabat jest w nazwie produktu (np. "Produkt XYZ -2,00 zł"), wyodrębnij kwotę
-- Dla rabatów ogólnych rozłóż proporcjonalnie na wszystkie produkty
-- Zawsze sprawdzaj czy cena po rabacie nie jest wyższa niż przed rabatem
+        KROK 2: Zaawansowana Analiza Rabatów
+        - Przeszukaj cały paragon w poszukiwaniu jakichkolwiek rabatów, opustów lub promocji.
+        - Priorytet 1: Jeśli znajdziesz rabat bezpośrednio pod produktem, odejmij jego wartość od ceny tego konkretnego produktu.
+        - Priorytet 2: Jeśli znajdziesz rabat na dole paragonu (np. "Suma rabatów", "Rabat promocyjny"), spróbuj go inteligentnie dopasować. Na przykład, rabat o nazwie "Upust Nudle Knorr" powinien zostać w całości odjęty od ceny produktu "Nudle Knorr". Szukaj też innych wskazówek, jak gwiazdki (*) przy produktach.
+        - Priorytet 3 (OSTATECZNOŚĆ): Jeśli znajdziesz rabat sumaryczny na dole paragonu i absolutnie nie da się go przypisać do konkretnych produktów, rozłóż go proporcjonalnie pomiędzy WSZYSTKIE zeskanowane produkty.
 
-KROK 3: Kategoryzacja
-- Użyj podanych kategorii: ${JSON.stringify(categories)}
-- Dla niepasujących produktów użyj "inne"
+        KROK 3: Kategoryzacja Produktów
+        - Dla każdego produktu z listy, dodaj pole "category".
+        - Wybierz dla niego najbardziej pasującą kategorię z tej listy: ${JSON.stringify(categories)}.
+        - Jeśli absolutnie żadna kategoria nie pasuje, użyj "inne".
 
-KROK 4: Format Wyniku
-{
-  "shop": "Nazwa sklepu",
-  "date": "2023-01-01",
-  "items": [
-    {
-      "name": "Produkt 1",
-      "originalPrice": 10.00,
-      "price": 9.00,
-      "category": "kategoria1"
-    }
-  ]
-}
+        KROK 4: Finalizacja
+        - Zwróć ostateczną listę produktów w formacie JSON, gdzie każdy produkt ma "name", "price" (po rabatach) i "category".
 
-Pamiętaj:
-1. Rabaty pod produktem mają pierwszeństwo
-2. Dokładnie sprawdzaj format kwot (kropki/przecinki)
-3. Upewnij się, że cena po rabacie jest niższa niż przed rabatem`;
-
+        Przykład idealnej odpowiedzi JSON:
+        {
+          "shop": "Biedronka",
+          "date": "2025-07-21",
+          "items": [
+            {"name": "Jaja L", "price": 8.99, "category": "spożywcze"},
+            {"name": "Mleko 2%", "price": 2.50, "category": "spożywcze"},
+            {"name": "Płyn do naczyń", "price": 7.99, "category": "chemia"}
+          ]
+        }
+    `;
+    
     try {
         const result = await model.generateContent([prompt, imagePart]);
-        let rawText = result.response.text();
+        const rawText = result.response.text();
         console.log("Surowa odpowiedź od AI:", rawText);
 
-        // Poprawianie formatu odpowiedzi
-        rawText = rawText.replace(/```json|```/g, '').trim();
-        
-        // Naprawianie częstych problemów z formatowaniem
-        rawText = rawText.replace(/'/g, '"') // zamiana apostrofów na cudzysłowy
-                         .replace(/(\w)\s*:\s*([^"\s][^,}]*)/g, '$1:"$2"') // naprawianie niecytowanych wartości
-                         .replace(/(\d),(\d)/g, '$1.$2'); // zamiana przecinków na kropki w liczbach
+        const cleanedText = rawText.replace(/^```json\s*|```$/g, '').trim();
+        const data = JSON.parse(cleanedText);
 
-        const data = JSON.parse(rawText);
-
-        // Zaawansowana walidacja i normalizacja
-        if (!data.shop || typeof data.shop !== 'string') data.shop = 'Nieznany sklep';
-        if (!validateDate(data.date)) data.date = new Date().toISOString().split('T')[0];
-        
-        data.items = (Array.isArray(data.items) ? data.items : []).map(item => {
-            const originalPrice = parseFloat(item.originalPrice) || 0;
-            let price = parseFloat(item.price) || originalPrice;
-            
-            // Zapewnienie, że cena po rabacie nie jest wyższa niż przed rabatem
-            price = Math.min(price, originalPrice);
-            price = Math.max(0, price); // Zapewnienie, że cena nie jest ujemna
-            
-            return {
-                name: item.name?.trim() || 'Nieznany produkt',
-                originalPrice: parseFloat(originalPrice.toFixed(2)),
-                price: parseFloat(price.toFixed(2)),
-                category: categories.includes(item.category) ? item.category : 'inne'
-            };
-        });
-
-        return data;
+        return {
+            shop: data.shop || 'Nieznany sklep',
+            date: validateDate(data.date) || new Date().toISOString().split('T')[0],
+            items: data.items || []
+        };
     } catch (error) {
         console.error("Błąd podczas przetwarzania odpowiedzi AI:", error);
         throw new Error('Nie udało się przetworzyć odpowiedzi z AI. Sprawdź logi serwera.');
     }
-}
-
-function validateDate(dateString) {
-    const regex = /^\d{4}-\d{2}-\d{2}$/;
-    if (!regex.test(dateString)) return false;
-    const date = new Date(dateString);
-    return !isNaN(date.getTime());
 }
 
 async function updateCategoryInPurchases(userId, oldName, newName, deleteMode = false) {
