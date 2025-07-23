@@ -4,165 +4,186 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tracker Wydatków</title>
+    <meta name="description" content="Aplikacja do śledzenia wydatków z inteligentną analizą paragonów.">
+    <meta name="theme-color" content="#4F46E5"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <meta name="theme-color" content="#4F46E5"/>
+    <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icon.svg">
     <style>
-        .active { border-bottom-width: 2px; border-color: #4F46E5; color: #4F46E5; }
-        .hidden { display: none; }
-        .item-row:not(:last-child) { border-bottom: 1px solid #e5e7eb; }
+        .nav-btn {
+            border-bottom: 4px solid transparent;
+            transition: border-color 0.3s, color 0.3s;
+        }
+        .nav-btn.active {
+            border-bottom-color: #4F46E5;
+            color: #4F46E5;
+            font-weight: 600;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
         .category-tag {
             display: inline-block;
-            padding: 0.1rem 0.5rem;
+            padding: 2px 8px;
             border-radius: 9999px;
             font-size: 0.75rem;
-            font-weight: 500;
-            margin-left: 0.5rem;
-            color: white;
+            margin-right: 4px;
+            margin-bottom: 4px;
         }
     </style>
 </head>
 <body class="bg-gray-100">
 
-    <!-- Sekcja Uwierzytelniania -->
-    <div id="auth-section">
-        <div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-            <div class="max-w-md w-full space-y-8">
-                <div>
-                    <h2 id="auth-title" class="mt-6 text-center text-3xl font-extrabold text-gray-900">Zaloguj się</h2>
-                </div>
-                <form id="login-form" class="mt-8 space-y-6">
-                    <div class="rounded-md shadow-sm -space-y-px">
-                        <div><input id="login-email" name="email" type="email" autocomplete="email" required class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="Adres email"></div>
-                        <div><input id="login-password" name="password" type="password" autocomplete="current-password" required class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="Hasło"></div>
-                    </div>
-                    <div><button type="submit" class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">Zaloguj się</button></div>
-                </form>
-                <form id="register-form" class="mt-8 space-y-6 hidden">
-                     <div class="rounded-md shadow-sm -space-y-px">
-                        <div><input id="register-email" name="email" type="email" autocomplete="email" required class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="Adres email"></div>
-                        <div><input id="register-password" name="password" type="password" autocomplete="new-password" required class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" placeholder="Hasło"></div>
-                    </div>
-                     <div><button type="submit" class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">Zarejestruj się</button></div>
-                </form>
-                <div class="text-sm text-center">
-                    <a href="#" id="toggle-auth-mode" class="font-medium text-indigo-600 hover:text-indigo-500">Nie masz konta? Zarejestruj się</a>
-                </div>
-                 <div id="auth-error" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative"></div>
+    <div id="auth-section" class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-md w-full space-y-8">
+            <div>
+                <h2 id="auth-title" class="mt-6 text-center text-3xl font-extrabold text-gray-900">Zaloguj się do swojego konta</h2>
             </div>
+            <form id="login-form" class="mt-8 space-y-6" action="#" method="POST">
+                <input type="hidden" name="remember" value="true">
+                <div class="rounded-md shadow-sm -space-y-px">
+                    <div><input id="login-email" name="email" type="email" autocomplete="email" required class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm" placeholder="Adres email"></div>
+                    <div><input id="login-password" name="password" type="password" autocomplete="current-password" required class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm" placeholder="Hasło"></div>
+                </div>
+                <div><button type="submit" class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">Zaloguj się</button></div>
+            </form>
+            <form id="register-form" class="mt-8 space-y-6 hidden" action="#" method="POST">
+                <div class="rounded-md shadow-sm -space-y-px">
+                    <div><input id="register-email" name="email" type="email" autocomplete="email" required class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm" placeholder="Adres email"></div>
+                    <div><input id="register-password" name="password" type="password" autocomplete="new-password" required class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm" placeholder="Hasło"></div>
+                </div>
+                <div><button type="submit" class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">Zarejestruj się</button></div>
+            </form>
+            <div class="text-center">
+                <a href="#" id="switch-auth-link" class="font-medium text-indigo-600 hover:text-indigo-500">Nie masz konta? Zarejestruj się</a>
+            </div>
+            <div id="auth-error" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert"></div>
         </div>
     </div>
 
-    <!-- Główna Aplikacja -->
     <div id="app-section" class="hidden">
-        <header class="bg-white shadow-md sticky top-0 z-10">
-            <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex justify-between items-center py-4">
-                    <h1 class="text-2xl font-bold text-gray-800">Tracker Zakupów</h1>
-                    <div class="text-right">
-                        <div id="monthly-balance-label" class="text-sm text-gray-500">Wydatki w tym miesiącu</div>
-                        <div id="monthlyBalance" class="text-2xl font-bold text-red-600">-0.00 zł</div>
+        <header class="bg-white shadow">
+            <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-16">
+                <h1 class="text-2xl font-bold text-gray-900">Tracker Wydatków</h1>
+                <div class="flex items-center">
+                    <div id="monthly-balance" class="text-right mr-4">
+                        <p id="monthly-balance-label" class="text-sm text-gray-500">Wydatki w tym miesiącu</p>
+                        <p id="monthly-balance-value" class="text-lg font-bold text-indigo-600">0.00 zł</p>
                     </div>
-                    <button id="logout-btn" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded">Wyloguj</button>
+                    <button id="logout-btn" class="p-2 text-gray-500 hover:text-red-600" title="Wyloguj"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg></button>
                 </div>
-                <nav class="border-b border-gray-200">
-                    <div class="flex -mb-px">
-                        <button data-tab="add" class="nav-btn py-4 px-6">Dodaj Zakup</button>
-                        <button data-tab="list" class="nav-btn py-4 px-6">Lista Zakupów</button>
-                        <button data-tab="categories" class="nav-btn py-4 px-6">Kategorie</button>
-                        <button data-tab="stats" class="nav-btn py-4 px-6">Statystyki</button>
-                    </div>
-                </nav>
             </div>
         </header>
 
         <main class="max-w-4xl mx-auto py-6 sm:px-6 lg:px-8">
+            <nav class="bg-white rounded-lg shadow mb-6">
+                <div class="flex -mb-px">
+                    <button data-tab="add" class="nav-btn py-4 px-6">Dodaj Zakup</button>
+                    <button data-tab="list" class="nav-btn py-4 px-6">Lista Zakupów</button>
+                    <button data-tab="categories" class="nav-btn py-4 px-6">Kategorie</button>
+                    <button data-tab="stats" class="nav-btn py-4 px-6">Statystyki</button>
+                </div>
+            </nav>
+
             <div id="add-tab" class="tab-content">
                 <div class="bg-white rounded-lg shadow p-6 mb-6">
                     <h3 class="text-lg font-semibold mb-4">Dodaj paragon skanując go</h3>
-                    <div class="flex items-center space-x-4">
-                        <input type="file" id="receipt-file-input" accept="image/*" class="hidden">
-                        <button id="file-upload-btn" class="py-2 px-5 bg-gray-600 text-white rounded-md hover:bg-gray-700 whitespace-nowrap">Wybierz plik</button>
-                        <button id="camera-btn" class="py-2 px-5 bg-blue-600 text-white rounded-md hover:bg-blue-700 whitespace-nowrap">Użyj aparatu</button>
-                    </div>
-                    <div id="camera-container" class="hidden mt-4">
-                        <video id="camera-stream" class="w-full rounded-md" autoplay></video>
-                        <canvas id="camera-canvas" class="hidden"></canvas>
-                        <div class="flex justify-center mt-2 space-x-4">
-                            <button id="capture-btn" class="py-2 px-5 bg-green-600 text-white rounded-md hover:bg-green-700">Zrób zdjęcie</button>
-                            <button id="cancel-camera-btn" class="py-2 px-5 bg-red-600 text-white rounded-md hover:bg-red-700">Anuluj</button>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+                        <div>
+                            <input type="file" id="receipt-file-input" accept="image/*" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
                         </div>
-                    </div>
-                    <div id="image-preview-container" class="hidden mt-4 text-center">
-                        <img id="image-preview" class="max-w-xs mx-auto rounded-lg" />
-                        <button id="analyze-receipt-btn" class="mt-2 py-2 px-5 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 whitespace-nowrap">Analizuj paragon</button>
+                        <div class="flex items-center space-x-2">
+                            <button id="analyze-receipt-btn" class="w-full py-2 px-4 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 whitespace-nowrap">Analizuj paragon</button>
+                            <button id="start-camera-btn" class="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 whitespace-nowrap">Użyj aparatu</button>
+                        </div>
                     </div>
                     <div id="analysis-spinner" class="hidden text-center mt-4">
                         <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
                         <p class="text-gray-600">Analizuję dane z paragonu, proszę czekać...</p>
                     </div>
+                    <div id="camera-view" class="hidden mt-4">
+                        <video id="camera-stream" class="w-full rounded-lg" autoplay></video>
+                        <div class="flex items-center space-x-2 mt-2">
+                            <button id="capture-photo-btn" class="w-full py-2 px-4 bg-green-600 text-white rounded-md hover:bg-green-700">Zrób zdjęcie</button>
+                            <button id="cancel-camera-btn" class="w-full py-2 px-4 bg-gray-500 text-white rounded-md hover:bg-gray-600">Anuluj</button>
+                        </div>
+                    </div>
                 </div>
-                <div class="bg-white rounded-lg shadow p-6 mb-6">
-                    <h3 id="form-title" class="text-lg font-semibold mb-4">Dodaj nowy zakup ręcznie</h3>
+
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 id="purchase-form-title" class="text-lg font-semibold mb-4">Dodaj nowy zakup ręcznie</h3>
                     <form id="purchase-form">
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                             <div>
                                 <label for="shop" class="block text-sm font-medium text-gray-700">Sklep</label>
-                                <input type="text" id="shop" required class="mt-1 block w-full rounded-md p-2 border-gray-300 shadow-sm"></div>
+                                <input type="text" id="shop" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                            </div>
                             <div>
                                 <label for="date" class="block text-sm font-medium text-gray-700">Data</label>
-                                <input type="date" id="date" required class="mt-1 block w-full rounded-md p-2 border-gray-300 shadow-sm"></div>
-                        </div>
-                        <h4 class="text-md font-semibold mb-2">Pozycje na paragonie</h4>
-                        <div id="items-container" class="space-y-2"></div>
-                        <div id="total-amount-container" class="hidden mt-4 pt-4 border-t-2 border-dashed">
-                            <div class="flex justify-end items-center">
-                                <span class="text-lg font-bold text-gray-700 mr-2">Suma:</span>
-                                <span id="total-amount-value" class="text-xl font-bold text-indigo-600">0.00 zł</span>
+                                <input type="date" id="date" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                            </div>
+                            <div id="total-amount-container" class="hidden">
+                                <label class="block text-sm font-medium text-gray-700">Suma</label>
+                                <p id="total-amount-value" class="mt-1 text-xl font-bold text-gray-900">0.00 zł</p>
                             </div>
                         </div>
-                        <div class="flex justify-between items-center mt-4">
-                            <button type="button" id="add-item-btn" class="py-2 px-4 bg-blue-500 text-white rounded-md hover:bg-blue-600">Dodaj pozycję</button>
-                            <div>
-                                <button type="button" id="cancel-edit-btn" class="py-2 px-4 bg-gray-500 text-white rounded-md hover:bg-gray-600 mr-2 hidden">Anuluj</button>
-                                <button type="submit" id="purchase-form-submit-btn" class="py-2 px-4 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">Zapisz cały zakup</button>
+                        <div class="border-t border-gray-200 pt-4">
+                            <h4 class="text-md font-medium text-gray-800 mb-2">Pozycje na paragonie</h4>
+                            <div id="items-container" class="space-y-2"></div>
+                            <div class="flex justify-between items-center mt-4">
+                                <button type="button" id="add-item-btn" class="py-2 px-4 bg-blue-500 text-white rounded-md hover:bg-blue-600">Dodaj pozycję</button>
+                                <div>
+                                    <button type="button" id="cancel-edit-btn" class="py-2 px-4 bg-gray-500 text-white rounded-md hover:bg-gray-600 mr-2 hidden">Anuluj</button>
+                                    <button type="submit" class="py-2 px-4 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">Zapisz cały zakup</button>
+                                </div>
                             </div>
                         </div>
                     </form>
                 </div>
             </div>
+
             <div id="list-tab" class="tab-content"><div id="purchases-list" class="space-y-4"></div></div>
+            
             <div id="categories-tab" class="tab-content hidden bg-white rounded-lg shadow p-6">
                  <h3 class="text-lg font-semibold mb-4">Zarządzaj Kategoriami</h3>
                  <div id="categories-list" class="space-y-2"></div>
             </div>
-            <div id="stats-tab" class="tab-content hidden space-y-6">
-                <div class="bg-white rounded-lg shadow p-6">
-                    <h3 class="text-lg font-semibold mb-4">Wydatki w wybranym miesiącu</h3>
-                    <div class="flex items-center space-x-4 mb-4">
-                        <select id="stats-month-select" class="block w-full rounded-md p-2 border-gray-300 shadow-sm"></select>
+
+            <div id="stats-tab" class="tab-content hidden">
+                <div class="bg-white rounded-lg shadow p-6 mb-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 id="stats-title" class="text-lg font-semibold">Statystyki wydatków</h3>
+                        <select id="stats-month-select" class="block w-52 rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"></select>
                     </div>
-                    <div id="category-chart-container" class="max-w-md mx-auto hidden">
-                         <canvas id="category-chart"></canvas>
+                    <div id="category-chart-container">
+                        <canvas id="category-chart"></canvas>
                     </div>
-                     <p id="no-data-pie-chart" class="text-center text-gray-500 hidden">Brak danych dla wybranego miesiąca.</p>
+                    <div id="no-data-pie-chart" class="hidden text-center py-12">
+                        <p class="text-gray-500">Brak danych o wydatkach w wybranym miesiącu.</p>
+                    </div>
                 </div>
                 <div class="bg-white rounded-lg shadow p-6">
-                    <h3 class="text-lg font-semibold mb-4">Porównanie wydatków miesięcznych</h3>
-                    <div id="comparison-chart-container" class="hidden">
+                    <h3 class="text-lg font-semibold mb-4">Porównanie wydatków w ostatnich miesiącach</h3>
+                    <div id="comparison-chart-container">
                         <canvas id="comparison-chart"></canvas>
                     </div>
-                    <p id="no-data-bar-chart" class="text-center text-gray-500 hidden">Brak danych do porównania.</p>
+                    <div id="no-data-bar-chart" class="hidden text-center py-12">
+                        <p class="text-gray-500">Brak historii wydatków do porównania.</p>
+                    </div>
                 </div>
             </div>
         </main>
     </div>
 
-    <datalist id="category-suggestions"></datalist>
-
 <script>
-document.addEventListener('DOMContentLoaded', () => {
+    // --- Konfiguracja ---
+    const API_BASE_URL = 'https://tracker-wydatkow-backend.onrender.com';
+
     // --- Stan Aplikacji ---
     let allPurchases = [];
     let allCategories = [];
@@ -177,41 +198,42 @@ document.addEventListener('DOMContentLoaded', () => {
     const appSection = document.getElementById('app-section');
     const loginForm = document.getElementById('login-form');
     const registerForm = document.getElementById('register-form');
-    const toggleAuthLink = document.getElementById('toggle-auth-mode');
+    const loginEmail = document.getElementById('login-email');
+    const loginPassword = document.getElementById('login-password');
+    const registerEmail = document.getElementById('register-email');
+    const registerPassword = document.getElementById('register-password');
     const authTitle = document.getElementById('auth-title');
+    const switchAuthLink = document.getElementById('switch-auth-link');
     const authErrorDiv = document.getElementById('auth-error');
     const logoutBtn = document.getElementById('logout-btn');
+    const navBtns = document.querySelectorAll('.nav-btn');
     const purchaseForm = document.getElementById('purchase-form');
-    const formTitle = document.getElementById('form-title');
-    const purchaseFormSubmitBtn = document.getElementById('purchase-form-submit-btn');
+    const purchaseFormTitle = document.getElementById('purchase-form-title');
+    const purchaseFormSubmitBtn = purchaseForm.querySelector('button[type="submit"]');
     const addItemBtn = document.getElementById('add-item-btn');
     const purchasesList = document.getElementById('purchases-list');
-    const monthlyBalanceEl = document.getElementById('monthlyBalance');
-    const monthlyBalanceLabel = document.getElementById('monthly-balance-label');
-    const navBtns = document.querySelectorAll('.nav-btn');
     const itemsContainer = document.getElementById('items-container');
     const shopInput = document.getElementById('shop');
     const dateInput = document.getElementById('date');
     const categoriesList = document.getElementById('categories-list');
+    const monthlyBalanceValue = document.getElementById('monthly-balance-value');
+    const monthlyBalanceLabel = document.getElementById('monthly-balance-label');
     const receiptFileInput = document.getElementById('receipt-file-input');
-    const fileUploadBtn = document.getElementById('file-upload-btn');
-    const cameraBtn = document.getElementById('camera-btn');
     const analyzeReceiptBtn = document.getElementById('analyze-receipt-btn');
     const analysisSpinner = document.getElementById('analysis-spinner');
-    const imagePreviewContainer = document.getElementById('image-preview-container');
-    const imagePreview = document.getElementById('image-preview');
-    const cameraContainer = document.getElementById('camera-container');
+    const startCameraBtn = document.getElementById('start-camera-btn');
+    const cameraView = document.getElementById('camera-view');
     const cameraStreamEl = document.getElementById('camera-stream');
-    const cameraCanvas = document.getElementById('camera-canvas');
-    const captureBtn = document.getElementById('capture-btn');
+    const capturePhotoBtn = document.getElementById('capture-photo-btn');
     const cancelCameraBtn = document.getElementById('cancel-camera-btn');
     const totalAmountContainer = document.getElementById('total-amount-container');
     const totalAmountValue = document.getElementById('total-amount-value');
+    const statsTitle = document.getElementById('stats-title');
     const statsMonthSelect = document.getElementById('stats-month-select');
-    const noDataPieChart = document.getElementById('no-data-pie-chart');
-    const noDataBarChart = document.getElementById('no-data-bar-chart');
     const categoryChartContainer = document.getElementById('category-chart-container');
+    const noDataPieChart = document.getElementById('no-data-pie-chart');
     const comparisonChartContainer = document.getElementById('comparison-chart-container');
+    const noDataBarChart = document.getElementById('no-data-bar-chart');
 
     // --- Funkcje Pomocnicze ---
     const categoryColors = {};
@@ -219,7 +241,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let colorIndex = 0;
 
     function getCategoryColor(category) {
-        if (!category) return '#6b7280';
         if (!categoryColors[category]) {
             categoryColors[category] = colorPalette[colorIndex % colorPalette.length];
             colorIndex++;
@@ -227,17 +248,20 @@ document.addEventListener('DOMContentLoaded', () => {
         return categoryColors[category];
     }
 
-    // --- Funkcje API ---
+    // --- Funkcja do komunikacji z API ---
     async function apiCall(endpoint, method = 'GET', body = null) {
         const token = localStorage.getItem('authToken');
-        const headers = { 'Content-Type': 'application/json' };
-        if (token) headers['X-Auth-Token'] = token;
-        const config = { method, headers };
-        if (body) config.body = JSON.stringify(body);
-        const response = await fetch(endpoint, config);
-        if (response.status === 401) throw new Error('Nieprawidłowy token.');
-        if (response.status === 204) return null;
-        const data = await response.json();
+        const headers = { 'Content-Type': 'application/json', 'X-Auth-Token': token };
+        const options = { method, headers };
+        if (body) options.body = JSON.stringify(body);
+
+        const response = await fetch(`${API_BASE_URL}${endpoint}`, options);
+        if (response.status === 401) {
+            logout();
+            throw new Error('Sesja wygasła. Zaloguj się ponownie.');
+        }
+        const text = await response.text();
+        const data = text ? JSON.parse(text) : {};
         if (!response.ok) throw new Error(data.error || 'Błąd serwera');
         return data;
     }
@@ -246,12 +270,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const token = localStorage.getItem('authToken');
         const formData = new FormData();
         formData.append('image', file);
-        const response = await fetch(endpoint, {
+
+        const response = await fetch(`${API_BASE_URL}${endpoint}`, {
             method: 'POST',
             headers: { 'X-Auth-Token': token },
             body: formData
         });
-        if (response.status === 401) throw new Error('Nieprawidłowy token.');
+        if (response.status === 401) {
+            logout();
+            throw new Error('Sesja wygasła. Zaloguj się ponownie.');
+        }
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || 'Błąd serwera');
         return data;
@@ -263,7 +291,13 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             authErrorDiv.classList.add('hidden');
             try {
-                const data = await apiCall('/auth/login', 'POST', { email: loginForm.email.value, password: loginForm.password.value });
+                const response = await fetch(`${API_BASE_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: loginEmail.value, password: loginPassword.value })
+                });
+                const data = await response.json();
+                if (!response.ok || !data.success) throw new Error(data.error || 'Błąd logowania');
                 localStorage.setItem('authToken', data.token);
                 main();
             } catch (error) {
@@ -271,81 +305,61 @@ document.addEventListener('DOMContentLoaded', () => {
                 authErrorDiv.classList.remove('hidden');
             }
         });
+
         registerForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             authErrorDiv.classList.add('hidden');
             try {
-                await apiCall('/auth/register', 'POST', { email: registerForm.email.value, password: registerForm.password.value });
+                const response = await fetch(`${API_BASE_URL}/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: registerEmail.value, password: registerPassword.value })
+                });
+                const data = await response.json();
+                if (!response.ok || !data.success) throw new Error(data.error || 'Błąd rejestracji');
                 alert('Rejestracja pomyślna! Możesz się teraz zalogować.');
-                toggleAuthForms();
+                switchAuthForm('login');
             } catch (error) {
                 authErrorDiv.textContent = error.message;
                 authErrorDiv.classList.remove('hidden');
             }
         });
-        toggleAuthLink.addEventListener('click', (e) => {
+
+        switchAuthLink.addEventListener('click', (e) => {
             e.preventDefault();
-            toggleAuthForms();
+            const isLogin = !loginForm.classList.contains('hidden');
+            switchAuthForm(isLogin ? 'register' : 'login');
         });
+
+        logoutBtn.addEventListener('click', logout);
     }
 
-    function showLoginScreen() {
+    function switchAuthForm(form) {
+        if (form === 'login') {
+            loginForm.classList.remove('hidden');
+            registerForm.classList.add('hidden');
+            authTitle.textContent = 'Zaloguj się do swojego konta';
+            switchAuthLink.textContent = 'Nie masz konta? Zarejestruj się';
+        } else {
+            loginForm.classList.add('hidden');
+            registerForm.classList.remove('hidden');
+            authTitle.textContent = 'Stwórz nowe konto';
+            switchAuthLink.textContent = 'Masz już konto? Zaloguj się';
+        }
+    }
+
+    function logout() {
         localStorage.removeItem('authToken');
         authSection.classList.remove('hidden');
         appSection.classList.add('hidden');
-        setupAuthEventListeners();
-    }
-
-    function toggleAuthForms() {
-        const isLoginHidden = loginForm.classList.toggle('hidden');
-        registerForm.classList.toggle('hidden');
-        authTitle.textContent = isLoginHidden ? 'Stwórz nowe konto' : 'Zaloguj się';
-        toggleAuthLink.textContent = isLoginHidden ? 'Masz już konto? Zaloguj się' : 'Nie masz konta? Zarejestruj się';
-    }
-
-    // --- Logika Aparatu ---
-    async function startCamera() {
-        try {
-            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-                cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-                cameraStreamEl.srcObject = cameraStream;
-                cameraContainer.classList.remove('hidden');
-                imagePreviewContainer.classList.add('hidden');
-            } else {
-                alert('Twoja przeglądarka nie wspiera dostępu do aparatu.');
-            }
-        } catch (error) {
-            console.error("Błąd uruchamiania kamery:", error);
-            alert('Nie udało się uruchomić kamery. Sprawdź uprawnienia w przeglądarce.');
-        }
-    }
-
-    function stopCamera() {
         if (cameraStream) {
             cameraStream.getTracks().forEach(track => track.stop());
+            cameraStream = null;
         }
-        cameraContainer.classList.add('hidden');
-    }
-
-    function takePicture() {
-        const video = cameraStreamEl;
-        const canvas = cameraCanvas;
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        const context = canvas.getContext('2d');
-        context.drawImage(video, 0, 0, canvas.width, canvas.height);
-        
-        canvas.toBlob(blob => {
-            currentFile = new File([blob], "paragon.jpg", { type: "image/jpeg" });
-            imagePreview.src = URL.createObjectURL(currentFile);
-            imagePreviewContainer.classList.remove('hidden');
-            stopCamera();
-        }, 'image/jpeg');
     }
 
     // --- Główna Logika Aplikacji ---
     function setupAppEventListeners() {
-        logoutBtn.addEventListener('click', showLoginScreen);
         navBtns.forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
         purchaseForm.addEventListener('submit', handlePurchaseFormSubmit);
         addItemBtn.addEventListener('click', () => addItemRow());
@@ -354,70 +368,47 @@ document.addEventListener('DOMContentLoaded', () => {
             switchTab('list');
         });
 
-        fileUploadBtn.addEventListener('click', () => receiptFileInput.click());
-        receiptFileInput.addEventListener('change', (event) => {
-            if (event.target.files && event.target.files[0]) {
-                currentFile = event.target.files[0];
-                imagePreview.src = URL.createObjectURL(currentFile);
-                imagePreviewContainer.classList.remove('hidden');
-                stopCamera();
-            }
-        });
-        
-        cameraBtn.addEventListener('click', startCamera);
-        captureBtn.addEventListener('click', takePicture);
-        cancelCameraBtn.addEventListener('click', stopCamera);
-
-        analyzeReceiptBtn.addEventListener('click', handleAnalyzeReceipt);
-        statsMonthSelect.addEventListener('change', updateCategoryPieChart);
-
         purchasesList.addEventListener('click', async (e) => {
-            const purchaseId = e.target.closest('[data-purchase-id]')?.dataset.purchaseId;
-            if (!purchaseId) return;
-            if (e.target.closest('.edit-purchase-btn')) enterEditMode(purchaseId);
-            else if (e.target.closest('.delete-purchase-btn')) {
+            const editBtn = e.target.closest('.edit-purchase-btn');
+            if (editBtn) {
+                const purchaseId = e.target.closest('[data-purchase-id]').dataset.purchaseId;
+                enterEditMode(purchaseId);
+                return;
+            }
+
+            const deleteBtn = e.target.closest('.delete-purchase-btn');
+            if (deleteBtn) {
+                const purchaseId = e.target.closest('[data-purchase-id]').dataset.purchaseId;
                 if (confirm('Czy na pewno chcesz usunąć ten zakup? Operacja jest nieodwracalna.')) {
                     try {
                         await apiCall(`/api/purchases/${purchaseId}`, 'DELETE');
-                        await fetchInitialData(false);
+                        await fetchInitialData();
                     } catch (error) {
                         alert('Nie udało się usunąć zakupu: ' + error.message);
                     }
                 }
             }
-        });
-
-        categoriesList.addEventListener('click', async (e) => {
-            const categoryDiv = e.target.closest('[data-category-name]');
-            if (!categoryDiv) return;
-            const categoryName = categoryDiv.dataset.categoryName;
-            if (e.target.closest('.rename-cat-btn')) {
-                const newName = prompt(`Wprowadź nową nazwę dla kategorii "${categoryName}":`, categoryName);
-                if (newName && newName.trim() !== '' && newName !== categoryName) {
-                    try {
-                        await apiCall(`/api/categories/${categoryName}`, 'PUT', { newName: newName.trim().toLowerCase() });
-                        await fetchInitialData(false);
-                    } catch (error) {
-                        alert('Nie udało się zmienić nazwy: ' + error.message);
-                    }
-                }
-            } else if (e.target.closest('.delete-cat-btn')) {
-                if (confirm(`Czy na pewno chcesz usunąć kategorię "${categoryName}"? Wszystkie produkty z tą kategorią zostaną oznaczone jako "inne".`)) {
-                    try {
-                        await apiCall(`/api/categories/${categoryName}`, 'DELETE');
-                        await fetchInitialData(false);
-                    } catch (error) {
-                        alert('Nie udało się usunąć kategorii: ' + error.message);
-                    }
-                }
+            
+            const header = e.target.closest('.purchase-header');
+            if (header) {
+                const itemsDiv = header.nextElementSibling;
+                itemsDiv.classList.toggle('hidden');
             }
         });
+
+        categoriesList.addEventListener('click', handleCategoryActions);
+        analyzeReceiptBtn.addEventListener('click', handleAnalyzeReceipt);
+        receiptFileInput.addEventListener('change', (e) => currentFile = e.target.files[0]);
+        startCameraBtn.addEventListener('click', startCamera);
+        cancelCameraBtn.addEventListener('click', stopCamera);
+        capturePhotoBtn.addEventListener('click', capturePhoto);
+        statsMonthSelect.addEventListener('change', updateCategoryPieChart);
     }
 
     function switchTab(tabName) {
         navBtns.forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tabName));
         document.querySelectorAll('.tab-content').forEach(content => {
-            content.classList.toggle('hidden', content.id !== `${tabName}-tab`);
+            content.classList.toggle('active', content.id === `${tabName}-tab`);
         });
         if (tabName !== 'add') exitEditMode();
         if (tabName === 'categories') renderCategoriesList();
@@ -425,51 +416,65 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function fetchInitialData(shouldSwitchToList = true) {
-        const [purchases, categories] = await Promise.all([apiCall('/api/purchases'), apiCall('/api/categories')]);
-        allPurchases = purchases;
-        allCategories = categories.sort();
-        renderAll();
-        if (shouldSwitchToList) switchTab('list');
+        try {
+            [allPurchases, allCategories] = await Promise.all([
+                apiCall('/api/purchases'),
+                apiCall('/api/categories')
+            ]);
+            renderAll();
+            if (shouldSwitchToList) switchTab('list');
+        } catch (error) {
+            alert(error.message);
+        }
     }
 
     function renderAll() {
         renderPurchasesList();
         updateMonthlyBalance();
-        if (!document.getElementById('categories-tab').classList.contains('hidden')) renderCategoriesList();
     }
 
-    function updateAllCategorySelects(newlySelected = null) {
-        const categoryOptions = allCategories.map(cat => `<option value="${cat}">${cat.charAt(0).toUpperCase() + cat.slice(1)}</option>`).join('');
-        const fullHtml = `<option value="" disabled>Wybierz kategorię</option>${categoryOptions}<option value="__add_new__" class="font-bold text-indigo-600">+ Dodaj nową</option>`;
-        document.querySelectorAll('.item-category-select').forEach(select => {
-            const currentValue = select.value;
-            select.innerHTML = fullHtml;
-            select.value = newlySelected || currentValue;
-        });
+    function updateMonthlyBalance() {
+        const now = new Date();
+        const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+        const monthlyPurchases = allPurchases.filter(p => p.date >= firstDayOfMonth);
+        const total = monthlyPurchases.reduce((sum, p) => sum + (p.totalAmount || 0), 0);
+        monthlyBalanceValue.textContent = `${total.toFixed(2)} zł`;
+        
+        const monthName = now.toLocaleString('pl-PL', { month: 'long' });
+        monthlyBalanceLabel.textContent = `Wydatki w ${monthName.charAt(0).toUpperCase() + monthName.slice(1)}`;
     }
 
-    function addItemRow(item = { name: '', price: '', category: '' }) {
+    // --- Logika Formularza Zakupu ---
+    function addItemRow(item = {}) {
         const itemRow = document.createElement('div');
-        itemRow.className = 'item-row grid grid-cols-1 md:grid-cols-4 gap-2 items-center py-2';
-        const categoryOptions = allCategories.map(cat => `<option value="${cat}">${cat.charAt(0).toUpperCase() + cat.slice(1)}</option>`).join('');
+        itemRow.className = 'item-row grid grid-cols-1 md:grid-cols-10 gap-2 items-center';
+        
+        const categoryOptions = allCategories.map(cat => `<option value="${cat}" ${item.category === cat ? 'selected' : ''}>${cat.charAt(0).toUpperCase() + cat.slice(1)}</option>`).join('');
+
         itemRow.innerHTML = `
-            <div class="md:col-span-2"><input type="text" placeholder="Opis produktu" required class="item-name w-full rounded-md p-2 border-gray-300 shadow-sm" value="${item.name}"></div>
-            <div><input type="number" step="0.01" placeholder="Kwota" required class="item-price w-full rounded-md p-2 border-gray-300 shadow-sm" value="${item.price}"></div>
-            <div class="flex items-center gap-2">
-                <div class="category-wrapper w-full">
-                    <select class="item-category-select w-full rounded-md p-2 border-gray-300 shadow-sm">
-                        <option value="" disabled ${!item.category ? 'selected' : ''}>Wybierz kategorię</option>
-                        ${categoryOptions}
-                        <option value="__add_new__" class="font-bold text-indigo-600">+ Dodaj nową</option>
-                    </select>
-                    <input type="text" placeholder="Nowa kategoria" class="item-category-new w-full rounded-md p-2 border-gray-300 shadow-sm hidden">
-                </div>
-                <button type="button" class="remove-item-btn text-red-500 hover:text-red-700">✖</button>
-            </div>`;
+            <div class="md:col-span-4">
+                <input type="text" class="item-name mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm" placeholder="Nazwa produktu" value="${item.name || ''}" required>
+            </div>
+            <div class="md:col-span-2">
+                <input type="number" step="0.01" class="item-price mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm" placeholder="Cena" value="${item.price || ''}" required>
+            </div>
+            <div class="md:col-span-3">
+                <select class="item-category-select mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm">
+                    <option value="">Wybierz kategorię</option>
+                    ${categoryOptions}
+                    <option value="__add_new__">-- Dodaj nową --</option>
+                </select>
+                <input type="text" class="new-category-input hidden mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm" placeholder="Nazwa nowej kategorii">
+            </div>
+            <div class="md:col-span-1 text-right">
+                <button type="button" class="remove-item-btn p-2 text-red-500 hover:text-red-700"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM7 9a1 1 0 000 2h6a1 1 0 100-2H7z" clip-rule="evenodd" /></svg></button>
+            </div>
+        `;
         itemsContainer.appendChild(itemRow);
+        
         const categorySelect = itemRow.querySelector('.item-category-select');
-        const newCategoryInput = itemRow.querySelector('.item-category-new');
-        if (item.category && allCategories.includes(item.category)) categorySelect.value = item.category;
+        const newCategoryInput = itemRow.querySelector('.new-category-input');
+
         categorySelect.addEventListener('change', () => {
             if (categorySelect.value === '__add_new__') {
                 categorySelect.classList.add('hidden');
@@ -477,18 +482,41 @@ document.addEventListener('DOMContentLoaded', () => {
                 newCategoryInput.focus();
             }
         });
-        newCategoryInput.addEventListener('blur', () => {
-            const newCategory = newCategoryInput.value.trim().toLowerCase();
-            if (newCategory && !allCategories.includes(newCategory)) {
-                allCategories.push(newCategory);
-                allCategories.sort();
-                updateAllCategorySelects(newCategory);
+
+        newCategoryInput.addEventListener('blur', () => handleNewCategory(newCategoryInput, categorySelect));
+        newCategoryInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                handleNewCategory(newCategoryInput, categorySelect);
             }
-            newCategoryInput.classList.add('hidden');
-            categorySelect.classList.remove('hidden');
-            if (newCategory) categorySelect.value = newCategory;
         });
+
         itemRow.querySelector('.remove-item-btn').addEventListener('click', () => itemRow.remove());
+    }
+
+    function handleNewCategory(newCategoryInput, categorySelect) {
+        const newCategory = newCategoryInput.value.trim().toLowerCase();
+        if (newCategory && !allCategories.includes(newCategory)) {
+            allCategories.push(newCategory);
+allCategories.sort();
+            updateAllCategorySelects(newCategory);
+        }
+        newCategoryInput.value = '';
+        newCategoryInput.classList.add('hidden');
+        categorySelect.classList.remove('hidden');
+        if (newCategory) categorySelect.value = newCategory;
+        else categorySelect.value = '';
+    }
+
+    function updateAllCategorySelects(newlySelected = null) {
+        const categoryOptions = allCategories.map(cat => `<option value="${cat}">${cat.charAt(0).toUpperCase() + cat.slice(1)}</option>`).join('');
+        const fullHtml = `<option value="">Wybierz kategorię</option>${categoryOptions}<option value="__add_new__">-- Dodaj nową --</option>`;
+        
+        document.querySelectorAll('.item-category-select').forEach(select => {
+            const currentValue = select.value;
+            select.innerHTML = fullHtml;
+            select.value = newlySelected || currentValue;
+        });
     }
 
     async function handlePurchaseFormSubmit(e) {
@@ -496,51 +524,65 @@ document.addEventListener('DOMContentLoaded', () => {
         const purchaseData = {
             shop: shopInput.value,
             date: dateInput.value,
-            items: Array.from(document.querySelectorAll('.item-row')).map(row => ({
-                name: row.querySelector('.item-name').value,
-                price: parseFloat(row.querySelector('.item-price').value),
-                category: row.querySelector('.item-category-select').value || 'inne'
-            }))
+            items: Array.from(document.querySelectorAll('.item-row')).map(row => {
+                const name = row.querySelector('.item-name').value;
+                const price = parseFloat(row.querySelector('.item-price').value.replace(',', '.'));
+                let category = row.querySelector('.item-category-select').value;
+                if (!category || category === '__add_new__') category = 'inne';
+                return { name, price, category };
+            }).filter(item => item.name && !isNaN(item.price))
         };
+
+        if (purchaseData.items.length === 0) {
+            alert('Dodaj przynajmniej jedną pozycję do zakupu.');
+            return;
+        }
+
         try {
             if (editMode.active) {
                 await apiCall(`/api/purchases/${editMode.purchaseId}`, 'PUT', purchaseData);
             } else {
                 await apiCall('/api/purchases', 'POST', purchaseData);
             }
-            exitEditMode();
             await fetchInitialData();
-        } catch(error) {
+        } catch (error) {
             alert('Błąd zapisu: ' + error.message);
-            if (error.message === 'Nieprawidłowy token.') showLoginScreen();
         }
     }
 
     function enterEditMode(purchaseId) {
         const purchase = allPurchases.find(p => p.id === purchaseId);
         if (!purchase) return;
+
         editMode.active = true;
         editMode.purchaseId = purchaseId;
+
         shopInput.value = purchase.shop;
         dateInput.value = purchase.date;
         itemsContainer.innerHTML = '';
         purchase.items.forEach(item => addItemRow(item));
-        formTitle.textContent = 'Edytuj istniejący zakup';
+
+        purchaseFormTitle.textContent = 'Edytuj istniejący zakup';
         purchaseFormSubmitBtn.textContent = 'Zaktualizuj zakup';
         purchaseFormSubmitBtn.classList.replace('bg-indigo-600', 'bg-green-600');
         purchaseFormSubmitBtn.classList.replace('hover:bg-indigo-700', 'hover:bg-green-700');
         document.getElementById('cancel-edit-btn').classList.remove('hidden');
+        totalAmountContainer.classList.remove('hidden');
+        totalAmountValue.textContent = `${(purchase.totalAmount || 0).toFixed(2)} zł`;
+
         switchTab('add');
     }
 
     function exitEditMode() {
         editMode.active = false;
         editMode.purchaseId = null;
+
         purchaseForm.reset();
         itemsContainer.innerHTML = '';
         dateInput.value = new Date().toISOString().split('T')[0];
         addItemRow();
-        formTitle.textContent = 'Dodaj nowy zakup ręcznie';
+
+        purchaseFormTitle.textContent = 'Dodaj nowy zakup ręcznie';
         purchaseFormSubmitBtn.textContent = 'Zapisz cały zakup';
         purchaseFormSubmitBtn.classList.replace('bg-green-600', 'bg-indigo-600');
         purchaseFormSubmitBtn.classList.replace('hover:bg-green-700', 'hover:bg-indigo-700');
@@ -548,16 +590,20 @@ document.addEventListener('DOMContentLoaded', () => {
         totalAmountContainer.classList.add('hidden');
     }
 
+    // --- Logika Listy Zakupów ---
     function renderPurchasesList() {
-        purchasesList.innerHTML = allPurchases.length === 0 ? '<p class="text-center text-gray-500">Brak zapisanych zakupów.</p>' :
-            allPurchases.map(p => `
+        if (allPurchases.length === 0) {
+            purchasesList.innerHTML = '<p class="text-center text-gray-500">Brak zapisanych zakupów. Dodaj pierwszy!</p>';
+            return;
+        }
+        purchasesList.innerHTML = allPurchases.map(p => `
             <div class="bg-white rounded-lg shadow" data-purchase-id="${p.id}">
-                <div class="p-4 flex justify-between items-center">
-                    <div class="cursor-pointer flex-grow" onclick="this.parentElement.nextElementSibling.classList.toggle('hidden')">
-                        <p class="font-bold text-lg">${ p.shop || 'Brak nazwy sklepu' }</p>
-                        <p class="text-sm text-gray-600">${ p.date ? new Date(p.date).toLocaleDateString('pl-PL') : 'Brak daty' }</p>
+                <div class="purchase-header flex justify-between items-center p-4 cursor-pointer">
+                    <div>
+                        <p class="font-bold text-lg">${p.shop}</p>
+                        <p class="text-sm text-gray-600">${p.date}</p>
                     </div>
-                    <div class="text-right mr-4">
+                    <div class="text-right">
                         <p class="font-bold text-xl">${(p.totalAmount || 0).toFixed(2)} zł</p>
                         <p class="text-xs text-gray-500">${(p.items || []).length} poz.</p>
                     </div>
@@ -569,16 +615,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="purchase-items hidden border-t p-4 space-y-2">
                     ${(p.items || []).map(item => `
                         <div class="flex justify-between items-center">
+                            <span>${item.name}</span>
                             <div>
-                                <span>${item.name || 'Brak nazwy produktu'}</span>
-                                <span class="category-tag" style="background-color: ${getCategoryColor(item.category)}">${item.category || 'brak'}</span>
+                                <span class="category-tag text-white" style="background-color: ${getCategoryColor(item.category)}">${item.category}</span>
+                                <span class="font-medium">${(item.price || 0).toFixed(2)} zł</span>
                             </div>
-                            <span class="font-medium">${(item.price || 0).toFixed(2)} zł</span>
-                        </div>`).join('')}
+                        </div>
+                    `).join('')}
                 </div>
-            </div>`).join('');
+            </div>
+        `).join('');
     }
 
+    // --- Logika Zarządzania Kategoriami ---
     function renderCategoriesList() {
         categoriesList.innerHTML = allCategories.map(cat => `
             <div class="flex justify-between items-center p-2 border-b" data-category-name="${cat}">
@@ -587,62 +636,123 @@ document.addEventListener('DOMContentLoaded', () => {
                     <button class="rename-cat-btn p-1 text-blue-500 hover:text-blue-700" title="Zmień nazwę"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" /><path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd" /></svg></button>
                     <button class="delete-cat-btn p-1 text-red-500 hover:text-red-700" title="Usuń"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" /></svg></button>
                 </div>
-            </div>`).join('');
+            </div>
+        `).join('');
     }
 
-    function updateMonthlyBalance() {
-        const monthName = new Date().toLocaleString('pl-PL', { month: 'long' });
-        monthlyBalanceLabel.textContent = `Wydatki w ${monthName.charAt(0).toUpperCase() + monthName.slice(1)}`;
-        const currentMonthStr = new Date().toISOString().substring(0, 7);
-        const total = allPurchases
-            .filter(p => p.date && p.date.startsWith(currentMonthStr))
-            .reduce((sum, p) => sum + (p.totalAmount || 0), 0);
-        monthlyBalanceEl.textContent = `-${total.toFixed(2)} zł`;
+    async function handleCategoryActions(e) {
+        const renameBtn = e.target.closest('.rename-cat-btn');
+        if (renameBtn) {
+            const categoryDiv = e.target.closest('[data-category-name]');
+            const oldName = categoryDiv.dataset.categoryName;
+            const newName = prompt(`Wprowadź nową nazwę dla kategorii "${oldName}":`, oldName);
+            if (newName && newName.trim() !== '' && newName !== oldName) {
+                try {
+                    await apiCall(`/api/categories/${oldName}`, 'PUT', { newName: newName.trim().toLowerCase() });
+                    await fetchInitialData(false);
+                    renderCategoriesList();
+                } catch (error) {
+                    alert('Nie udało się zmienić nazwy: ' + error.message);
+                }
+            }
+        }
+
+        const deleteBtn = e.target.closest('.delete-cat-btn');
+        if (deleteBtn) {
+            const categoryDiv = e.target.closest('[data-category-name]');
+            const name = categoryDiv.dataset.categoryName;
+            if (confirm(`Czy na pewno chcesz usunąć kategorię "${name}"? Wszystkie produkty z tą kategorią zostaną oznaczone jako "inne".`)) {
+                try {
+                    await apiCall(`/api/categories/${name}`, 'DELETE');
+                    await fetchInitialData(false);
+                    renderCategoriesList();
+                } catch (error) {
+                    alert('Nie udało się usunąć kategorii: ' + error.message);
+                }
+            }
+        }
     }
 
+    // --- Logika Skanowania i Aparatu ---
     async function handleAnalyzeReceipt() {
         if (!currentFile) {
-            alert('Najpierw wybierz plik lub zrób zdjęcie paragonu.');
+            alert('Najpierw wybierz plik z paragonem.');
             return;
         }
         analysisSpinner.classList.remove('hidden');
         analyzeReceiptBtn.disabled = true;
         try {
-            const result = await apiCallWithFile('/api/analyze-receipt', currentFile);
-            fillFormWithAnalysis(result.analysis);
+            const { analysis } = await apiCallWithFile('/api/analyze-receipt', currentFile);
+            fillFormWithAnalysis(analysis);
         } catch (error) {
             alert('Błąd analizy paragonu: ' + error.message);
-            if (error.message === 'Nieprawidłowy token.') showLoginScreen();
         } finally {
             analysisSpinner.classList.add('hidden');
             analyzeReceiptBtn.disabled = false;
+            receiptFileInput.value = '';
+            currentFile = null;
         }
     }
 
-    function fillFormWithAnalysis(data) {
-        shopInput.value = data.shop || '';
-        dateInput.value = data.date || new Date().toISOString().split('T')[0];
+    async function startCamera() {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            alert("Twoja przeglądarka nie wspiera dostępu do aparatu.");
+            return;
+        }
+        try {
+            cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+            cameraView.classList.remove('hidden');
+            cameraStreamEl.srcObject = cameraStream;
+        } catch (err) {
+            alert("Nie udało się uzyskać dostępu do aparatu. Sprawdź uprawnienia w przeglądarce.");
+        }
+    }
+
+    function stopCamera() {
+        if (cameraStream) {
+            cameraStream.getTracks().forEach(track => track.stop());
+        }
+        cameraView.classList.add('hidden');
+        cameraStream = null;
+    }
+
+    function capturePhoto() {
+        const canvas = document.createElement('canvas');
+        canvas.width = cameraStreamEl.videoWidth;
+        canvas.height = cameraStreamEl.videoHeight;
+        canvas.getContext('2d').drawImage(cameraStreamEl, 0, 0);
+        canvas.toBlob(blob => {
+            currentFile = new File([blob], "paragon.jpg", { type: "image/jpeg" });
+            stopCamera();
+            handleAnalyzeReceipt();
+        }, 'image/jpeg');
+    }
+
+    function fillFormWithAnalysis(analysis) {
+        shopInput.value = analysis.shop || '';
+        dateInput.value = analysis.date || new Date().toISOString().split('T')[0];
         itemsContainer.innerHTML = '';
-        let total = 0;
-        if (data.items && data.items.length > 0) {
-            data.items.forEach(item => {
-                addItemRow(item);
-                total += item.price || 0;
-            });
-        } else {
+        (analysis.items || []).forEach(item => {
+            if (!allCategories.includes(item.category)) {
+                allCategories.push(item.category);
+                allCategories.sort();
+            }
+            addItemRow(item);
+        });
+        if ((analysis.items || []).length === 0) {
             addItemRow();
         }
-        totalAmountValue.textContent = `${total.toFixed(2)} zł`;
-        totalAmountContainer.classList.remove('hidden');
+        updateAllCategorySelects();
         alert('Formularz został wypełniony danymi z paragonu. Sprawdź dane przed zapisem.');
     }
-    
+
+    // --- Logika Statystyk ---
     async function renderStatistics() {
         try {
-            const initialStats = await apiCall('/api/statistics'); // Fetch initial data for current month and available months
+            const initialStats = await apiCall('/api/statistics');
             populateMonthSelector(initialStats.availableMonths);
-            updateCategoryPieChart(initialStats);
-            renderComparisonBarChart();
+            await updateCategoryPieChart();
+            await renderComparisonBarChart();
         } catch (error) {
             console.error("Błąd ładowania statystyk:", error);
         }
@@ -665,15 +775,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function updateCategoryPieChart() {
         const selectedMonth = statsMonthSelect.value;
-        if (!selectedMonth) {
+        if (!selectedMonth || selectedMonth === 'Brak danych') {
             noDataPieChart.classList.remove('hidden');
             categoryChartContainer.classList.add('hidden');
             return;
         };
-        
+
         const [year, month] = selectedMonth.split('-');
         const stats = await apiCall(`/api/statistics?year=${year}&month=${month}`);
-        
+
         const ctx = document.getElementById('category-chart').getContext('2d');
         const labels = Object.keys(stats.spendingByCategory);
         const data = Object.values(stats.spendingByCategory);
@@ -701,7 +811,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function renderComparisonBarChart() {
         const stats = await apiCall('/api/statistics/comparison');
         const ctx = document.getElementById('comparison-chart').getContext('2d');
-        
+
         if (comparisonChart) comparisonChart.destroy();
 
         if (!stats.monthlyTotals || stats.monthlyTotals.length === 0) {
@@ -734,24 +844,28 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Inicjalizacja Aplikacji ---
     async function main() {
         if (!localStorage.getItem('authToken')) {
-            showLoginScreen();
+            authSection.classList.remove('hidden');
+            appSection.classList.add('hidden');
             return;
         }
-        try {
-            setupAppEventListeners();
-            await fetchInitialData();
-            authSection.classList.add('hidden');
-            appSection.classList.remove('hidden');
-            dateInput.value = new Date().toISOString().split('T')[0];
-            addItemRow();
-        } catch (error) {
-            console.error("Błąd inicjalizacji:", error.message);
-            if (error.message === 'Nieprawidłowy token.') showLoginScreen();
-        }
+        authSection.classList.add('hidden');
+        appSection.classList.remove('hidden');
+
+        setupAppEventListeners();
+        await fetchInitialData();
+        exitEditMode();
     }
 
-    main();
-});
+    document.addEventListener('DOMContentLoaded', () => {
+        setupAuthEventListeners();
+        main();
+
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js')
+                .then(reg => console.log('Service Worker zarejestrowany:', reg))
+                .catch(err => console.log('Błąd rejestracji Service Workera:', err));
+        }
+    });
 </script>
 </body>
 </html>
