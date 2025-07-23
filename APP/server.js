@@ -97,36 +97,37 @@ function validateDate(dateStr) {
 async function extractAndCategorizePurchase(file, categories) {
     const imagePart = { inlineData: { data: file.buffer.toString("base64"), mimeType: file.mimetype } };
     const prompt = `
-        Twoim zadaniem jest ekstremalnie dokładna analiza tego paragonu i zwrócenie danych w formacie JSON. Postępuj według poniższych kroków:
+        Twoim zadaniem jest dokładna analiza paragonu i zwrócenie danych w formacie JSON. Postępuj zgodnie z poniższymi krokami, aby uwzględnić rabaty i kategorie. Wykonaj wszystko w jednym kroku, aby zminimalizować liczbę zapytań.
 
         KROK 1: Ekstrakcja Danych Podstawowych
-        - Wyodrębnij nazwę sklepu ("shop").
-        - Wyodrębnij datę transakcji ("date") w formacie YYYY-MM-DD.
-        - Wyodrębnij listę wszystkich zakupionych produktów ("items"). Dla każdego produktu zidentyfikuj jego nazwę ("name") i cenę jednostkową ("price").
-        - Zignoruj pozycje, które nie są produktami (np. "SUMA", "DO ZAPŁATY", "RESZTA", "opakowanie").
+        - Wyodrębnij nazwę sklepu ("shop"). Jeśli nie ma nazwy, ustaw "Nieznany sklep".
+        - Wyodrębnij datę transakcji ("date") w formacie YYYY-MM-DD. Jeśli data jest nieczytelna, użyj dzisiejszej daty.
+        - Wyodrębnij listę wszystkich zakupionych produktów ("items"). Dla każdego produktu zidentyfikuj jego nazwę ("name") i cenę jednostkową przed rabatem ("originalPrice").
+        - Ignoruj pozycje, które nie są produktami (np. "SUMA", "DO ZAPŁATY", "RESZTA", "opakowanie").
 
-        KROK 2: Zaawansowana Analiza Rabatów
-        - Przeszukaj cały paragon w poszukiwaniu jakichkolwiek rabatów, opustów lub promocji.
-        - Priorytet 1: Jeśli znajdziesz rabat bezpośrednio pod produktem, odejmij jego wartość od ceny tego konkretnego produktu.
-        - Priorytet 2: Jeśli znajdziesz rabat na dole paragonu (np. "Suma rabatów", "Rabat promocyjny"), spróbuj go inteligentnie dopasować. Na przykład, rabat o nazwie "Upust Nudle Knorr" powinien zostać w całości odjęty od ceny produktu "Nudle Knorr". Szukaj też innych wskazówek, jak gwiazdki (*) przy produktach.
-        - Priorytet 3 (OSTATECZNOŚĆ): Jeśli znajdziesz rabat sumaryczny na dole paragonu i absolutnie nie da się go przypisać do konkretnych produktów, rozłóż go proporcjonalnie pomiędzy WSZYSTKIE zeskanowane produkty.
+        KROK 2: Analiza i Przypisanie Rabatów
+        - Zidentyfikuj wszystkie rabaty na paragonie (np. "Rabat", "Upust", "Promocja", "-X.XX zł", gwiazdki (*) przy produkcie, lub rabaty sumaryczne na dole paragonu).
+        - Priorytet 1: Jeśli rabat jest przypisany do konkretnego produktu (np. "Upust Nudle Knorr -2.00 zł" lub gwiazdka przy produkcie), odejmij wartość rabatu od ceny tego produktu i zapisz ją jako "price".
+        - Priorytet 2: Jeśli rabat jest ogólny (np. "Suma rabatów -5.00 zł") i nie można go przypisać do konkretnego produktu, rozłóż go proporcjonalnie na wszystkie produkty na podstawie ich oryginalnych cen. Oblicz nową cenę ("price") dla każdego produktu.
+        - Priorytet 3: Jeśli nie można zidentyfikować żadnych rabatów, ustaw "price" równe "originalPrice".
+        - Upewnij się, że ceny po rabatach ("price") są dodatnie i zaokrąglone do dwóch miejsc po przecinku.
 
         KROK 3: Kategoryzacja Produktów
-        - Dla każdego produktu z listy, dodaj pole "category".
-        - Wybierz dla niego najbardziej pasującą kategorię z tej listy: ${JSON.stringify(categories)}.
-        - Jeśli absolutnie żadna kategoria nie pasuje, użyj "inne".
+        - Dla każdego produktu przypisz pole "category" na podstawie najbardziej pasującej kategorii z listy: ${JSON.stringify(categories)}.
+        - Jeśli żadna kategoria nie pasuje, użyj "inne".
 
         KROK 4: Finalizacja
-        - Zwróć ostateczną listę produktów w formacie JSON, gdzie każdy produkt ma "name", "price" (po rabatach) i "category".
+        - Zwróć dane w formacie JSON z polami "shop", "date" i "items", gdzie każdy element w "items" zawiera "name", "originalPrice", "price" (po rabacie) i "category".
+        - Upewnij się, że JSON jest poprawny i nie zawiera błędów składniowych.
 
-        Przykład idealnej odpowiedzi JSON:
+        Przykład odpowiedzi JSON:
         {
           "shop": "Biedronka",
           "date": "2025-07-21",
           "items": [
-            {"name": "Jaja L", "price": 8.99, "category": "spożywcze"},
-            {"name": "Mleko 2%", "price": 2.50, "category": "spożywcze"},
-            {"name": "Płyn do naczyń", "price": 7.99, "category": "chemia"}
+            {"name": "Jaja L", "originalPrice": 10.99, "price": 8.99, "category": "spożywcze"},
+            {"name": "Mleko 2%", "originalPrice": 3.00, "price": 2.50, "category": "spożywcze"},
+            {"name": "Płyn do naczyń", "originalPrice": 7.99, "price": 7.99, "category": "chemia"}
           ]
         }
     `;
@@ -139,11 +140,20 @@ async function extractAndCategorizePurchase(file, categories) {
         const cleanedText = rawText.replace(/^```json\s*|```$/g, '').trim();
         const data = JSON.parse(cleanedText);
 
-        return {
-            shop: data.shop || 'Nieznany sklep',
-            date: validateDate(data.date) || new Date().toISOString().split('T')[0],
-            items: data.items || []
-        };
+        // Walidacja danych
+        if (!data.shop) data.shop = 'Nieznany sklep';
+        if (!validateDate(data.date)) data.date = new Date().toISOString().split('T')[0];
+        if (!Array.isArray(data.items)) data.items = [];
+
+        // Dodatkowa walidacja cen
+        data.items = data.items.map(item => ({
+            name: item.name || 'Nieznany produkt',
+            originalPrice: parseFloat(item.originalPrice) || 0,
+            price: parseFloat(item.price) >= 0 ? parseFloat(item.price).toFixed(2) : parseFloat(item.originalPrice || 0).toFixed(2),
+            category: categories.includes(item.category) ? item.category : 'inne'
+        }));
+
+        return data;
     } catch (error) {
         console.error("Błąd podczas przetwarzania odpowiedzi AI:", error);
         throw new Error('Nie udało się przetworzyć odpowiedzi z AI. Sprawdź logi serwera.');
