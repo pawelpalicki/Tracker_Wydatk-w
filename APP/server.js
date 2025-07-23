@@ -96,70 +96,95 @@ function validateDate(dateStr) {
 
 async function extractAndCategorizePurchase(file, categories) {
     const imagePart = { inlineData: { data: file.buffer.toString("base64"), mimeType: file.mimetype } };
-    const prompt = `
-        Twoim zadaniem jest dokładna analiza paragonu i zwrócenie danych w formacie JSON. Postępuj zgodnie z poniższymi krokami, aby uwzględnić rabaty i kategorie. Wykonaj wszystko w jednym kroku, aby zminimalizować liczbę zapytań.
+    const prompt = 
+`Twoim zadaniem jest dokładna analiza paragonu i zwrócenie danych w formacie JSON. Zwróć szczególną uwagę na rabaty. Postępuj zgodnie z poniższymi krokami:
 
-        KROK 1: Ekstrakcja Danych Podstawowych
-        - Wyodrębnij nazwę sklepu ("shop"). Jeśli nie ma nazwy, ustaw "Nieznany sklep".
-        - Wyodrębnij datę transakcji ("date") w formacie YYYY-MM-DD. Jeśli data jest nieczytelna, użyj dzisiejszej daty.
-        - Wyodrębnij listę wszystkich zakupionych produktów ("items"). Dla każdego produktu zidentyfikuj jego nazwę ("name") i cenę jednostkową przed rabatem ("originalPrice").
-        - Ignoruj pozycje, które nie są produktami (np. "SUMA", "DO ZAPŁATY", "RESZTA", "opakowanie").
+KROK 1: Ekstrakcja Danych Podstawowych
+- Nazwa sklepu ("shop") - jeśli nie ma, ustaw "Nieznany sklep"
+- Data transakcji ("date") w formacie YYYY-MM-DD
+- Lista produktów ("items") z:
+  * nazwą ("name")
+  * ceną przed rabatem ("originalPrice")
+  * uwzględnionym rabatem ("price")
+  * kategorią ("category")
 
-        KROK 2: Analiza i Przypisanie Rabatów
-        - Zidentyfikuj wszystkie rabaty na paragonie (np. "Rabat", "Upust", "Promocja", "-X.XX", gwiazdki (*) przy produkcie, lub rabaty sumaryczne na dole paragonu).
-        - Priorytet 1: Jeśli rabat znajduje się bezpośrednio **pod nazwą produktu** i jego wartość (np. "Rabat -1,01") odnosi się do pozycji powyżej – **odejmij go od ceny tego produktu**. Przypisz zaktualizowaną cenę jako "price".
-        - Priorytet 2: Jeśli rabat jest przypisany do konkretnego produktu w inny sposób (np. "Upust Nudle Knorr -2.00 zł" lub gwiazdka przy produkcie), odejmij wartość rabatu od ceny tego produktu i zapisz ją jako "price".
-        - Priorytet 3: Jeśli rabat jest ogólny (np. "Suma rabatów -5.00 zł") i nie można go przypisać do konkretnego produktu, rozłóż go proporcjonalnie na wszystkie produkty na podstawie ich oryginalnych cen. Oblicz nową cenę ("price") dla każdego produktu.
-        - Priorytet 4: Jeśli nie można zidentyfikować żadnych rabatów, ustaw "price" równe "originalPrice".
-        - Upewnij się, że ceny po rabatach ("price") są dodatnie i zaokrąglone do dwóch miejsc po przecinku.
+KROK 2: Szczegółowa Analiza Rabatów
+- Szukaj wyraźnych oznaczeń rabatów: "Rabat", "Upust", "Promocja", "-X.XX", "*"
+- Jeśli rabat jest w osobnej linijce pod produktem (np. "Rabat -1,01"), przypisz go do produktu powyżej
+- Jeśli rabat jest w nazwie produktu (np. "Produkt XYZ -2,00 zł"), wyodrębnij kwotę
+- Dla rabatów ogólnych rozłóż proporcjonalnie na wszystkie produkty
+- Zawsze sprawdzaj czy cena po rabacie nie jest wyższa niż przed rabatem
 
+KROK 3: Kategoryzacja
+- Użyj podanych kategorii: ${JSON.stringify(categories)}
+- Dla niepasujących produktów użyj "inne"
 
-        KROK 3: Kategoryzacja Produktów
-        - Dla każdego produktu przypisz pole "category" na podstawie najbardziej pasującej kategorii z listy: ${JSON.stringify(categories)}.
-        - Jeśli żadna kategoria nie pasuje, użyj "inne".
+KROK 4: Format Wyniku
+{
+  "shop": "Nazwa sklepu",
+  "date": "2023-01-01",
+  "items": [
+    {
+      "name": "Produkt 1",
+      "originalPrice": 10.00,
+      "price": 9.00,
+      "category": "kategoria1"
+    }
+  ]
+}
 
-        KROK 4: Finalizacja
-        - Zwróć dane w formacie JSON z polami "shop", "date" i "items", gdzie każdy element w "items" zawiera "name", "originalPrice", "price" (po rabacie) i "category".
-        - Upewnij się, że JSON jest poprawny i nie zawiera błędów składniowych.
+Pamiętaj:
+1. Rabaty pod produktem mają pierwszeństwo
+2. Dokładnie sprawdzaj format kwot (kropki/przecinki)
+3. Upewnij się, że cena po rabacie jest niższa niż przed rabatem`;
 
-        Przykład odpowiedzi JSON:
-        {
-          "shop": "Biedronka",
-          "date": "2025-07-21",
-          "items": [
-            {"name": "Jaja L", "originalPrice": 10.99, "price": 8.99, "category": "spożywcze"},
-            {"name": "Mleko 2%", "originalPrice": 3.00, "price": 2.50, "category": "spożywcze"},
-            {"name": "Płyn do naczyń", "originalPrice": 7.99, "price": 7.99, "category": "chemia"}
-          ]
-        }
-    `;
-    
     try {
         const result = await model.generateContent([prompt, imagePart]);
-        const rawText = result.response.text();
+        let rawText = result.response.text();
         console.log("Surowa odpowiedź od AI:", rawText);
 
-        const cleanedText = rawText.replace(/^```json\s*|```$/g, '').trim();
-        const data = JSON.parse(cleanedText);
+        // Poprawianie formatu odpowiedzi
+        rawText = rawText.replace(/```json|```/g, '').trim();
+        
+        // Naprawianie częstych problemów z formatowaniem
+        rawText = rawText.replace(/'/g, '"') // zamiana apostrofów na cudzysłowy
+                         .replace(/(\w)\s*:\s*([^"\s][^,}]*)/g, '$1:"$2"') // naprawianie niecytowanych wartości
+                         .replace(/(\d),(\d)/g, '$1.$2'); // zamiana przecinków na kropki w liczbach
 
-        // Walidacja danych
-        if (!data.shop) data.shop = 'Nieznany sklep';
+        const data = JSON.parse(rawText);
+
+        // Zaawansowana walidacja i normalizacja
+        if (!data.shop || typeof data.shop !== 'string') data.shop = 'Nieznany sklep';
         if (!validateDate(data.date)) data.date = new Date().toISOString().split('T')[0];
-        if (!Array.isArray(data.items)) data.items = [];
-
-        // Dodatkowa walidacja cen
-        data.items = data.items.map(item => ({
-            name: item.name || 'Nieznany produkt',
-            originalPrice: parseFloat(item.originalPrice) || 0,
-            price: parseFloat(item.price) >= 0 ? parseFloat(item.price).toFixed(2) : parseFloat(item.originalPrice || 0).toFixed(2),
-            category: categories.includes(item.category) ? item.category : 'inne'
-        }));
+        
+        data.items = (Array.isArray(data.items) ? data.items : []).map(item => {
+            const originalPrice = parseFloat(item.originalPrice) || 0;
+            let price = parseFloat(item.price) || originalPrice;
+            
+            // Zapewnienie, że cena po rabacie nie jest wyższa niż przed rabatem
+            price = Math.min(price, originalPrice);
+            price = Math.max(0, price); // Zapewnienie, że cena nie jest ujemna
+            
+            return {
+                name: item.name?.trim() || 'Nieznany produkt',
+                originalPrice: parseFloat(originalPrice.toFixed(2)),
+                price: parseFloat(price.toFixed(2)),
+                category: categories.includes(item.category) ? item.category : 'inne'
+            };
+        });
 
         return data;
     } catch (error) {
         console.error("Błąd podczas przetwarzania odpowiedzi AI:", error);
         throw new Error('Nie udało się przetworzyć odpowiedzi z AI. Sprawdź logi serwera.');
     }
+}
+
+function validateDate(dateString) {
+    const regex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!regex.test(dateString)) return false;
+    const date = new Date(dateString);
+    return !isNaN(date.getTime());
 }
 
 async function updateCategoryInPurchases(userId, oldName, newName, deleteMode = false) {
