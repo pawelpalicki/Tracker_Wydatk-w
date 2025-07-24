@@ -97,38 +97,41 @@ function validateDate(dateStr) {
 async function extractAndCategorizePurchase(file, categories) {
     const imagePart = { inlineData: { data: file.buffer.toString("base64"), mimeType: file.mimetype } };
     const prompt = `
-        Twoim zadaniem jest ekstremalnie dokładna analiza tego paragonu i zwrócenie danych w formacie JSON. Postępuj według poniższych kroków:
+        Przeanalizuj obraz paragonu. Twoim zadaniem jest wyodrębnienie informacji i zwrócenie ich WYŁĄCZNIE w formacie JSON.
 
-        KROK 1: Ekstrakcja Danych Podstawowych
-        - Wyodrębnij nazwę sklepu ("shop").
-        - Wyodrębnij datę transakcji ("date") w formacie YYYY-MM-DD.
-        - Wyodrębnij listę wszystkich zakupionych produktów ("items"). Dla każdego produktu zidentyfikuj jego nazwę ("name") i cenę jednostkową ("price").
-        - Zignoruj pozycje, które nie są produktami (np. "SUMA", "DO ZAPŁATY", "RESZTA", "opakowanie").
-
-        KROK 2: Zaawansowana Analiza Rabatów
-        - Przeszukaj cały paragon w poszukiwaniu jakichkolwiek rabatów, opustów lub promocji.
-        - Priorytet 1: Jeśli znajdziesz rabat bezpośrednio pod produktem, odejmij jego wartość od ceny tego konkretnego produktu.
-        - Priorytet 2: Jeśli znajdziesz rabat na dole paragonu (np. "Suma rabatów", "Rabat promocyjny"), spróbuj go inteligentnie dopasować. Na przykład, rabat o nazwie "Upust Nudle Knorr" powinien zostać w całości odjęty od ceny produktu "Nudle Knorr". Szukaj też innych wskazówek, jak gwiazdki (*) przy produktach.
-        - Priorytet 3 (OSTATECZNOŚĆ): Jeśli znajdziesz rabat sumaryczny na dole paragonu i absolutnie nie da się go przypisać do konkretnych produktów, rozłóż go proporcjonalnie pomiędzy WSZYSTKIE zeskanowane produkty.
-
-        KROK 3: Kategoryzacja Produktów
-        - Dla każdego produktu z listy, dodaj pole "category".
-        - Wybierz dla niego najbardziej pasującą kategorię z tej listy: ${JSON.stringify(categories)}.
-        - Jeśli absolutnie żadna kategoria nie pasuje, użyj "inne".
-
-        KROK 4: Finalizacja
-        - Zwróć ostateczną listę produktów w formacie JSON, gdzie każdy produkt ma "name", "price" (po rabatach) i "category".
-
-        Przykład idealnej odpowiedzi JSON:
+        Struktura JSON powinna być następująca:
         {
-          "shop": "Biedronka",
-          "date": "2025-07-21",
+          "shop": "string",
+          "date": "string",
           "items": [
-            {"name": "Jaja L", "price": 8.99, "category": "spożywcze"},
-            {"name": "Mleko 2%", "price": 2.50, "category": "spożywcze"},
-            {"name": "Płyn do naczyń", "price": 7.99, "category": "chemia"}
+            { "name": "string", "price": number, "category": "string" }
           ]
         }
+
+        Instrukcje:
+        1.  **Dane podstawowe**: Wyodrębnij nazwę sklepu i datę w formacie YYYY-MM-DD.
+        2.  **Produkty**: Zidentyfikuj każdy produkt i jego cenę.
+        3.  **Rabaty**: Jeśli znajdziesz rabaty, postaraj się odjąć je od cen odpowiednich produktów.
+        4.  **Kategoryzacja**: Dla każdego produktu przypisz kategorię z listy: ${JSON.stringify(categories)}. Jeśli żadna nie pasuje, użyj "inne".
+        5.  **Format wyjściowy**: Zawsze zwracaj odpowiedź jako blok JSON. Nie dodawaj żadnych wyjaśnień ani tekstu przed lub po bloku JSON.
+
+        Jeśli obraz jest nieczytelny lub nie jest paragonem, zwróć poniższy JSON:
+        {
+          "shop": "Błąd odczytu",
+          "date": "${new Date().toISOString().split('T')[0]}",
+          "items": []
+        }
+
+        Przykład odpowiedzi:
+        ```json
+        {
+          "shop": "Lidl",
+          "date": "2025-07-25",
+          "items": [
+            {"name": "Chleb", "price": 3.50, "category": "spożywcze"}
+          ]
+        }
+        ```
     `;
     
     try {
@@ -136,8 +139,28 @@ async function extractAndCategorizePurchase(file, categories) {
         const rawText = result.response.text();
         console.log("Surowa odpowiedź od AI:", rawText);
 
-        const cleanedText = rawText.replace(/^```json\s*|```$/g, '').trim();
-        const data = JSON.parse(cleanedText);
+        const jsonMatch = rawText.match(/```json\s*([\s\S]*?)\s*```/);
+        if (!jsonMatch || !jsonMatch[1]) {
+            console.error("Odpowiedź AI nie zawiera prawidłowego bloku JSON:", rawText);
+            // Spróbujmy sparsować cały tekst, jeśli blok nie został znaleziony
+            try {
+                const data = JSON.parse(rawText);
+                return data;
+            } catch (e) {
+                 throw new Error(`AI zwróciło nieoczekiwaną odpowiedź tekstową.`);
+            }
+        }
+
+        const cleanedText = jsonMatch[1].trim();
+        
+        let data;
+        try {
+            data = JSON.parse(cleanedText);
+        } catch (parseError) {
+            console.error("Błąd parsowania JSON z odpowiedzi AI:", parseError);
+            console.error("Oczyszczony tekst, który zawiódł:", cleanedText);
+            throw new Error('AI zwróciło odpowiedź w nieprawidłowym formacie JSON.');
+        }
 
         return {
             shop: data.shop || 'Nieznany sklep',
