@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tracker-wydatkow-cache-v4'; // Zwiększona wersja
+const CACHE_NAME = 'tracker-wydatkow-cache-v5'; // Zwiększona wersja
 const urlsToCache = [
     '/',
     '/tracker.html',
