@@ -942,26 +942,16 @@
     }
 
     // --- Inicjalizacja Aplikacji ---
-    async function checkAuthStatus() {
-        const token = localStorage.getItem('authToken');
-        if (!token) {
-            loadingSection.classList.add('hidden');
+    async function main() {
+        loadingSection.classList.add('hidden');
+        if (!localStorage.getItem('authToken')) {
             authSection.classList.remove('hidden');
+            appSection.classList.add('hidden');
             return;
         }
-        try {
-            await apiCall('/auth/status');
-            await initializeApp();
-        } catch (error) {
-            logout(); // Token jest nieprawidłowy lub wygasł
-        } finally {
-            loadingSection.classList.add('hidden');
-        }
-    }
-
-    async function initializeApp() {
         authSection.classList.add('hidden');
         appSection.classList.remove('hidden');
+
         setupAppEventListeners();
         await fetchInitialData();
         exitEditMode();
@@ -969,7 +959,7 @@
 
     document.addEventListener('DOMContentLoaded', () => {
         setupAuthEventListeners();
-        checkAuthStatus();
+        main();
 
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('/sw.js')
