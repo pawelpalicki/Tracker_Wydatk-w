@@ -369,7 +369,7 @@
                 const data = await response.json();
                 if (!response.ok || !data.success) throw new Error(data.error || 'Błąd logowania');
                 localStorage.setItem('authToken', data.token);
-                await initializeApp();
+                await main();
             } catch (error) {
                 authErrorDiv.textContent = error.message;
                 authErrorDiv.classList.remove('hidden');
