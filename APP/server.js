@@ -233,6 +233,11 @@ app.post('/auth/login', async (req, res) => {
     }
 });
 
+app.get('/auth/status', authMiddleware, (req, res) => {
+    // If authMiddleware passes, the token is valid.
+    res.json({ success: true, userId: req.userId });
+});
+
 // --- API do zarządzania ZAKUPAMI ---
 
 // GET: Pobierz wszystkie zakupy dla zalogowanego użytkownika
