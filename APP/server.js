@@ -97,38 +97,43 @@ function validateDate(dateStr) {
 async function extractAndCategorizePurchase(file, categories) {
     const imagePart = { inlineData: { data: file.buffer.toString("base64"), mimeType: file.mimetype } };
     const prompt = `
-        Przeanalizuj obraz paragonu. Twoim zadaniem jest wyodrębnienie informacji i zwrócenie ich WYŁĄCZNIE w formacie JSON.
+        Twoim zadaniem jest BARDZO DOKŁADNA analiza paragonu i zwrócenie danych WYŁĄCZNIE w formacie JSON.
 
-        Struktura JSON powinna być następująca:
+        Struktura JSON:
         {
           "shop": "string",
-          "date": "string",
+          "date": "string (format YYYY-MM-DD)",
           "items": [
-            { "name": "string", "price": number, "category": "string" }
+            { "name": "string", "price": number (cena PO RABACIE), "category": "string" }
           ]
         }
 
-        Instrukcje:
-        1.  **Dane podstawowe**: Wyodrębnij nazwę sklepu i datę w formacie YYYY-MM-DD.
-        2.  **Produkty**: Zidentyfikuj każdy produkt i jego cenę.
-        3.  **Rabaty**: Jeśli znajdziesz rabaty, postaraj się odjąć je od cen odpowiednich produktów.
-        4.  **Kategoryzacja**: Dla każdego produktu przypisz kategorię z listy: ${JSON.stringify(categories)}. Jeśli żadna nie pasuje, użyj "inne".
-        5.  **Format wyjściowy**: Zawsze zwracaj odpowiedź jako blok JSON. Nie dodawaj żadnych wyjaśnień ani tekstu przed lub po bloku JSON.
+        Postępuj DOKŁADNIE według tych kroków:
+        1.  **Dane Główne**: Wyodrębnij nazwę sklepu (\`shop\`) i datę transakcji (\`date\`) w formacie YYYY-MM-DD.
+        2.  **Analiza Rabatów (NAJWAŻNIEJSZE)**: Dla każdego produktu zidentyfikuj jego nazwę i cenę. Następnie precyzyjnie odejmij rabaty od cen, stosując tę hierarchię:
+            -   **Priorytet 1**: Rabat podany bezpośrednio przy produkcie. Odejmij go od ceny tego konkretnego produktu.
+            -   **Priorytet 2**: Rabat na dole paragonu z nazwą wskazującą na produkt (np. "Rabat Mleko"). Odejmij całą kwotę rabatu od ceny tego produktu.
+            -   **Priorytet 3 (OSTATECZNOŚĆ)**: Rabat ogólny na dole paragonu bez wskazania produktu. Rozdziel go proporcjonalnie między wszystkie zeskanowane produkty.
+        3.  **Kategoryzacja**: Dla każdego produktu przypisz kategorię (\`category\`) z tej listy: ${JSON.stringify(categories)}. Jeśli żadna nie pasuje, użyj "inne".
+        4.  **Format Wyjściowy**: Zwróć ostateczną listę produktów w formacie JSON. Nie dodawaj żadnych wyjaśnień ani tekstu przed lub po bloku JSON.
 
-        Jeśli obraz jest nieczytelny lub nie jest paragonem, zwróć poniższy JSON:
+        **Obsługa Błędów**: Jeśli obraz jest nieczytelny lub nie jest paragonem, zwróć DOKŁADNIE ten JSON:
+        ```json
         {
           "shop": "Błąd odczytu",
           "date": "${new Date().toISOString().split('T')[0]}",
           "items": []
         }
-
-        Przykład odpowiedzi:
+        ```
+        
+        Przykład idealnej odpowiedzi:
         ```json
         {
-          "shop": "Lidl",
+          "shop": "Biedronka",
           "date": "2025-07-25",
           "items": [
-            {"name": "Chleb", "price": 3.50, "category": "spożywcze"}
+            {"name": "Sok pomarańczowy", "price": 4.50, "category": "spożywcze"},
+            {"name": "Mleko 2%", "price": 2.00, "category": "spożywcze"}
           ]
         }
         ```
