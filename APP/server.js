@@ -416,6 +416,9 @@ app.post('/api/analyze-receipt', authMiddleware, upload.single('image'), async (
 
     } catch (error) {
         console.error('Błąd w głównym procesie analizy:', error);
+        if (error.message && (error.message.includes('503') || error.message.includes('overloaded'))) {
+            return res.status(503).json({ success: false, error: 'Usługa analizy AI jest chwilowo przeciążona. Spróbuj ponownie za kilka chwil.' });
+        }
         res.status(500).json({ success: false, error: 'Błąd serwera podczas analizy paragonu', details: error.message });
     }
 });
