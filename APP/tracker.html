@@ -754,8 +754,12 @@
     function handleFileSelect(event) {
         currentFile = event.target.files[0];
         if (currentFile) {
-            imagePreview.src = URL.createObjectURL(currentFile);
-            imagePreviewContainer.classList.remove('hidden');
+            if (currentFile.type.startsWith('image/')) {
+                imagePreview.src = URL.createObjectURL(currentFile);
+                imagePreviewContainer.classList.remove('hidden');
+            } else {
+                imagePreviewContainer.classList.add('hidden');
+            }
         } else {
             imagePreviewContainer.classList.add('hidden');
         }
@@ -770,8 +774,11 @@
         analyzeReceiptBtn.disabled = true;
         imagePreviewContainer.classList.add('hidden');
         try {
-            const resizedFile = await resizeImage(currentFile);
-            const { analysis } = await apiCallWithFile('/api/analyze-receipt', resizedFile);
+            let fileToSend = currentFile;
+            if (currentFile.type.startsWith('image/')) {
+                fileToSend = await resizeImage(currentFile);
+            }
+            const { analysis } = await apiCallWithFile('/api/analyze-receipt', fileToSend);
             fillFormWithAnalysis(analysis);
         } catch (error) {
             alert('Błąd analizy paragonu: ' + error.message);

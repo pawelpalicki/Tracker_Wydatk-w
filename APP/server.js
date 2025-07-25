@@ -97,9 +97,9 @@ function validateDate(dateStr) {
 async function extractAndCategorizePurchase(file, categories) {
     const imagePart = { inlineData: { data: file.buffer.toString("base64"), mimeType: file.mimetype } };
     const prompt = `
-        Twoim zadaniem jest BARDZO DOKŁADNA analiza paragonu i zwrócenie danych WYŁĄCZNIE w formacie JSON.
+        Twoim zadaniem jest BARDZO DOKŁADNA analiza paragonu lub faktury i zwrócenie danych WYŁĄCZNIE w formacie JSON.
 
-        Struktura JSON:
+        Struktura JSON, której masz użyć:
         {
           "shop": "string",
           "date": "string (format YYYY-MM-DD)",
@@ -109,25 +109,22 @@ async function extractAndCategorizePurchase(file, categories) {
         }
 
         Postępuj DOKŁADNIE według tych kroków:
-        1.  **Dane Główne**: Wyodrębnij nazwę sklepu (\`shop\`) i datę transakcji (\`date\`) w formacie YYYY-MM-DD.
+        1.  **Dane Główne**: Wyodrębnij nazwę sklepu ('shop') i datę transakcji ('date') w formacie YYYY-MM-DD.
         2.  **Analiza Rabatów (NAJWAŻNIEJSZE)**: Dla każdego produktu zidentyfikuj jego nazwę i cenę. Następnie precyzyjnie odejmij rabaty od cen, stosując tę hierarchię:
             -   **Priorytet 1**: Rabat podany bezpośrednio przy produkcie. Odejmij go od ceny tego konkretnego produktu.
-            -   **Priorytet 2**: Rabat na dole paragonu z nazwą wskazującą na produkt (np. "Rabat Mleko"). Odejmij całą kwotę rabatu od ceny tego produktu.
-            -   **Priorytet 3 (OSTATECZNOŚĆ)**: Rabat ogólny na dole paragonu bez wskazania produktu. Rozdziel go proporcjonalnie między wszystkie zeskanowane produkty.
-        3.  **Kategoryzacja**: Dla każdego produktu przypisz kategorię (\`category\`) z tej listy: ${JSON.stringify(categories)}. Jeśli żadna nie pasuje, użyj "inne".
-        4.  **Format Wyjściowy**: Zwróć ostateczną listę produktów w formacie JSON. Nie dodawaj żadnych wyjaśnień ani tekstu przed lub po bloku JSON.
+            -   **Priorytet 2**: Rabat na dole dokumentu z nazwą wskazującą na produkt (np. "Rabat Mleko"). Odejmij całą kwotę rabatu od ceny tego produktu.
+            -   **Priorytet 3 (OSTATECZNOŚĆ)**: Rabat ogólny na dole dokumentu bez wskazania produktu. Rozdziel go proporcjonalnie między wszystkie zeskanowane produkty.
+        3.  **Kategoryzacja**: Dla każdego produktu przypisz kategorię ('category') z tej listy: ${JSON.stringify(categories)}. Jeśli żadna nie pasuje, użyj "inne".
+        4.  **Format Wyjściowy**: Zwróć ostateczną listę produktów w formacie JSON. Nie dodawaj żadnych wyjaśnień ani tekstu przed lub po bloku JSON. Twoja odpowiedź musi być czystym JSON-em.
 
-        **Obsługa Błędów**: Jeśli obraz jest nieczytelny lub nie jest paragonem, zwróć DOKŁADNIE ten JSON:
-        \`\`\`json
+        **Obsługa Błędów**: Jeśli plik jest nieczytelny lub nie jest paragonem/fakturą, zwróć DOKŁADNIE ten JSON:
         {
           "shop": "Błąd odczytu",
           "date": "${new Date().toISOString().split('T')[0]}",
           "items": []
         }
-        \`\`\`
         
-        Przykład idealnej odpowiedzi:
-        \`\`\`json
+        **Przykład idealnej odpowiedzi**:
         {
           "shop": "Biedronka",
           "date": "2025-07-25",
@@ -136,7 +133,6 @@ async function extractAndCategorizePurchase(file, categories) {
             {"name": "Mleko 2%", "price": 2.00, "category": "spożywcze"}
           ]
         }
-        \`\`\`
     `;
     
     try {
@@ -144,26 +140,19 @@ async function extractAndCategorizePurchase(file, categories) {
         const rawText = result.response.text();
         console.log("Surowa odpowiedź od AI:", rawText);
 
-        const jsonMatch = rawText.match(/\`\`\`json\s*([\s\S]*?)\s*\`\`\`/);
-        if (!jsonMatch || !jsonMatch[1]) {
-            console.error("Odpowiedź AI nie zawiera prawidłowego bloku JSON:", rawText);
-            // Spróbujmy sparsować cały tekst, jeśli blok nie został znaleziony
-            try {
-                const data = JSON.parse(rawText);
-                return data;
-            } catch (e) {
-                 throw new Error(`AI zwróciło nieoczekiwaną odpowiedź tekstową.`);
-            }
+        // Próba znalezienia bloku JSON, ale gotowość na parsowanie całości
+        let jsonString = rawText;
+        const jsonMatch = rawText.match(/```json\s*([\s\S]*?)\s*```/);
+        if (jsonMatch && jsonMatch[1]) {
+            jsonString = jsonMatch[1];
         }
 
-        const cleanedText = jsonMatch[1].trim();
-        
         let data;
         try {
-            data = JSON.parse(cleanedText);
+            data = JSON.parse(jsonString);
         } catch (parseError) {
             console.error("Błąd parsowania JSON z odpowiedzi AI:", parseError);
-            console.error("Oczyszczony tekst, który zawiódł:", cleanedText);
+            console.error("Tekst, który zawiódł:", jsonString);
             throw new Error('AI zwróciło odpowiedź w nieprawidłowym formacie JSON.');
         }
 
