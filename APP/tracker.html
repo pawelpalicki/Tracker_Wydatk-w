@@ -110,7 +110,7 @@
                     <h3 class="text-lg font-semibold mb-4">Dodaj paragon skanując go</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
                         <div>
-                            <input type="file" id="receipt-file-input" accept="image/*" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                            <input type="file" id="receipt-file-input" accept="image/*,application/pdf" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
                         </div>
                         <div class="flex items-center space-x-2">
                             <button id="analyze-receipt-btn" class="w-full py-2 px-4 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 whitespace-nowrap">Analizuj paragon</button>
@@ -944,17 +944,27 @@
     // --- Inicjalizacja Aplikacji ---
     async function main() {
         loadingSection.classList.add('hidden');
-        if (!localStorage.getItem('authToken')) {
+        const token = localStorage.getItem('authToken');
+        if (!token) {
             authSection.classList.remove('hidden');
             appSection.classList.add('hidden');
             return;
         }
-        authSection.classList.add('hidden');
-        appSection.classList.remove('hidden');
 
-        setupAppEventListeners();
-        await fetchInitialData();
-        exitEditMode();
+        try {
+            // Sprawdź ważność tokena na serwerze
+            await apiCall('/auth/status');
+            
+            authSection.classList.add('hidden');
+            appSection.classList.remove('hidden');
+
+            setupAppEventListeners();
+            await fetchInitialData();
+            exitEditMode();
+        } catch (error) {
+            // Token jest nieważny lub wystąpił inny błąd
+            logout();
+        }
     }
 
     document.addEventListener('DOMContentLoaded', () => {
