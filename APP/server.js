@@ -491,6 +491,40 @@ app.get('/api/statistics/comparison', authMiddleware, async (req, res) => {
     }
 });
 
+app.get('/api/statistics/by-shop', authMiddleware, async (req, res) => {
+    try {
+        const { year, month } = req.query;
+        if (!year || !month) {
+            return res.status(400).json({ error: 'Rok i miesiąc są wymagane.' });
+        }
+
+        const snapshot = await purchasesCollection.where('userId', '==', req.userId).get();
+        if (snapshot.empty) {
+            return res.json({ spendingByShop: {} });
+        }
+
+        const purchases = snapshot.docs.map(doc => doc.data());
+
+        const firstDayOfMonth = new Date(parseInt(year), parseInt(month) - 1, 1).toISOString().split('T')[0];
+        const lastDayOfMonth = new Date(parseInt(year), parseInt(month), 0).toISOString().split('T')[0];
+
+        const monthlyPurchases = purchases.filter(p => p.date >= firstDayOfMonth && p.date <= lastDayOfMonth);
+
+        const spendingByShop = monthlyPurchases.reduce((acc, p) => {
+            const shop = p.shop || 'Nieznany sklep';
+            const amount = p.totalAmount || 0;
+            acc[shop] = (acc[shop] || 0) + amount;
+            return acc;
+        }, {});
+        
+        res.json({ spendingByShop });
+
+    } catch (error) {
+        console.error("Błąd pobierania statystyk wg sklepów:", error);
+        res.status(500).json({ error: 'Błąd serwera' });
+    }
+});
+
 // --- Trasy Główne ---
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'tracker.html')));
 app.get('/favicon.ico', (req, res) => res.sendFile(path.join(__dirname, 'icon.svg')));

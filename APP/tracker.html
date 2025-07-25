@@ -219,6 +219,15 @@
                         <p class="text-gray-500">Brak historii wydatków do porównania.</p>
                     </div>
                 </div>
+                <div class="bg-white rounded-lg shadow p-6 mt-6">
+                    <h3 class="text-lg font-semibold mb-4">Wydatki w podziale na sklepy</h3>
+                    <div id="shop-chart-container">
+                        <canvas id="shop-chart"></canvas>
+                    </div>
+                    <div id="no-data-shop-chart" class="hidden text-center py-12">
+                        <p class="text-gray-500">Brak danych o wydatkach w sklepach w wybranym miesiącu.</p>
+                    </div>
+                </div>
             </div>
         </main>
     </div>
@@ -235,6 +244,7 @@
     let cameraStream = null;
     let categoryChart = null;
     let comparisonChart = null;
+    let shopChart = null;
 
     // --- Elementy DOM ---
     const loadingSection = document.getElementById('loading-section');
@@ -286,6 +296,8 @@
     const noDataPieChart = document.getElementById('no-data-pie-chart');
     const comparisonChartContainer = document.getElementById('comparison-chart-container');
     const noDataBarChart = document.getElementById('no-data-bar-chart');
+    const shopChartContainer = document.getElementById('shop-chart-container');
+    const noDataShopChart = document.getElementById('no-data-shop-chart');
 
     // --- Funkcje Pomocnicze ---
     const categoryColors = {};
@@ -952,6 +964,7 @@
             populateMonthSelector(initialStats.availableMonths);
             await updateCategoryPieChart();
             await renderComparisonBarChart();
+            await renderShopBarChart(); // Dodane wywołanie
         } catch (error) {
             console.error("Błąd ładowania statystyk:", error);
         }
@@ -1005,6 +1018,8 @@
                 options: { responsive: true, plugins: { legend: { position: 'top' } } }
             });
         }
+        // Po zmianie miesiąca, zaktualizuj też wykres sklepów
+        await renderShopBarChart();
     }
 
     async function renderComparisonBarChart() {
@@ -1036,6 +1051,49 @@
                     }]
                 },
                 options: { responsive: true, plugins: { legend: { display: false } } }
+            });
+        }
+    }
+
+    async function renderShopBarChart() {
+        const selectedMonth = statsMonthSelect.value;
+        if (!selectedMonth || selectedMonth === 'Brak danych') {
+            noDataShopChart.classList.remove('hidden');
+            shopChartContainer.classList.add('hidden');
+            return;
+        };
+
+        const [year, month] = selectedMonth.split('-');
+        const stats = await apiCall(`/api/statistics/by-shop?year=${year}&month=${month}`);
+        const ctx = document.getElementById('shop-chart').getContext('2d');
+
+        if (shopChart) shopChart.destroy();
+
+        const labels = Object.keys(stats.spendingByShop);
+        const data = Object.values(stats.spendingByShop);
+
+        if (labels.length === 0) {
+            noDataShopChart.classList.remove('hidden');
+            shopChartContainer.classList.add('hidden');
+        } else {
+            noDataShopChart.classList.add('hidden');
+            shopChartContainer.classList.remove('hidden');
+            
+            shopChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'Wydatki w sklepie',
+                        data,
+                        backgroundColor: colorPalette
+                    }]
+                },
+                options: { 
+                    responsive: true, 
+                    plugins: { legend: { display: false } },
+                    indexAxis: 'y', // Wykres horyzontalny dla lepszej czytelności nazw sklepów
+                }
             });
         }
     }
