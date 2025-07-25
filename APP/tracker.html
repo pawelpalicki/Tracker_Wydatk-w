@@ -90,7 +90,12 @@
                         <p id="monthly-balance-label" class="text-sm text-gray-500">Wydatki w tym miesiącu</p>
                         <p id="monthly-balance-value" class="text-lg font-bold text-indigo-600">0.00 zł</p>
                     </div>
-                    <button id="logout-btn" class="p-2 text-gray-500 hover:text-red-600" title="Wyloguj"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg></button>
+                    <button id="settings-btn" class="p-2 text-gray-500 hover:text-indigo-600" title="Ustawienia">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                    </button>
                 </div>
             </div>
         </header>
@@ -100,7 +105,6 @@
                 <div class="flex -mb-px">
                     <button data-tab="add" class="nav-btn py-4 px-6">Dodaj Zakup</button>
                     <button data-tab="list" class="nav-btn py-4 px-6">Lista Zakupów</button>
-                    <button data-tab="categories" class="nav-btn py-4 px-6">Kategorie</button>
                     <button data-tab="stats" class="nav-btn py-4 px-6">Statystyki</button>
                 </div>
             </nav>
@@ -168,9 +172,29 @@
 
             <div id="list-tab" class="tab-content"><div id="purchases-list" class="space-y-4"></div></div>
             
-            <div id="categories-tab" class="tab-content hidden bg-white rounded-lg shadow p-6">
-                 <h3 class="text-lg font-semibold mb-4">Zarządzaj Kategoriami</h3>
-                 <div id="categories-list" class="space-y-2"></div>
+            <div id="settings-modal" class="hidden fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center z-50">
+                <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-semibold">Ustawienia</h3>
+                        <button id="close-settings-btn" class="p-2 text-gray-500 hover:text-gray-800">&times;</button>
+                    </div>
+                    
+                    <div class="border-t pt-4">
+                        <h4 class="text-lg font-semibold mb-4">Zarządzaj Kategoriami</h4>
+                        <div id="categories-list" class="space-y-2 mb-4 max-h-60 overflow-y-auto"></div>
+                        
+                        <form id="add-category-form" class="flex items-center space-x-2">
+                            <input type="text" id="new-category-name" placeholder="Nazwa nowej kategorii" class="flex-grow mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm py-2">
+                            <button type="submit" class="py-2 px-4 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">Dodaj</button>
+                        </form>
+                    </div>
+
+                    <div class="border-t mt-6 pt-6">
+                         <button id="logout-btn" class="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                            Wyloguj się
+                        </button>
+                    </div>
+                </div>
             </div>
 
             <div id="stats-tab" class="tab-content hidden">
@@ -225,6 +249,11 @@
     const authTitle = document.getElementById('auth-title');
     const switchAuthLink = document.getElementById('switch-auth-link');
     const authErrorDiv = document.getElementById('auth-error');
+    
+    // Elementy Głównej Aplikacji
+    const settingsBtn = document.getElementById('settings-btn');
+    const settingsModal = document.getElementById('settings-modal');
+    const closeSettingsBtn = document.getElementById('close-settings-btn');
     const logoutBtn = document.getElementById('logout-btn');
     const navBtns = document.querySelectorAll('.nav-btn');
     const purchaseForm = document.getElementById('purchase-form');
@@ -236,6 +265,8 @@
     const shopInput = document.getElementById('shop');
     const dateInput = document.getElementById('date');
     const categoriesList = document.getElementById('categories-list');
+    const addCategoryForm = document.getElementById('add-category-form');
+    const newCategoryInput = document.getElementById('new-category-name');
     const monthlyBalanceValue = document.getElementById('monthly-balance-value');
     const monthlyBalanceLabel = document.getElementById('monthly-balance-label');
     const receiptFileInput = document.getElementById('receipt-file-input');
@@ -248,8 +279,6 @@
     const cameraStreamEl = document.getElementById('camera-stream');
     const capturePhotoBtn = document.getElementById('capture-photo-btn');
     const cancelCameraBtn = document.getElementById('cancel-camera-btn');
-    const totalAmountContainer = document.getElementById('total-amount-container');
-    const totalAmountValue = document.getElementById('total-amount-value');
     const purchaseSummary = document.getElementById('purchase-summary');
     const statsTitle = document.getElementById('stats-title');
     const statsMonthSelect = document.getElementById('stats-month-select');
@@ -428,6 +457,7 @@
         localStorage.removeItem('authToken');
         appSection.classList.add('hidden');
         authSection.classList.remove('hidden');
+        settingsModal.classList.add('hidden');
         if (cameraStream) {
             cameraStream.getTracks().forEach(track => track.stop());
             cameraStream = null;
@@ -440,13 +470,44 @@
         purchaseForm.addEventListener('submit', handlePurchaseFormSubmit);
         addItemBtn.addEventListener('click', () => addItemRow());
         itemsContainer.addEventListener('input', (e) => {
-            if (e.target.classList.contains('item-price')) {
+            if (e.target.classList.contains('item-price') || e.target.classList.contains('item-name')) {
                 updatePurchaseSummary();
             }
         });
         document.getElementById('cancel-edit-btn').addEventListener('click', () => {
             exitEditMode();
             switchTab('list');
+        });
+
+        // Obsługa modala ustawień
+        settingsBtn.addEventListener('click', () => {
+            renderCategoriesList();
+            settingsModal.classList.remove('hidden');
+        });
+        closeSettingsBtn.addEventListener('click', () => settingsModal.classList.add('hidden'));
+        settingsModal.addEventListener('click', (e) => {
+            if (e.target === settingsModal) {
+                settingsModal.classList.add('hidden');
+            }
+        });
+
+        addCategoryForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const newName = newCategoryInput.value.trim().toLowerCase();
+            if (newName && !allCategories.includes(newName)) {
+                try {
+                    // Proste dodanie nowej kategorii - serwer nie wymaga endpointu
+                    allCategories.push(newName);
+                    allCategories.sort();
+                    newCategoryInput.value = '';
+                    renderCategoriesList();
+                    updateAllCategorySelects();
+                } catch (error) {
+                    alert('Nie udało się dodać kategorii: ' + error.message);
+                }
+            } else if (allCategories.includes(newName)) {
+                alert('Taka kategoria już istnieje.');
+            }
         });
 
         purchasesList.addEventListener('click', async (e) => {
@@ -493,7 +554,6 @@
             content.classList.toggle('active', content.id === `${tabName}-tab`);
         });
         if (tabName !== 'add') exitEditMode();
-        if (tabName === 'categories') renderCategoriesList();
         if (tabName === 'stats') renderStatistics();
     }
 
