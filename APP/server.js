@@ -118,16 +118,16 @@ async function extractAndCategorizePurchase(file, categories) {
         4.  **Format Wyjściowy**: Zwróć ostateczną listę produktów w formacie JSON. Nie dodawaj żadnych wyjaśnień ani tekstu przed lub po bloku JSON.
 
         **Obsługa Błędów**: Jeśli obraz jest nieczytelny lub nie jest paragonem, zwróć DOKŁADNIE ten JSON:
-        ```json
+        \`\`\`json
         {
           "shop": "Błąd odczytu",
           "date": "${new Date().toISOString().split('T')[0]}",
           "items": []
         }
-        ```
+        \`\`\`
         
         Przykład idealnej odpowiedzi:
-        ```json
+        \`\`\`json
         {
           "shop": "Biedronka",
           "date": "2025-07-25",
@@ -136,7 +136,7 @@ async function extractAndCategorizePurchase(file, categories) {
             {"name": "Mleko 2%", "price": 2.00, "category": "spożywcze"}
           ]
         }
-        ```
+        \`\`\`
     `;
     
     try {
@@ -144,7 +144,7 @@ async function extractAndCategorizePurchase(file, categories) {
         const rawText = result.response.text();
         console.log("Surowa odpowiedź od AI:", rawText);
 
-        const jsonMatch = rawText.match(/```json\s*([\s\S]*?)\s*```/);
+        const jsonMatch = rawText.match(/\`\`\`json\s*([\s\S]*?)\s*\`\`\`/);
         if (!jsonMatch || !jsonMatch[1]) {
             console.error("Odpowiedź AI nie zawiera prawidłowego bloku JSON:", rawText);
             // Spróbujmy sparsować cały tekst, jeśli blok nie został znaleziony
