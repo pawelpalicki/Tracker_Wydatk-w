@@ -235,9 +235,33 @@
         </main>
     </div>
 
+    <div id="category-details-modal" class="hidden fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-2xl max-h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="category-details-title" class="text-xl font-semibold">Szczegóły Kategorii</h3>
+                <button id="close-category-details-btn" class="p-2 text-gray-500 hover:text-gray-800">&times;</button>
+            </div>
+            <div class="overflow-y-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produkt</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sklep</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cena</th>
+                        </tr>
+                    </thead>
+                    <tbody id="category-details-table-body" class="bg-white divide-y divide-gray-200">
+                        <!-- Wiersze zostaną wstawione tutaj -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
 <script>
     // --- Konfiguracja ---
-    const API_BASE_URL = 'https://tracker-wydatkow-backend.onrender.com'; // Używamy ścieżek względnych
+    const API_BASE_URL = ''; // Używamy ścieżek względnych
 
     // --- Stan Aplikacji ---
     let allPurchases = [];
@@ -301,6 +325,10 @@
     const noDataBarChart = document.getElementById('no-data-bar-chart');
     const shopChartContainer = document.getElementById('shop-chart-container');
     const noDataShopChart = document.getElementById('no-data-shop-chart');
+    const categoryDetailsModal = document.getElementById('category-details-modal');
+    const closeCategoryDetailsBtn = document.getElementById('close-category-details-btn');
+    const categoryDetailsTitle = document.getElementById('category-details-title');
+    const categoryDetailsTableBody = document.getElementById('category-details-table-body');
 
     // --- Funkcje Pomocnicze ---
     const categoryColors = {};
@@ -561,6 +589,15 @@
         cancelCameraBtn.addEventListener('click', stopCamera);
         capturePhotoBtn.addEventListener('click', capturePhoto);
         statsMonthSelect.addEventListener('change', updateCategoryPieChart);
+
+        // Obsługa modala szczegółów kategorii
+        closeCategoryDetailsBtn.addEventListener('click', () => categoryDetailsModal.classList.add('hidden'));
+        categoryDetailsModal.addEventListener('click', (e) => {
+            if (e.target === categoryDetailsModal) {
+                categoryDetailsModal.classList.add('hidden');
+            }
+        });
+        document.getElementById('category-chart').addEventListener('click', handleCategoryChartClick);
     }
 
     function switchTab(tabName) {
@@ -1018,11 +1055,71 @@
                     labels: labels.map(l => l.charAt(0).toUpperCase() + l.slice(1)),
                     datasets: [{ data, backgroundColor: backgroundColors }]
                 },
-                options: { responsive: true, plugins: { legend: { position: 'top' } } }
+                options: { 
+                    responsive: true, 
+                    plugins: { 
+                        legend: { position: 'top' },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed !== null) {
+                                        label += new Intl.NumberFormat('pl-PL', { style: 'currency', currency: 'PLN' }).format(context.parsed);
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    } 
+                }
             });
         }
         // Po zmianie miesiąca, zaktualizuj też wykres sklepów
         await renderShopBarChart();
+    }
+
+    async function handleCategoryChartClick(event) {
+        if (!categoryChart) return;
+        const points = categoryChart.getElementsAtEventForMode(event, 'nearest', { intersect: true }, true);
+
+        if (points.length) {
+            const firstPoint = points[0];
+            const label = categoryChart.data.labels[firstPoint.index].toLowerCase();
+            const selectedMonth = statsMonthSelect.value;
+            const [year, month] = selectedMonth.split('-');
+
+            try {
+                const { items } = await apiCall(`/api/statistics/category-details?year=${year}&month=${month}&category=${label}`);
+                renderCategoryDetailsModal(label, items);
+            } catch (error) {
+                alert('Błąd pobierania szczegółów kategorii: ' + error.message);
+            }
+        }
+    }
+
+    function renderCategoryDetailsModal(category, items) {
+        categoryDetailsTitle.textContent = `Szczegóły dla: ${category.charAt(0).toUpperCase() + category.slice(1)}`;
+        categoryDetailsTableBody.innerHTML = '';
+
+        if (items.length === 0) {
+            categoryDetailsTableBody.innerHTML = '<tr><td colspan="4" class="text-center py-4">Brak produktów w tej kategorii.</td></tr>';
+        } else {
+            items.sort((a, b) => new Date(b.purchaseDate) - new Date(a.purchaseDate));
+            items.forEach(item => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${item.name}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.shop || 'Brak'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.purchaseDate}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">${(item.price || 0).toFixed(2)} zł</td>
+                `;
+                categoryDetailsTableBody.appendChild(row);
+            });
+        }
+        categoryDetailsModal.classList.remove('hidden');
     }
 
     async function renderComparisonBarChart() {
