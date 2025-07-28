@@ -40,26 +40,26 @@
         }
     </style>
 </head>
-<body class="bg-gray-100">
+<body class="bg-gray-50 dark:bg-gray-900">
 
-    <div id="loading-section" class="min-h-screen flex flex-col items-center justify-center bg-gray-100">
-        <div class="animate-spin rounded-full h-16 w-16 border-b-4 border-indigo-600"></div>
-        <p class="mt-4 text-lg text-gray-600">Wczytuję aplikację...</p>
+    <div id="loading-section" class="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <div class="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600"></div>
+        <p class="mt-4 text-lg text-gray-600 dark:text-gray-300">Wczytuję aplikację...</p>
     </div>
 
-    <div id="auth-section" class="hidden min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div id="auth-section" class="hidden min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
         <div class="max-w-md w-full space-y-8">
             <div>
-                <h2 id="auth-title" class="mt-6 text-center text-3xl font-extrabold text-gray-900">Zaloguj się do swojego konta</h2>
+                <h2 id="auth-title" class="mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-white">Zaloguj się do swojego konta</h2>
             </div>
             <form id="login-form" class="mt-8 space-y-6" action="#" method="POST">
                 <input type="hidden" name="remember" value="true">
                 <div class="rounded-md shadow-sm -space-y-px">
-                    <div><input id="login-email" name="email" type="email" autocomplete="email" required class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm" placeholder="Adres email"></div>
-                    <div><input id="login-password" name="password" type="password" autocomplete="current-password" required class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm" placeholder="Hasło"></div>
+                    <div><input id="login-email" name="email" type="email" autocomplete="email" required class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 placeholder-gray-500 text-gray-900 dark:text-white bg-white dark:bg-gray-800 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm" placeholder="Adres email"></div>
+                    <div><input id="login-password" name="password" type="password" autocomplete="current-password" required class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 placeholder-gray-500 text-gray-900 dark:text-white bg-white dark:bg-gray-800 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm" placeholder="Hasło"></div>
                 </div>
                 <div>
-                    <button type="submit" class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50">
+                    <button type="submit" class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50">
                         <span class="button-text">Zaloguj się</span>
                         <span class="button-spinner hidden absolute right-4 top-1/2 -translate-y-1/2">
                             <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -72,28 +72,32 @@
             </form>
             <form id="register-form" class="mt-8 space-y-6 hidden" action="#" method="POST">
                 <div class="rounded-md shadow-sm -space-y-px">
-                    <div><input id="register-email" name="email" type="email" autocomplete="email" required class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm" placeholder="Adres email"></div>
-                    <div><input id="register-password" name="password" type="password" autocomplete="new-password" required class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm" placeholder="Hasło"></div>
+                    <div><input id="register-email" name="email" type="email" autocomplete="email" required class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 placeholder-gray-500 text-gray-900 dark:text-white bg-white dark:bg-gray-800 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm" placeholder="Adres email"></div>
+                    <div><input id="register-password" name="password" type="password" autocomplete="new-password" required class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 placeholder-gray-500 text-gray-900 dark:text-white bg-white dark:bg-gray-800 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm" placeholder="Hasło"></div>
                 </div>
-                <div><button type="submit" class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">Zarejestruj się</button></div>
+                <div><button type="submit" class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">Zarejestruj się</button></div>
             </form>
             <div class="text-center">
-                <a href="#" id="switch-auth-link" class="font-medium text-indigo-600 hover:text-indigo-500">Nie masz konta? Zarejestruj się</a>
+                <a href="#" id="switch-auth-link" class="font-medium text-blue-600 hover:text-blue-500">Nie masz konta? Zarejestruj się</a>
             </div>
             <div id="auth-error" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert"></div>
         </div>
     </div>
 
     <div id="app-section" class="hidden">
-        <header class="bg-white shadow">
-            <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-16">
-                <h1 class="text-2xl font-bold text-gray-900">Tracker Wydatków</h1>
+        <header class="bg-white dark:bg-gray-800 shadow-sm">
+            <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-20">
+                <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Tracker Wydatków</h1>
                 <div class="flex items-center">
                     <div id="monthly-balance" class="text-right mr-4">
-                        <p id="monthly-balance-label" class="text-sm text-gray-500">Wydatki w tym miesiącu</p>
-                        <p id="monthly-balance-value" class="text-lg font-bold text-indigo-600">0.00 zł</p>
+                        <p id="monthly-balance-label" class="text-sm text-gray-500 dark:text-gray-400">Wydatki w tym miesiącu</p>
+                        <p id="monthly-balance-value" class="text-xl font-bold text-blue-600 dark:text-blue-400">0.00 zł</p>
                     </div>
-                    <button id="settings-btn" class="p-2 text-gray-500 hover:text-indigo-600" title="Ustawienia">
+                    <button id="theme-toggle-btn" class="p-2 mr-2 text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-white" title="Zmień motyw">
+                        <svg id="theme-icon-light" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                        <svg id="theme-icon-dark" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+                    </button>
+                    <button id="settings-btn" class="p-2 text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-white" title="Ustawienia">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                             <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -104,32 +108,80 @@
         </header>
 
         <main class="max-w-4xl mx-auto py-6 sm:px-6 lg:px-8">
-            <nav class="bg-white rounded-lg shadow mb-6">
-                <div class="flex -mb-px">
-                    <button data-tab="add" class="nav-btn py-4 px-6">Dodaj Zakup</button>
-                    <button data-tab="list" class="nav-btn py-4 px-6">Lista Zakupów</button>
-                    <button data-tab="stats" class="nav-btn py-4 px-6">Statystyki</button>
-                </div>
+            <!-- Nawigacja w formie pigułek -->
+            <nav class="p-1.5 mb-6 max-w-md mx-auto bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center space-x-2">
+                <button data-tab="stats" class="nav-btn flex-1 text-center py-2 px-4 rounded-full">Kokpit</button>
+                <button data-tab="list" class="nav-btn flex-1 text-center py-2 px-4 rounded-full">Lista</button>
+                <button data-tab="add" class="nav-btn flex-1 text-center py-2 px-4 rounded-full">Dodaj</button>
             </nav>
 
+            <!-- Kokpit / Statystyki -->
+            <div id="stats-tab" class="tab-content">
+                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 flex flex-col items-center justify-center text-center">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Szybkie Akcje</h3>
+                        <div class="flex space-x-4 mt-2">
+                            <button id="quick-add-manual-btn" class="flex flex-col items-center px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                                <span>Dodaj ręcznie</span>
+                            </button>
+                            <button id="quick-add-scan-btn" class="flex flex-col items-center px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mb-1" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 2a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V4a2 2 0 00-2-2H4zm1.5 4a.5.5 0 00-.5.5v3a.5.5 0 00.5.5h3a.5.5 0 00.5-.5v-3a.5.5 0 00-.5-.5h-3zM8 8a.5.5 0 01.5-.5h5a.5.5 0 010 1h-5A.5.5 0 018 8zm.5 3.5a.5.5 0 00-.5.5v3a.5.5 0 00.5.5h3a.5.5 0 00.5-.5v-3a.5.5 0 00-.5-.5h-3z" clip-rule="evenodd" /></svg>
+                                <span>Skanuj paragon</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 id="stats-title" class="text-lg font-semibold text-gray-900 dark:text-white">Wydatki w miesiącu</h3>
+                            <select id="stats-month-select" class="block w-auto rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50 text-sm"></select>
+                        </div>
+                        <div id="category-chart-container" class="h-48">
+                            <canvas id="category-chart"></canvas>
+                        </div>
+                        <div id="no-data-pie-chart" class="hidden text-center py-12">
+                            <p class="text-gray-500 dark:text-gray-400">Brak danych o wydatkach w wybranym miesiącu.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-6">
+                    <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Porównanie wydatków w ostatnich miesiącach</h3>
+                    <div id="comparison-chart-container">
+                        <canvas id="comparison-chart"></canvas>
+                    </div>
+                    <div id="no-data-bar-chart" class="hidden text-center py-12">
+                        <p class="text-gray-500 dark:text-gray-400">Brak historii wydatków do porównania.</p>
+                    </div>
+                </div>
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+                    <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Wydatki w podziale na sklepy</h3>
+                    <div id="shop-chart-container">
+                        <canvas id="shop-chart"></canvas>
+                    </div>
+                    <div id="no-data-shop-chart" class="hidden text-center py-12">
+                        <p class="text-gray-500 dark:text-gray-400">Brak danych o wydatkach w sklepach w wybranym miesiącu.</p>
+                    </div>
+                </div>
+            </div>
+
             <div id="add-tab" class="tab-content">
-                <div class="bg-white rounded-lg shadow p-6 mb-6">
-                    <h3 class="text-lg font-semibold mb-4">Dodaj paragon skanując go</h3>
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-6">
+                    <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Dodaj paragon skanując go</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
                         <div>
-                            <input type="file" id="receipt-file-input" accept="image/*,application/pdf" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                            <input type="file" id="receipt-file-input" accept="image/*,application/pdf" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 dark:file:bg-blue-900 file:text-blue-700 dark:file:text-blue-300 hover:file:bg-blue-100 dark:hover:file:bg-blue-800">
                         </div>
                         <div class="flex items-center space-x-2">
-                            <button id="analyze-receipt-btn" class="w-full py-2 px-4 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 whitespace-nowrap">Analizuj paragon</button>
-                            <button id="start-camera-btn" class="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 whitespace-nowrap">Użyj aparatu</button>
+                            <button id="analyze-receipt-btn" class="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 whitespace-nowrap">Analizuj paragon</button>
+                            <button id="start-camera-btn" class="w-full py-2 px-4 bg-green-600 text-white rounded-md hover:bg-green-700 whitespace-nowrap">Użyj aparatu</button>
                         </div>
                     </div>
                     <div id="image-preview-container" class="hidden mt-4">
                         <img id="image-preview" class="max-h-48 mx-auto rounded-lg" />
                     </div>
                     <div id="analysis-spinner" class="hidden text-center mt-4">
-                        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
-                        <p class="text-gray-600">Analizuję dane z paragonu, proszę czekać...</p>
+                        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                        <p class="text-gray-600 dark:text-gray-300">Analizuję dane z paragonu, proszę czekać...</p>
                     </div>
                     <div id="camera-view" class="hidden mt-4">
                         <video id="camera-stream" class="w-full rounded-lg" autoplay></video>
@@ -140,33 +192,33 @@
                     </div>
                 </div>
 
-                <div class="bg-white rounded-lg shadow p-6">
-                    <h3 id="purchase-form-title" class="text-lg font-semibold mb-4">Dodaj nowy zakup ręcznie</h3>
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+                    <h3 id="purchase-form-title" class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Dodaj nowy zakup ręcznie</h3>
                     <form id="purchase-form">
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                             <div>
-                                <label for="shop" class="block text-sm font-medium text-gray-700">Sklep</label>
-                                <input type="text" id="shop" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm py-3">
+                                <label for="shop" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Sklep</label>
+                                <input type="text" id="shop" required class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-3">
                             </div>
                             <div>
-                                <label for="date" class="block text-sm font-medium text-gray-700">Data</label>
-                                <input type="date" id="date" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm py-3">
+                                <label for="date" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Data</label>
+                                <input type="date" id="date" required class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-3">
                             </div>
                             <div id="total-amount-container" class="hidden">
-                                <label class="block text-sm font-medium text-gray-700">Suma</label>
-                                <p id="total-amount-value" class="mt-1 text-xl font-bold text-gray-900">0.00 zł</p>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Suma</label>
+                                <p id="total-amount-value" class="mt-1 text-xl font-bold text-gray-900 dark:text-white">0.00 zł</p>
                             </div>
                         </div>
-                        <div class="border-t border-gray-200 pt-4">
-                            <h4 class="text-md font-medium text-gray-800 mb-2">Pozycje na paragonie</h4>
+                        <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
+                            <h4 class="text-md font-medium text-gray-800 dark:text-gray-200 mb-2">Pozycje na paragonie</h4>
                             <div id="items-container" class="space-y-4"></div>
-                            <div class="border-t mt-4 pt-4 flex justify-between items-center">
+                            <div class="border-t border-gray-200 dark:border-gray-700 mt-4 pt-4 flex justify-between items-center">
                                 <div class="flex items-center space-x-2">
                                     <button type="button" id="add-item-btn" class="py-2 px-4 bg-blue-500 text-white rounded-md hover:bg-blue-600">Dodaj pozycję</button>
                                     <button type="button" id="cancel-edit-btn" class="py-2 px-4 bg-gray-500 text-white rounded-md hover:bg-gray-600 hidden">Anuluj</button>
-                                    <button type="submit" class="py-2 px-4 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">Zapisz cały zakup</button>
+                                    <button type="submit" class="py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700">Zapisz cały zakup</button>
                                 </div>
-                                <div id="purchase-summary" class="text-lg font-bold text-gray-800">Suma: 0.00 zł</div>
+                                <div id="purchase-summary" class="text-lg font-bold text-gray-800 dark:text-gray-200">Suma: 0.00 zł</div>
                             </div>
                         </div>
                     </form>
@@ -176,23 +228,23 @@
             <div id="list-tab" class="tab-content"><div id="purchases-list" class="space-y-4"></div></div>
             
             <div id="settings-modal" class="hidden fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center z-50">
-                <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-md">
                     <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-xl font-semibold">Ustawienia</h3>
-                        <button id="close-settings-btn" class="p-2 text-gray-500 hover:text-gray-800">&times;</button>
+                        <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Ustawienia</h3>
+                        <button id="close-settings-btn" class="p-2 text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white">&times;</button>
                     </div>
                     
-                    <div class="border-t pt-4">
-                        <h4 class="text-lg font-semibold mb-4">Zarządzaj Kategoriami</h4>
+                    <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
+                        <h4 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Zarządzaj Kategoriami</h4>
                         <div id="categories-list" class="space-y-2 mb-4 max-h-60 overflow-y-auto"></div>
                         
                         <form id="add-category-form" class="flex items-center space-x-2">
-                            <input type="text" id="new-category-name" placeholder="Nazwa nowej kategorii" class="flex-grow mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm py-2">
-                            <button type="submit" class="py-2 px-4 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">Dodaj</button>
+                            <input type="text" id="new-category-name" placeholder="Nazwa nowej kategorii" class="flex-grow mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2">
+                            <button type="submit" class="py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700">Dodaj</button>
                         </form>
                     </div>
 
-                    <div class="border-t mt-6 pt-6">
+                    <div class="border-t border-gray-200 dark:border-gray-700 mt-6 pt-6">
                          <button id="logout-btn" class="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
                             Wyloguj się
                         </button>
@@ -200,58 +252,26 @@
                 </div>
             </div>
 
-            <div id="stats-tab" class="tab-content hidden">
-                <div class="bg-white rounded-lg shadow p-6 mb-6">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 id="stats-title" class="text-lg font-semibold">Statystyki wydatków</h3>
-                        <select id="stats-month-select" class="block w-52 rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"></select>
-                    </div>
-                    <div id="category-chart-container">
-                        <canvas id="category-chart"></canvas>
-                    </div>
-                    <div id="no-data-pie-chart" class="hidden text-center py-12">
-                        <p class="text-gray-500">Brak danych o wydatkach w wybranym miesiącu.</p>
-                    </div>
-                </div>
-                <div class="bg-white rounded-lg shadow p-6">
-                    <h3 class="text-lg font-semibold mb-4">Porównanie wydatków w ostatnich miesiącach</h3>
-                    <div id="comparison-chart-container">
-                        <canvas id="comparison-chart"></canvas>
-                    </div>
-                    <div id="no-data-bar-chart" class="hidden text-center py-12">
-                        <p class="text-gray-500">Brak historii wydatków do porównania.</p>
-                    </div>
-                </div>
-                <div class="bg-white rounded-lg shadow p-6 mt-6">
-                    <h3 class="text-lg font-semibold mb-4">Wydatki w podziale na sklepy</h3>
-                    <div id="shop-chart-container">
-                        <canvas id="shop-chart"></canvas>
-                    </div>
-                    <div id="no-data-shop-chart" class="hidden text-center py-12">
-                        <p class="text-gray-500">Brak danych o wydatkach w sklepach w wybranym miesiącu.</p>
-                    </div>
-                </div>
-            </div>
         </main>
     </div>
 
     <div id="category-details-modal" class="hidden fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center z-50">
-        <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-2xl max-h-[90vh] flex flex-col">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-2xl max-h-[90vh] flex flex-col">
             <div class="flex justify-between items-center mb-4">
-                <h3 id="category-details-title" class="text-xl font-semibold">Szczegóły Kategorii</h3>
-                <button id="close-category-details-btn" class="p-2 text-gray-500 hover:text-gray-800">&times;</button>
+                <h3 id="category-details-title" class="text-xl font-semibold text-gray-900 dark:text-white">Szczegóły Kategorii</h3>
+                <button id="close-category-details-btn" class="p-2 text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white">&times;</button>
             </div>
             <div class="overflow-y-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
+                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead class="bg-gray-50 dark:bg-gray-700">
                         <tr>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produkt</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sklep</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cena</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Produkt</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Sklep</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Data</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Cena</th>
                         </tr>
                     </thead>
-                    <tbody id="category-details-table-body" class="bg-white divide-y divide-gray-200">
+                    <tbody id="category-details-table-body" class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                         <!-- Wiersze zostaną wstawione tutaj -->
                     </tbody>
                 </table>
@@ -329,6 +349,37 @@
     const closeCategoryDetailsBtn = document.getElementById('close-category-details-btn');
     const categoryDetailsTitle = document.getElementById('category-details-title');
     const categoryDetailsTableBody = document.getElementById('category-details-table-body');
+    const quickAddManualBtn = document.getElementById('quick-add-manual-btn');
+    const quickAddScanBtn = document.getElementById('quick-add-scan-btn');
+    const themeToggleBtn = document.getElementById('theme-toggle-btn');
+    const themeIconLight = document.getElementById('theme-icon-light');
+    const themeIconDark = document.getElementById('theme-icon-dark');
+
+    // --- Logika Motywu ---
+    function applyTheme(theme) {
+        const isDarkMode = theme === 'dark';
+        document.documentElement.classList.toggle('dark', isDarkMode);
+        themeIconLight.classList.toggle('hidden', !isDarkMode);
+        themeIconDark.classList.toggle('hidden', isDarkMode);
+        
+        // Po zmianie motywu, trzeba odświeżyć wykresy, aby kolory tekstu się zgadzały
+        if (!appSection.classList.contains('hidden')) {
+             renderStatistics();
+        }
+    }
+
+    function toggleTheme() {
+        const currentTheme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        localStorage.setItem('theme', newTheme);
+        applyTheme(newTheme);
+    }
+
+    function initTheme() {
+        const savedTheme = localStorage.getItem('theme');
+        const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        applyTheme(savedTheme || systemTheme);
+    }
 
     // --- Funkcje Pomocnicze ---
     const categoryColors = {};
@@ -567,7 +618,7 @@
                 if (confirm('Czy na pewno chcesz usunąć ten zakup? Operacja jest nieodwracalna.')) {
                     try {
                         await apiCall(`/api/purchases/${purchaseId}`, 'DELETE');
-                        await fetchInitialData();
+                        await fetchInitialData(false); // nie przełączaj zakładki
                     } catch (error) {
                         alert('Nie udało się usunąć zakupu: ' + error.message);
                     }
@@ -579,6 +630,8 @@
             if (header) {
                 const itemsDiv = header.nextElementSibling;
                 itemsDiv.classList.toggle('hidden');
+                const arrow = header.querySelector('.toggle-arrow');
+                arrow.classList.toggle('rotate-180');
             }
         });
 
@@ -598,6 +651,19 @@
             }
         });
         document.getElementById('category-chart').addEventListener('click', handleCategoryChartClick);
+
+        // Szybkie akcje z kokpitu
+        quickAddManualBtn.addEventListener('click', () => {
+            switchTab('add');
+            setTimeout(() => shopInput.focus(), 100);
+        });
+        quickAddScanBtn.addEventListener('click', () => {
+            switchTab('add');
+            setTimeout(() => startCamera(), 100);
+        });
+
+        // Przełącznik motywu
+        themeToggleBtn.addEventListener('click', toggleTheme);
     }
 
     function switchTab(tabName) {
@@ -609,14 +675,16 @@
         if (tabName === 'stats') renderStatistics();
     }
 
-    async function fetchInitialData(shouldSwitchToList = true) {
+    async function fetchInitialData(shouldSwitchToDefault = true) {
         try {
             [allPurchases, allCategories] = await Promise.all([
                 apiCall('/api/purchases'),
                 apiCall('/api/categories')
             ]);
             renderAll();
-            if (shouldSwitchToList) switchTab('list');
+            if (shouldSwitchToDefault) {
+                switchTab('stats'); // Domyślna zakładka to kokpit
+            }
         } catch (error) {
             alert(error.message);
         }
@@ -625,6 +693,7 @@
     function renderAll() {
         renderPurchasesList();
         updateMonthlyBalance();
+        renderStatistics(); // Od razu renderuj statystyki
     }
 
     function updateMonthlyBalance() {
@@ -658,18 +727,18 @@
 
         itemRow.innerHTML = `
             <div class="md:col-span-4 col-span-9">
-                <textarea class="item-name mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm py-3 resize-none overflow-hidden" placeholder="Nazwa produktu" rows="1" required>${item.name || ''}</textarea>
+                <textarea class="item-name mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-3 resize-none overflow-hidden" placeholder="Nazwa produktu" rows="1" required>${item.name || ''}</textarea>
             </div>
             <div class="md:col-span-2 col-span-5">
-                <input type="number" step="0.01" class="item-price mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm py-3" placeholder="Cena" value="${priceValue}" required>
+                <input type="number" step="0.01" class="item-price mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-3" placeholder="Cena" value="${priceValue}" required>
             </div>
             <div class="md:col-span-3 col-span-4">
-                <select class="item-category-select mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm py-3">
+                <select class="item-category-select mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-3">
                     <option value="">Wybierz kategorię</option>
                     ${categoryOptions}
                     <option value="__add_new__">-- Dodaj nową --</option>
                 </select>
-                <input type="text" class="new-category-input hidden mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm py-3" placeholder="Nazwa nowej kategorii">
+                <input type="text" class="new-category-input hidden mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-3" placeholder="Nazwa nowej kategorii">
             </div>
             <div class="md:col-span-1 col-span-1 text-right">
                 <button type="button" class="remove-item-btn p-3 text-red-500 hover:text-red-700 rounded-full mt-1"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM7 9a1 1 0 000 2h6a1 1 0 100-2H7z" clip-rule="evenodd" /></svg></button>
@@ -764,7 +833,8 @@
             } else {
                 await apiCall('/api/purchases', 'POST', purchaseData);
             }
-            await fetchInitialData();
+            await fetchInitialData(false);
+            switchTab('list');
         } catch (error) {
             alert('Błąd zapisu: ' + error.message);
         }
@@ -784,8 +854,8 @@
 
         purchaseFormTitle.textContent = 'Edytuj istniejący zakup';
         purchaseFormSubmitBtn.textContent = 'Zaktualizuj zakup';
-        purchaseFormSubmitBtn.classList.replace('bg-indigo-600', 'bg-green-600');
-        purchaseFormSubmitBtn.classList.replace('hover:bg-indigo-700', 'hover:bg-green-700');
+        purchaseFormSubmitBtn.classList.replace('bg-blue-600', 'bg-green-600');
+        purchaseFormSubmitBtn.classList.replace('hover:bg-blue-700', 'hover:bg-green-700');
         document.getElementById('cancel-edit-btn').classList.remove('hidden');
         
         updatePurchaseSummary();
@@ -803,8 +873,8 @@
 
         purchaseFormTitle.textContent = 'Dodaj nowy zakup ręcznie';
         purchaseFormSubmitBtn.textContent = 'Zapisz cały zakup';
-        purchaseFormSubmitBtn.classList.replace('bg-green-600', 'bg-indigo-600');
-        purchaseFormSubmitBtn.classList.replace('hover:bg-green-700', 'hover:bg-indigo-700');
+        purchaseFormSubmitBtn.classList.replace('bg-green-600', 'bg-blue-600');
+        purchaseFormSubmitBtn.classList.replace('hover:bg-green-700', 'hover:bg-blue-700');
         document.getElementById('cancel-edit-btn').classList.add('hidden');
         
         updatePurchaseSummary();
@@ -813,32 +883,40 @@
     // --- Logika Listy Zakupów ---
     function renderPurchasesList() {
         if (allPurchases.length === 0) {
-            purchasesList.innerHTML = '<p class="text-center text-gray-500">Brak zapisanych zakupów. Dodaj pierwszy!</p>';
+            purchasesList.innerHTML = '<div class="text-center py-12"><svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg><h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">Brak zakupów</h3><p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Zacznij dodawać wydatki, aby zobaczyć je tutaj.</p></div>';
             return;
         }
         purchasesList.innerHTML = allPurchases.map(p => `
-            <div class="bg-white rounded-lg shadow" data-purchase-id="${p.id}">
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm" data-purchase-id="${p.id}">
                 <div class="purchase-header flex justify-between items-center p-4 cursor-pointer">
-                    <div>
-                        <p class="font-bold text-lg">${p.shop}</p>
-                        <p class="text-sm text-gray-600">${p.date}</p>
+                    <div class="flex items-center space-x-4">
+                        <div class="flex-shrink-0 h-10 w-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-500 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+                        </div>
+                        <div>
+                            <p class="font-bold text-lg text-gray-900 dark:text-white">${p.shop}</p>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">${p.date}</p>
+                        </div>
                     </div>
-                    <div class="text-right">
-                        <p class="font-bold text-xl">${(p.totalAmount || 0).toFixed(2)} zł</p>
-                        <p class="text-xs text-gray-500">${(p.items || []).length} poz.</p>
-                    </div>
-                    <div class="flex items-center">
-                        <button class="edit-purchase-btn p-2 text-blue-500 hover:text-blue-700" title="Edytuj"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" /><path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd" /></svg></button>
-                        <button class="delete-purchase-btn p-2 text-red-500 hover:text-red-700" title="Usuń"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" /></svg></button>
+                    <div class="flex items-center space-x-4">
+                        <div class="text-right">
+                            <p class="font-bold text-xl text-gray-900 dark:text-white">${(p.totalAmount || 0).toFixed(2)} zł</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">${(p.items || []).length} poz.</p>
+                        </div>
+                        <div class="flex items-center">
+                            <button class="edit-purchase-btn p-2 text-blue-500 hover:text-blue-700" title="Edytuj"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" /><path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd" /></svg></button>
+                            <button class="delete-purchase-btn p-2 text-red-500 hover:text-red-700" title="Usuń"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" /></svg></button>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 toggle-arrow text-gray-500 dark:text-gray-400 transition-transform transform" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                        </div>
                     </div>
                 </div>
-                <div class="purchase-items hidden border-t p-4 space-y-2">
+                <div class="purchase-items hidden border-t border-gray-200 dark:border-gray-700 p-4 space-y-2">
                     ${(p.items || []).map(item => `
                         <div class="flex justify-between items-center">
-                            <span>${item.name}</span>
+                            <span class="text-gray-800 dark:text-gray-200">${item.name}</span>
                             <div>
-                                <span class="category-tag text-white" style="background-color: ${getCategoryColor(item.category)}">${item.category}</span>
-                                <span class="font-medium">${(item.price || 0).toFixed(2)} zł</span>
+                                <span class="category-tag text-white text-xs font-semibold" style="background-color: ${getCategoryColor(item.category)}; padding: 3px 10px; border-radius: 9999px;">${item.category}</span>
+                                <span class="font-medium text-gray-900 dark:text-white ml-4">${(item.price || 0).toFixed(2)} zł</span>
                             </div>
                         </div>
                     `).join('')}
@@ -850,8 +928,8 @@
     // --- Logika Zarządzania Kategoriami ---
     function renderCategoriesList() {
         categoriesList.innerHTML = allCategories.map(cat => `
-            <div class="flex justify-between items-center p-2 border-b" data-category-name="${cat}">
-                <span class="category-text">${cat.charAt(0).toUpperCase() + cat.slice(1)}</span>
+            <div class="flex justify-between items-center p-2 border-b border-gray-200 dark:border-gray-700" data-category-name="${cat}">
+                <span class="category-text text-gray-900 dark:text-white">${cat.charAt(0).toUpperCase() + cat.slice(1)}</span>
                 <div class="category-actions">
                     <button class="rename-cat-btn p-1 text-blue-500 hover:text-blue-700" title="Zmień nazwę"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" /><path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd" /></svg></button>
                     <button class="delete-cat-btn p-1 text-red-500 hover:text-red-700" title="Usuń"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" /></svg></button>
@@ -1032,6 +1110,7 @@
             categoryChartContainer.classList.add('hidden');
             return;
         };
+        const isDarkMode = document.documentElement.classList.contains('dark');
 
         const [year, month] = selectedMonth.split('-');
         const stats = await apiCall(`/api/statistics?year=${year}&month=${month}`);
@@ -1057,8 +1136,16 @@
                 },
                 options: { 
                     responsive: true, 
+                    maintainAspectRatio: false,
                     plugins: { 
-                        legend: { position: 'top' },
+                        legend: { 
+                            position: 'right',
+                            labels: {
+                                boxWidth: 12,
+                                padding: 15,
+                                color: isDarkMode ? 'white' : '#374151'
+                            }
+                        },
                         tooltip: {
                             callbacks: {
                                 label: function(context) {
@@ -1111,10 +1198,10 @@
             items.forEach(item => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${item.name}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.shop || 'Brak'}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.purchaseDate}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">${(item.price || 0).toFixed(2)} zł</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">${item.name}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">${item.shop || 'Brak'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">${item.purchaseDate}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 text-right">${(item.price || 0).toFixed(2)} zł</td>
                 `;
                 categoryDetailsTableBody.appendChild(row);
             });
@@ -1125,6 +1212,7 @@
     async function renderComparisonBarChart() {
         const stats = await apiCall('/api/statistics/comparison');
         const ctx = document.getElementById('comparison-chart').getContext('2d');
+        const isDarkMode = document.body.classList.contains('dark');
 
         if (comparisonChart) comparisonChart.destroy();
 
@@ -1147,10 +1235,17 @@
                     datasets: [{
                         label: 'Suma wydatków',
                         data,
-                        backgroundColor: '#4F46E5'
+                        backgroundColor: '#3B82F6'
                     }]
                 },
-                options: { responsive: true, plugins: { legend: { display: false } } }
+                options: { 
+                    responsive: true, 
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { ticks: { color: isDarkMode ? 'white' : '#374151' } },
+                        x: { ticks: { color: isDarkMode ? 'white' : '#374151' } }
+                    }
+                }
             });
         }
     }
@@ -1162,6 +1257,7 @@
             shopChartContainer.classList.add('hidden');
             return;
         };
+        const isDarkMode = document.body.classList.contains('dark');
 
         const [year, month] = selectedMonth.split('-');
         const stats = await apiCall(`/api/statistics/by-shop?year=${year}&month=${month}`);
@@ -1193,6 +1289,10 @@
                     responsive: true, 
                     plugins: { legend: { display: false } },
                     indexAxis: 'y', // Wykres horyzontalny dla lepszej czytelności nazw sklepów
+                    scales: {
+                        y: { ticks: { color: isDarkMode ? 'white' : '#374151' } },
+                        x: { ticks: { color: isDarkMode ? 'white' : '#374151' } }
+                    }
                 }
             });
         }
@@ -1225,6 +1325,7 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
+        initTheme();
         setupAuthEventListeners();
         main();
 
