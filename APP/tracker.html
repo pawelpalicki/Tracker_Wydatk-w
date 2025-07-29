@@ -11,6 +11,8 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icon.svg">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css">
     <style>
         .nav-btn {
             border-bottom: 4px solid transparent;
@@ -39,6 +41,16 @@
         }
         .item-name {
             min-height: 48px;
+        }
+        input, textarea, select {
+            padding-left: 0.75rem !important;
+        }
+        input:-webkit-autofill,
+        input:-webkit-autofill:hover,
+        input:-webkit-autofill:focus,
+        input:-webkit-autofill:active {
+            -webkit-box-shadow: 0 0 0 30px #4b5563 inset !important; /* gray-600 */
+            -webkit-text-fill-color: #fff !important;
         }
     </style>
 </head>
@@ -200,26 +212,27 @@
                             </div>
                             <div>
                                 <label for="date" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Data</label>
-                                <input type="date" id="date" required class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-3">
+                                <div class="relative mt-1">
+                                    <input type="date" id="date" required class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-3">
+                                </div>
                             </div>
                             <div id="total-amount-container" class="hidden">
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Suma</label>
                                 <p id="total-amount-value" class="mt-1 text-xl font-bold text-gray-900 dark:text-white">0.00 zł</p>
                             </div>
                         </div>
-                        <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
+                        <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                             <h4 class="text-md font-medium text-gray-800 dark:text-gray-200 mb-2">Pozycje na paragonie</h4>
                             <div id="items-container" class="space-y-4"></div>
                             <div class="border-t border-gray-200 dark:border-gray-700 mt-4 pt-4 flex justify-between items-center flex-wrap">
+                                <div id="purchase-summary" class="text-lg font-bold text-gray-800 dark:text-gray-200">Suma: 0.00 zł</div>
                                 <button type="button" id="add-item-btn" class="py-2 px-4 bg-blue-500 text-white rounded-md hover:bg-blue-600">+ Dodaj</button>
-                                <div id="purchase-summary" class="text-lg font-bold text-gray-800 dark:text-gray-200 mr-4">Suma: 0.00 zł</div>
                             </div>
-                            <div class="flex justify-end mt-4">
-                                
-                                <div class="flex items-center space-x-2">
-                                    <button type="button" id="cancel-edit-btn" class="py-2 px-4 bg-gray-500 text-white rounded-md hover:bg-gray-600 hidden">Anuluj</button>
-                                    <button type="submit" class="py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700">Zapisz cały zakup</button>
-                                </div>
+                        </div>
+                        <div class="flex justify-end mt-4">
+                            <div class="flex items-center space-x-2">
+                                <button type="button" id="cancel-edit-btn" class="py-2 px-4 bg-gray-500 text-white rounded-md hover:bg-gray-600 hidden">Anuluj</button>
+                                <button type="submit" class="py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700">Zapisz cały zakup</button>
                             </div>
                         </div>
                     </form>
@@ -293,6 +306,7 @@
     let categoryChart = null;
     let comparisonChart = null;
     let shopChart = null;
+    let fp; // Declare fp globally
 
     // --- Elementy DOM ---
     const loadingSection = document.getElementById('loading-section');
@@ -817,7 +831,7 @@
         editMode.purchaseId = purchaseId;
 
         shopInput.value = purchase.shop;
-        dateInput.value = purchase.date;
+        fp.setDate(purchase.date); // Use flatpickr's setDate method
         itemsContainer.innerHTML = '';
         purchase.items.forEach(item => addItemRow(item));
 
@@ -837,7 +851,7 @@
 
         purchaseForm.reset();
         itemsContainer.innerHTML = '';
-        dateInput.value = new Date().toISOString().split('T')[0];
+        fp.setDate(new Date()); // Reset date using flatpickr's setDate
         addItemRow();
 
         purchaseFormTitle.textContent = 'Dodaj nowy zakup ręcznie';
@@ -1317,7 +1331,16 @@
                 .then(reg => console.log('Service Worker zarejestrowany:', reg))
                 .catch(err => console.log('Błąd rejestracji Service Workera:', err));
         }
+
+        // Initialize Flatpickr and store the instance
+        fp = flatpickr("#date", {
+            dateFormat: "Y-m-d",
+            altInput: true,
+            altFormat: "F j, Y",
+            theme: "dark" // Apply the dark theme
+        });
     });
 </script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 </body>
 </html>
