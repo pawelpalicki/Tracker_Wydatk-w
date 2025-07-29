@@ -14,11 +14,13 @@
     <style>
         .nav-btn {
             border-bottom: 4px solid transparent;
+            color: #eaeaf3;
+            font-weight: 500;
             transition: border-color 0.3s, color 0.3s;
         }
         .nav-btn.active {
-            border-bottom-color: #4F46E5;
-            color: #4F46E5;
+            border-bottom-color: #a19de7;
+            color: #a19de7;
             font-weight: 600;
         }
         .tab-content {
@@ -93,10 +95,10 @@
                         <p id="monthly-balance-label" class="text-sm text-gray-500 dark:text-gray-400">Wydatki w tym miesiącu</p>
                         <p id="monthly-balance-value" class="text-xl font-bold text-blue-600 dark:text-blue-400">0.00 zł</p>
                     </div>
-                    <button id="theme-toggle-btn" class="p-2 mr-2 text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-white" title="Zmień motyw">
+                    <!-- <button id="theme-toggle-btn" class="p-2 mr-2 text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-white" title="Zmień motyw">
                         <svg id="theme-icon-light" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
                         <svg id="theme-icon-dark" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
-                    </button>
+                    </button> -->
                     <button id="settings-btn" class="p-2 text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-white" title="Ustawienia">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
@@ -351,35 +353,35 @@
     const categoryDetailsTableBody = document.getElementById('category-details-table-body');
     const quickAddManualBtn = document.getElementById('quick-add-manual-btn');
     const quickAddScanBtn = document.getElementById('quick-add-scan-btn');
-    const themeToggleBtn = document.getElementById('theme-toggle-btn');
-    const themeIconLight = document.getElementById('theme-icon-light');
-    const themeIconDark = document.getElementById('theme-icon-dark');
+    // const themeToggleBtn = document.getElementById('theme-toggle-btn');
+    // const themeIconLight = document.getElementById('theme-icon-light');
+    // const themeIconDark = document.getElementById('theme-icon-dark');
 
-    // --- Logika Motywu ---
-    function applyTheme(theme) {
-        const isDarkMode = theme === 'dark';
-        document.documentElement.classList.toggle('dark', isDarkMode);
-        themeIconLight.classList.toggle('hidden', !isDarkMode);
-        themeIconDark.classList.toggle('hidden', isDarkMode);
+    // // --- Logika Motywu ---
+    // function applyTheme(theme) {
+    //     const isDarkMode = theme === 'dark';
+    //     document.documentElement.classList.toggle('dark', isDarkMode);
+    //     themeIconLight.classList.toggle('hidden', !isDarkMode);
+    //     themeIconDark.classList.toggle('hidden', isDarkMode);
         
-        // Po zmianie motywu, trzeba odświeżyć wykresy, aby kolory tekstu się zgadzały
-        if (!appSection.classList.contains('hidden')) {
-             renderStatistics();
-        }
-    }
+    //     // Po zmianie motywu, trzeba odświeżyć wykresy, aby kolory tekstu się zgadzały
+    //     if (!appSection.classList.contains('hidden')) {
+    //          renderStatistics();
+    //     }
+    // }
 
-    function toggleTheme() {
-        const currentTheme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
-        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-        localStorage.setItem('theme', newTheme);
-        applyTheme(newTheme);
-    }
+    // function toggleTheme() {
+    //     const currentTheme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+    //     const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    //     localStorage.setItem('theme', newTheme);
+    //     applyTheme(newTheme);
+    // }
 
-    function initTheme() {
-        const savedTheme = localStorage.getItem('theme');
-        const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-        applyTheme(savedTheme || systemTheme);
-    }
+    // function initTheme() {
+    //     const savedTheme = localStorage.getItem('theme');
+    //     const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    //     applyTheme(savedTheme || systemTheme);
+    // }
 
     // --- Funkcje Pomocnicze ---
     const categoryColors = {};
@@ -662,8 +664,8 @@
             setTimeout(() => startCamera(), 100);
         });
 
-        // Przełącznik motywu
-        themeToggleBtn.addEventListener('click', toggleTheme);
+        // // Przełącznik motywu
+        // themeToggleBtn.addEventListener('click', toggleTheme);
     }
 
     function switchTab(tabName) {
@@ -726,7 +728,7 @@
         const priceValue = typeof item.price === 'number' ? item.price.toFixed(2) : '';
 
         itemRow.innerHTML = `
-            <div class="md:col-span-4 col-span-9">
+            <div class="md:col-span-5 col-span-9 break-words">
                 <textarea class="item-name mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-3 resize-none overflow-hidden" placeholder="Nazwa produktu" rows="1" required>${item.name || ''}</textarea>
             </div>
             <div class="md:col-span-2 col-span-5">
@@ -913,11 +915,13 @@
                 <div class="purchase-items hidden border-t border-gray-200 dark:border-gray-700 p-4 space-y-2">
                     ${(p.items || []).map(item => `
                         <div class="flex justify-between items-center">
-                            <span class="text-gray-800 dark:text-gray-200">${item.name}</span>
-                            <div>
+                            <span class="text-gray-800 dark:text-gray-200 break-words">${item.name}</span>
+                            <div class="flex items-center space-x-2 flex-shrink-0">
                                 <span class="category-tag text-white text-xs font-semibold" style="background-color: ${getCategoryColor(item.category)}; padding: 3px 10px; border-radius: 9999px;">${item.category}</span>
-                                <span class="font-medium text-gray-900 dark:text-white ml-4">${(item.price || 0).toFixed(2)} zł</span>
+                                 <span class="font-medium text-gray-900 dark:text-white whitespace-nowrap">${(item.price || 0).toFixed(2)}&nbsp;zł</span>
                             </div>
+
+
                         </div>
                     `).join('')}
                 </div>
@@ -1110,7 +1114,7 @@
             categoryChartContainer.classList.add('hidden');
             return;
         };
-        const isDarkMode = document.documentElement.classList.contains('dark');
+        // const isDarkMode = document.documentElement.classList.contains('dark');
 
         const [year, month] = selectedMonth.split('-');
         const stats = await apiCall(`/api/statistics?year=${year}&month=${month}`);
@@ -1143,7 +1147,7 @@
                             labels: {
                                 boxWidth: 12,
                                 padding: 15,
-                                color: isDarkMode ? 'white' : '#374151'
+                                color: 'white' 
                             }
                         },
                         tooltip: {
@@ -1212,7 +1216,7 @@
     async function renderComparisonBarChart() {
         const stats = await apiCall('/api/statistics/comparison');
         const ctx = document.getElementById('comparison-chart').getContext('2d');
-        const isDarkMode = document.body.classList.contains('dark');
+        // const isDarkMode = document.body.classList.contains('dark');
 
         if (comparisonChart) comparisonChart.destroy();
 
@@ -1242,8 +1246,16 @@
                     responsive: true, 
                     plugins: { legend: { display: false } },
                     scales: {
-                        y: { ticks: { color: isDarkMode ? 'white' : '#374151' } },
-                        x: { ticks: { color: isDarkMode ? 'white' : '#374151' } }
+                        y: { 
+                            ticks: { color:  'white' },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            }
+                         },
+                        x: { 
+                            ticks: { color:  'white'  },
+                             grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                        }
                     }
                 }
             });
@@ -1257,7 +1269,7 @@
             shopChartContainer.classList.add('hidden');
             return;
         };
-        const isDarkMode = document.body.classList.contains('dark');
+        // const isDarkMode = document.body.classList.contains('dark');
 
         const [year, month] = selectedMonth.split('-');
         const stats = await apiCall(`/api/statistics/by-shop?year=${year}&month=${month}`);
@@ -1290,8 +1302,16 @@
                     plugins: { legend: { display: false } },
                     indexAxis: 'y', // Wykres horyzontalny dla lepszej czytelności nazw sklepów
                     scales: {
-                        y: { ticks: { color: isDarkMode ? 'white' : '#374151' } },
-                        x: { ticks: { color: isDarkMode ? 'white' : '#374151' } }
+                        y: { 
+                            ticks: { color: 'white'  },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            }
+                         },
+                        x: { 
+                            ticks: { color:  'white'  },
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                        }
                     }
                 }
             });
@@ -1325,7 +1345,7 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-        initTheme();
+        // initTheme();
         setupAuthEventListeners();
         main();
 
