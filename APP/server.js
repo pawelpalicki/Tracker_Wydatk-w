@@ -101,37 +101,42 @@ async function extractAndCategorizePurchase(file, categories) {
 
         Struktura JSON, której masz użyć:
         {
-          "shop": "string",
-          "date": "string (format YYYY-MM-DD)",
-          "items": [
+        "shop": "string",
+        "date": "string (format YYYY-MM-DD)",
+        "items": [
             { "name": "string", "price": number (cena PO RABACIE), "category": "string" }
-          ]
+        ]
         }
 
         Postępuj DOKŁADNIE według tych kroków:
         1.  **Dane Główne**: Wyodrębnij nazwę sklepu ('shop') i datę transakcji ('date') w formacie YYYY-MM-DD.
-        2.  **Analiza Rabatów (NAJWAŻNIEJSZE)**: Dla każdego produktu zidentyfikuj jego nazwę i cenę. Następnie precyzyjnie odejmij rabaty od cen, stosując tę hierarchię:
-            -   **Priorytet 1**: Rabat podany bezpośrednio przy produkcie lub poniżej produktu. Odejmij go od ceny tego konkretnego produktu.
-            -   **Priorytet 2**: Rabat na dole dokumentu z nazwą wskazującą na produkt (np. "Rabat Mleko"). Odejmij całą kwotę rabatu od ceny tego produktu.
-            -   **Priorytet 3 (OSTATECZNOŚĆ)**: Rabat ogólny na dole dokumentu bez wskazania produktu. Rozdziel go proporcjonalnie między wszystkie zeskanowane produkty.
+        2.  **Analiza Rabatów (NAJWAŻNIEJSZE)**: Znajdź wszystkie rabaty na paragonie i dopasuj je do odpowiednich produktów:
+            -   Rabaty bezpośrednio przy produkcie (pod, obok, w tej samej linii)
+            -   Rabaty na dole paragonu z nazwą produktu (np. "Rabat Mleko", "Rab. Sok") 
+            -   Rabaty ogólne - rozdziel proporcjonalnie między produkty
         3.  **Kategoryzacja**: Dla każdego produktu przypisz kategorię ('category') z tej listy: ${JSON.stringify(categories)}. Jeśli żadna nie pasuje, użyj "inne".
         4.  **Format Wyjściowy**: Zwróć ostateczną listę produktów w formacie JSON. Nie dodawaj żadnych wyjaśnień ani tekstu przed lub po bloku JSON. Twoja odpowiedź musi być czystym JSON-em.
 
+        **PRZYKŁADY RABATÓW:**
+        - Produkt z rabatem bezpośrednio przy nim = odejmij rabat od ceny produktu
+        - Rabat z nazwą produktu gdziekolwiek na paragonie = przypisz do tego produktu
+        - Rabat ogólny bez nazwy produktu = rozdziel między wszystkie produkty
+
         **Obsługa Błędów**: Jeśli plik jest nieczytelny lub nie jest paragonem/fakturą, zwróć DOKŁADNIE ten JSON:
         {
-          "shop": "Błąd odczytu",
-          "date": "${new Date().toISOString().split('T')[0]}",
-          "items": []
+        "shop": "Błąd odczytu",
+        "date": "${new Date().toISOString().split('T')[0]}",
+        "items": []
         }
         
         **Przykład idealnej odpowiedzi**:
         {
-          "shop": "Biedronka",
-          "date": "2025-07-25",
-          "items": [
+        "shop": "Biedronka",
+        "date": "2025-07-25",
+        "items": [
             {"name": "Sok pomarańczowy", "price": 4.50, "category": "spożywcze"},
             {"name": "Mleko 2%", "price": 2.00, "category": "spożywcze"}
-          ]
+        ]
         }
     `;
     
