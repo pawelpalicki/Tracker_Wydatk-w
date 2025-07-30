@@ -9,6 +9,10 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icon.svg">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
@@ -294,6 +298,21 @@
     </div>
 
 <script>
+    // --- Konfiguracja Firebase (wypełnij swoimi danymi) ---
+    const firebaseConfig = {
+        apiKey: "AIzaSyCotoNKJ1Y9BCt6N8ZKCXny9PTcgCJc2fk",
+        authDomain: "trackerwydatkowapp.firebaseapp.com",
+        projectId: "trackerwydatkowapp",
+        storageBucket: "trackerwydatkowapp.firebasestorage.app",
+        messagingSenderId: "985262621512",
+        appId: "1:985262621512:web:87348caca12ca4c453297d",
+        measurementId: "G-SSDG9QGDL4"
+    };
+    
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
     // --- Konfiguracja ---
     const IS_LOCAL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
     const API_BASE_URL = IS_LOCAL ? 'http://localhost:3001' : 'https://tracker-wydatkow-backend.onrender.com';
@@ -420,18 +439,25 @@
 
     // --- Funkcja do komunikacji z API ---
     async function apiCall(endpoint, method = 'GET', body = null) {
-        const token = localStorage.getItem('authToken');
-        const headers = { 'Content-Type': 'application/json' };
-        if (token) {
-            headers['X-Auth-Token'] = token;
+        const user = auth.currentUser;
+        if (!user) {
+            logout();
+            throw new Error('Użytkownik nie jest zalogowany.');
         }
+
+        const token = await user.getIdToken();
+        const headers = {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        };
+
         const options = { method, headers };
         if (body) options.body = JSON.stringify(body);
 
         const response = await fetch(`${API_BASE_URL}${endpoint}`, options);
-        if (response.status === 401 && endpoint !== '/auth/status') {
+        if (response.status === 401) {
             logout();
-            throw new Error('Sesja wygasła. Zaloguj się ponownie.');
+            throw new Error('Sesja wygasła lub jest nieprawidłowa. Zaloguj się ponownie.');
         }
         const text = await response.text();
         const data = text ? JSON.parse(text) : {};
@@ -440,18 +466,24 @@
     }
 
     async function apiCallWithFile(endpoint, file) {
-        const token = localStorage.getItem('authToken');
+        const user = auth.currentUser;
+        if (!user) {
+            logout();
+            throw new Error('Użytkownik nie jest zalogowany.');
+        }
+
+        const token = await user.getIdToken();
         const formData = new FormData();
         formData.append('image', file);
 
         const response = await fetch(`${API_BASE_URL}${endpoint}`, {
             method: 'POST',
-            headers: { 'X-Auth-Token': token },
+            headers: { 'Authorization': `Bearer ${token}` },
             body: formData
         });
         if (response.status === 401) {
             logout();
-            throw new Error('Sesja wygasła. Zaloguj się ponownie.');
+            throw new Error('Sesja wygasła lub jest nieprawidłowa. Zaloguj się ponownie.');
         }
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || 'Błąd serwera');
@@ -473,17 +505,14 @@
             buttonSpinner.classList.remove('hidden');
 
             try {
-                const response = await fetch(`${API_BASE_URL}/auth/login`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email: loginEmail.value, password: loginPassword.value })
-                });
-                const data = await response.json();
-                if (!response.ok || !data.success) throw new Error(data.error || 'Błąd logowania');
-                localStorage.setItem('authToken', data.token);
-                await main();
+                await auth.signInWithEmailAndPassword(loginEmail.value, loginPassword.value);
+                // Reszta logiki (przełączenie widoku) jest obsługiwana przez onAuthStateChanged
             } catch (error) {
-                authErrorDiv.textContent = error.message;
+                let message = 'Wystąpił błąd logowania.';
+                if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+                    message = 'Nieprawidłowy email lub hasło.';
+                }
+                authErrorDiv.textContent = message;
                 authErrorDiv.classList.remove('hidden');
             } finally {
                 submitButton.disabled = false;
@@ -535,14 +564,8 @@
     }
 
     function logout() {
-        localStorage.removeItem('authToken');
-        appSection.classList.add('hidden');
-        authSection.classList.remove('hidden');
-        settingsModal.classList.add('hidden');
-        if (cameraStream) {
-            cameraStream.getTracks().forEach(track => track.stop());
-            cameraStream = null;
-        }
+        auth.signOut(); // Wylogowanie z Firebase
+        // onAuthStateChanged zajmie się resztą (ukryciem app-section itp.)
     }
 
     // --- Główna Logika Aplikacji ---
@@ -1298,34 +1321,34 @@
     }
 
     // --- Inicjalizacja Aplikacji ---
-    async function main() {
-        loadingSection.classList.add('hidden');
-        const token = localStorage.getItem('authToken');
-        if (!token) {
-            authSection.classList.remove('hidden');
-            appSection.classList.add('hidden');
-            return;
-        }
+    function initializeApp() {
+        setupAppEventListeners();
+        fetchInitialData();
+        exitEditMode();
+    }
 
-        try {
-            // Sprawdź ważność tokena na serwerze
-            await apiCall('/auth/status');
-            
+    // Główny mechanizm obsługi stanu uwierzytelnienia
+    auth.onAuthStateChanged(user => {
+        loadingSection.classList.add('hidden');
+        if (user) {
+            // Użytkownik jest zalogowany
             authSection.classList.add('hidden');
             appSection.classList.remove('hidden');
-
-            setupAppEventListeners();
-            await fetchInitialData();
-            exitEditMode();
-        } catch (error) {
-            // Token jest nieważny lub wystąpił inny błąd
-            logout();
+            initializeApp();
+        } else {
+            // Użytkownik jest wylogowany
+            authSection.classList.remove('hidden');
+            appSection.classList.add('hidden');
+            if (cameraStream) {
+                cameraStream.getTracks().forEach(track => track.stop());
+                cameraStream = null;
+            }
         }
-    }
+    });
 
     document.addEventListener('DOMContentLoaded', () => {
         setupAuthEventListeners();
-        main();
+        // Usunięto wywołanie main() - teraz onAuthStateChanged zarządza stanem
 
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('/sw.js')

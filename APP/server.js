@@ -2,7 +2,8 @@ const express = require('express');
 const multer = require('multer');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const { initializeApp, cert } = require('firebase-admin/app');
-const { getFirestore } = require('firebase-admin/firestore');
+const { getFirestore, FieldValue } = require('firebase-admin/firestore');
+const { getAuth } = require('firebase-admin/auth');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const path = require('path');
@@ -61,17 +62,7 @@ app.use(express.static(path.join(__dirname)));
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
 
-const authMiddleware = (req, res, next) => {
-    const token = req.headers['x-auth-token'];
-    if (!token) return res.status(401).json({ success: false, error: 'Brak tokena.' });
-    try {
-        const decoded = jwt.verify(token, JWT_SECRET);
-        req.userId = decoded.userId;
-        next();
-    } catch (error) {
-        return res.status(401).json({ success: false, error: 'Nieprawidłowy token.' });
-    }
-};
+
 
 // --- Funkcje pomocnicze ---
 const DEFAULT_CATEGORIES = ['spożywcze', 'chemia', 'transport', 'rozrywka', 'zdrowie', 'ubrania', 'dom', 'rachunki', 'inne'];
@@ -210,7 +201,72 @@ async function updateCategoryInPurchases(userId, oldName, newName, deleteMode = 
     await batch.commit();
 }
 
+// --- Endpoint Migracyjny (jednorazowe użycie) ---
+const MIGRATION_SECRET_KEY = process.env.MIGRATION_KEY || "bardzo-tajny-klucz-do-migracji";
+
+app.post('/admin/migrate-users', async (req, res) => {
+    const providedKey = req.headers['x-migration-key'];
+    if (providedKey !== MIGRATION_SECRET_KEY) {
+        return res.status(403).json({ success: false, error: 'Brak uprawnień.' });
+    }
+
+    console.log('Rozpoczynam migrację użytkowników...');
+
+    try {
+        const usersSnapshot = await usersCollection.get();
+        if (usersSnapshot.empty) {
+            return res.status(200).json({ success: true, message: 'Brak użytkowników do migracji.' });
+        }
+
+        const usersToImport = usersSnapshot.docs.map(doc => {
+            const userData = doc.data();
+            return {
+                uid: doc.id,
+                email: userData.email,
+                passwordHash: Buffer.from(userData.password, 'utf8'),
+            };
+        });
+        
+        console.log(`Przygotowano ${usersToImport.length} użytkowników do importu.`);
+
+        const result = await getAuth().importUsers(usersToImport, {
+            hash: {
+                algorithm: 'BCRYPT'
+            }
+        });
+
+        console.log(`Pomyślnie zaimportowano ${result.successCount} użytkowników.`);
+        if (result.failureCount > 0) {
+            console.error('Błędy importu:', result.errors);
+        }
+        
+        console.log('Rozpoczynam usuwanie haseł z Firestore...');
+        const batch = db.batch();
+        usersSnapshot.docs.forEach(doc => {
+            batch.update(doc.ref, { 
+                uid: doc.id,
+                password: FieldValue.delete() 
+            });
+        });
+        await batch.commit();
+        console.log('✅ Hasła zostały usunięte z Firestore.');
+
+        res.status(200).json({
+            success: true,
+            message: 'Migracja zakończona pomyślnie!',
+            imported: result.successCount,
+            failed: result.failureCount
+        });
+
+    } catch (error) {
+        console.error("Błąd krytyczny podczas migracji:", error);
+        res.status(500).json({ success: false, error: 'Błąd serwera podczas migracji.', details: error.message });
+    }
+});
+
+
 // --- API Uwierzytelniania ---
+// ZASTĄPIONY ENDPOINT /auth/register
 app.post('/auth/register', async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -218,61 +274,64 @@ app.post('/auth/register', async (req, res) => {
             return res.status(400).json({ success: false, error: 'Email i hasło są wymagane.' });
         }
 
-        const userDoc = await usersCollection.where('email', '==', email).get();
-        if (!userDoc.empty) {
-            return res.status(400).json({ success: false, error: 'Użytkownik o tym emailu już istnieje.' });
-        }
-
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
-
-        const newUserRef = await usersCollection.add({
+        // 1. Utwórz użytkownika w Firebase Authentication
+        const userRecord = await getAuth().createUser({
             email,
-            password: hashedPassword,
-            createdAt: new Date()
+            password,
         });
 
-        res.status(201).json({ success: true, userId: newUserRef.id });
+        // 2. Utwórz dokument profilu w Firestore, używając UID z Authentication
+        await usersCollection.doc(userRecord.uid).set({
+            email: userRecord.email,
+            uid: userRecord.uid,
+            createdAt: new Date()
+            // Nie przechowujemy już hasła!
+        });
+
+        res.status(201).json({ success: true, userId: userRecord.uid });
 
     } catch (error) {
         console.error("Błąd podczas rejestracji:", error);
+        if (error.code === 'auth/email-already-exists') {
+            return res.status(400).json({ success: false, error: 'Użytkownik o tym emailu już istnieje.' });
+        }
         res.status(500).json({ success: false, error: 'Błąd serwera podczas rejestracji.' });
     }
 });
 
-app.post('/auth/login', async (req, res) => {
-    try {
-        const { email, password } = req.body;
-        if (!email || !password) {
-            return res.status(400).json({ success: false, error: 'Email i hasło są wymagane.' });
-        }
+// Endpoint /auth/login został usunięty. Logowanie odbywa się po stronie klienta.
 
-        const snapshot = await usersCollection.where('email', '==', email).limit(1).get();
-        if (snapshot.empty) {
-            return res.status(401).json({ success: false, error: 'Nieprawidłowy email lub hasło.' });
-        }
-
-        const userDoc = snapshot.docs[0];
-        const user = userDoc.data();
-
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) {
-            return res.status(401).json({ success: false, error: 'Nieprawidłowy email lub hasło.' });
-        }
-
-        const token = jwt.sign({ userId: userDoc.id }, JWT_SECRET, { expiresIn: '1h' });
-
-        res.json({ success: true, token });
-
-    } catch (error) {
-        console.error("Błąd podczas logowania:", error);
-        res.status(500).json({ success: false, error: 'Błąd serwera podczas logowania.' });
+// ZASTĄPIONY authMiddleware
+const authMiddleware = async (req, res, next) => {
+    const authHeader = req.headers.authorization; // Oczekujemy nagłówka "Authorization: Bearer <TOKEN>"
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ success: false, error: 'Brak tokena lub nieprawidłowy format.' });
     }
-});
 
-app.get('/auth/status', authMiddleware, (req, res) => {
-    // If authMiddleware passes, the token is valid.
-    res.json({ success: true, userId: req.userId });
+    const idToken = authHeader.split('Bearer ')[1];
+
+    try {
+        const decodedToken = await getAuth().verifyIdToken(idToken);
+        req.userId = decodedToken.uid; // Przypisujemy UID z tokena
+        next();
+    } catch (error) {
+        console.error("Błąd weryfikacji tokena:", error);
+        return res.status(401).json({ success: false, error: 'Nieprawidłowy lub nieważny token.' });
+    }
+};
+
+// NOWY ENDPOINT do pobierania danych zalogowanego użytkownika
+app.get('/api/user/me', authMiddleware, async (req, res) => {
+    try {
+        const userDoc = await usersCollection.doc(req.userId).get();
+        if (!userDoc.exists) {
+            return res.status(404).json({ error: 'Nie znaleziono użytkownika' });
+        }
+        res.json({ success: true, user: userDoc.data() });
+    } catch (error) {
+         res.status(500).json({ error: 'Błąd serwera' });
+    }
 });
 
 // --- API do zarządzania ZAKUPAMI ---
