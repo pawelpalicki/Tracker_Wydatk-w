@@ -51,7 +51,7 @@ const model = gemini.getGenerativeModel({ model: "gemini-1.5-flash" , });
 app.use((req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Auth-Token');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Auth-Token, Authorization');
     if (req.method === 'OPTIONS') {
         return res.sendStatus(204);
     }
