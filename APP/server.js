@@ -44,7 +44,7 @@ const purchasesCollection = db.collection('expenses');
 
 // --- Inicjalizacja Gemini AI ---
 const gemini = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = gemini.getGenerativeModel({ model: "gemini-1.5-flash" });
+const model = gemini.getGenerativeModel({ model: "gemini-2.0-flash" });
 
 // --- Middleware ---
 app.use((req, res, next) => {
