@@ -94,6 +94,22 @@ function validateDate(dateStr) {
     }
 }
 
+// Funkcja pomocnicza do ponawiania prób z exponential backoff
+async function retryWithBackoff(fn, retries = 2, delay = 1000) {
+    try {
+        return await fn();
+    } catch (error) {
+        // Ponawiaj tylko przy błędach 503 (przeciążenie usługi)
+        if (retries > 0 && error.message && (error.message.includes('503') || error.message.includes('overloaded'))) {
+            console.log(`Błąd usługi AI (503). Ponawiam próbę za ${delay / 1000}s... (${retries} prób pozostało)`);
+            await new Promise(res => setTimeout(res, delay));
+            return retryWithBackoff(fn, retries - 1, delay * 2);
+        }
+        // Dla innych błędów lub po wyczerpaniu prób, rzuć błąd dalej
+        throw error;
+    }
+}
+
 async function extractAndCategorizePurchase(file, categories) {
     const imagePart = { inlineData: { data: file.buffer.toString("base64"), mimeType: file.mimetype } };
     const prompt = `
@@ -101,11 +117,11 @@ async function extractAndCategorizePurchase(file, categories) {
 
         Struktura JSON, której masz użyć:
         {
-        "shop": "string",
-        "date": "string (format YYYY-MM-DD)",
-        "items": [
+          "shop": "string",
+          "date": "string (format YYYY-MM-DD)",
+          "items": [
             { "name": "string", "price": number (cena PO RABACIE), "category": "string" }
-        ]
+          ]
         }
 
         Postępuj DOKŁADNIE według tych kroków:
@@ -123,29 +139,26 @@ async function extractAndCategorizePurchase(file, categories) {
         - Rabat ogólny bez nazwy produktu = rozdziel między wszystkie produkty
 
         **Obsługa Błędów**: Jeśli plik jest nieczytelny lub nie jest paragonem/fakturą, zwróć DOKŁADNIE ten JSON:
-        {
-        "shop": "Błąd odczytu",
-        "date": "${new Date().toISOString().split('T')[0]}",
-        "items": []
-        }
+        { "error": "Nie udało się odczytać danych z dokumentu. Obraz może być nieczytelny lub nie jest paragonem." }
         
         **Przykład idealnej odpowiedzi**:
         {
-        "shop": "Biedronka",
-        "date": "2025-07-25",
-        "items": [
+          "shop": "Biedronka",
+          "date": "2025-07-25",
+          "items": [
             {"name": "Sok pomarańczowy", "price": 4.50, "category": "spożywcze"},
             {"name": "Mleko 2%", "price": 2.00, "category": "spożywcze"}
-        ]
+          ]
         }
     `;
     
     try {
-        const result = await model.generateContent([prompt, imagePart]);
+        const generationFn = () => model.generateContent([prompt, imagePart]);
+        const result = await retryWithBackoff(generationFn);
+        
         const rawText = result.response.text();
         console.log("Surowa odpowiedź od AI:", rawText);
 
-        // Próba znalezienia bloku JSON, ale gotowość na parsowanie całości
         let jsonString = rawText;
         const jsonMatch = rawText.match(/```json\s*([\s\S]*?)\s*```/);
         if (jsonMatch && jsonMatch[1]) {
@@ -161,14 +174,16 @@ async function extractAndCategorizePurchase(file, categories) {
             throw new Error('AI zwróciło odpowiedź w nieprawidłowym formacie JSON.');
         }
 
-        return {
-            shop: data.shop || 'Nieznany sklep',
-            date: validateDate(data.date) || new Date().toISOString().split('T')[0],
-            items: data.items || []
-        };
+        // Jeśli AI zwróciło zdefiniowany błąd, rzuć go dalej, aby endpoint go obsłużył.
+        if (data.error) {
+            throw new Error(data.error);
+        }
+
+        return data; // Zwróć surowe dane, walidacja nastąpi w endpoincie.
+
     } catch (error) {
-        console.error("Błąd podczas przetwarzania odpowiedzi AI:", error);
-        throw new Error('Nie udało się przetworzyć odpowiedzi z AI. Sprawdź logi serwera.');
+        // Przekaż błąd (z AI, z parsowania, lub z sieci) do głównego handlera endpointu.
+        throw error;
     }
 }
 
@@ -406,19 +421,39 @@ app.delete('/api/categories/:name', authMiddleware, async (req, res) => {
 // --- API DO ANALIZY PARAGONÓW ---
 app.post('/api/analyze-receipt', authMiddleware, upload.single('image'), async (req, res) => {
     try {
-        if (!req.file) return res.status(400).json({ success: false, error: 'Brak pliku obrazu.' });
+        if (!req.file) {
+            return res.status(400).json({ success: false, error: 'Brak pliku obrazu.' });
+        }
 
         const allPossibleCategories = await getUserCategories(req.userId);
-        const finalAnalysis = await extractAndCategorizePurchase(req.file, allPossibleCategories);
+        const analysisResult = await extractAndCategorizePurchase(req.file, allPossibleCategories);
+
+        // Jeśli wszystko jest w porządku, formatujemy i wysyłamy dane
+        const finalAnalysis = {
+            shop: analysisResult.shop || 'Nieznany sklep',
+            date: validateDate(analysisResult.date) || new Date().toISOString().split('T')[0],
+            items: analysisResult.items || []
+        };
 
         res.json({ success: true, analysis: finalAnalysis });
 
     } catch (error) {
-        console.error('Błąd w głównym procesie analizy:', error);
+        console.error('Błąd w głównym procesie analizy:', error.message);
+
+        // Błąd przeciążenia usługi AI
         if (error.message && (error.message.includes('503') || error.message.includes('overloaded'))) {
-            return res.status(503).json({ success: false, error: 'Usługa analizy AI jest chwilowo przeciążona. Spróbuj ponownie za kilka chwil.' });
+            return res.status(503).json({ 
+                success: false, 
+                error: 'Usługa analizy AI jest chwilowo przeciążona. Spróbuj ponownie za kilka chwil.' 
+            });
         }
-        res.status(500).json({ success: false, error: 'Błąd serwera podczas analizy paragonu', details: error.message });
+
+        // Inne błędy (w tym błąd odczytu z AI, błąd parsowania JSON itp.)
+        // Domyślnie zwracamy status 400, który jest odpowiedni dla błędów klienta/danych
+        res.status(400).json({ 
+            success: false, 
+            error: error.message || 'Wystąpił nieznany błąd podczas analizy paragonu.'
+        });
     }
 });
 
