@@ -1265,6 +1265,11 @@
             noDataShopChart.classList.add('hidden');
             shopChartContainer.classList.remove('hidden');
             
+            // Dynamiczne ustawianie wysokości kontenera wykresu
+            const barHeight = 35; // Wysokość jednego słupka w pikselach
+            const chartHeight = labels.length * barHeight;
+            shopChartContainer.style.height = `${Math.max(chartHeight, 200)}px`; // Minimalna wysokość 200px
+
             shopChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
@@ -1276,12 +1281,16 @@
                     }]
                 },
                 options: { 
-                    responsive: true, 
+                    responsive: true,
+                    maintainAspectRatio: false, // Pozwala na niestandardowe wymiary
                     plugins: { legend: { display: false } },
                     indexAxis: 'y', // Wykres horyzontalny dla lepszej czytelności nazw sklepów
                     scales: {
                         y: { 
-                            ticks: { color: 'white'  },
+                            ticks: { 
+                                color: 'white',
+                                autoSkip: false // Wyświetla wszystkie etykiety
+                            },
                             grid: {
                                 color: 'rgba(255, 255, 255, 0.1)'
                             }
