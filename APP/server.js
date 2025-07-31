@@ -2,7 +2,8 @@ const express = require('express');
 const multer = require('multer');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const { initializeApp, cert } = require('firebase-admin/app');
-const { getFirestore } = require('firebase-admin/firestore');
+const { getFirestore, FieldValue } = require('firebase-admin/firestore');
+const { getAuth } = require('firebase-admin/auth');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const path = require('path');
@@ -50,7 +51,7 @@ const model = gemini.getGenerativeModel({ model: "gemini-1.5-flash" , });
 app.use((req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Auth-Token');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Auth-Token, Authorization');
     if (req.method === 'OPTIONS') {
         return res.sendStatus(204);
     }
@@ -61,17 +62,7 @@ app.use(express.static(path.join(__dirname)));
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
 
-const authMiddleware = (req, res, next) => {
-    const token = req.headers['x-auth-token'];
-    if (!token) return res.status(401).json({ success: false, error: 'Brak tokena.' });
-    try {
-        const decoded = jwt.verify(token, JWT_SECRET);
-        req.userId = decoded.userId;
-        next();
-    } catch (error) {
-        return res.status(401).json({ success: false, error: 'Nieprawidłowy token.' });
-    }
-};
+
 
 // --- Funkcje pomocnicze ---
 const DEFAULT_CATEGORIES = ['spożywcze', 'chemia', 'transport', 'rozrywka', 'zdrowie', 'ubrania', 'dom', 'rachunki', 'inne'];
@@ -94,6 +85,22 @@ function validateDate(dateStr) {
     }
 }
 
+// Funkcja pomocnicza do ponawiania prób z exponential backoff
+async function retryWithBackoff(fn, retries = 2, delay = 1000) {
+    try {
+        return await fn();
+    } catch (error) {
+        // Ponawiaj tylko przy błędach 503 (przeciążenie usługi)
+        if (retries > 0 && error.message && (error.message.includes('503') || error.message.includes('overloaded'))) {
+            console.log(`Błąd usługi AI (503). Ponawiam próbę za ${delay / 1000}s... (${retries} prób pozostało)`);
+            await new Promise(res => setTimeout(res, delay));
+            return retryWithBackoff(fn, retries - 1, delay * 2);
+        }
+        // Dla innych błędów lub po wyczerpaniu prób, rzuć błąd dalej
+        throw error;
+    }
+}
+
 async function extractAndCategorizePurchase(file, categories) {
     const imagePart = { inlineData: { data: file.buffer.toString("base64"), mimeType: file.mimetype } };
     const prompt = `
@@ -101,11 +108,11 @@ async function extractAndCategorizePurchase(file, categories) {
 
         Struktura JSON, której masz użyć:
         {
-        "shop": "string",
-        "date": "string (format YYYY-MM-DD)",
-        "items": [
+          "shop": "string",
+          "date": "string (format YYYY-MM-DD)",
+          "items": [
             { "name": "string", "price": number (cena PO RABACIE), "category": "string" }
-        ]
+          ]
         }
 
         Postępuj DOKŁADNIE według tych kroków:
@@ -123,29 +130,26 @@ async function extractAndCategorizePurchase(file, categories) {
         - Rabat ogólny bez nazwy produktu = rozdziel między wszystkie produkty
 
         **Obsługa Błędów**: Jeśli plik jest nieczytelny lub nie jest paragonem/fakturą, zwróć DOKŁADNIE ten JSON:
-        {
-        "shop": "Błąd odczytu",
-        "date": "${new Date().toISOString().split('T')[0]}",
-        "items": []
-        }
+        { "error": "Nie udało się odczytać danych z dokumentu. Obraz może być nieczytelny lub nie jest paragonem." }
         
         **Przykład idealnej odpowiedzi**:
         {
-        "shop": "Biedronka",
-        "date": "2025-07-25",
-        "items": [
+          "shop": "Biedronka",
+          "date": "2025-07-25",
+          "items": [
             {"name": "Sok pomarańczowy", "price": 4.50, "category": "spożywcze"},
             {"name": "Mleko 2%", "price": 2.00, "category": "spożywcze"}
-        ]
+          ]
         }
     `;
     
     try {
-        const result = await model.generateContent([prompt, imagePart]);
+        const generationFn = () => model.generateContent([prompt, imagePart]);
+        const result = await retryWithBackoff(generationFn);
+        
         const rawText = result.response.text();
         console.log("Surowa odpowiedź od AI:", rawText);
 
-        // Próba znalezienia bloku JSON, ale gotowość na parsowanie całości
         let jsonString = rawText;
         const jsonMatch = rawText.match(/```json\s*([\s\S]*?)\s*```/);
         if (jsonMatch && jsonMatch[1]) {
@@ -161,14 +165,16 @@ async function extractAndCategorizePurchase(file, categories) {
             throw new Error('AI zwróciło odpowiedź w nieprawidłowym formacie JSON.');
         }
 
-        return {
-            shop: data.shop || 'Nieznany sklep',
-            date: validateDate(data.date) || new Date().toISOString().split('T')[0],
-            items: data.items || []
-        };
+        // Jeśli AI zwróciło zdefiniowany błąd, rzuć go dalej, aby endpoint go obsłużył.
+        if (data.error) {
+            throw new Error(data.error);
+        }
+
+        return data; // Zwróć surowe dane, walidacja nastąpi w endpoincie.
+
     } catch (error) {
-        console.error("Błąd podczas przetwarzania odpowiedzi AI:", error);
-        throw new Error('Nie udało się przetworzyć odpowiedzi z AI. Sprawdź logi serwera.');
+        // Przekaż błąd (z AI, z parsowania, lub z sieci) do głównego handlera endpointu.
+        throw error;
     }
 }
 
@@ -195,7 +201,72 @@ async function updateCategoryInPurchases(userId, oldName, newName, deleteMode = 
     await batch.commit();
 }
 
+// --- Endpoint Migracyjny (jednorazowe użycie) ---
+const MIGRATION_SECRET_KEY = process.env.MIGRATION_KEY || "bardzo-tajny-klucz-do-migracji";
+
+app.post('/admin/migrate-users', async (req, res) => {
+    const providedKey = req.headers['x-migration-key'];
+    if (providedKey !== MIGRATION_SECRET_KEY) {
+        return res.status(403).json({ success: false, error: 'Brak uprawnień.' });
+    }
+
+    console.log('Rozpoczynam migrację użytkowników...');
+
+    try {
+        const usersSnapshot = await usersCollection.get();
+        if (usersSnapshot.empty) {
+            return res.status(200).json({ success: true, message: 'Brak użytkowników do migracji.' });
+        }
+
+        const usersToImport = usersSnapshot.docs.map(doc => {
+            const userData = doc.data();
+            return {
+                uid: doc.id,
+                email: userData.email,
+                passwordHash: Buffer.from(userData.password, 'utf8'),
+            };
+        });
+        
+        console.log(`Przygotowano ${usersToImport.length} użytkowników do importu.`);
+
+        const result = await getAuth().importUsers(usersToImport, {
+            hash: {
+                algorithm: 'BCRYPT'
+            }
+        });
+
+        console.log(`Pomyślnie zaimportowano ${result.successCount} użytkowników.`);
+        if (result.failureCount > 0) {
+            console.error('Błędy importu:', result.errors);
+        }
+        
+        console.log('Rozpoczynam usuwanie haseł z Firestore...');
+        const batch = db.batch();
+        usersSnapshot.docs.forEach(doc => {
+            batch.update(doc.ref, { 
+                uid: doc.id,
+                password: FieldValue.delete() 
+            });
+        });
+        await batch.commit();
+        console.log('✅ Hasła zostały usunięte z Firestore.');
+
+        res.status(200).json({
+            success: true,
+            message: 'Migracja zakończona pomyślnie!',
+            imported: result.successCount,
+            failed: result.failureCount
+        });
+
+    } catch (error) {
+        console.error("Błąd krytyczny podczas migracji:", error);
+        res.status(500).json({ success: false, error: 'Błąd serwera podczas migracji.', details: error.message });
+    }
+});
+
+
 // --- API Uwierzytelniania ---
+// ZASTĄPIONY ENDPOINT /auth/register
 app.post('/auth/register', async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -203,61 +274,64 @@ app.post('/auth/register', async (req, res) => {
             return res.status(400).json({ success: false, error: 'Email i hasło są wymagane.' });
         }
 
-        const userDoc = await usersCollection.where('email', '==', email).get();
-        if (!userDoc.empty) {
-            return res.status(400).json({ success: false, error: 'Użytkownik o tym emailu już istnieje.' });
-        }
-
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
-
-        const newUserRef = await usersCollection.add({
+        // 1. Utwórz użytkownika w Firebase Authentication
+        const userRecord = await getAuth().createUser({
             email,
-            password: hashedPassword,
-            createdAt: new Date()
+            password,
         });
 
-        res.status(201).json({ success: true, userId: newUserRef.id });
+        // 2. Utwórz dokument profilu w Firestore, używając UID z Authentication
+        await usersCollection.doc(userRecord.uid).set({
+            email: userRecord.email,
+            uid: userRecord.uid,
+            createdAt: new Date()
+            // Nie przechowujemy już hasła!
+        });
+
+        res.status(201).json({ success: true, userId: userRecord.uid });
 
     } catch (error) {
         console.error("Błąd podczas rejestracji:", error);
+        if (error.code === 'auth/email-already-exists') {
+            return res.status(400).json({ success: false, error: 'Użytkownik o tym emailu już istnieje.' });
+        }
         res.status(500).json({ success: false, error: 'Błąd serwera podczas rejestracji.' });
     }
 });
 
-app.post('/auth/login', async (req, res) => {
-    try {
-        const { email, password } = req.body;
-        if (!email || !password) {
-            return res.status(400).json({ success: false, error: 'Email i hasło są wymagane.' });
-        }
+// Endpoint /auth/login został usunięty. Logowanie odbywa się po stronie klienta.
 
-        const snapshot = await usersCollection.where('email', '==', email).limit(1).get();
-        if (snapshot.empty) {
-            return res.status(401).json({ success: false, error: 'Nieprawidłowy email lub hasło.' });
-        }
-
-        const userDoc = snapshot.docs[0];
-        const user = userDoc.data();
-
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) {
-            return res.status(401).json({ success: false, error: 'Nieprawidłowy email lub hasło.' });
-        }
-
-        const token = jwt.sign({ userId: userDoc.id }, JWT_SECRET, { expiresIn: '1h' });
-
-        res.json({ success: true, token });
-
-    } catch (error) {
-        console.error("Błąd podczas logowania:", error);
-        res.status(500).json({ success: false, error: 'Błąd serwera podczas logowania.' });
+// ZASTĄPIONY authMiddleware
+const authMiddleware = async (req, res, next) => {
+    const authHeader = req.headers.authorization; // Oczekujemy nagłówka "Authorization: Bearer <TOKEN>"
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ success: false, error: 'Brak tokena lub nieprawidłowy format.' });
     }
-});
 
-app.get('/auth/status', authMiddleware, (req, res) => {
-    // If authMiddleware passes, the token is valid.
-    res.json({ success: true, userId: req.userId });
+    const idToken = authHeader.split('Bearer ')[1];
+
+    try {
+        const decodedToken = await getAuth().verifyIdToken(idToken);
+        req.userId = decodedToken.uid; // Przypisujemy UID z tokena
+        next();
+    } catch (error) {
+        console.error("Błąd weryfikacji tokena:", error);
+        return res.status(401).json({ success: false, error: 'Nieprawidłowy lub nieważny token.' });
+    }
+};
+
+// NOWY ENDPOINT do pobierania danych zalogowanego użytkownika
+app.get('/api/user/me', authMiddleware, async (req, res) => {
+    try {
+        const userDoc = await usersCollection.doc(req.userId).get();
+        if (!userDoc.exists) {
+            return res.status(404).json({ error: 'Nie znaleziono użytkownika' });
+        }
+        res.json({ success: true, user: userDoc.data() });
+    } catch (error) {
+         res.status(500).json({ error: 'Błąd serwera' });
+    }
 });
 
 // --- API do zarządzania ZAKUPAMI ---
@@ -406,19 +480,39 @@ app.delete('/api/categories/:name', authMiddleware, async (req, res) => {
 // --- API DO ANALIZY PARAGONÓW ---
 app.post('/api/analyze-receipt', authMiddleware, upload.single('image'), async (req, res) => {
     try {
-        if (!req.file) return res.status(400).json({ success: false, error: 'Brak pliku obrazu.' });
+        if (!req.file) {
+            return res.status(400).json({ success: false, error: 'Brak pliku obrazu.' });
+        }
 
         const allPossibleCategories = await getUserCategories(req.userId);
-        const finalAnalysis = await extractAndCategorizePurchase(req.file, allPossibleCategories);
+        const analysisResult = await extractAndCategorizePurchase(req.file, allPossibleCategories);
+
+        // Jeśli wszystko jest w porządku, formatujemy i wysyłamy dane
+        const finalAnalysis = {
+            shop: analysisResult.shop || 'Nieznany sklep',
+            date: validateDate(analysisResult.date) || new Date().toISOString().split('T')[0],
+            items: analysisResult.items || []
+        };
 
         res.json({ success: true, analysis: finalAnalysis });
 
     } catch (error) {
-        console.error('Błąd w głównym procesie analizy:', error);
+        console.error('Błąd w głównym procesie analizy:', error.message);
+
+        // Błąd przeciążenia usługi AI
         if (error.message && (error.message.includes('503') || error.message.includes('overloaded'))) {
-            return res.status(503).json({ success: false, error: 'Usługa analizy AI jest chwilowo przeciążona. Spróbuj ponownie za kilka chwil.' });
+            return res.status(503).json({ 
+                success: false, 
+                error: 'Usługa analizy AI jest chwilowo przeciążona. Spróbuj ponownie za kilka chwil.' 
+            });
         }
-        res.status(500).json({ success: false, error: 'Błąd serwera podczas analizy paragonu', details: error.message });
+
+        // Inne błędy (w tym błąd odczytu z AI, błąd parsowania JSON itp.)
+        // Domyślnie zwracamy status 400, który jest odpowiedni dla błędów klienta/danych
+        res.status(400).json({ 
+            success: false, 
+            error: error.message || 'Wystąpił nieznany błąd podczas analizy paragonu.'
+        });
     }
 });
 
