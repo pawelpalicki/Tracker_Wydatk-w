@@ -447,6 +447,15 @@ app.get('/api/purchases', authMiddleware, async (req, res) => {
                 const month = dateToCheck.getUTCMonth();
                 const currentMonthStr = `${year}-${String(month + 1).padStart(2, '0')}`;
 
+                // *** NOWY WARUNEK ***
+                // Sprawdź, czy już nadszedł dzień płatności w bieżącym miesiącu
+                const isSameMonthAsToday = (today.getUTCFullYear() === year && today.getUTCMonth() === month);
+                if (isSameMonthAsToday && today.getUTCDate() < expense.dayOfMonth) {
+                    dateToCheck.setUTCMonth(dateToCheck.getUTCMonth() + 1);
+                    continue; // Przejdź do następnego miesiąca, jeśli dzień płatności jeszcze nie nadszedł
+                }
+                // *** KONIEC NOWEGO WARUNKU ***
+
                 const daysInMonth = new Date(year, month + 1, 0).getDate();
                 const actualDay = Math.min(expense.dayOfMonth, daysInMonth);
                 const newPurchaseDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(actualDay).padStart(2, '0')}`;

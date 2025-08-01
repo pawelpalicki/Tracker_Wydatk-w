@@ -2,7 +2,7 @@ const CACHE_NAME = 'tracker-wydatkow-cache-v5'; // Zwiększona wersja
 const urlsToCache = [
     '/',
     '/tracker.html',
-    '/icon.svg',
+    '/icon-new.svg',
     '/manifest.json'
 ];
 
