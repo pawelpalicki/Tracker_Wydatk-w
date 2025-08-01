@@ -662,21 +662,37 @@ app.put('/api/categories/:name', authMiddleware, async (req, res) => {
     }
 });
 
-// DELETE: Usuń kategorię we wszystkich dokumentach (zastąp przez "inne")
+// DELETE: Usuń kategorię (aktualizuje zakupy, profil użytkownika i wszystkie budżety)
 app.delete('/api/categories/:name', authMiddleware, async (req, res) => {
     const { name } = req.params;
 
     try {
-        // Krok 1: Zaktualizuj istniejące zakupy
+        // Krok 1: Zaktualizuj kategorię w istniejących zakupach na "inne"
         await updateCategoryInPurchases(req.userId, name, null, true);
 
-        // Krok 2: Usuń kategorię z listy niestandardowej użytkownika
+        // Krok 2: Usuń kategorię z listy niestandardowej w profilu użytkownika
         const userRef = usersCollection.doc(req.userId);
         await userRef.update({
             customCategories: FieldValue.arrayRemove(name)
         });
 
-        res.json({ success: true, message: `Kategoria '${name}' została usunięta.` });
+        // Krok 3: Usuń kategorię ze wszystkich zdefiniowanych budżetów tego użytkownika
+        const budgetsSnapshot = await db.collection('budgets').where('userId', '==', req.userId).get();
+        if (!budgetsSnapshot.empty) {
+            const batch = db.batch();
+            budgetsSnapshot.docs.forEach(doc => {
+                const budgetData = doc.data();
+                // Sprawdź, czy usuwana kategoria istnieje w tym budżecie
+                if (budgetData.budgets && budgetData.budgets[name]) {
+                    const newBudgets = { ...budgetData.budgets };
+                    delete newBudgets[name];
+                    batch.update(doc.ref, { budgets: newBudgets });
+                }
+            });
+            await batch.commit();
+        }
+
+        res.json({ success: true, message: `Kategoria '${name}' została usunięta, a powiązane budżety zaktualizowane.` });
 
     } catch (error) {
         console.error("Błąd usuwania kategorii:", error);
