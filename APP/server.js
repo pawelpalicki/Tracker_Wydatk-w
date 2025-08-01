@@ -624,14 +624,37 @@ app.post('/api/categories', authMiddleware, async (req, res) => {
 app.put('/api/categories/:name', authMiddleware, async (req, res) => {
     const { name: oldName } = req.params;
     const { newName } = req.body;
+    const newNameLower = newName.trim().toLowerCase();
 
-    if (!newName) {
+    if (!newNameLower) {
         return res.status(400).json({ error: 'Nowa nazwa kategorii jest wymagana.' });
     }
 
     try {
-        await updateCategoryInPurchases(req.userId, oldName, newName);
-        res.json({ success: true, message: `Kategoria '${oldName}' została zmieniona na '${newName}'.` });
+        // Krok 1: Zaktualizuj nazwę w liście niestandardowej użytkownika
+        const userRef = usersCollection.doc(req.userId);
+        await db.runTransaction(async (transaction) => {
+            const userDoc = await transaction.get(userRef);
+            if (!userDoc.exists) {
+                throw new Error("User not found");
+            }
+            const customCategories = userDoc.data().customCategories || [];
+            const oldNameIndex = customCategories.indexOf(oldName);
+
+            if (oldNameIndex > -1) {
+                customCategories.splice(oldNameIndex, 1);
+            }
+            if (!customCategories.includes(newNameLower)) {
+                customCategories.push(newNameLower);
+            }
+            
+            transaction.update(userRef, { customCategories });
+        });
+
+        // Krok 2: Zaktualizuj nazwę w istniejących zakupach
+        await updateCategoryInPurchases(req.userId, oldName, newNameLower);
+
+        res.json({ success: true, message: `Kategoria '${oldName}' została zmieniona na '${newNameLower}'.` });
 
     } catch (error) {
         console.error("Błąd zmiany nazwy kategorii:", error);
