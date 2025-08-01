@@ -1,0 +1,7 @@
+<!-- Nowa ikona pasująca do ciemnego motywu -->
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect width="512" height="512" rx="96" fill="#1F2937"/>
+<path d="M160 128H352C369.673 128 384 142.327 384 160V224C384 241.673 369.673 256 352 256H160C142.327 256 128 241.673 128 224V160C128 142.327 142.327 128 160 128Z" fill="#4F46E5"/>
+<path d="M128 288H384V352C384 369.673 369.673 384 352 384H160C142.327 384 128 369.673 128 352V288Z" fill="#3730A3"/>
+<circle cx="328" cy="192" r="24" fill="#E5E7EB"/>
+</svg>
