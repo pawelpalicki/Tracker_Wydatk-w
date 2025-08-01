@@ -687,6 +687,7 @@
                     // Odśwież wszystko, aby pobrać nową listę kategorii i przerysować interfejs
                     await fetchInitialData(false);
                     renderCategoriesList(); // Odśwież listę w ustawieniach
+                    renderBudgetInputs(); // DODANE: Odśwież listę budżetów
                 } catch (error) {
                     alert('Nie udało się dodać kategorii: ' + error.message);
                 }
@@ -1167,6 +1168,7 @@
                     await apiCall(`/api/categories/${oldName}`, 'PUT', { newName: newName.trim().toLowerCase() });
                     await fetchInitialData(false);
                     renderCategoriesList();
+                    renderBudgetInputs(); // DODANE
                 } catch (error) {
                     alert('Nie udało się zmienić nazwy: ' + error.message);
                 }
@@ -1182,6 +1184,7 @@
                     await apiCall(`/api/categories/${name}`, 'DELETE');
                     await fetchInitialData(false);
                     renderCategoriesList();
+                    renderBudgetInputs(); // DODANE
                 } catch (error) {
                     alert('Nie udało się usunąć kategorii: ' + error.message);
                 }
