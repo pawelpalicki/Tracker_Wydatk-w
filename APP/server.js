@@ -49,33 +49,27 @@ const gemini = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const model = gemini.getGenerativeModel({ model: "gemini-1.5-flash" , });
 
 // --- Middleware ---
-const cors = require('cors');
-
-// --- Middleware ---
 const allowedOrigins = [
-    'https://trackerwydatkowapp.web.app',
-    'https://tracker-wydatkow.firebaseapp.com',
-    'https://tracker-wydatkow-backend.onrender.com',
+    'https://trackerwydatkowapp.web.app', // Główna domena produkcyjna
+    'https://tracker-wydatkow.firebaseapp.com', // Starsza/alternatywna domena Firebase
+    'https://tracker-wydatkow-backend.onrender.com', // Domena backendu (na wszelki wypadek)
     'http://localhost:3001',
     'http://127.0.0.1:3001',
-    'https://3001-cs-412431879004-default.cs-europe-west4-pear.cloudshell.dev'
+    'https://3001-cs-412431879004-default.cs-europe-west4-pear.cloudshell.dev' // Twoja domena deweloperska
 ];
 
-const corsOptions = {
-    origin: function (origin, callback) {
-        if (!origin || allowedOrigins.indexOf(origin) !== -1) {
-            callback(null, true);
-        } else {
-            callback(new Error('Not allowed by CORS'));
-        }
-    },
-    credentials: true,
-    optionsSuccessStatus: 204,
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Firebase-Token', 'X-Sync-Key'] // Dodano X-Sync-Key
-};
-
-app.use(cors(corsOptions));
-app.options('* ', cors(corsOptions)); // Jawna obsługa zapytań preflight dla wszystkich tras
+app.use((req, res, next) => {
+    const origin = req.headers.origin;
+    if (allowedOrigins.includes(origin)) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+    }
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization'); // Usunięto stary X-Auth-Token
+    if (req.method === 'OPTIONS') {
+        return res.sendStatus(204);
+    }
+    next();
+});
 app.use(express.json());
 app.use(express.static(path.join(__dirname)));
 
@@ -323,29 +317,16 @@ app.post('/auth/register', async (req, res) => {
 
 // Endpoint /auth/login został usunięty. Logowanie odbywa się po stronie klienta.
 
-const SW_SYNC_SECRET = process.env.SW_SYNC_SECRET || 'bardzo-tajny-klucz-synchronizacji';
-
 // ZASTĄPIONY authMiddleware
 const authMiddleware = async (req, res, next) => {
-    // Opcja 1: Uwierzytelnianie przez Service Workera
-    const syncHeader = req.headers['x-sync-key'];
-    if (syncHeader === SW_SYNC_SECRET) {
-        const { userId } = req.body;
-        if (userId) {
-            req.userId = userId; // Zaufaj userId z ciała żądania
-            // Usuń userId z ciała, aby nie trafiło do logiki endpointu
-            delete req.body.userId;
-            return next();
-        }
-    }
-
-    // Opcja 2: Standardowe uwierzytelnianie przez token Firebase
-    const authHeader = req.headers.authorization || req.headers['x-firebase-token'];
+    const authHeader = req.headers.authorization || req.headers['x-firebase-token']; // Sprawdź oba nagłówki
+    
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
         return res.status(401).json({ success: false, error: 'Brak tokena lub nieprawidłowy format.' });
     }
 
     const idToken = authHeader.split('Bearer ')[1];
+
     try {
         const decodedToken = await getAuth().verifyIdToken(idToken);
         req.userId = decodedToken.uid; // Przypisujemy UID z tokena

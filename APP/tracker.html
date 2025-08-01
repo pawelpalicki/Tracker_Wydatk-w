@@ -18,8 +18,6 @@
     <link rel="apple-touch-icon" href="icon-new.svg">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css">
-    <script src="https://npmcdn.com/flatpickr/dist/flatpickr.min.js" defer></script>
-    <script src="https://npmcdn.com/flatpickr/dist/l10n/pl.js" defer></script>
     <style>
         .nav-btn {
             border-bottom: 4px solid transparent;
@@ -343,7 +341,6 @@
         </div>
     </div>
 
-<script src="https://cdn.jsdelivr.net/npm/idb@7/build/umd.js"></script>
 <script>
     // --- Konfiguracja Firebase (wypełnij swoimi danymi) ---
     const firebaseConfig = {
@@ -361,23 +358,9 @@
     const db = firebase.firestore();
 
     // --- Konfiguracja ---
+    // Inteligentne wykrywanie środowiska deweloperskiego (Cloud Shell)
     const IS_DEVELOPMENT = window.location.hostname.includes('cloudshell.dev');
     const API_BASE_URL = IS_DEVELOPMENT ? '' : 'https://tracker-wydatkow-backend.onrender.com';
-
-    // --- Baza Danych Offline (IndexedDB) ---
-    let idbPromise;
-    function openDatabase() {
-        if (!idbPromise) {
-            idbPromise = idb.openDB('tracker-db', 1, {
-                upgrade(db) {
-                    if (!db.objectStoreNames.contains('outbox')) {
-                        db.createObjectStore('outbox', { autoIncrement: true, keyPath: 'id' });
-                    }
-                },
-            });
-        }
-        return idbPromise;
-    }
 
     // --- Stan Aplikacji ---
     let allPurchases = [];
@@ -389,14 +372,24 @@
     let categoryChart = null;
     let comparisonChart = null;
     let shopChart = null;
-    let fp;
-    let fp_range;
+    let fp; // Declare fp globally
+    let fp_range; // For date range filter
 
     // --- Elementy DOM ---
     const loadingSection = document.getElementById('loading-section');
     const authSection = document.getElementById('auth-section');
     const appSection = document.getElementById('app-section');
-    // ... (reszta elementów DOM bez zmian)
+    const loginForm = document.getElementById('login-form');
+    const registerForm = document.getElementById('register-form');
+    const loginEmail = document.getElementById('login-email');
+    const loginPassword = document.getElementById('login-password');
+    const registerEmail = document.getElementById('register-email');
+    const registerPassword = document.getElementById('register-password');
+    const authTitle = document.getElementById('auth-title');
+    const switchAuthLink = document.getElementById('switch-auth-link');
+    const authErrorDiv = document.getElementById('auth-error');
+    
+    // Elementy Głównej Aplikacji
     const logoutBtn = document.getElementById('logout-btn');
     const navBtns = document.querySelectorAll('.nav-btn');
     const purchaseForm = document.getElementById('purchase-form');
@@ -440,6 +433,8 @@
     const budgetMonthSelect = document.getElementById('budget-month-select');
     const budgetsList = document.getElementById('budgets-list');
     const saveBudgetBtn = document.getElementById('save-budget-btn');
+
+    // Elementy filtrów
     const filterKeyword = document.getElementById('filter-keyword');
     const filterDateRange = document.getElementById('filter-date-range');
     const filterCategory = document.getElementById('filter-category');
@@ -450,26 +445,18 @@
     const filterToggle = document.getElementById('filter-toggle');
     const filtersContainer = document.getElementById('filters-container');
     const filterArrow = document.getElementById('filter-arrow');
+
+    // Elementy wydatków cyklicznych
     const recurringExpensesList = document.getElementById('recurring-expenses-list');
     const addRecurringExpenseForm = document.getElementById('add-recurring-expense-form');
     const recurringName = document.getElementById('recurring-name');
     const recurringAmount = document.getElementById('recurring-amount');
     const recurringCategory = document.getElementById('recurring-category');
     const recurringDay = document.getElementById('recurring-day');
-    const shopAutocompleteList = document.getElementById('shop-autocomplete-list');
-    const loginForm = document.getElementById('login-form');
-    const registerForm = document.getElementById('register-form');
-    const loginEmail = document.getElementById('login-email');
-    const loginPassword = document.getElementById('login-password');
-    const registerEmail = document.getElementById('register-email');
-    const registerPassword = document.getElementById('register-password');
-    const authTitle = document.getElementById('auth-title');
-    const switchAuthLink = document.getElementById('switch-auth-link');
-    const authErrorDiv = document.getElementById('auth-error');
 
+    const shopAutocompleteList = document.getElementById('shop-autocomplete-list');
 
     // --- Funkcje Pomocnicze ---
-    // ... (bez zmian)
     const categoryColors = {};
     const colorPalette = ['#3b82f6', '#10b981', '#ef4444', '#f97316', '#8b5cf6', '#ec4899', '#f59e0b', '#14b8a6', '#64748b', '#06b6d4'];
     let colorIndex = 0;
@@ -537,42 +524,24 @@
         });
     }
 
-    // --- NOWA Funkcja do komunikacji z API (z obsługą offline) ---
+    // --- Funkcja do komunikacji z API ---
     async function apiCall(endpoint, method = 'GET', body = null) {
-        // Dla zapytań GET, zawsze próbuj pobrać z sieci (obsługiwane przez SW)
-        if (method === 'GET') {
-            return fetchWithToken(endpoint, method, body);
-        }
-
-        // Dla zapytań modyfikujących dane (POST, PUT, DELETE)
-        if (!navigator.onLine) {
-            console.log('[Offline] Żądanie zapisane w outbox:', { endpoint, method, body });
-            await saveRequestToOutbox({ endpoint, method, body });
-            await registerBackgroundSync();
-            // Zwróć obietnicę, która rozwiąże się pomyślnie, aby UI mogło się zaktualizować
-            return Promise.resolve({ success: true, offline: true });
-        }
-
-        // Jeśli online, wyślij normalnie
-        try {
-            return await fetchWithToken(endpoint, method, body);
-        } catch (error) {
-            console.error('[Online] Błąd fetch, próba zapisu do outbox:', error);
-            await saveRequestToOutbox({ endpoint, method, body });
-            await registerBackgroundSync();
-            return Promise.resolve({ success: true, offline: true, error: error.message });
-        }
-    }
-
-    async function fetchWithToken(endpoint, method, body) {
         const user = auth.currentUser;
         if (!user) {
             logout();
             throw new Error('Użytkownik nie jest zalogowany.');
         }
+
         const token = await user.getIdToken();
+        
+        // Wybierz odpowiedni nagłówek w zależności od środowiska
         const authHeaderName = IS_DEVELOPMENT ? 'X-Firebase-Token' : 'Authorization';
-        const headers = { 'Content-Type': 'application/json', [authHeaderName]: `Bearer ${token}` };
+
+        const headers = {
+            'Content-Type': 'application/json',
+            [authHeaderName]: `Bearer ${token}`
+        };
+
         const options = { method, headers };
         if (body) options.body = JSON.stringify(body);
 
@@ -586,31 +555,35 @@
         if (!response.ok) throw new Error(data.error || 'Błąd serwera');
         return data;
     }
-    
-    async function saveRequestToOutbox(request) {
+
+    async function apiCallWithFile(endpoint, file) {
         const user = auth.currentUser;
         if (!user) {
-            console.error('Nie można zapisać żądania offline - użytkownik nie jest zalogowany.');
-            return;
+            logout();
+            throw new Error('Użytkownik nie jest zalogowany.');
         }
-        request.userId = user.uid; // Dołącz UserID do zapytania
-        const db = await openDatabase();
-        await db.add('outbox', request);
+
+        const token = await user.getIdToken();
+        const authHeaderName = IS_DEVELOPMENT ? 'X-Firebase-Token' : 'Authorization';
+        
+        const formData = new FormData();
+        formData.append('image', file);
+
+        const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+            method: 'POST',
+            headers: { [authHeaderName]: `Bearer ${token}` },
+            body: formData
+        });
+        if (response.status === 401) {
+            logout();
+            throw new Error('Sesja wygasła lub jest nieprawidłowa. Zaloguj się ponownie.');
+        }
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Błąd serwera');
+        return data;
     }
 
-    async function registerBackgroundSync() {
-        if ('serviceWorker' in navigator && 'SyncManager' in window) {
-            const registration = await navigator.serviceWorker.ready;
-            try {
-                await registration.sync.register('sync-outbox');
-                console.log('[Sync] Synchronizacja w tle zarejestrowana.');
-            } catch (error) {
-                console.error('[Sync] Rejestracja synchronizacji w tle nie powiodła się:', error);
-            }
-        }
-    }
-    
-    // --- Logika Uwierzytelniania (bez zmian) ---
+    // --- Logika Uwierzytelniania ---
     function setupAuthEventListeners() {
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -688,8 +661,7 @@
         // onAuthStateChanged zajmie się resztą (ukryciem app-section itp.)
     }
 
-    // --- Główna Logika Aplikacji (z drobnymi modyfikacjami) ---
-    // ... (reszta bez zmian, aż do handlePurchaseFormSubmit)
+    // --- Główna Logika Aplikacji ---
     function setupAppEventListeners() {
         navBtns.forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
         purchaseForm.addEventListener('submit', handlePurchaseFormSubmit);
@@ -866,73 +838,28 @@
 
     async function fetchInitialData(shouldSwitchToDefault = true) {
         try {
-            // Użyj `fetchWithToken` do pobierania danych, aby SW mógł je przechwycić
             [allPurchases, allCategories, allShops] = await Promise.all([
-                fetchWithToken('/api/purchases', 'GET'),
-                fetchWithToken('/api/categories', 'GET'),
-                fetchWithToken('/api/shops', 'GET')
+                apiCall('/api/purchases'),
+                apiCall('/api/categories'),
+                apiCall('/api/shops')
             ]);
             renderAll();
             populateAllSelects();
-            populateBudgetMonthSelector();
+            populateBudgetMonthSelector(); // Wypełnij selektor miesięcy w budżecie
             if (shouldSwitchToDefault) {
-                switchTab('stats');
+                switchTab('stats'); // Domyślna zakładka to kokpit
             }
         } catch (error) {
-            console.error("Błąd pobierania danych początkowych:", error);
-            // alert(error.message); // Można to odkomentować do debugowania
+            alert(error.message);
         }
     }
 
     function renderAll() {
         renderPurchasesList();
         updateMonthlyBalance();
-        renderStatistics();
+        renderStatistics(); // Od razu renderuj statystyki
     }
 
-    async function handlePurchaseFormSubmit(e) {
-        e.preventDefault();
-        const purchaseData = {
-            shop: shopInput.value,
-            date: dateInput.value,
-            items: Array.from(document.querySelectorAll('.item-row')).map(row => {
-                const name = row.querySelector('.item-name').value;
-                const price = parseFloat(row.querySelector('.item-price').value.replace(',', '.'));
-                let category = row.querySelector('.item-category-select').value;
-                if (!category || category === '__add_new__') category = 'inne';
-                return { name, price, category };
-            }).filter(item => item.name && !isNaN(item.price))
-        };
-
-        if (purchaseData.items.length === 0) {
-            alert('Dodaj przynajmniej jedną pozycję do zakupu.');
-            return;
-        }
-
-        try {
-            let result;
-            if (editMode.active) {
-                result = await apiCall(`/api/purchases/${editMode.purchaseId}`, 'PUT', purchaseData);
-            } else {
-                result = await apiCall('/api/purchases', 'POST', purchaseData);
-            }
-
-            // Optymistyczna aktualizacja UI
-            if (result && result.offline) {
-                alert('Jesteś offline. Zmiany zostaną zsynchronizowane, gdy wrócisz do sieci.');
-                // Tutaj można dodać logikę do natychmiastowej aktualizacji UI
-                // na podstawie `purchaseData`, bez czekania na serwer.
-            }
-            
-            await fetchInitialData(false);
-            switchTab('list');
-
-        } catch (error) {
-            alert('Błąd zapisu: ' + error.message);
-        }
-    }
-    
-    // ... (reszta funkcji renderujących i obsługujących zdarzenia bez zmian)
     function updateMonthlyBalance() {
         const now = new Date();
         // Użyj roku i miesiąca z `now` do stworzenia daty w lokalnej strefie czasowej, unikając problemów z UTC
@@ -1048,6 +975,38 @@
             select.innerHTML = fullHtml;
             select.value = newlySelected || currentValue;
         });
+    }
+
+    async function handlePurchaseFormSubmit(e) {
+        e.preventDefault();
+        const purchaseData = {
+            shop: shopInput.value,
+            date: dateInput.value,
+            items: Array.from(document.querySelectorAll('.item-row')).map(row => {
+                const name = row.querySelector('.item-name').value;
+                const price = parseFloat(row.querySelector('.item-price').value.replace(',', '.'));
+                let category = row.querySelector('.item-category-select').value;
+                if (!category || category === '__add_new__') category = 'inne';
+                return { name, price, category };
+            }).filter(item => item.name && !isNaN(item.price))
+        };
+
+        if (purchaseData.items.length === 0) {
+            alert('Dodaj przynajmniej jedną pozycję do zakupu.');
+            return;
+        }
+
+        try {
+            if (editMode.active) {
+                await apiCall(`/api/purchases/${editMode.purchaseId}`, 'PUT', purchaseData);
+            } else {
+                await apiCall('/api/purchases', 'POST', purchaseData);
+            }
+            await fetchInitialData(false);
+            switchTab('list');
+        } catch (error) {
+            alert('Błąd zapisu: ' + error.message);
+        }
     }
 
     function enterEditMode(purchaseId) {
@@ -1341,7 +1300,7 @@
     // --- Logika Statystyk ---
     async function renderStatistics() {
         try {
-            const initialStats = await fetchWithToken('/api/statistics', 'GET');
+            const initialStats = await apiCall('/api/statistics');
             populateMonthSelector(initialStats.availableMonths);
             await updateCategoryPieChart();
             await renderComparisonBarChart();
@@ -1379,8 +1338,8 @@
         
         // Pobierz jednocześnie statystyki wydatków i dane budżetu
         const [stats, budgetData] = await Promise.all([
-            fetchWithToken(`/api/statistics?year=${year}&month=${month}`, 'GET'),
-            fetchWithToken(`/api/budgets/${year}/${month}`, 'GET')
+            apiCall(`/api/statistics?year=${year}&month=${month}`),
+            apiCall(`/api/budgets/${year}/${month}`)
         ]);
 
         const spendingByCategory = stats.spendingByCategory;
@@ -1492,7 +1451,7 @@
             const [year, month] = selectedMonth.split('-');
 
             try {
-                const { items } = await fetchWithToken(`/api/statistics/category-details?year=${year}&month=${month}&category=${label}`, 'GET');
+                const { items } = await apiCall(`/api/statistics/category-details?year=${year}&month=${month}&category=${label}`);
                 renderCategoryDetailsModal(label, items);
             } catch (error) {
                 alert('Błąd pobierania szczegółów kategorii: ' + error.message);
@@ -1523,7 +1482,7 @@
     }
 
     async function renderComparisonBarChart() {
-        const stats = await fetchWithToken('/api/statistics/comparison', 'GET');
+        const stats = await apiCall('/api/statistics/comparison');
         const ctx = document.getElementById('comparison-chart').getContext('2d');
 
         if (comparisonChart) comparisonChart.destroy();
@@ -1579,7 +1538,7 @@
         };
 
         const [year, month] = selectedMonth.split('-');
-        const stats = await fetchWithToken(`/api/statistics/by-shop?year=${year}&month=${month}`, 'GET');
+        const stats = await apiCall(`/api/statistics/by-shop?year=${year}&month=${month}`);
         const ctx = document.getElementById('shop-chart').getContext('2d');
 
         if (shopChart) shopChart.destroy();
@@ -1668,7 +1627,7 @@
     async function renderBudgetInputs() {
         const [year, month] = budgetMonthSelect.value.split('-');
         try {
-            const { budgets } = await fetchWithToken(`/api/budgets/${year}/${month}`, 'GET');
+            const { budgets } = await apiCall(`/api/budgets/${year}/${month}`);
             budgetsList.innerHTML = allCategories.map(cat => `
                 <div class="flex justify-between items-center">
                     <label for="budget-${cat}" class="text-gray-800 dark:text-gray-200">${cat.charAt(0).toUpperCase() + cat.slice(1)}</label>
@@ -1711,7 +1670,7 @@
     // --- Logika Wydatków Cyklicznych ---
     async function renderRecurringExpenses() {
         try {
-            const expenses = await fetchWithToken('/api/recurring-expenses', 'GET');
+            const expenses = await apiCall('/api/recurring-expenses');
             recurringExpensesList.innerHTML = expenses.map(exp => `
                 <div class="flex justify-between items-center p-2 border-b border-gray-200 dark:border-gray-700">
                     <div>
@@ -1761,23 +1720,23 @@
         }
     }
 
-
     // --- Inicjalizacja Aplikacji ---
     function initializeApp() {
         setupAppEventListeners();
         fetchInitialData();
         exitEditMode();
-        openDatabase(); // Otwórz bazę danych przy starcie
     }
 
     // Główny mechanizm obsługi stanu uwierzytelnienia
     auth.onAuthStateChanged(user => {
         loadingSection.classList.add('hidden');
         if (user) {
+            // Użytkownik jest zalogowany
             authSection.classList.add('hidden');
             appSection.classList.remove('hidden');
             initializeApp();
         } else {
+            // Użytkownik jest wylogowany
             authSection.classList.remove('hidden');
             appSection.classList.add('hidden');
             if (cameraStream) {
@@ -1789,25 +1748,32 @@
 
     document.addEventListener('DOMContentLoaded', () => {
         setupAuthEventListeners();
+        // Usunięto wywołanie main() - teraz onAuthStateChanged zarządza stanem
 
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('/sw.js')
-                .then(reg => {
-                    console.log('Service Worker zarejestrowany:', reg);
-                    // Nasłuchuj na wiadomości od SW (np. o zakończeniu synchronizacji)
-                    navigator.serviceWorker.addEventListener('message', event => {
-                        if (event.data && event.data.type === 'SYNC_COMPLETE') {
-                            console.log('[App] Synchronizacja zakończona, wymuszam odświeżenie danych z sieci.');
-                            fetchInitialData(false, true); // Odśwież dane bez przełączania widoku, wymuś pobranie z sieci
-                        }
-                    });
-                })
+                .then(reg => console.log('Service Worker zarejestrowany:', reg))
                 .catch(err => console.log('Błąd rejestracji Service Workera:', err));
         }
 
-        fp = flatpickr("#date", { dateFormat: "Y-m-d", defaultDate: new Date(), altInput: true, altFormat: "F j, Y", theme: "dark", locale: "pl" });
-        fp_range = flatpickr("#filter-date-range", { mode: "range", dateFormat: "Y-m-d", altInput: true, altFormat: "F j, Y", theme: "dark", locale: "pl" });
+        // Initialize Flatpickr and store the instance
+        fp = flatpickr("#date", {
+            dateFormat: "Y-m-d",
+            defaultDate: new Date(),
+            altInput: true,
+            altFormat: "F j, Y",
+            theme: "dark" // Apply the dark theme
+        });
+
+        fp_range = flatpickr("#filter-date-range", {
+            mode: "range",
+            dateFormat: "Y-m-d",
+            altInput: true,
+            altFormat: "F j, Y",
+            theme: "dark"
+        });
     });
 </script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 </body>
 </html>
