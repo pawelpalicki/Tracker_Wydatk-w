@@ -956,7 +956,7 @@ app.get('/api/statistics/category-details', authMiddleware, async (req, res) => 
 
 // --- Trasy Główne ---
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'tracker.html')));
-app.get('/favicon.ico', (req, res) => res.sendFile(path.join(__dirname, 'icon.svg')));
+app.get('/favicon.ico', (req, res) => res.sendFile(path.join(__dirname, 'icon-new.svg')));
 
 // --- Start serwera ---
 app.listen(PORT, () => {
