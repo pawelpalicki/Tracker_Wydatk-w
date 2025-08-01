@@ -106,18 +106,15 @@
         <header class="bg-white dark:bg-gray-800 shadow-sm">
             <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-20">
                 <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Tracker Wydatków</h1>
-                <div class="flex items-center">
-                    <div id="monthly-balance" class="text-right mr-4">
-                        <p id="monthly-balance-label" class="text-sm text-gray-500 dark:text-gray-400">Wydatki w tym miesiącu</p>
-                        <p id="monthly-balance-value" class="text-xl font-bold text-blue-600 dark:text-blue-400">0.00 zł</p>
-                    </div>
-                    <button id="settings-btn" class="p-2 text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-white" title="Ustawienia">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
-                    </button>
+                <div id="monthly-balance" class="text-right mr-4">
+                    <p id="monthly-balance-label" class="text-sm text-gray-500 dark:text-gray-400">Wydatki w miesiącu</p>
+                    <p id="monthly-balance-value" class="text-xl font-bold text-blue-600 dark:text-blue-400">0.00 zł</p>
                 </div>
+                <button id="logout-btn" class="p-2 text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-white" title="Wyloguj się">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                </button>
             </div>
         </header>
 
@@ -127,6 +124,7 @@
                 <button data-tab="stats" class="nav-btn flex-1 text-center py-2 px-4 rounded-full">Kokpit</button>
                 <button data-tab="list" class="nav-btn flex-1 text-center py-2 px-4 rounded-full">Lista</button>
                 <button data-tab="add" class="nav-btn flex-1 text-center py-2 px-4 rounded-full">Dodaj</button>
+                <button data-tab="settings" class="nav-btn flex-1 text-center py-2 px-4 rounded-full">Ustawienia</button>
             </nav>
 
             <!-- Kokpit / Statystyki -->
@@ -155,6 +153,9 @@
                         </div>
                         <div id="no-data-pie-chart" class="hidden text-center py-12">
                             <p class="text-gray-500 dark:text-gray-400">Brak danych o wydatkach w wybranym miesiącu.</p>
+                        </div>
+                        <div id="budget-progress-container" class="mt-4 space-y-3">
+                            <!-- Paski postępu budżetu zostaną wyrenderowane tutaj -->
                         </div>
                     </div>
                 </div>
@@ -212,7 +213,10 @@
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                             <div class="md:col-span-2">
                                 <label for="shop" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Sklep</label>
-                                <input type="text" id="shop" required class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-3">
+                                <div class="relative">
+                                    <input type="text" id="shop" required class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-3">
+                                    <div id="shop-autocomplete-list" class="absolute z-10 w-full bg-white dark:bg-gray-600 rounded-md shadow-lg mt-1 hidden max-h-60 overflow-auto"></div>
+                                </div>
                             </div>
                             <div>
                                 <label for="date" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Data</label>
@@ -243,32 +247,71 @@
                 </div>
             </div>
 
-            <div id="list-tab" class="tab-content"><div id="purchases-list" class="space-y-4"></div></div>
-            
-            <div id="settings-modal" class="hidden fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center z-50">
-                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-md">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Ustawienia</h3>
-                        <button id="close-settings-btn" class="p-2 text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white">&times;</button>
+            <div id="list-tab" class="tab-content">
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 mb-6">
+                    <div id="filter-toggle" class="cursor-pointer flex justify-between items-center">
+                        <h4 class="text-lg font-semibold text-gray-900 dark:text-white">Filtry</h4>
+                        <svg id="filter-arrow" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-500 dark:text-gray-400 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
                     </div>
-                    
-                    <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
-                        <h4 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Zarządzaj Kategoriami</h4>
-                        <div id="categories-list" class="space-y-2 mb-4 max-h-60 overflow-y-auto"></div>
-                        
+                    <div id="filters-container" class="hidden mt-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <input type="text" id="filter-keyword" placeholder="Szukaj produktu..." class="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2">
+                            <input type="text" id="filter-date-range" placeholder="Wybierz zakres dat" class="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2">
+                            <select id="filter-category" class="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2"><option value="">Wszystkie kategorie</option></select>
+                            <select id="filter-shop" class="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2"><option value="">Wszystkie sklepy</option></select>
+                            <input type="number" id="filter-min-amount" placeholder="Kwota od" class="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2">
+                            <input type="number" id="filter-max-amount" placeholder="Kwota do" class="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2">
+                        </div>
+                        <div class="flex justify-end mt-4">
+                            <button id="clear-filters-btn" class="py-2 px-4 bg-gray-500 text-white rounded-md hover:bg-gray-600">Wyczyść filtry</button>
+                        </div>
+                    </div>
+                </div>
+                <div id="purchases-list" class="space-y-4"></div>
+            </div>
+
+            <div id="settings-tab" class="tab-content">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <!-- Zarządzanie Kategoriami -->
+                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+                        <h3 class="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Zarządzaj Kategoriami</h3>
+                        <div id="categories-list" class="space-y-2 mb-4 max-h-96 overflow-y-auto"></div>
                         <form id="add-category-form" class="flex items-center space-x-2">
                             <input type="text" id="new-category-name" placeholder="Nazwa nowej kategorii" class="flex-grow mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2">
                             <button type="submit" class="py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700">Dodaj</button>
                         </form>
                     </div>
 
-                    <div class="border-t border-gray-200 dark:border-gray-700 mt-6 pt-6">
-                         <button id="logout-btn" class="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
-                            Wyloguj się
-                        </button>
+                    <!-- Zarządzanie Budżetem -->
+                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+                        <h3 class="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Zarządzaj Budżetem</h3>
+                        <div class="flex items-center justify-between mb-3">
+                            <label for="budget-month-select" class="text-sm font-medium text-gray-700 dark:text-gray-300">Miesiąc:</label>
+                            <select id="budget-month-select" class="block w-auto rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50 text-sm"></select>
+                        </div>
+                        <div id="budgets-list" class="space-y-2 mb-4 max-h-80 overflow-y-auto"></div>
+                        <button id="save-budget-btn" class="w-full py-2 px-4 bg-green-600 text-white rounded-md hover:bg-green-700">Zapisz budżet</button>
                     </div>
                 </div>
+
+                <!-- Wydatki Cykliczne -->
+                <div class="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
+                    <h3 class="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Wydatki Cykliczne (Subskrypcje)</h3>
+                    <div id="recurring-expenses-list" class="space-y-3 mb-4"></div>
+                    <form id="add-recurring-expense-form" class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg space-y-4">
+                        <h4 class="font-semibold text-gray-800 dark:text-white">Dodaj nowy wydatek cykliczny</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <input type="text" id="recurring-name" placeholder="Nazwa (np. Netflix)" required class="md:col-span-2 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2">
+                            <input type="number" id="recurring-amount" placeholder="Kwota" required step="0.01" class="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2">
+                            <select id="recurring-category" required class="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2"></select>
+                            <input type="number" id="recurring-day" placeholder="Dzień miesiąca (1-31)" required min="1" max="31" class="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2">
+                        </div>
+                        <button type="submit" class="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700">Dodaj subskrypcję</button>
+                    </form>
+                </div>
             </div>
+            
+            <!-- Stary modal ustawień został usunięty -->
 
         </main>
     </div>
@@ -314,12 +357,14 @@
     const db = firebase.firestore();
 
     // --- Konfiguracja ---
-    const IS_LOCAL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-    const API_BASE_URL = IS_LOCAL ? 'http://localhost:3001' : 'https://tracker-wydatkow-backend.onrender.com';
+    // Inteligentne wykrywanie środowiska deweloperskiego (Cloud Shell)
+    const IS_DEVELOPMENT = window.location.hostname.includes('cloudshell.dev');
+    const API_BASE_URL = IS_DEVELOPMENT ? '' : 'https://tracker-wydatkow-backend.onrender.com';
 
     // --- Stan Aplikacji ---
     let allPurchases = [];
     let allCategories = [];
+    let allShops = [];
     let editMode = { active: false, purchaseId: null };
     let currentFile = null;
     let cameraStream = null;
@@ -327,6 +372,7 @@
     let comparisonChart = null;
     let shopChart = null;
     let fp; // Declare fp globally
+    let fp_range; // For date range filter
 
     // --- Elementy DOM ---
     const loadingSection = document.getElementById('loading-section');
@@ -343,9 +389,6 @@
     const authErrorDiv = document.getElementById('auth-error');
     
     // Elementy Głównej Aplikacji
-    const settingsBtn = document.getElementById('settings-btn');
-    const settingsModal = document.getElementById('settings-modal');
-    const closeSettingsBtn = document.getElementById('close-settings-btn');
     const logoutBtn = document.getElementById('logout-btn');
     const navBtns = document.querySelectorAll('.nav-btn');
     const purchaseForm = document.getElementById('purchase-form');
@@ -386,6 +429,31 @@
     const categoryDetailsTableBody = document.getElementById('category-details-table-body');
     const quickAddManualBtn = document.getElementById('quick-add-manual-btn');
     const quickAddScanBtn = document.getElementById('quick-add-scan-btn');
+    const budgetMonthSelect = document.getElementById('budget-month-select');
+    const budgetsList = document.getElementById('budgets-list');
+    const saveBudgetBtn = document.getElementById('save-budget-btn');
+
+    // Elementy filtrów
+    const filterKeyword = document.getElementById('filter-keyword');
+    const filterDateRange = document.getElementById('filter-date-range');
+    const filterCategory = document.getElementById('filter-category');
+    const filterShop = document.getElementById('filter-shop');
+    const filterMinAmount = document.getElementById('filter-min-amount');
+    const filterMaxAmount = document.getElementById('filter-max-amount');
+    const clearFiltersBtn = document.getElementById('clear-filters-btn');
+    const filterToggle = document.getElementById('filter-toggle');
+    const filtersContainer = document.getElementById('filters-container');
+    const filterArrow = document.getElementById('filter-arrow');
+
+    // Elementy wydatków cyklicznych
+    const recurringExpensesList = document.getElementById('recurring-expenses-list');
+    const addRecurringExpenseForm = document.getElementById('add-recurring-expense-form');
+    const recurringName = document.getElementById('recurring-name');
+    const recurringAmount = document.getElementById('recurring-amount');
+    const recurringCategory = document.getElementById('recurring-category');
+    const recurringDay = document.getElementById('recurring-day');
+
+    const shopAutocompleteList = document.getElementById('shop-autocomplete-list');
 
     // --- Funkcje Pomocnicze ---
     const categoryColors = {};
@@ -398,6 +466,24 @@
             colorIndex++;
         }
         return categoryColors[category];
+    }
+    
+    function renderShopAutocomplete(query) {
+        if (!query) {
+            shopAutocompleteList.classList.add('hidden');
+            return;
+        }
+        const filteredShops = allShops.filter(shop => shop.toLowerCase().includes(query.toLowerCase()));
+        
+        if (filteredShops.length === 0) {
+            shopAutocompleteList.classList.add('hidden');
+            return;
+        }
+
+        shopAutocompleteList.innerHTML = filteredShops.map(shop => 
+            `<div class="p-2 hover:bg-gray-100 dark:hover:bg-gray-500 cursor-pointer">${shop}</div>`
+        ).join('');
+        shopAutocompleteList.classList.remove('hidden');
     }
 
     function resizeImage(file, maxSize = 1600) {
@@ -446,9 +532,13 @@
         }
 
         const token = await user.getIdToken();
+        
+        // Wybierz odpowiedni nagłówek w zależności od środowiska
+        const authHeaderName = IS_DEVELOPMENT ? 'X-Firebase-Token' : 'Authorization';
+
         const headers = {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
+            [authHeaderName]: `Bearer ${token}`
         };
 
         const options = { method, headers };
@@ -473,12 +563,14 @@
         }
 
         const token = await user.getIdToken();
+        const authHeaderName = IS_DEVELOPMENT ? 'X-Firebase-Token' : 'Authorization';
+        
         const formData = new FormData();
         formData.append('image', file);
 
         const response = await fetch(`${API_BASE_URL}${endpoint}`, {
             method: 'POST',
-            headers: { 'Authorization': `Bearer ${token}` },
+            headers: { [authHeaderName]: `Bearer ${token}` },
             body: formData
         });
         if (response.status === 401) {
@@ -583,17 +675,7 @@
             switchTab('list');
         });
 
-        // Obsługa modala ustawień
-        settingsBtn.addEventListener('click', () => {
-            renderCategoriesList();
-            settingsModal.classList.remove('hidden');
-        });
-        closeSettingsBtn.addEventListener('click', () => settingsModal.classList.add('hidden'));
-        settingsModal.addEventListener('click', (e) => {
-            if (e.target === settingsModal) {
-                settingsModal.classList.add('hidden');
-            }
-        });
+        // Usunięto logikę modala
 
         addCategoryForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -671,6 +753,53 @@
             switchTab('add');
             setTimeout(() => startCamera(), 100);
         });
+
+        // Autouzupełnianie sklepu
+        shopInput.addEventListener('input', () => renderShopAutocomplete(shopInput.value));
+        shopInput.addEventListener('focus', () => renderShopAutocomplete(shopInput.value));
+        
+        shopAutocompleteList.addEventListener('click', (e) => {
+            if (e.target.tagName === 'DIV') {
+                shopInput.value = e.target.textContent;
+                shopAutocompleteList.classList.add('hidden');
+            }
+        });
+
+        // Ukryj autouzupełnianie po kliknięciu gdziekolwiek indziej
+        document.addEventListener('click', (e) => {
+            if (!shopInput.contains(e.target) && !shopAutocompleteList.contains(e.target)) {
+                shopAutocompleteList.classList.add('hidden');
+            }
+        });
+
+        // Zarządzanie budżetem
+        budgetMonthSelect.addEventListener('change', renderBudgetInputs);
+        saveBudgetBtn.addEventListener('click', handleSaveBudget);
+
+        // Logika filtrów
+        filterToggle.addEventListener('click', () => {
+            filtersContainer.classList.toggle('hidden');
+            filterArrow.classList.toggle('rotate-180');
+        });
+
+        [filterKeyword, filterCategory, filterShop, filterMinAmount, filterMaxAmount].forEach(el => {
+            el.addEventListener('input', () => renderPurchasesList());
+        });
+        filterDateRange.addEventListener('change', () => renderPurchasesList()); // Flatpickr trigger
+
+        clearFiltersBtn.addEventListener('click', () => {
+            filterKeyword.value = '';
+            if (fp_range) fp_range.clear();
+            filterCategory.value = '';
+            filterShop.value = '';
+            filterMinAmount.value = '';
+            filterMaxAmount.value = '';
+            renderPurchasesList();
+        });
+
+        // Logika wydatków cyklicznych
+        addRecurringExpenseForm.addEventListener('submit', handleAddRecurringExpense);
+        recurringExpensesList.addEventListener('click', handleDeleteRecurringExpense);
     }
 
     function switchTab(tabName) {
@@ -680,15 +809,42 @@
         });
         if (tabName !== 'add') exitEditMode();
         if (tabName === 'stats') renderStatistics();
+        if (tabName === 'settings') {
+            renderCategoriesList();
+            renderBudgetInputs();
+            renderRecurringExpenses();
+        }
+    }
+
+    function populateAllSelects() {
+        const categoryOptions = allCategories.map(cat => `<option value="${cat}">${cat.charAt(0).toUpperCase() + cat.slice(1)}</option>`).join('');
+        
+        // Filtry
+        filterCategory.innerHTML = '<option value="">Wszystkie kategorie</option>' + categoryOptions;
+
+        // Formularz wydatków cyklicznych
+        recurringCategory.innerHTML = categoryOptions;
+
+        // Sklepy
+        filterShop.innerHTML = '<option value="">Wszystkie sklepy</option>';
+        allShops.forEach(shop => {
+            const option = document.createElement('option');
+            option.value = shop;
+            option.textContent = shop;
+            filterShop.appendChild(option);
+        });
     }
 
     async function fetchInitialData(shouldSwitchToDefault = true) {
         try {
-            [allPurchases, allCategories] = await Promise.all([
+            [allPurchases, allCategories, allShops] = await Promise.all([
                 apiCall('/api/purchases'),
-                apiCall('/api/categories')
+                apiCall('/api/categories'),
+                apiCall('/api/shops')
             ]);
             renderAll();
+            populateAllSelects();
+            populateBudgetMonthSelector(); // Wypełnij selektor miesięcy w budżecie
             if (shouldSwitchToDefault) {
                 switchTab('stats'); // Domyślna zakładka to kokpit
             }
@@ -705,8 +861,13 @@
 
     function updateMonthlyBalance() {
         const now = new Date();
-        const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
-        const monthlyPurchases = allPurchases.filter(p => p.date >= firstDayOfMonth);
+        // Użyj roku i miesiąca z `now` do stworzenia daty w lokalnej strefie czasowej, unikając problemów z UTC
+        const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const year = firstDayOfMonth.getFullYear();
+        const month = (firstDayOfMonth.getMonth() + 1).toString().padStart(2, '0');
+        const firstDayOfMonthStr = `${year}-${month}-01`;
+
+        const monthlyPurchases = allPurchases.filter(p => p.date >= firstDayOfMonthStr);
         const total = monthlyPurchases.reduce((sum, p) => sum + (p.totalAmount || 0), 0);
         monthlyBalanceValue.textContent = `${total.toFixed(2)} zł`;
         
@@ -888,12 +1049,61 @@
     }
 
     // --- Logika Listy Zakupów ---
+    function applyFilters() {
+        const keyword = filterKeyword.value.toLowerCase();
+        const category = filterCategory.value;
+        const shop = filterShop.value;
+        const minAmount = parseFloat(filterMinAmount.value) || 0;
+        const maxAmount = parseFloat(filterMaxAmount.value) || Infinity;
+        const dateRange = fp_range.selectedDates;
+
+        let filtered = allPurchases;
+
+        // 1. Filtrowanie po dacie zakupu (poprawione, aby uwzględniać cały dzień)
+        if (dateRange.length === 2) {
+            const startDate = dateRange[0];
+            const endDate = new Date(dateRange[1]); // Utwórz kopię, aby nie modyfikować oryginału
+            endDate.setHours(23, 59, 59, 999); // Ustaw czas na koniec dnia dla pełnej inkluzywności
+
+            filtered = filtered.filter(p => {
+                // Parsuj datę zakupu jako lokalną, aby uniknąć problemów ze strefą czasową
+                const parts = p.date.split('-').map(Number);
+                const purchaseDate = new Date(parts[0], parts[1] - 1, parts[2]);
+                return purchaseDate >= startDate && purchaseDate <= endDate;
+            });
+        }
+
+        // 2. Filtrowanie po sklepie i kwocie całego zakupu
+        if (shop) filtered = filtered.filter(p => p.shop === shop);
+        filtered = filtered.filter(p => p.totalAmount >= minAmount && p.totalAmount <= maxAmount);
+
+        // 3. Filtrowanie po produktach (słowo kluczowe, kategoria)
+        if (keyword || category) {
+            filtered = filtered.map(p => {
+                const matchingItems = p.items.filter(item => {
+                    const keywordMatch = !keyword || item.name.toLowerCase().includes(keyword);
+                    const categoryMatch = !category || item.category === category;
+                    return keywordMatch && categoryMatch;
+                });
+
+                if (matchingItems.length > 0) {
+                    // Zwróć kopię zakupu tylko z pasującymi produktami
+                    return { ...p, items: matchingItems };
+                }
+                return null;
+            }).filter(p => p !== null); // Usuń zakupy, które nie mają pasujących produktów
+        }
+
+        return filtered;
+    }
+
     function renderPurchasesList() {
-        if (allPurchases.length === 0) {
+        const filteredPurchases = applyFilters();
+        if (filteredPurchases.length === 0) {
             purchasesList.innerHTML = '<div class="text-center py-12"><svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg><h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">Brak zakupów</h3><p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Zacznij dodawać wydatki, aby zobaczyć je tutaj.</p></div>';
             return;
         }
-        purchasesList.innerHTML = allPurchases.map(p => `
+        purchasesList.innerHTML = filteredPurchases.map(p => `
             <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm" data-purchase-id="${p.id}">
                 <div class="purchase-header flex justify-between items-center p-4 cursor-pointer">
                     <div class="flex items-center space-x-4">
@@ -1117,15 +1327,27 @@
         if (!selectedMonth || selectedMonth === 'Brak danych') {
             noDataPieChart.classList.remove('hidden');
             categoryChartContainer.classList.add('hidden');
+            document.getElementById('budget-progress-container').innerHTML = ''; // Wyczyść paski postępu
             return;
         };
 
         const [year, month] = selectedMonth.split('-');
-        const stats = await apiCall(`/api/statistics?year=${year}&month=${month}`);
+        
+        // Pobierz jednocześnie statystyki wydatków i dane budżetu
+        const [stats, budgetData] = await Promise.all([
+            apiCall(`/api/statistics?year=${year}&month=${month}`),
+            apiCall(`/api/budgets/${year}/${month}`)
+        ]);
+
+        const spendingByCategory = stats.spendingByCategory;
+        const budgets = budgetData.budgets || {};
+
+        // Renderuj paski postępu budżetu
+        renderBudgetProgress(spendingByCategory, budgets);
 
         const ctx = document.getElementById('category-chart').getContext('2d');
-        const labels = Object.keys(stats.spendingByCategory);
-        const data = Object.values(stats.spendingByCategory);
+        const labels = Object.keys(spendingByCategory);
+        const data = Object.values(spendingByCategory);
         const backgroundColors = labels.map(label => getCategoryColor(label));
 
         if (categoryChart) categoryChart.destroy();
@@ -1174,6 +1396,40 @@
         }
         // Po zmianie miesiąca, zaktualizuj też wykres sklepów
         await renderShopBarChart();
+    }
+
+    function renderBudgetProgress(spending, budgets) {
+        const container = document.getElementById('budget-progress-container');
+        container.innerHTML = ''; // Wyczyść poprzednie paski
+
+        const categoriesWithBudget = Object.keys(budgets);
+
+        if (categoriesWithBudget.length === 0) {
+            container.innerHTML = '<p class="text-center text-sm text-gray-500 dark:text-gray-400">Nie zdefiniowano budżetu na ten miesiąc.</p>';
+            return;
+        }
+
+        categoriesWithBudget.forEach(cat => {
+            const budgetAmount = budgets[cat];
+            const spentAmount = spending[cat] || 0;
+            const percentage = Math.min((spentAmount / budgetAmount) * 100, 100);
+
+            let bgColor = 'bg-green-500'; // Domyślnie zielony
+            if (percentage > 90) bgColor = 'bg-red-500'; // Powyżej 90% - czerwony
+            else if (percentage > 75) bgColor = 'bg-yellow-500'; // Powyżej 75% - żółty
+
+            const progressElement = document.createElement('div');
+            progressElement.innerHTML = `
+                <div class="flex justify-between items-center text-sm mb-1">
+                    <span class="font-medium text-gray-800 dark:text-gray-200">${cat.charAt(0).toUpperCase() + cat.slice(1)}</span>
+                    <span class="text-gray-600 dark:text-gray-400">${spentAmount.toFixed(2)} zł / ${budgetAmount.toFixed(2)} zł</span>
+                </div>
+                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
+                    <div class="${bgColor} h-2.5 rounded-full" style="width: ${percentage}%"></div>
+                </div>
+            `;
+            container.appendChild(progressElement);
+        });
     }
 
     async function handleCategoryChartClick(event) {
@@ -1329,6 +1585,133 @@
         }
     }
 
+    // --- Logika Budżetowania ---
+    function populateBudgetMonthSelector() {
+        budgetMonthSelect.innerHTML = '';
+        const months = [];
+        const today = new Date();
+        const currentMonthStr = today.toISOString().substring(0, 7);
+
+        // Generuj listę miesięcy: 2 poprzednie, bieżący i 12 przyszłych
+        for (let i = -2; i <= 12; i++) {
+            const d = new Date(today.getFullYear(), today.getMonth() + i, 1);
+            months.push(d.toISOString().substring(0, 7));
+        }
+        
+        // Sortuj od najnowszego do najstarszego
+        months.sort().reverse();
+
+        months.forEach(monthStr => {
+            const option = document.createElement('option');
+            option.value = monthStr;
+            const [y, m] = monthStr.split('-');
+            option.textContent = new Date(y, m - 1).toLocaleString('pl-PL', { month: 'long', year: 'numeric' });
+            
+            // Ustaw bieżący miesiąc jako domyślnie wybrany
+            if (monthStr === currentMonthStr) {
+                option.selected = true;
+            }
+            
+            budgetMonthSelect.appendChild(option);
+        });
+    }
+
+    async function renderBudgetInputs() {
+        const [year, month] = budgetMonthSelect.value.split('-');
+        try {
+            const { budgets } = await apiCall(`/api/budgets/${year}/${month}`);
+            budgetsList.innerHTML = allCategories.map(cat => `
+                <div class="flex justify-between items-center">
+                    <label for="budget-${cat}" class="text-gray-800 dark:text-gray-200">${cat.charAt(0).toUpperCase() + cat.slice(1)}</label>
+                    <input type="number" id="budget-${cat}" data-category="${cat}"
+                           class="budget-input w-32 rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-1"
+                           placeholder="0.00" value="${budgets[cat] || ''}">
+                </div>
+            `).join('');
+        } catch (error) {
+            console.error("Błąd renderowania pól budżetu:", error);
+            budgetsList.innerHTML = `<p class="text-red-500">Nie udało się załadować danych budżetu.</p>`;
+        }
+    }
+
+    async function handleSaveBudget() {
+        const [year, month] = budgetMonthSelect.value.split('-');
+        const budgetInputs = budgetsList.querySelectorAll('.budget-input');
+        const budgets = {};
+
+        budgetInputs.forEach(input => {
+            const category = input.dataset.category;
+            const amount = parseFloat(input.value);
+            if (amount > 0) {
+                budgets[category] = amount;
+            }
+        });
+
+        try {
+            await apiCall(`/api/budgets/${year}/${month}`, 'POST', { budgets });
+            alert('Budżet został pomyślnie zapisany!');
+            // Odśwież statystyki, jeśli widok kokpitu jest aktywny
+            if (document.getElementById('stats-tab').classList.contains('active')) {
+                renderStatistics();
+            }
+        } catch (error) {
+            alert('Nie udało się zapisać budżetu: ' + error.message);
+        }
+    }
+
+    // --- Logika Wydatków Cyklicznych ---
+    async function renderRecurringExpenses() {
+        try {
+            const expenses = await apiCall('/api/recurring-expenses');
+            recurringExpensesList.innerHTML = expenses.map(exp => `
+                <div class="flex justify-between items-center p-2 border-b border-gray-200 dark:border-gray-700">
+                    <div>
+                        <p class="font-semibold text-gray-900 dark:text-white">${exp.name}</p>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">${exp.amount.toFixed(2)} zł, kategoria: ${exp.category}, dzień: ${exp.dayOfMonth}</p>
+                    </div>
+                    <button data-id="${exp.id}" class="delete-recurring-btn p-1 text-red-500 hover:text-red-700" title="Usuń">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" /></svg>
+                    </button>
+                </div>
+            `).join('');
+        } catch (error) {
+            recurringExpensesList.innerHTML = `<p class="text-red-500">Nie udało się załadować wydatków cyklicznych.</p>`;
+        }
+    }
+
+    async function handleAddRecurringExpense(e) {
+        e.preventDefault();
+        const data = {
+            name: recurringName.value,
+            amount: recurringAmount.value,
+            category: recurringCategory.value,
+            dayOfMonth: recurringDay.value
+        };
+
+        try {
+            await apiCall('/api/recurring-expenses', 'POST', data);
+            addRecurringExpenseForm.reset();
+            renderRecurringExpenses();
+        } catch (error) {
+            alert('Błąd dodawania wydatku: ' + error.message);
+        }
+    }
+
+    async function handleDeleteRecurringExpense(e) {
+        const deleteBtn = e.target.closest('.delete-recurring-btn');
+        if (deleteBtn) {
+            const id = deleteBtn.dataset.id;
+            if (confirm('Czy na pewno chcesz usunąć ten wydatek cykliczny?')) {
+                try {
+                    await apiCall(`/api/recurring-expenses/${id}`, 'DELETE');
+                    renderRecurringExpenses();
+                } catch (error) {
+                    alert('Błąd usuwania wydatku: ' + error.message);
+                }
+            }
+        }
+    }
+
     // --- Inicjalizacja Aplikacji ---
     function initializeApp() {
         setupAppEventListeners();
@@ -1368,9 +1751,18 @@
         // Initialize Flatpickr and store the instance
         fp = flatpickr("#date", {
             dateFormat: "Y-m-d",
+            defaultDate: new Date(),
             altInput: true,
             altFormat: "F j, Y",
             theme: "dark" // Apply the dark theme
+        });
+
+        fp_range = flatpickr("#filter-date-range", {
+            mode: "range",
+            dateFormat: "Y-m-d",
+            altInput: true,
+            altFormat: "F j, Y",
+            theme: "dark"
         });
     });
 </script>

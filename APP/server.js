@@ -42,16 +42,29 @@ initializeApp({
 const db = getFirestore();
 const usersCollection = db.collection('users');
 const purchasesCollection = db.collection('expenses');
+const recurringExpensesCollection = db.collection('recurringExpenses');
 
 // --- Inicjalizacja Gemini AI ---
 const gemini = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const model = gemini.getGenerativeModel({ model: "gemini-1.5-flash" , });
 
 // --- Middleware ---
+const allowedOrigins = [
+    'https://tracker-wydatkow.web.app', // Główna domena produkcyjna
+    'https://trackerwydatkowapp.firebaseapp.com', // Starsza/alternatywna domena Firebase
+    'https://tracker-wydatkow-backend.onrender.com', // Domena backendu (na wszelki wypadek)
+    'http://localhost:3001',
+    'http://127.0.0.1:3001',
+    'https://3001-cs-412431879004-default.cs-europe-west4-pear.cloudshell.dev' // Twoja domena deweloperska
+];
+
 app.use((req, res, next) => {
-    res.setHeader('Access-Control-Allow-Origin', '*');
+    const origin = req.headers.origin;
+    if (allowedOrigins.includes(origin)) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+    }
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Auth-Token, Authorization');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization'); // Usunięto stary X-Auth-Token
     if (req.method === 'OPTIONS') {
         return res.sendStatus(204);
     }
@@ -303,7 +316,7 @@ app.post('/auth/register', async (req, res) => {
 
 // ZASTĄPIONY authMiddleware
 const authMiddleware = async (req, res, next) => {
-    const authHeader = req.headers.authorization; // Oczekujemy nagłówka "Authorization: Bearer <TOKEN>"
+    const authHeader = req.headers.authorization || req.headers['x-firebase-token']; // Sprawdź oba nagłówki
     
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
         return res.status(401).json({ success: false, error: 'Brak tokena lub nieprawidłowy format.' });
@@ -334,17 +347,158 @@ app.get('/api/user/me', authMiddleware, async (req, res) => {
     }
 });
 
+// --- API do zarządzania WYDATKAMI CYKLICZNYMI ---
+
+// GET: Pobierz wszystkie definicje wydatków cyklicznych
+app.get('/api/recurring-expenses', authMiddleware, async (req, res) => {
+    try {
+        const snapshot = await recurringExpensesCollection.where('userId', '==', req.userId).get();
+        const expenses = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        res.json(expenses);
+    } catch (error) {
+        console.error("Błąd pobierania wydatków cyklicznych:", error);
+        res.status(500).json({ error: 'Błąd serwera' });
+    }
+});
+
+// POST: Dodaj nową definicję wydatku cyklicznego
+app.post('/api/recurring-expenses', authMiddleware, async (req, res) => {
+    try {
+        const { name, amount, category, dayOfMonth } = req.body;
+        if (!name || !amount || !category || !dayOfMonth) {
+            return res.status(400).json({ error: 'Wszystkie pola są wymagane.' });
+        }
+
+        const createdAt = new Date();
+        // Ustaw `lastAdded` na miesiąc PRZED utworzeniem, aby zagwarantować, że logika uzupełniania historii zadziała.
+        const lastAddedDate = new Date(createdAt);
+        lastAddedDate.setUTCMonth(lastAddedDate.getUTCMonth() - 1);
+        const lastAdded = `${lastAddedDate.getUTCFullYear()}-${String(lastAddedDate.getUTCMonth() + 1).padStart(2, '0')}`;
+
+        const newExpense = {
+            userId: req.userId,
+            name,
+            amount: parseFloat(amount),
+            category,
+            dayOfMonth: parseInt(dayOfMonth),
+            createdAt: createdAt, 
+            lastAdded: lastAdded 
+        };
+
+        const docRef = await recurringExpensesCollection.add(newExpense);
+        res.status(201).json({ id: docRef.id, ...newExpense });
+    } catch (error) {
+        console.error("Błąd dodawania wydatku cyklicznego:", error);
+        res.status(500).json({ error: 'Błąd serwera' });
+    }
+});
+
+// DELETE: Usuń definicję wydatku cyklicznego
+app.delete('/api/recurring-expenses/:id', authMiddleware, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const expenseRef = recurringExpensesCollection.doc(id);
+        const doc = await expenseRef.get();
+
+        if (!doc.exists || doc.data().userId !== req.userId) {
+            return res.status(403).json({ error: 'Brak uprawnień lub wydatek nie istnieje.' });
+        }
+
+        await expenseRef.delete();
+        res.status(204).send();
+    } catch (error) {
+        console.error("Błąd usuwania wydatku cyklicznego:", error);
+        res.status(500).json({ error: 'Błąd serwera' });
+    }
+});
+
+
 // --- API do zarządzania ZAKUPAMI ---
 
-// GET: Pobierz wszystkie zakupy dla zalogowanego użytkownika
+// GET: Pobierz wszystkie zakupy dla zalogowanego użytkownika (z automatycznym dodawaniem wydatków cyklicznych)
 app.get('/api/purchases', authMiddleware, async (req, res) => {
     try {
+        const today = new Date();
+        const recurringSnapshot = await recurringExpensesCollection.where('userId', '==', req.userId).get();
+        const batch = db.batch();
+        let anyNewPurchases = false;
+
+        for (const doc of recurringSnapshot.docs) {
+            const expense = doc.data();
+            const expenseId = doc.id;
+            
+            let dateToCheck;
+            if (expense.lastAdded) {
+                dateToCheck = new Date(expense.lastAdded + '-01T12:00:00Z');
+                dateToCheck.setUTCMonth(dateToCheck.getUTCMonth() + 1);
+            } else {
+                dateToCheck = new Date(expense.createdAt.toDate());
+                dateToCheck.setUTCMonth(dateToCheck.getUTCMonth() - 1);
+            }
+            dateToCheck.setUTCDate(1);
+
+            let latestProcessedMonth = expense.lastAdded;
+
+            while (dateToCheck <= today) {
+                const year = dateToCheck.getUTCFullYear();
+                const month = dateToCheck.getUTCMonth();
+                const currentMonthStr = `${year}-${String(month + 1).padStart(2, '0')}`;
+
+                const daysInMonth = new Date(year, month + 1, 0).getDate();
+                const actualDay = Math.min(expense.dayOfMonth, daysInMonth);
+                const newPurchaseDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(actualDay).padStart(2, '0')}`;
+
+                const newPurchase = {
+                    userId: req.userId,
+                    shop: "Wydatek cykliczny",
+                    date: newPurchaseDate,
+                    items: [{ name: expense.name, price: expense.amount, category: expense.category }],
+                    totalAmount: expense.amount,
+                    createdAt: new Date(),
+                    isRecurring: true
+                };
+                
+                const newPurchaseRef = purchasesCollection.doc();
+                batch.set(newPurchaseRef, newPurchase);
+                
+                anyNewPurchases = true;
+                latestProcessedMonth = currentMonthStr;
+
+                dateToCheck.setUTCMonth(dateToCheck.getUTCMonth() + 1);
+            }
+
+            if (latestProcessedMonth !== expense.lastAdded) {
+                const expenseRef = recurringExpensesCollection.doc(expenseId);
+                batch.update(expenseRef, { lastAdded: latestProcessedMonth });
+            }
+        }
+
+        if (anyNewPurchases) {
+            await batch.commit();
+        }
+
         const snapshot = await purchasesCollection.where('userId', '==', req.userId).orderBy('date', 'desc').get();
         const purchases = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         res.json(purchases);
     } catch (error) {
         console.error("Błąd pobierania zakupów:", error);
         res.status(500).json({ error: 'Błąd serwera podczas pobierania zakupów' });
+    }
+});
+
+// GET: Pobierz wszystkie unikalne nazwy sklepów
+app.get('/api/shops', authMiddleware, async (req, res) => {
+    try {
+        const snapshot = await purchasesCollection.where('userId', '==', req.userId).get();
+        if (snapshot.empty) {
+            return res.json([]);
+        }
+        const shops = snapshot.docs.map(doc => doc.data().shop);
+        const uniqueShops = [...new Set(shops)].filter(Boolean).sort(); // Usuwa puste wpisy i sortuje
+        res.json(uniqueShops);
+    } catch (error) {
+        console.error("Błąd pobierania sklepów:", error);
+        res.status(500).json({ error: 'Błąd serwera podczas pobierania sklepów' });
     }
 });
 
@@ -476,6 +630,57 @@ app.delete('/api/categories/:name', authMiddleware, async (req, res) => {
         res.status(500).json({ error: 'Błąd serwera podczas usuwania kategorii.' });
     }
 });
+
+// --- API do zarządzania BUDŻETAMI ---
+
+// GET: Pobierz budżet na dany miesiąc
+app.get('/api/budgets/:year/:month', authMiddleware, async (req, res) => {
+    try {
+        const { year, month } = req.params;
+        const budgetId = `${req.userId}_${year}-${month}`;
+        
+        const budgetRef = db.collection('budgets').doc(budgetId);
+        const doc = await budgetRef.get();
+
+        if (!doc.exists) {
+            return res.json({ budgets: {} }); // Zwróć pusty obiekt, jeśli budżet nie jest ustawiony
+        }
+        res.json(doc.data());
+    } catch (error) {
+        console.error("Błąd pobierania budżetu:", error);
+        res.status(500).json({ error: 'Błąd serwera podczas pobierania budżetu' });
+    }
+});
+
+// POST: Ustaw lub zaktualizuj budżet na dany miesiąc
+app.post('/api/budgets/:year/:month', authMiddleware, async (req, res) => {
+    try {
+        const { year, month } = req.params;
+        const { budgets } = req.body; // Oczekujemy obiektu np. { "spożywcze": 800, "rozrywka": 200 }
+        
+        if (!budgets || typeof budgets !== 'object') {
+            return res.status(400).json({ error: 'Nieprawidłowy format danych budżetu.' });
+        }
+
+        const budgetId = `${req.userId}_${year}-${month}`;
+        const budgetRef = db.collection('budgets').doc(budgetId);
+
+        const budgetData = {
+            userId: req.userId,
+            month: `${year}-${month}`,
+            budgets,
+            updatedAt: new Date()
+        };
+
+        await budgetRef.set(budgetData, { merge: true }); // Użyj merge, aby nie nadpisywać całego dokumentu
+
+        res.status(200).json(budgetData);
+    } catch (error) {
+        console.error("Błąd zapisywania budżetu:", error);
+        res.status(500).json({ error: 'Błąd serwera podczas zapisywania budżetu' });
+    }
+});
+
 
 // --- API DO ANALIZY PARAGONÓW ---
 app.post('/api/analyze-receipt', authMiddleware, upload.single('image'), async (req, res) => {
