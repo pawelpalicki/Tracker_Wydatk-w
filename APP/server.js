@@ -620,7 +620,7 @@ app.post('/api/categories', authMiddleware, async (req, res) => {
     }
 });
 
-// PUT: Zmień nazwę kategorii we wszystkich dokumentach
+// PUT: Zmień nazwę kategorii (aktualizuje profil, zakupy i wszystkie budżety)
 app.put('/api/categories/:name', authMiddleware, async (req, res) => {
     const { name: oldName } = req.params;
     const { newName } = req.body;
@@ -653,6 +653,22 @@ app.put('/api/categories/:name', authMiddleware, async (req, res) => {
 
         // Krok 2: Zaktualizuj nazwę w istniejących zakupach
         await updateCategoryInPurchases(req.userId, oldName, newNameLower);
+
+        // Krok 3: Zaktualizuj nazwę w istniejących budżetach
+        const budgetsSnapshot = await db.collection('budgets').where('userId', '==', req.userId).get();
+        if (!budgetsSnapshot.empty) {
+            const batch = db.batch();
+            budgetsSnapshot.docs.forEach(doc => {
+                const budgetData = doc.data();
+                if (budgetData.budgets && budgetData.budgets[oldName]) {
+                    const newBudgets = { ...budgetData.budgets };
+                    newBudgets[newNameLower] = newBudgets[oldName];
+                    delete newBudgets[oldName];
+                    batch.update(doc.ref, { budgets: newBudgets });
+                }
+            });
+            await batch.commit();
+        }
 
         res.json({ success: true, message: `Kategoria '${oldName}' została zmieniona na '${newNameLower}'.` });
 
