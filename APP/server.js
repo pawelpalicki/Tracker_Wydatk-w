@@ -50,8 +50,8 @@ const model = gemini.getGenerativeModel({ model: "gemini-1.5-flash" , });
 
 // --- Middleware ---
 const allowedOrigins = [
-    'https://tracker-wydatkow.web.app', // Główna domena produkcyjna
-    'https://trackerwydatkowapp.firebaseapp.com', // Starsza/alternatywna domena Firebase
+    'https://trackerwydatkowapp.web.app', // Główna domena produkcyjna
+    'https://tracker-wydatkow.firebaseapp.com', // Starsza/alternatywna domena Firebase
     'https://tracker-wydatkow-backend.onrender.com', // Domena backendu (na wszelki wypadek)
     'http://localhost:3001',
     'http://127.0.0.1:3001',
