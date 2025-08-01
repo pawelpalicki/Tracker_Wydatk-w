@@ -81,10 +81,13 @@ const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 
 const DEFAULT_CATEGORIES = ['spożywcze', 'chemia', 'transport', 'rozrywka', 'zdrowie', 'ubrania', 'dom', 'rachunki', 'inne'];
 
 async function getUserCategories(userId) {
+    const userDoc = await usersCollection.doc(userId).get();
+    const customCategories = userDoc.exists && userDoc.data().customCategories ? userDoc.data().customCategories : [];
+
     const snapshot = await purchasesCollection.where('userId', '==', userId).get();
     const allItems = snapshot.docs.flatMap(doc => doc.data().items || []);
     const userCategories = allItems.map(item => item.category).filter(Boolean);
-    return [...new Set([...DEFAULT_CATEGORIES, ...userCategories])].sort();
+    return [...new Set([...DEFAULT_CATEGORIES, ...customCategories, ...userCategories])].sort();
 }
 
 function validateDate(dateStr) {
@@ -598,6 +601,25 @@ app.get('/api/categories', authMiddleware, async (req, res) => {
     }
 });
 
+// POST: Dodaj nową kategorię do listy niestandardowej użytkownika
+app.post('/api/categories', authMiddleware, async (req, res) => {
+    const { name } = req.body;
+    if (!name) {
+        return res.status(400).json({ error: 'Nazwa kategorii jest wymagana.' });
+    }
+
+    try {
+        const userRef = usersCollection.doc(req.userId);
+        await userRef.update({
+            customCategories: FieldValue.arrayUnion(name.trim().toLowerCase())
+        });
+        res.status(201).json({ success: true, message: `Kategoria '${name}' została dodana.` });
+    } catch (error) {
+        console.error("Błąd dodawania nowej kategorii:", error);
+        res.status(500).json({ error: 'Błąd serwera podczas dodawania kategorii.' });
+    }
+});
+
 // PUT: Zmień nazwę kategorii we wszystkich dokumentach
 app.put('/api/categories/:name', authMiddleware, async (req, res) => {
     const { name: oldName } = req.params;
@@ -622,7 +644,15 @@ app.delete('/api/categories/:name', authMiddleware, async (req, res) => {
     const { name } = req.params;
 
     try {
+        // Krok 1: Zaktualizuj istniejące zakupy
         await updateCategoryInPurchases(req.userId, name, null, true);
+
+        // Krok 2: Usuń kategorię z listy niestandardowej użytkownika
+        const userRef = usersCollection.doc(req.userId);
+        await userRef.update({
+            customCategories: FieldValue.arrayRemove(name)
+        });
+
         res.json({ success: true, message: `Kategoria '${name}' została usunięta.` });
 
     } catch (error) {

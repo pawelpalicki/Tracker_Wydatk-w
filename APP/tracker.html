@@ -682,12 +682,11 @@
             const newName = newCategoryInput.value.trim().toLowerCase();
             if (newName && !allCategories.includes(newName)) {
                 try {
-                    // Proste dodanie nowej kategorii - serwer nie wymaga endpointu
-                    allCategories.push(newName);
-                    allCategories.sort();
+                    await apiCall('/api/categories', 'POST', { name: newName });
                     newCategoryInput.value = '';
-                    renderCategoriesList();
-                    updateAllCategorySelects();
+                    // Odśwież wszystko, aby pobrać nową listę kategorii i przerysować interfejs
+                    await fetchInitialData(false);
+                    renderCategoriesList(); // Odśwież listę w ustawieniach
                 } catch (error) {
                     alert('Nie udało się dodać kategorii: ' + error.message);
                 }
