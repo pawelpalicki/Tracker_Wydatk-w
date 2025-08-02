@@ -45,6 +45,47 @@ const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 
 // --- Funkcje pomocnicze ---
 const DEFAULT_CATEGORIES = ['spożywcze', 'chemia', 'transport', 'rozrywka', 'zdrowie', 'ubrania', 'dom', 'rachunki', 'inne'];
 
+// Funkcja do pobierania kursu waluty
+async function getExchangeRate(fromCurrency, toCurrency = 'PLN') {
+    if (fromCurrency === toCurrency) return { rate: 1, success: true };
+    
+    try {
+        // Używamy darmowego API exchangerate-api.com
+        const response = await fetch(`https://api.exchangerate-api.com/v4/latest/${fromCurrency}`);
+        const data = await response.json();
+        
+        if (data.rates && data.rates[toCurrency]) {
+            return { rate: data.rates[toCurrency], success: true };
+        }
+        
+        console.warn(`Nie znaleziono kursu ${fromCurrency} -> ${toCurrency}, używam 1:1`);
+        return { rate: 1, success: false };
+    } catch (error) {
+        console.error('Błąd pobierania kursu waluty:', error);
+        return { rate: 1, success: false }; // Fallback - nie przeliczaj
+    }
+}
+
+// Funkcja do konwersji cen na PLN
+async function convertCurrencyToPLN(items, currency) {
+    if (currency === 'PLN') {
+        return { items, exchangeRate: 1, originalCurrency: 'PLN', rateSuccess: true };
+    }
+    
+    const { rate: exchangeRate, success: rateSuccess } = await getExchangeRate(currency, 'PLN');
+    const convertedItems = items.map(item => ({
+        ...item,
+        price: Math.round(item.price * exchangeRate * 100) / 100 // Zaokrąglij do 2 miejsc
+    }));
+    
+    return { 
+        items: convertedItems, 
+        exchangeRate, 
+        originalCurrency: currency,
+        rateSuccess
+    };
+}
+
 async function getUserCategories(userId) {
     const userDoc = await usersCollection.doc(userId).get();
     const customCategories = userDoc.exists && userDoc.data().customCategories ? userDoc.data().customCategories : [];
@@ -91,13 +132,14 @@ async function extractAndCategorizePurchase(file, categories) {
         {
           "shop": "string",
           "date": "string (format YYYY-MM-DD)",
+          "currency": "string (kod waluty: PLN, EUR, USD, GBP, etc.)",
           "items": [
             { "name": "string", "price": number (cena PO RABACIE), "category": "string" }
           ]
         }
 
         Postępuj DOKŁADNIE według tych kroków:
-        1.  **Dane Główne**: Wyodrębnij nazwę sklepu ('shop') i datę transakcji ('date') w formacie YYYY-MM-DD.
+        1.  **Dane Główne**: Wyodrębnij nazwę sklepu ('shop'), datę transakcji ('date') w formacie YYYY-MM-DD i walutę ('currency') - użyj kodu waluty (PLN, EUR, USD, GBP, etc.).
         2.  **Analiza Rabatów (NAJWAŻNIEJSZE)**: Znajdź wszystkie rabaty na paragonie i dopasuj je do odpowiednich produktów:
             -   Rabaty bezpośrednio przy produkcie (pod, obok, w tej samej linii)
             -   Rabaty na dole paragonu z nazwą produktu (np. "Rabat Mleko"), 
@@ -113,13 +155,27 @@ async function extractAndCategorizePurchase(file, categories) {
         **Obsługa Błędów**: Jeśli plik jest nieczytelny lub nie jest paragonem/fakturą, zwróć DOKŁADNIE ten JSON:
         { "error": "Nie udało się odczytać danych z dokumentu. Obraz może być nieczytelny lub nie jest paragonem." }
         
-        **Przykład idealnej odpowiedzi**:
+        **Przykłady idealnych odpowiedzi**:
+        
+        Polski paragon:
         {
           "shop": "Biedronka",
           "date": "2025-07-25",
+          "currency": "PLN",
           "items": [
             {"name": "Sok pomarańczowy", "price": 4.50, "category": "spożywcze"},
             {"name": "Mleko 2%", "price": 2.00, "category": "spożywcze"}
+          ]
+        }
+        
+        Zagraniczny paragon:
+        {
+          "shop": "Carrefour",
+          "date": "2025-07-25", 
+          "currency": "EUR",
+          "items": [
+            {"name": "Orange Juice", "price": 2.50, "category": "spożywcze"},
+            {"name": "Milk", "price": 1.20, "category": "spożywcze"}
           ]
         }
     `;
@@ -880,6 +936,40 @@ app.get('/api/statistics/category-details', authMiddleware, async (req, res) => 
 });
 
 // --- API DO ANALIZY PARAGONÓW ---
+
+// Endpoint do ręcznego przeliczenia kursu waluty
+app.post('/api/convert-currency', authMiddleware, async (req, res) => {
+    try {
+        const { items, fromCurrency, toCurrency = 'PLN', exchangeRate } = req.body;
+        
+        if (!items || !Array.isArray(items) || !fromCurrency || !exchangeRate) {
+            return res.status(400).json({ error: 'Brak wymaganych danych (items, fromCurrency, exchangeRate).' });
+        }
+        
+        const rate = parseFloat(exchangeRate);
+        if (isNaN(rate) || rate <= 0) {
+            return res.status(400).json({ error: 'Kurs wymiany musi być liczbą większą od zera.' });
+        }
+        
+        const convertedItems = items.map(item => ({
+            ...item,
+            price: Math.round(item.price * rate * 100) / 100 // Zaokrąglij do 2 miejsc
+        }));
+        
+        res.json({
+            success: true,
+            items: convertedItems,
+            exchangeRate: rate,
+            originalCurrency: fromCurrency,
+            currency: toCurrency
+        });
+        
+    } catch (error) {
+        console.error("Błąd ręcznego przeliczenia kursu:", error);
+        res.status(500).json({ error: 'Błąd serwera podczas przeliczania kursu.' });
+    }
+});
+
 app.post('/api/analyze-receipt', authMiddleware, async (req, res) => {
     console.log('Otrzymano żądanie analizy paragonu');
     console.log('Content-Type:', req.get('Content-Type'));
@@ -907,11 +997,19 @@ app.post('/api/analyze-receipt', authMiddleware, async (req, res) => {
         const categories = await getUserCategories(req.userId);
         const analysisResult = await extractAndCategorizePurchase(fileObject, categories);
 
+        // Konwertuj waluty na PLN jeśli potrzeba
+        const currency = analysisResult.currency || 'PLN';
+        const conversionResult = await convertCurrencyToPLN(analysisResult.items || [], currency);
+
         // Formatuj odpowiedź jak w wersji z Render.com
         const finalAnalysis = {
             shop: analysisResult.shop || 'Nieznany sklep',
             date: validateDate(analysisResult.date) || new Date().toISOString().split('T')[0],
-            items: analysisResult.items || []
+            currency: 'PLN', // Zawsze PLN po konwersji
+            originalCurrency: conversionResult.originalCurrency,
+            exchangeRate: conversionResult.exchangeRate,
+            rateSuccess: conversionResult.rateSuccess,
+            items: conversionResult.items
         };
 
         console.log('Analiza paragonu zakończona pomyślnie');
