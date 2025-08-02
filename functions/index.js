@@ -13,10 +13,10 @@ const cors = require('cors');
 // --- Konfiguracja ---
 const app = express();
 
-// Użyj zmiennych środowiskowych Firebase dla sekretów
-const JWT_SECRET = functions.config().keys.jwt_secret || 'your-super-secret-key-change-it';
-const GEMINI_API_KEY = functions.config().keys.gemini_api_key;
-const MIGRATION_SECRET_KEY = functions.config().keys.migration_key || "bardzo-tajny-klucz-do-migracji";
+// Użyj Firebase Secrets (bezpieczne)
+const JWT_SECRET = process.env.JWT_SECRET;
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const MIGRATION_SECRET_KEY = process.env.MIGRATION_SECRET_KEY;
 
 
 // --- Inicjalizacja Firebase ---
@@ -123,11 +123,11 @@ async function extractAndCategorizePurchase(file, categories) {
           ]
         }
     `;
-    
+
     try {
         const generationFn = () => model.generateContent([prompt, imagePart]);
         const result = await retryWithBackoff(generationFn);
-        
+
         const rawText = result.response.text();
         console.log("Surowa odpowiedź od AI:", rawText);
 
@@ -205,7 +205,7 @@ app.post('/admin/migrate-users', async (req, res) => {
                 passwordHash: Buffer.from(userData.password, 'utf8'),
             };
         });
-        
+
         console.log(`Przygotowano ${usersToImport.length} użytkowników do importu.`);
 
         const result = await getAuth().importUsers(usersToImport, {
@@ -218,13 +218,13 @@ app.post('/admin/migrate-users', async (req, res) => {
         if (result.failureCount > 0) {
             console.error('Błędy importu:', result.errors);
         }
-        
+
         console.log('Rozpoczynam usuwanie haseł z Firestore...');
         const batch = db.batch();
         usersSnapshot.docs.forEach(doc => {
-            batch.update(doc.ref, { 
+            batch.update(doc.ref, {
                 uid: doc.id,
-                password: FieldValue.delete() 
+                password: FieldValue.delete()
             });
         });
         await batch.commit();
@@ -283,7 +283,7 @@ app.post('/auth/register', async (req, res) => {
 // ZASTĄPIONY authMiddleware
 const authMiddleware = async (req, res, next) => {
     const authHeader = req.headers.authorization || req.headers['x-firebase-token']; // Sprawdź oba nagłówki
-    
+
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
         return res.status(401).json({ success: false, error: 'Brak tokena lub nieprawidłowy format.' });
     }
@@ -309,7 +309,7 @@ app.get('/api/user/me', authMiddleware, async (req, res) => {
         }
         res.json({ success: true, user: userDoc.data() });
     } catch (error) {
-         res.status(500).json({ error: 'Błąd serwera' });
+        res.status(500).json({ error: 'Błąd serwera' });
     }
 });
 
@@ -347,8 +347,8 @@ app.post('/api/recurring-expenses', authMiddleware, async (req, res) => {
             amount: parseFloat(amount),
             category,
             dayOfMonth: parseInt(dayOfMonth),
-            createdAt: createdAt, 
-            lastAdded: lastAdded 
+            createdAt: createdAt,
+            lastAdded: lastAdded
         };
 
         const docRef = await recurringExpensesCollection.add(newExpense);
@@ -392,7 +392,7 @@ app.get('/api/purchases', authMiddleware, async (req, res) => {
         for (const doc of recurringSnapshot.docs) {
             const expense = doc.data();
             const expenseId = doc.id;
-            
+
             let dateToCheck;
             if (expense.lastAdded) {
                 dateToCheck = new Date(expense.lastAdded + '-01T12:00:00Z');
@@ -432,10 +432,10 @@ app.get('/api/purchases', authMiddleware, async (req, res) => {
                     createdAt: new Date(),
                     isRecurring: true
                 };
-                
+
                 const newPurchaseRef = purchasesCollection.doc();
                 batch.set(newPurchaseRef, newPurchase);
-                
+
                 anyNewPurchases = true;
                 latestProcessedMonth = currentMonthStr;
 
@@ -619,7 +619,7 @@ app.put('/api/categories/:name', authMiddleware, async (req, res) => {
             if (!customCategories.includes(newNameLower)) {
                 customCategories.push(newNameLower);
             }
-            
+
             transaction.update(userRef, { customCategories });
         });
 
@@ -695,7 +695,7 @@ app.get('/api/budgets/:year/:month', authMiddleware, async (req, res) => {
     try {
         const { year, month } = req.params;
         const budgetId = `${req.userId}_${year}-${month}`;
-        
+
         const budgetRef = db.collection('budgets').doc(budgetId);
         const doc = await budgetRef.get();
 
@@ -714,7 +714,7 @@ app.post('/api/budgets/:year/:month', authMiddleware, async (req, res) => {
     try {
         const { year, month } = req.params;
         const { budgets } = req.body; // Oczekujemy obiektu np. { "spożywcze": 800, "rozrywka": 200 }
-        
+
         if (!budgets || typeof budgets !== 'object') {
             return res.status(400).json({ error: 'Nieprawidłowy format danych budżetu.' });
         }
@@ -739,44 +739,6 @@ app.post('/api/budgets/:year/:month', authMiddleware, async (req, res) => {
 });
 
 
-// --- API DO ANALIZY PARAGONÓW ---
-app.post('/api/analyze-receipt', authMiddleware, upload.single('image'), async (req, res) => {
-    try {
-        if (!req.file) {
-            return res.status(400).json({ success: false, error: 'Brak pliku obrazu.' });
-        }
-
-        const allPossibleCategories = await getUserCategories(req.userId);
-        const analysisResult = await extractAndCategorizePurchase(req.file, allPossibleCategories);
-
-        // Jeśli wszystko jest w porządku, formatujemy i wysyłamy dane
-        const finalAnalysis = {
-            shop: analysisResult.shop || 'Nieznany sklep',
-            date: validateDate(analysisResult.date) || new Date().toISOString().split('T')[0],
-            items: analysisResult.items || []
-        };
-
-        res.json({ success: true, analysis: finalAnalysis });
-
-    } catch (error) {
-        console.error('Błąd w głównym procesie analizy:', error.message);
-
-        // Błąd przeciążenia usługi AI
-        if (error.message && (error.message.includes('503') || error.message.includes('overloaded'))) {
-            return res.status(503).json({ 
-                success: false, 
-                error: 'Usługa analizy AI jest chwilowo przeciążona. Spróbuj ponownie za kilka chwil.' 
-            });
-        }
-
-        // Inne błędy (w tym błąd odczytu z AI, błąd parsowania JSON itp.)
-        // Domyślnie zwracamy status 400, który jest odpowiedni dla błędów klienta/danych
-        res.status(400).json({ 
-            success: false, 
-            error: error.message || 'Wystąpił nieznany błąd podczas analizy paragonu.'
-        });
-    }
-});
 
 // --- API do Statystyk ---
 app.get('/api/statistics', authMiddleware, async (req, res) => {
@@ -799,7 +761,7 @@ app.get('/api/statistics', authMiddleware, async (req, res) => {
         const lastDayOfMonth = new Date(targetDate.getFullYear(), targetDate.getMonth() + 1, 0).toISOString().split('T')[0];
 
         const monthlyPurchases = purchases.filter(p => p.date >= firstDayOfMonth && p.date <= lastDayOfMonth);
-        
+
         const monthlyTotal = monthlyPurchases.reduce((sum, p) => sum + (p.totalAmount || 0), 0);
 
         const spendingByCategory = monthlyPurchases
@@ -877,7 +839,7 @@ app.get('/api/statistics/by-shop', authMiddleware, async (req, res) => {
             acc[shop] = (acc[shop] || 0) + amount;
             return acc;
         }, {});
-        
+
         res.json({ spendingByShop });
 
     } catch (error) {
@@ -917,11 +879,69 @@ app.get('/api/statistics/category-details', authMiddleware, async (req, res) => 
     }
 });
 
+// --- API DO ANALIZY PARAGONÓW ---
+app.post('/api/analyze-receipt', authMiddleware, async (req, res) => {
+    console.log('Otrzymano żądanie analizy paragonu');
+    console.log('Content-Type:', req.get('Content-Type'));
+
+    try {
+        const { image, mimetype, filename, size } = req.body;
+
+        if (!image) {
+            return res.status(400).json({ error: 'Nie przesłano danych obrazu.' });
+        }
+
+        console.log('Rozpoczynam analizę paragonu...');
+        console.log('Rozmiar pliku:', size);
+        console.log('Typ pliku:', mimetype);
+        console.log('Nazwa pliku:', filename);
+
+        // Stwórz obiekt podobny do req.file z multer
+        const fileObject = {
+            buffer: Buffer.from(image, 'base64'),
+            mimetype: mimetype,
+            originalname: filename,
+            size: size
+        };
+
+        const categories = await getUserCategories(req.userId);
+        const analysisResult = await extractAndCategorizePurchase(fileObject, categories);
+
+        // Formatuj odpowiedź jak w wersji z Render.com
+        const finalAnalysis = {
+            shop: analysisResult.shop || 'Nieznany sklep',
+            date: validateDate(analysisResult.date) || new Date().toISOString().split('T')[0],
+            items: analysisResult.items || []
+        };
+
+        console.log('Analiza paragonu zakończona pomyślnie');
+        res.json({ success: true, analysis: finalAnalysis });
+
+    } catch (error) {
+        console.error("Błąd analizy paragonu:", error);
+
+        // Błąd przeciążenia usługi AI
+        if (error.message && (error.message.includes('503') || error.message.includes('overloaded'))) {
+            return res.status(503).json({
+                success: false,
+                error: 'Usługa analizy AI jest chwilowo przeciążona. Spróbuj ponownie za kilka chwil.'
+            });
+        }
+
+        res.status(400).json({
+            success: false,
+            error: error.message || 'Wystąpił nieznany błąd podczas analizy paragonu.'
+        });
+    }
+});
+
 // --- Trasy Główne ---
 // Te trasy nie są potrzebne w Cloud Function, ponieważ hosting zajmuje się serwowaniem plików.
 // app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'tracker.html')));
 // app.get('/favicon.ico', (req, res) => res.sendFile(path.join(__dirname, 'icon-new.svg')));
 
 
-// Eksportuj aplikację Express jako funkcję chmurową o nazwie 'api'
-exports.api = functions.https.onRequest(app);
+// Eksportuj aplikację Express jako funkcję chmurową o nazwie 'api' z sekretami
+exports.api = functions.https.onRequest({
+    secrets: ['JWT_SECRET', 'GEMINI_API_KEY', 'MIGRATION_SECRET_KEY']
+}, app);
