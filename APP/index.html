@@ -210,6 +210,29 @@
                         <div id="no-data-pie-chart" class="hidden text-center py-12">
                             <p class="text-gray-500 dark:text-gray-400">Brak danych o wydatkach w wybranym miesiącu.</p>
                         </div>
+                        <!-- Podsumowanie budżetu -->
+                        <div id="budget-summary-container" class="mt-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg hidden">
+                            <h4 class="text-md font-semibold text-gray-900 dark:text-white mb-3">Podsumowanie budżetu</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+                                <div class="bg-white dark:bg-gray-800 p-3 rounded-lg">
+                                    <p class="text-sm text-gray-600 dark:text-gray-400">Zaplanowany budżet</p>
+                                    <p id="total-budget" class="text-lg font-bold text-blue-600 dark:text-blue-400">0.00 zł</p>
+                                </div>
+                                <div class="bg-white dark:bg-gray-800 p-3 rounded-lg">
+                                    <p class="text-sm text-gray-600 dark:text-gray-400">Wydane</p>
+                                    <p id="total-spent" class="text-lg font-bold text-red-600 dark:text-red-400">0.00 zł</p>
+                                </div>
+                                <div class="bg-white dark:bg-gray-800 p-3 rounded-lg">
+                                    <p class="text-sm text-gray-600 dark:text-gray-400">Pozostało</p>
+                                    <p id="total-remaining" class="text-lg font-bold text-green-600 dark:text-green-400">0.00 zł</p>
+                                </div>
+                            </div>
+                            <div id="unbudgeted-expenses" class="mt-3 p-3 bg-yellow-50 dark:bg-yellow-900 rounded-lg hidden">
+                                <p class="text-sm font-medium text-yellow-800 dark:text-yellow-200">⚠️ Wydatki bez budżetu</p>
+                                <p id="unbudgeted-amount" class="text-lg font-bold text-yellow-700 dark:text-yellow-300">0.00 zł</p>
+                                <p id="unbudgeted-categories" class="text-xs text-yellow-600 dark:text-yellow-400 mt-1"></p>
+                            </div>
+                        </div>
                         <div id="budget-progress-container" class="mt-4 space-y-3">
                             <!-- Paski postępu budżetu zostaną wyrenderowane tutaj -->
                         </div>
@@ -398,7 +421,8 @@
                                 class="w-full py-2 px-4 bg-green-600 text-white rounded-md hover:bg-green-700">Zapisz
                                 budżet</button>
                             <button id="copy-budget-btn"
-                                class="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700">Kopiuj na następne miesiące</button>
+                                class="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700">Kopiuj na
+                                następne miesiące</button>
                         </div>
                     </div>
                 </div>
@@ -470,22 +494,34 @@
     </div>
 
     <!-- Modal kopiowania budżetu -->
-    <div id="copy-budget-modal" class="hidden fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center z-50">
+    <div id="copy-budget-modal"
+        class="hidden fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center z-50">
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-md">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Kopiuj budżet na następne miesiące</h3>
-                <button id="close-copy-budget-modal" class="p-2 text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white">&times;</button>
+                <button id="close-copy-budget-modal"
+                    class="p-2 text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white">&times;</button>
             </div>
             <div class="space-y-4">
-                <p class="text-gray-600 dark:text-gray-300">Na ile miesięcy do przodu chcesz skopiować obecny budżet?</p>
+                <p class="text-gray-600 dark:text-gray-300">Na ile miesięcy do przodu chcesz skopiować obecny budżet?
+                </p>
                 <div class="grid grid-cols-2 gap-3">
-                    <button class="copy-months-btn py-3 px-4 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-800 font-medium" data-months="1">1 miesiąc</button>
-                    <button class="copy-months-btn py-3 px-4 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-800 font-medium" data-months="3">3 miesiące</button>
-                    <button class="copy-months-btn py-3 px-4 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-800 font-medium" data-months="6">6 miesięcy</button>
-                    <button class="copy-months-btn py-3 px-4 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-800 font-medium" data-months="12">12 miesięcy</button>
+                    <button
+                        class="copy-months-btn py-3 px-4 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-800 font-medium"
+                        data-months="1">1 miesiąc</button>
+                    <button
+                        class="copy-months-btn py-3 px-4 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-800 font-medium"
+                        data-months="3">3 miesiące</button>
+                    <button
+                        class="copy-months-btn py-3 px-4 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-800 font-medium"
+                        data-months="6">6 miesięcy</button>
+                    <button
+                        class="copy-months-btn py-3 px-4 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-800 font-medium"
+                        data-months="12">12 miesięcy</button>
                 </div>
                 <div class="flex justify-end space-x-2 pt-4">
-                    <button id="cancel-copy-budget" class="py-2 px-4 bg-gray-500 text-white rounded-md hover:bg-gray-600">Anuluj</button>
+                    <button id="cancel-copy-budget"
+                        class="py-2 px-4 bg-gray-500 text-white rounded-md hover:bg-gray-600">Anuluj</button>
                 </div>
             </div>
         </div>
@@ -1011,7 +1047,7 @@
             budgetMonthSelect.addEventListener('change', renderBudgetInputs);
             saveBudgetBtn.addEventListener('click', handleSaveBudget);
             copyBudgetBtn.addEventListener('click', () => copyBudgetModal.classList.remove('hidden'));
-            
+
             // Modal kopiowania budżetu
             closeCopyBudgetModal.addEventListener('click', () => copyBudgetModal.classList.add('hidden'));
             cancelCopyBudget.addEventListener('click', () => copyBudgetModal.classList.add('hidden'));
@@ -1020,7 +1056,7 @@
                     copyBudgetModal.classList.add('hidden');
                 }
             });
-            
+
             // Przyciski wyboru liczby miesięcy
             copyMonthsBtns.forEach(btn => {
                 btn.addEventListener('click', () => {
@@ -1656,6 +1692,7 @@
                 noDataPieChart.classList.remove('hidden');
                 categoryChartContainer.classList.add('hidden');
                 document.getElementById('budget-progress-container').innerHTML = ''; // Wyczyść paski postępu
+                document.getElementById('budget-summary-container').classList.add('hidden'); // Ukryj podsumowanie
                 return;
             };
 
@@ -1670,8 +1707,9 @@
             const spendingByCategory = stats.spendingByCategory;
             const budgets = budgetData.budgets || {};
 
-            // Renderuj paski postępu budżetu
+            // Renderuj paski postępu budżetu i podsumowanie
             renderBudgetProgress(spendingByCategory, budgets);
+            renderBudgetSummary(spendingByCategory, budgets);
 
             const ctx = document.getElementById('category-chart').getContext('2d');
             const labels = Object.keys(spendingByCategory);
@@ -1763,6 +1801,55 @@
             `;
                 container.appendChild(progressElement);
             });
+        }
+
+        function renderBudgetSummary(spending, budgets) {
+            const summaryContainer = document.getElementById('budget-summary-container');
+            const totalBudgetEl = document.getElementById('total-budget');
+            const totalSpentEl = document.getElementById('total-spent');
+            const totalRemainingEl = document.getElementById('total-remaining');
+            const unbudgetedExpensesEl = document.getElementById('unbudgeted-expenses');
+            const unbudgetedAmountEl = document.getElementById('unbudgeted-amount');
+            const unbudgetedCategoriesEl = document.getElementById('unbudgeted-categories');
+
+            // Oblicz sumy
+            const totalBudget = Object.values(budgets).reduce((sum, amount) => sum + amount, 0);
+            const totalSpentInBudget = Object.keys(budgets).reduce((sum, cat) => sum + (spending[cat] || 0), 0);
+            const totalSpent = Object.values(spending).reduce((sum, amount) => sum + amount, 0);
+            const totalRemaining = totalBudget - totalSpentInBudget;
+
+            // Znajdź wydatki bez budżetu
+            const unbudgetedCategories = Object.keys(spending).filter(cat => !budgets[cat]);
+            const unbudgetedAmount = unbudgetedCategories.reduce((sum, cat) => sum + spending[cat], 0);
+
+            // Aktualizuj wartości
+            totalBudgetEl.textContent = `${totalBudget.toFixed(2)} zł`;
+            totalSpentEl.textContent = `${totalSpent.toFixed(2)} zł`;
+            
+            // Kolor dla pozostałej kwoty
+            if (totalRemaining >= 0) {
+                totalRemainingEl.textContent = `${totalRemaining.toFixed(2)} zł`;
+                totalRemainingEl.className = 'text-lg font-bold text-green-600 dark:text-green-400';
+            } else {
+                totalRemainingEl.textContent = `${Math.abs(totalRemaining).toFixed(2)} zł przekroczono`;
+                totalRemainingEl.className = 'text-lg font-bold text-red-600 dark:text-red-400';
+            }
+
+            // Pokaż/ukryj wydatki bez budżetu
+            if (unbudgetedAmount > 0) {
+                unbudgetedAmountEl.textContent = `${unbudgetedAmount.toFixed(2)} zł`;
+                unbudgetedCategoriesEl.textContent = `Kategorie: ${unbudgetedCategories.map(cat => cat.charAt(0).toUpperCase() + cat.slice(1)).join(', ')}`;
+                unbudgetedExpensesEl.classList.remove('hidden');
+            } else {
+                unbudgetedExpensesEl.classList.add('hidden');
+            }
+
+            // Pokaż podsumowanie tylko jeśli jest budżet
+            if (totalBudget > 0 || unbudgetedAmount > 0) {
+                summaryContainer.classList.remove('hidden');
+            } else {
+                summaryContainer.classList.add('hidden');
+            }
         }
 
         async function handleCategoryChartClick(event) {
@@ -2028,20 +2115,20 @@
                     const targetDate = new Date(currentYear, currentMonth - 1 + i, 1);
                     const targetYear = targetDate.getFullYear();
                     const targetMonth = String(targetDate.getMonth() + 1).padStart(2, '0');
-                    
+
                     promises.push(
                         apiCall(`/api/budgets/${targetYear}/${targetMonth}`, 'POST', { budgets })
                     );
                 }
 
                 await Promise.all(promises);
-                
+
                 const monthText = monthsCount === 1 ? '1 miesiąc' : `${monthsCount} miesięcy`;
                 alert(`✅ Budżet został skopiowany na następne ${monthText}!`);
-                
+
                 // Zamknij modal
                 copyBudgetModal.classList.add('hidden');
-                
+
             } catch (error) {
                 alert('Błąd podczas kopiowania budżetu: ' + error.message);
             }
