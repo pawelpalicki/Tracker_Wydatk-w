@@ -22,15 +22,21 @@
     <style>
         .nav-btn {
             border-bottom: 4px solid transparent;
-            color: #eaeaf3;
-            font-weight: 500;
+            color: #9ca3af;
             transition: border-color 0.3s, color 0.3s;
         }
 
         .nav-btn.active {
             border-bottom-color: #a19de7;
             color: #a19de7;
-            font-weight: 600;
+        }
+
+        .nav-btn svg {
+            transition: color 0.3s;
+        }
+
+        .nav-btn.active svg {
+            color: #a19de7;
         }
 
         .tab-content {
@@ -161,12 +167,28 @@
         <main class="max-w-4xl mx-auto py-6 sm:px-6 lg:px-8">
             <!-- Nawigacja w formie pigułek -->
             <nav
-                class="p-1.5 mb-6 max-w-md mx-auto bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center space-x-2">
-                <button data-tab="stats" class="nav-btn flex-1 text-center py-2 px-4 rounded-full">Kokpit</button>
-                <button data-tab="list" class="nav-btn flex-1 text-center py-2 px-4 rounded-full">Lista</button>
-                <button data-tab="add" class="nav-btn flex-1 text-center py-2 px-4 rounded-full">Dodaj</button>
-                <button data-tab="settings"
-                    class="nav-btn flex-1 text-center py-2 px-4 rounded-full">Ustawienia</button>
+                class="p-1.5 mb-6 max-w-lg mx-auto bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center space-x-1">
+                <button data-tab="stats" class="nav-btn flex-1 text-center py-3 px-2 rounded-full" title="Kokpit">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                </button>
+                <button data-tab="list" class="nav-btn flex-1 text-center py-3 px-2 rounded-full" title="Lista">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                    </svg>
+                </button>
+                <button data-tab="add" class="nav-btn flex-1 text-center py-3 px-2 rounded-full" title="Dodaj">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                </button>
+                <button data-tab="settings" class="nav-btn flex-1 text-center py-3 px-2 rounded-full" title="Ustawienia">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                </button>
             </nav>
 
             <!-- Kokpit / Statystyki -->
