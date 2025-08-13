@@ -393,9 +393,13 @@
                                 class="block w-auto rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50 text-sm"></select>
                         </div>
                         <div id="budgets-list" class="space-y-2 mb-4 max-h-80 overflow-y-auto"></div>
-                        <button id="save-budget-btn"
-                            class="w-full py-2 px-4 bg-green-600 text-white rounded-md hover:bg-green-700">Zapisz
-                            budżet</button>
+                        <div class="space-y-2">
+                            <button id="save-budget-btn"
+                                class="w-full py-2 px-4 bg-green-600 text-white rounded-md hover:bg-green-700">Zapisz
+                                budżet</button>
+                            <button id="copy-budget-btn"
+                                class="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700">Kopiuj na następne miesiące</button>
+                        </div>
                     </div>
                 </div>
 
@@ -461,6 +465,28 @@
                         <!-- Wiersze zostaną wstawione tutaj -->
                     </tbody>
                 </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal kopiowania budżetu -->
+    <div id="copy-budget-modal" class="hidden fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center z-50">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-md">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Kopiuj budżet na następne miesiące</h3>
+                <button id="close-copy-budget-modal" class="p-2 text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white">&times;</button>
+            </div>
+            <div class="space-y-4">
+                <p class="text-gray-600 dark:text-gray-300">Na ile miesięcy do przodu chcesz skopiować obecny budżet?</p>
+                <div class="grid grid-cols-2 gap-3">
+                    <button class="copy-months-btn py-3 px-4 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-800 font-medium" data-months="1">1 miesiąc</button>
+                    <button class="copy-months-btn py-3 px-4 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-800 font-medium" data-months="3">3 miesiące</button>
+                    <button class="copy-months-btn py-3 px-4 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-800 font-medium" data-months="6">6 miesięcy</button>
+                    <button class="copy-months-btn py-3 px-4 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-800 font-medium" data-months="12">12 miesięcy</button>
+                </div>
+                <div class="flex justify-end space-x-2 pt-4">
+                    <button id="cancel-copy-budget" class="py-2 px-4 bg-gray-500 text-white rounded-md hover:bg-gray-600">Anuluj</button>
+                </div>
             </div>
         </div>
     </div>
@@ -557,6 +583,11 @@
         const budgetMonthSelect = document.getElementById('budget-month-select');
         const budgetsList = document.getElementById('budgets-list');
         const saveBudgetBtn = document.getElementById('save-budget-btn');
+        const copyBudgetBtn = document.getElementById('copy-budget-btn');
+        const copyBudgetModal = document.getElementById('copy-budget-modal');
+        const closeCopyBudgetModal = document.getElementById('close-copy-budget-modal');
+        const cancelCopyBudget = document.getElementById('cancel-copy-budget');
+        const copyMonthsBtns = document.querySelectorAll('.copy-months-btn');
 
         // Elementy filtrów
         const filterKeyword = document.getElementById('filter-keyword');
@@ -979,6 +1010,24 @@
             // Zarządzanie budżetem
             budgetMonthSelect.addEventListener('change', renderBudgetInputs);
             saveBudgetBtn.addEventListener('click', handleSaveBudget);
+            copyBudgetBtn.addEventListener('click', () => copyBudgetModal.classList.remove('hidden'));
+            
+            // Modal kopiowania budżetu
+            closeCopyBudgetModal.addEventListener('click', () => copyBudgetModal.classList.add('hidden'));
+            cancelCopyBudget.addEventListener('click', () => copyBudgetModal.classList.add('hidden'));
+            copyBudgetModal.addEventListener('click', (e) => {
+                if (e.target === copyBudgetModal) {
+                    copyBudgetModal.classList.add('hidden');
+                }
+            });
+            
+            // Przyciski wyboru liczby miesięcy
+            copyMonthsBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const monthsCount = parseInt(btn.dataset.months);
+                    handleCopyBudget(monthsCount);
+                });
+            });
 
             // Logika filtrów
             filterToggle.addEventListener('click', () => {
@@ -1950,6 +1999,51 @@
                 }
             } catch (error) {
                 alert('Nie udało się zapisać budżetu: ' + error.message);
+            }
+        }
+
+        async function handleCopyBudget(monthsCount) {
+            const [currentYear, currentMonth] = budgetMonthSelect.value.split('-');
+            const budgetInputs = budgetsList.querySelectorAll('.budget-input');
+            const budgets = {};
+
+            // Pobierz obecny budżet
+            budgetInputs.forEach(input => {
+                const category = input.dataset.category;
+                const amount = parseFloat(input.value);
+                if (amount > 0) {
+                    budgets[category] = amount;
+                }
+            });
+
+            if (Object.keys(budgets).length === 0) {
+                alert('Brak budżetu do skopiowania. Najpierw ustaw budżet dla obecnego miesiąca.');
+                return;
+            }
+
+            try {
+                // Zapisz budżet na następne miesiące
+                const promises = [];
+                for (let i = 1; i <= monthsCount; i++) {
+                    const targetDate = new Date(currentYear, currentMonth - 1 + i, 1);
+                    const targetYear = targetDate.getFullYear();
+                    const targetMonth = String(targetDate.getMonth() + 1).padStart(2, '0');
+                    
+                    promises.push(
+                        apiCall(`/api/budgets/${targetYear}/${targetMonth}`, 'POST', { budgets })
+                    );
+                }
+
+                await Promise.all(promises);
+                
+                const monthText = monthsCount === 1 ? '1 miesiąc' : `${monthsCount} miesięcy`;
+                alert(`✅ Budżet został skopiowany na następne ${monthText}!`);
+                
+                // Zamknij modal
+                copyBudgetModal.classList.add('hidden');
+                
+            } catch (error) {
+                alert('Błąd podczas kopiowania budżetu: ' + error.message);
             }
         }
 
