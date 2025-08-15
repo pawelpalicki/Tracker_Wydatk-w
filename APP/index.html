@@ -766,17 +766,19 @@
                 e.preventDefault();
                 authErrorDiv.classList.add('hidden');
                 try {
-                    const response = await fetch(`${API_BASE_URL}/auth/register`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ email: registerEmail.value, password: registerPassword.value })
-                    });
-                    const data = await response.json();
-                    if (!response.ok || !data.success) throw new Error(data.error || 'Błąd rejestracji');
-                    alert('Rejestracja pomyślna! Możesz się teraz zalogować.');
-                    switchAuthForm('login');
+                    // Użyj Firebase Auth do rejestracji
+                    await auth.createUserWithEmailAndPassword(registerEmail.value, registerPassword.value);
+                    // onAuthStateChanged automatycznie przełączy na aplikację
                 } catch (error) {
-                    authErrorDiv.textContent = error.message;
+                    let message = 'Wystąpił błąd rejestracji.';
+                    if (error.code === 'auth/email-already-in-use') {
+                        message = 'Ten adres email jest już używany.';
+                    } else if (error.code === 'auth/weak-password') {
+                        message = 'Hasło jest za słabe. Użyj co najmniej 6 znaków.';
+                    } else if (error.code === 'auth/invalid-email') {
+                        message = 'Nieprawidłowy adres email.';
+                    }
+                    authErrorDiv.textContent = message;
                     authErrorDiv.classList.remove('hidden');
                 }
             });
