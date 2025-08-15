@@ -81,7 +81,7 @@ function handleNewCategory(newCategoryInput, categorySelect) {
     newCategoryInput.value = '';
     newCategoryInput.classList.add('hidden');
     categorySelect.classList.remove('hidden');
-    
+
     if (newCategory && !allCategories.includes(newCategory)) {
         allCategories.push(newCategory);
         allCategories.sort();
@@ -103,7 +103,7 @@ function updateAllCategorySelects(newlySelected = null, targetSelect = null) {
     document.querySelectorAll('.item-category-select').forEach(select => {
         const currentValue = select.value;
         select.innerHTML = fullHtml;
-        
+
         // Ustaw nową kategorię tylko w tym konkretnym select, który ją dodał
         if (targetSelect && select === targetSelect && newlySelected) {
             select.value = newlySelected;
