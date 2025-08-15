@@ -1,1 +1,1 @@
-feat: Refine desktop layout and progress bar colors
+fix: Resolve mobile layout issue for Quick Actions container
