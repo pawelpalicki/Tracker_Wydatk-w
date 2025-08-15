@@ -1,1 +1,1 @@
-refactor: Update color scheme for budget summary
+refactor: Redesign budget summary with a separate card and new color scheme
