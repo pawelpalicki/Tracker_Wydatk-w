@@ -171,7 +171,7 @@ function renderBudgetProgress(spending, budgets) {
         progressElement.innerHTML = `
             <div class="flex justify-between items-center text-sm mb-1">
                 <span class="font-medium text-gray-800 dark:text-gray-200 flex items-center">${cat.charAt(0).toUpperCase() + cat.slice(1)} ${warningIcon}</span>
-                <span class="`${amountClass}`">${spentAmount.toFixed(2)} zł / ${budgetAmount.toFixed(2)} zł</span>
+                <span class="${amountClass}">${spentAmount.toFixed(2)} zł / ${budgetAmount.toFixed(2)} zł</span>
             </div>
             <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
                 <div class="h-2.5 rounded-full" style="width: ${percentage}%; background-color: ${categoryColor};"></div>

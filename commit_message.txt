@@ -1,0 +1,1 @@
+fix: Fix JavaScript errors on budget page
