@@ -1,1 +1,1 @@
-refactor: Reorder budget stats and adjust colors
+refactor: Update color scheme for budget summary
