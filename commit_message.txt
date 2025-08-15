@@ -1,1 +1,1 @@
-feat: Replace budget summary with a compact card
+refactor: Reorder budget stats and adjust colors
