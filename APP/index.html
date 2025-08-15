@@ -1126,7 +1126,7 @@
             if (newCategory && !allCategories.includes(newCategory)) {
                 allCategories.push(newCategory);
                 allCategories.sort();
-                updateAllCategorySelects(newCategory);
+                updateAllCategorySelects(newCategory, categorySelect);
             }
             newCategoryInput.value = '';
             newCategoryInput.classList.add('hidden');
@@ -1135,14 +1135,20 @@
             else categorySelect.value = '';
         }
 
-        function updateAllCategorySelects(newlySelected = null) {
+        function updateAllCategorySelects(newlySelected = null, targetSelect = null) {
             const categoryOptions = allCategories.map(cat => `<option value="${cat}">${cat.charAt(0).toUpperCase() + cat.slice(1)}</option>`).join('');
             const fullHtml = `<option value="">Wybierz kategorię</option>${categoryOptions}<option value="__add_new__">-- Dodaj nową --</option>`;
 
             document.querySelectorAll('.item-category-select').forEach(select => {
                 const currentValue = select.value;
                 select.innerHTML = fullHtml;
-                select.value = newlySelected || currentValue;
+                
+                // Ustaw nową kategorię tylko w tym konkretnym select, który ją dodał
+                if (targetSelect && select === targetSelect && newlySelected) {
+                    select.value = newlySelected;
+                } else {
+                    select.value = currentValue;
+                }
             });
         }
 
