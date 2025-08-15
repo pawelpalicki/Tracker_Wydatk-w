@@ -1,0 +1,27 @@
+[debug] [2025-08-15T11:45:46.680Z] ----------------------------------------------------------------------
+[debug] [2025-08-15T11:45:46.691Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\Dell\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\firebase.js emulators:start --only hosting
+[debug] [2025-08-15T11:45:46.692Z] CLI Version:   14.11.1
+[debug] [2025-08-15T11:45:46.692Z] Platform:      win32
+[debug] [2025-08-15T11:45:46.693Z] Node Version:  v22.17.0
+[debug] [2025-08-15T11:45:46.693Z] Time:          Fri Aug 15 2025 13:45:46 GMT+0200 (czas środkowoeuropejski letni)
+[debug] [2025-08-15T11:45:46.694Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2025-08-15T11:45:46.699Z] >>> [apiv2][query] GET https://firebase-public.firebaseio.com/cli.json [none]
+[debug] [2025-08-15T11:45:47.115Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-08-15T11:45:47.116Z] > authorizing via signed-in user (pawelpalicki@gmail.com)
+[info] i  emulators: Starting emulators: hosting {"metadata":{"emulator":{"name":"hub"},"message":"Starting emulators: hosting"}}
+[debug] [2025-08-15T11:45:47.138Z] [logging] Logging Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2025-08-15T11:45:47.138Z] [hosting] Hosting Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2025-08-15T11:45:47.138Z] assigned listening specs for emulators {"user":{"hub":[{"address":"127.0.0.1","family":"IPv4","port":4400},{"address":"::1","family":"IPv6","port":4400}],"logging":[{"address":"127.0.0.1","family":"IPv4","port":4500}],"hosting":[{"address":"127.0.0.1","family":"IPv4","port":5000}]},"metadata":{"message":"assigned listening specs for emulators"}}
+[warn] !  emulators: It seems that you are running multiple instances of the emulator suite for project trackerwydatkowapp. This may result in unexpected behavior. 
+[debug] [2025-08-15T11:45:47.147Z] [hub] writing locator at C:\Users\Dell\AppData\Local\Temp\hub-trackerwydatkowapp.json
+[debug] [2025-08-15T11:45:47.197Z] Checked if tokens are valid: false, expires at: 1755111947748
+[debug] [2025-08-15T11:45:47.197Z] Checked if tokens are valid: false, expires at: 1755111947748
+[debug] [2025-08-15T11:45:47.198Z] > refreshing access token with scopes: []
+[debug] [2025-08-15T11:45:47.199Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2025-08-15T11:45:47.199Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-08-15T11:45:47.377Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2025-08-15T11:45:47.378Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-08-15T11:45:47.411Z] >>> [apiv2][query] GET https://firebasehosting.googleapis.com/v1beta1/projects/trackerwydatkowapp/sites 
+[debug] [2025-08-15T11:45:47.479Z] <<< [apiv2][status] GET https://firebase-public.firebaseio.com/cli.json 200
+[debug] [2025-08-15T11:45:47.480Z] <<< [apiv2][body] GET https://firebase-public.firebaseio.com/cli.json {"cloudBuildErrorAfter":1594252800000,"cloudBuildWarnAfter":1590019200000,"defaultNode10After":1594252800000,"minVersion":"3.0.5","node8DeploysDisabledAfter":1613390400000,"node8RuntimeDisabledAfter":1615809600000,"node8WarnAfter":1600128000000}

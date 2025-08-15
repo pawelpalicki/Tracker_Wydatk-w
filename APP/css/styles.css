@@ -1,0 +1,61 @@
+/* Tracker Wydatków - Custom Styles */
+
+/* Navigation buttons */
+.nav-btn {
+    border-bottom: 4px solid transparent;
+    color: #9ca3af;
+    transition: border-color 0.3s, color 0.3s;
+}
+
+.nav-btn.active {
+    border-bottom-color: #a19de7;
+    color: #a19de7;
+}
+
+.nav-btn svg {
+    transition: color 0.3s;
+}
+
+.nav-btn.active svg {
+    color: #a19de7;
+}
+
+/* Tab content visibility */
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* Category tags */
+.category-tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    margin-right: 4px;
+    margin-bottom: 4px;
+}
+
+/* Form elements */
+.item-name {
+    min-height: 48px;
+}
+
+input,
+textarea,
+select {
+    padding-left: 0.75rem !important;
+}
+
+/* Autofill styles */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 30px #4b5563 inset !important;
+    /* gray-600 */
+    -webkit-text-fill-color: #fff !important;
+}

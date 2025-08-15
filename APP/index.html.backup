@@ -19,7 +19,62 @@
     <link rel="apple-touch-icon" href="icon-new.svg">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css">
-    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        .nav-btn {
+            border-bottom: 4px solid transparent;
+            color: #9ca3af;
+            transition: border-color 0.3s, color 0.3s;
+        }
+
+        .nav-btn.active {
+            border-bottom-color: #a19de7;
+            color: #a19de7;
+        }
+
+        .nav-btn svg {
+            transition: color 0.3s;
+        }
+
+        .nav-btn.active svg {
+            color: #a19de7;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .category-tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            margin-right: 4px;
+            margin-bottom: 4px;
+        }
+
+        .item-name {
+            min-height: 48px;
+        }
+
+        input,
+        textarea,
+        select {
+            padding-left: 0.75rem !important;
+        }
+
+        input:-webkit-autofill,
+        input:-webkit-autofill:hover,
+        input:-webkit-autofill:focus,
+        input:-webkit-autofill:active {
+            -webkit-box-shadow: 0 0 0 30px #4b5563 inset !important;
+            /* gray-600 */
+            -webkit-text-fill-color: #fff !important;
+        }
+    </style>
 </head>
 
 <body class="bg-gray-50 dark:bg-gray-900">
