@@ -130,15 +130,26 @@ async function handleCopyBudget(monthsCount) {
 }
 
 function renderBudgetProgress(spending, budgets) {
+    console.log('renderBudgetProgress called with:', { spending, budgets }); // DEBUG
     const container = document.getElementById('budget-progress-container');
+    const toggleButton = document.getElementById('toggle-budget-details');
+    
+    console.log('Toggle button found:', toggleButton); // DEBUG
+    console.log('Categories with budget:', Object.keys(budgets)); // DEBUG
+
+    
     container.innerHTML = ''; // Wyczyść poprzednie paski
 
     const categoriesWithBudget = Object.keys(budgets);
 
     if (categoriesWithBudget.length === 0) {
         container.innerHTML = '<p class="text-center text-sm text-gray-500 dark:text-gray-400">Nie zdefiniowano budżetu na ten miesiąc.</p>';
+        toggleButton.classList.add('hidden'); // DODANE - ukryj przycisk gdy brak danych
         return;
     }
+
+    // DODANE - pokaż przycisk gdy są dane budżetowe
+    toggleButton.classList.remove('hidden');
 
     categoriesWithBudget.forEach(cat => {
         const budgetAmount = budgets[cat];
@@ -166,6 +177,9 @@ function renderBudgetProgress(spending, budgets) {
         `;
         container.appendChild(progressElement);
     });
+
+    // DODANE - domyślnie ukryj szczegóły (paski będą ukryte do momentu kliknięcia)
+    container.classList.add('hidden');
 }
 
 function renderBudgetSummary(spending, budgets) {
