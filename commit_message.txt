@@ -1,1 +1,1 @@
-feat: Refine desktop layout and progress bar colors
+refactor: Implement new progress bar color logic
