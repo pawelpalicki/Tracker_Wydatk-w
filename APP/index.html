@@ -1123,16 +1123,22 @@
 
         function handleNewCategory(newCategoryInput, categorySelect) {
             const newCategory = newCategoryInput.value.trim().toLowerCase();
+            newCategoryInput.value = '';
+            newCategoryInput.classList.add('hidden');
+            categorySelect.classList.remove('hidden');
+            
             if (newCategory && !allCategories.includes(newCategory)) {
                 allCategories.push(newCategory);
                 allCategories.sort();
                 updateAllCategorySelects(newCategory, categorySelect);
+                // Kategoria zostanie ustawiona w updateAllCategorySelects
+            } else if (newCategory && allCategories.includes(newCategory)) {
+                // Jeśli kategoria już istnieje, ustaw ją
+                categorySelect.value = newCategory;
+            } else {
+                // Jeśli nie ma kategorii, wyczyść select
+                categorySelect.value = '';
             }
-            newCategoryInput.value = '';
-            newCategoryInput.classList.add('hidden');
-            categorySelect.classList.remove('hidden');
-            if (newCategory) categorySelect.value = newCategory;
-            else categorySelect.value = '';
         }
 
         function updateAllCategorySelects(newlySelected = null, targetSelect = null) {
