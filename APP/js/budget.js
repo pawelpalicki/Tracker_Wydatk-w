@@ -1,5 +1,7 @@
 // Tracker Wydatków - Budget Functions
 
+let budgetDonutChart;
+
 // --- Logika Budżetowania ---
 function populateBudgetMonthSelector() {
     budgetMonthSelect.innerHTML = '';
@@ -169,7 +171,7 @@ function renderBudgetProgress(spending, budgets) {
         progressElement.innerHTML = `
             <div class="flex justify-between items-center text-sm mb-1">
                 <span class="font-medium text-gray-800 dark:text-gray-200 flex items-center">${cat.charAt(0).toUpperCase() + cat.slice(1)} ${warningIcon}</span>
-                <span class="${amountClass}">${spentAmount.toFixed(2)} zł / ${budgetAmount.toFixed(2)} zł</span>
+                <span class="`${amountClass}`">${spentAmount.toFixed(2)} zł / ${budgetAmount.toFixed(2)} zł</span>
             </div>
             <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
                 <div class="h-2.5 rounded-full" style="width: ${percentage}%; background-color: ${categoryColor};"></div>
@@ -182,11 +184,48 @@ function renderBudgetProgress(spending, budgets) {
     container.classList.add('hidden');
 }
 
+function renderBudgetDonutChart(totalBudget, totalSpentInBudget) {
+    const ctx = document.getElementById('budget-donut-chart').getContext('2d');
+    const centerTextEl = document.getElementById('budget-donut-center-text').children;
+
+    if (budgetDonutChart) {
+        budgetDonutChart.destroy();
+    }
+
+    const remaining = totalBudget - totalSpentInBudget;
+    const spentPercentage = totalBudget > 0 ? (totalSpentInBudget / totalBudget * 100) : 0;
+
+    centerTextEl[0].textContent = `${spentPercentage.toFixed(0)}%`;
+    centerTextEl[1].textContent = 'Wydano';
+
+    budgetDonutChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Wydane', 'Pozostało'],
+            datasets: [{
+                data: [totalSpentInBudget, remaining > 0 ? remaining : 0],
+                backgroundColor: ['#EF4444', '#22C55E'],
+                borderWidth: 0,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '75%',
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    enabled: false
+                }
+            }
+        }
+    });
+}
+
 function renderBudgetSummary(spending, budgets) {
     const summaryContainer = document.getElementById('budget-summary-container');
-    const totalBudgetEl = document.getElementById('total-budget');
-    const totalSpentEl = document.getElementById('total-spent');
-    const totalRemainingEl = document.getElementById('total-remaining');
     const unbudgetedExpensesEl = document.getElementById('unbudgeted-expenses');
     const unbudgetedAmountEl = document.getElementById('unbudgeted-amount');
     const unbudgetedCategoriesEl = document.getElementById('unbudgeted-categories');
@@ -194,25 +233,10 @@ function renderBudgetSummary(spending, budgets) {
     // Oblicz sumy
     const totalBudget = Object.values(budgets).reduce((sum, amount) => sum + amount, 0);
     const totalSpentInBudget = Object.keys(budgets).reduce((sum, cat) => sum + (spending[cat] || 0), 0);
-    const totalSpent = Object.values(spending).reduce((sum, amount) => sum + amount, 0);
-    const totalRemaining = totalBudget - totalSpentInBudget;
-
+    
     // Znajdź wydatki bez budżetu
     const unbudgetedCategories = Object.keys(spending).filter(cat => !budgets[cat]);
     const unbudgetedAmount = unbudgetedCategories.reduce((sum, cat) => sum + spending[cat], 0);
-
-    // Aktualizuj wartości
-    totalBudgetEl.textContent = `${totalBudget.toFixed(2)} zł`;
-    totalSpentEl.textContent = `${totalSpent.toFixed(2)} zł`;
-
-    // Kolor dla pozostałej kwoty
-    if (totalRemaining >= 0) {
-        totalRemainingEl.textContent = `${totalRemaining.toFixed(2)} zł`;
-        totalRemainingEl.className = 'text-lg font-bold text-green-600 dark:text-green-400';
-    } else {
-        totalRemainingEl.textContent = `${Math.abs(totalRemaining).toFixed(2)} zł przekroczono`;
-        totalRemainingEl.className = 'text-lg font-bold text-red-600 dark:text-red-400';
-    }
 
     // Pokaż/ukryj wydatki bez budżetu
     if (unbudgetedAmount > 0) {
@@ -226,6 +250,9 @@ function renderBudgetSummary(spending, budgets) {
     // Pokaż podsumowanie tylko jeśli jest budżet
     if (totalBudget > 0 || unbudgetedAmount > 0) {
         summaryContainer.classList.remove('hidden');
+        if (totalBudget > 0) {
+            renderBudgetDonutChart(totalBudget, totalSpentInBudget);
+        }
     } else {
         summaryContainer.classList.add('hidden');
     }
