@@ -184,58 +184,46 @@ function renderBudgetProgress(spending, budgets) {
     container.classList.add('hidden');
 }
 
-function renderBudgetDonutChart(totalBudget, totalSpentInBudget) {
-    const ctx = document.getElementById('budget-donut-chart').getContext('2d');
-    const centerTextEl = document.getElementById('budget-donut-center-text').children;
-
-    if (budgetDonutChart) {
-        budgetDonutChart.destroy();
-    }
-
-    const remaining = totalBudget - totalSpentInBudget;
-
-    centerTextEl[1].textContent = `${remaining.toFixed(2)} zł`;
-    centerTextEl[2].textContent = `Wydano: ${totalSpentInBudget.toFixed(2)} zł z ${totalBudget.toFixed(2)} zł`;
-
-    budgetDonutChart = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-            labels: ['Wydane', 'Pozostało'],
-            datasets: [{
-                data: [totalSpentInBudget, remaining > 0 ? remaining : 0],
-                backgroundColor: ['#EF4444', '#22C55E'],
-                borderWidth: 0,
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            cutout: '75%',
-            plugins: {
-                legend: {
-                    display: false
-                },
-                tooltip: {
-                    enabled: false
-                }
-            }
-        }
-    });
-}
-
 function renderBudgetSummary(spending, budgets) {
     const summaryContainer = document.getElementById('budget-summary-container');
     const unbudgetedExpensesEl = document.getElementById('unbudgeted-expenses');
     const unbudgetedAmountEl = document.getElementById('unbudgeted-amount');
     const unbudgetedCategoriesEl = document.getElementById('unbudgeted-categories');
+    const budgetProgressBar = document.getElementById('budget-progress-bar');
+    const budgetPercentage = document.getElementById('budget-percentage');
+    const summarySpent = document.getElementById('summary-spent');
+    const summaryBudget = document.getElementById('summary-budget');
+    const summaryRemaining = document.getElementById('summary-remaining');
 
     // Oblicz sumy
     const totalBudget = Object.values(budgets).reduce((sum, amount) => sum + amount, 0);
     const totalSpentInBudget = Object.keys(budgets).reduce((sum, cat) => sum + (spending[cat] || 0), 0);
-    
+    const totalRemaining = totalBudget - totalSpentInBudget;
+    const percentage = totalBudget > 0 ? (totalSpentInBudget / totalBudget) * 100 : 0;
+
     // Znajdź wydatki bez budżetu
     const unbudgetedCategories = Object.keys(spending).filter(cat => !budgets[cat]);
     const unbudgetedAmount = unbudgetedCategories.reduce((sum, cat) => sum + spending[cat], 0);
+
+    // Aktualizuj wartości
+    summarySpent.textContent = `${totalSpentInBudget.toFixed(2)} zł`;
+    summaryBudget.textContent = `${totalBudget.toFixed(2)} zł`;
+    summaryRemaining.textContent = `${totalRemaining.toFixed(2)} zł`;
+    budgetPercentage.textContent = `${percentage.toFixed(0)}%`;
+    budgetProgressBar.style.width = `${percentage}%`;
+
+    // Kolor dla paska postępu i pozostałej kwoty
+    if (percentage > 100) {
+        budgetProgressBar.classList.remove('bg-blue-600');
+        budgetProgressBar.classList.add('bg-red-600');
+        summaryRemaining.classList.remove('text-green-600', 'dark:text-green-400');
+        summaryRemaining.classList.add('text-red-600', 'dark:text-red-400');
+    } else {
+        budgetProgressBar.classList.remove('bg-red-600');
+        budgetProgressBar.classList.add('bg-blue-600');
+        summaryRemaining.classList.remove('text-red-600', 'dark:text-red-400');
+        summaryRemaining.classList.add('text-green-600', 'dark:text-green-400');
+    }
 
     // Pokaż/ukryj wydatki bez budżetu
     if (unbudgetedAmount > 0) {
@@ -249,9 +237,6 @@ function renderBudgetSummary(spending, budgets) {
     // Pokaż podsumowanie tylko jeśli jest budżet
     if (totalBudget > 0 || unbudgetedAmount > 0) {
         summaryContainer.classList.remove('hidden');
-        if (totalBudget > 0) {
-            renderBudgetDonutChart(totalBudget, totalSpentInBudget);
-        }
     } else {
         summaryContainer.classList.add('hidden');
     }

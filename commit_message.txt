@@ -1,1 +1,1 @@
-feat: Improve budget donut chart with more details
+feat: Replace budget summary with a compact card
