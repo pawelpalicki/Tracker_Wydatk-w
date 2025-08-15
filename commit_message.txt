@@ -1,1 +1,1 @@
-fix: Fix JavaScript errors on budget page
+feat: Improve budget donut chart with more details

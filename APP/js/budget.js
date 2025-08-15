@@ -193,10 +193,9 @@ function renderBudgetDonutChart(totalBudget, totalSpentInBudget) {
     }
 
     const remaining = totalBudget - totalSpentInBudget;
-    const spentPercentage = totalBudget > 0 ? (totalSpentInBudget / totalBudget * 100) : 0;
 
-    centerTextEl[0].textContent = `${spentPercentage.toFixed(0)}%`;
-    centerTextEl[1].textContent = 'Wydano';
+    centerTextEl[1].textContent = `${remaining.toFixed(2)} zł`;
+    centerTextEl[2].textContent = `Wydano: ${totalSpentInBudget.toFixed(2)} zł z ${totalBudget.toFixed(2)} zł`;
 
     budgetDonutChart = new Chart(ctx, {
         type: 'doughnut',
