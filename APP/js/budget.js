@@ -214,15 +214,15 @@ function renderBudgetSummary(spending, budgets) {
 
     // Kolor dla paska postępu i pozostałej kwoty
     if (percentage > 100) {
-        budgetProgressBar.classList.remove('bg-green-600');
+        budgetProgressBar.classList.remove('bg-blue-600');
         budgetProgressBar.classList.add('bg-red-600');
-        summaryRemaining.classList.remove('text-gray-900', 'dark:text-white');
+        summaryRemaining.classList.remove('text-green-600', 'dark:text-green-400');
         summaryRemaining.classList.add('text-red-600', 'dark:text-red-400');
     } else {
         budgetProgressBar.classList.remove('bg-red-600');
-        budgetProgressBar.classList.add('bg-green-600');
+        budgetProgressBar.classList.add('bg-blue-600');
         summaryRemaining.classList.remove('text-red-600', 'dark:text-red-400');
-        summaryRemaining.classList.add('text-gray-900', 'dark:text-white');
+        summaryRemaining.classList.add('text-green-600', 'dark:text-green-400');
     }
 
     // Pokaż/ukryj wydatki bez budżetu

@@ -1,1 +1,1 @@
-refactor: Update color scheme for budget summary to be more intuitive
+refactor: Implement new progress bar color logic
