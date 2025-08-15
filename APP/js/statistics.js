@@ -77,11 +77,12 @@ async function updateCategoryPieChart() {
                 maintainAspectRatio: false,
                 plugins: {
                     legend: {
-                        position: 'right',
+                        position: 'bottom',
                         labels: {
                             boxWidth: 12,
-                            padding: 15,
-                            color: 'white'
+                            padding: 8,
+                            color: 'white',
+                            usePointStyle: true
                         }
                     },
                     tooltip: {
