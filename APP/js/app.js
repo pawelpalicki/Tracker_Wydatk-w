@@ -335,6 +335,9 @@ function setupAppEventListeners() {
     // Logika wydatków cyklicznych
     addRecurringExpenseForm.addEventListener('submit', handleAddRecurringExpense);
     recurringExpensesList.addEventListener('click', handleDeleteRecurringExpense);
+
+    // DODAJ TEN EVENT LISTENER TUTAJ:
+    document.getElementById('toggle-budget-details').addEventListener('click', toggleBudgetDetails);
 }
 
 function populateAllSelects() {

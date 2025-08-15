@@ -148,3 +148,22 @@ function renderShopAutocomplete(query) {
     ).join('');
     shopAutocompleteList.classList.remove('hidden');
 }
+// --- Przełączanie szczegółów budżetu ---
+function toggleBudgetDetails() {
+    const container = document.getElementById('budget-progress-container');
+    const button = document.getElementById('toggle-budget-details');
+    const text = document.getElementById('toggle-budget-text');
+    const icon = document.getElementById('toggle-budget-icon');
+    
+    const isHidden = container.classList.contains('hidden');
+    
+    if (isHidden) {
+        container.classList.remove('hidden');
+        text.textContent = 'Ukryj szczegóły budżetu';
+        icon.classList.add('rotate-180');
+    } else {
+        container.classList.add('hidden');
+        text.textContent = 'Pokaż szczegóły budżetu';
+        icon.classList.remove('rotate-180');
+    }
+}
