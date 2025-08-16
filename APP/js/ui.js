@@ -9,7 +9,9 @@ function switchTab(tabName) {
     if (tabName !== 'add') exitEditMode();
     if (tabName === 'stats') {
         renderStatistics();
-        // Inicjalizuj analizę długoterminową budżetu przy pierwszym wejściu na zakładkę stats
+    }
+    if (tabName === 'analysis') {
+        // Inicjalizuj analizę długoterminową budżetu przy pierwszym wejściu na zakładkę analysis
         if (typeof initializeLongTermBudget === 'function') {
             initializeLongTermBudget().catch(console.error);
         }
