@@ -7,7 +7,13 @@ function switchTab(tabName) {
         content.classList.toggle('active', content.id === `${tabName}-tab`);
     });
     if (tabName !== 'add') exitEditMode();
-    if (tabName === 'stats') renderStatistics();
+    if (tabName === 'stats') {
+        renderStatistics();
+        // Inicjalizuj analizę długoterminową budżetu przy pierwszym wejściu na zakładkę stats
+        if (typeof initializeLongTermBudget === 'function') {
+            initializeLongTermBudget().catch(console.error);
+        }
+    }
     if (tabName === 'settings') {
         renderCategoriesList();
         populateBudgetMonthSelector(); // Upewnij się, że selektor jest wypełniony
