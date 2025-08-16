@@ -147,9 +147,11 @@ async function renderLongTermBudgetAnalysis() {
         // Renderuj komponenty
         renderLongTermSummary(dataWithBudget);
         renderLongTermChart(dataWithBudget);
+        renderCategoryProgressBars(dataWithBudget);
         renderMonthlyDetailsTable(dataWithBudget);
         
-        // Pokaż kontener szczegółów miesięcznych
+        // Pokaż kontenery
+        document.getElementById('category-analysis-container').classList.remove('hidden');
         document.getElementById('monthly-details-container').classList.remove('hidden');
         document.getElementById('no-long-term-data').classList.add('hidden');
         
@@ -162,6 +164,7 @@ async function renderLongTermBudgetAnalysis() {
 
 function showNoLongTermData() {
     document.getElementById('no-long-term-data').classList.remove('hidden');
+    document.getElementById('category-analysis-container').classList.add('hidden');
     document.getElementById('monthly-details-container').classList.add('hidden');
     
     // Wyczyść podsumowanie
@@ -328,4 +331,63 @@ function toggleMonthlyDetailsTable() {
         toggleText.textContent = 'Pokaż szczegóły miesięczne';
         toggleIcon.style.transform = 'rotate(0deg)';
     }
+}function renderCategoryProgressBars(data) {
+    const container = document.getElementById('category-progress-bars');
+    container.innerHTML = '';
+    
+    // Agreguj dane po kategoriach
+    const categoryTotals = {};
+    
+    data.forEach(monthData => {
+        // Budżety
+        Object.keys(monthData.budgets).forEach(category => {
+            if (!categoryTotals[category]) {
+                categoryTotals[category] = { budget: 0, spending: 0 };
+            }
+            categoryTotals[category].budget += monthData.budgets[category];
+        });
+        
+        // Wydatki
+        Object.keys(monthData.spendingByCategory).forEach(category => {
+            if (!categoryTotals[category]) {
+                categoryTotals[category] = { budget: 0, spending: 0 };
+            }
+            categoryTotals[category].spending += monthData.spendingByCategory[category];
+        });
+    });
+    
+    // Sortuj kategorie według budżetu (malejąco)
+    const sortedCategories = Object.entries(categoryTotals)
+        .sort(([,a], [,b]) => b.budget - a.budget);
+    
+    // Renderuj paski postępu
+    sortedCategories.forEach(([category, totals]) => {
+        const percentage = totals.budget > 0 ? Math.min((totals.spending / totals.budget) * 100, 100) : 0;
+        const remaining = totals.budget - totals.spending;
+        
+        let progressColor = 'bg-green-500';
+        if (percentage > 90) progressColor = 'bg-red-500';
+        else if (percentage > 75) progressColor = 'bg-yellow-500';
+        
+        const progressBar = document.createElement('div');
+        progressBar.className = 'bg-gray-200 dark:bg-gray-600 rounded-lg p-3';
+        progressBar.innerHTML = `
+            <div class="flex justify-between items-center mb-2">
+                <span class="text-sm font-medium text-gray-900 dark:text-white">${category.charAt(0).toUpperCase() + category.slice(1)}</span>
+                <span class="text-sm text-gray-600 dark:text-gray-400">${percentage.toFixed(1)}%</span>
+            </div>
+            <div class="w-full bg-gray-300 dark:bg-gray-700 rounded-full h-2 mb-2">
+                <div class="${progressColor} h-2 rounded-full transition-all duration-300" style="width: ${percentage}%"></div>
+            </div>
+            <div class="flex justify-between text-xs text-gray-600 dark:text-gray-400">
+                <span>Wydano: ${new Intl.NumberFormat('pl-PL', { style: 'currency', currency: 'PLN' }).format(totals.spending)}</span>
+                <span>Budżet: ${new Intl.NumberFormat('pl-PL', { style: 'currency', currency: 'PLN' }).format(totals.budget)}</span>
+            </div>
+            <div class="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                ${remaining >= 0 ? 'Pozostało' : 'Przekroczono o'}: ${new Intl.NumberFormat('pl-PL', { style: 'currency', currency: 'PLN' }).format(Math.abs(remaining))}
+            </div>
+        `;
+        
+        container.appendChild(progressBar);
+    });
 }
