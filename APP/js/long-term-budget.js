@@ -331,7 +331,9 @@ function toggleMonthlyDetailsTable() {
         toggleText.textContent = 'Pokaż szczegóły miesięczne';
         toggleIcon.style.transform = 'rotate(0deg)';
     }
-}function renderCategoryProgressBars(data) {
+}
+
+function renderCategoryProgressBars(data) {
     const container = document.getElementById('category-progress-bars');
     container.innerHTML = '';
     
