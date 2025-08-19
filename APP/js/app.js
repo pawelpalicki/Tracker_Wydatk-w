@@ -364,34 +364,24 @@ function setupAppEventListeners() {
 }
 
 function populateAllSelects() {
+    // Kategorie
     const categoryOptions = allCategories.map(cat => `<option value="${cat}">${cat.charAt(0).toUpperCase() + cat.slice(1)}</option>`).join('');
-
-    // Filtry
     filterCategory.innerHTML = '<option value="">Wszystkie kategorie</option>' + categoryOptions;
-
-    // Formularz wydatków cyklicznych
     recurringCategory.innerHTML = categoryOptions;
 
     // Sklepy
-    filterShop.innerHTML = '<option value="">Wszystkie sklepy</option>';
-    allShops.forEach(shop => {
-        const option = document.createElement('option');
-        option.value = shop;
-        option.textContent = shop;
-        filterShop.appendChild(option);
-    });
+    const shopOptions = allShops.map(shop => `<option value="${shop}">${shop}</option>`).join('');
+    filterShop.innerHTML = '<option value="">Wszystkie sklepy</option>' + shopOptions;
 
     populateBudgetFilterSelect();
 }
 
 function populateBudgetFilterSelect() {
-    filterBudget.innerHTML = '<option value="">Wszystkie budżety</option><option value="monthly">Budżet miesięczny</option>';
+    let budgetOptionsHTML = '<option value="">Wszystkie budżety</option><option value="monthly">Budżet miesięczny</option>';
     allSpecialBudgets.forEach(budget => {
-        const option = document.createElement('option');
-        option.value = budget.id;
-        option.textContent = budget.name;
-        filterBudget.appendChild(option);
+        budgetOptionsHTML += `<option value="${budget.id}">${budget.name}</option>`;
     });
+    filterBudget.innerHTML = budgetOptionsHTML;
 }
 
 async function fetchInitialData(shouldSwitchToDefault = true) {
