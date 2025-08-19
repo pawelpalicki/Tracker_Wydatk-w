@@ -1,7 +1,17 @@
 const CACHE_NAME = 'tracker-wydatkow-cache-v6'; // Zwiększona wersja
 const urlsToCache = [
     '/',
-    '/tracker.html',
+    '/index.html',
+    '/css/styles.css',
+    '/js/api.js',
+    '/js/auth.js',
+    '/js/ui.js',
+    '/js/budget.js',
+    '/js/statistics.js',
+    '/js/purchases.js',
+    '/js/long-term-budget.js',
+    '/js/special-budgets.js',
+    '/js/app.js',
     '/icon-new.svg',
     '/manifest.json'
 ];
