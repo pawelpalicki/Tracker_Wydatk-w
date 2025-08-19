@@ -5,6 +5,7 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 const { initializeApp, cert, getApps } = require('firebase-admin/app');
 const { getFirestore, FieldValue } = require('firebase-admin/firestore');
 const { getAuth } = require('firebase-admin/auth');
+const { onSchedule } = require("firebase-functions/v2/scheduler");
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const path = require('path');
@@ -440,77 +441,71 @@ app.delete('/api/recurring-expenses/:id', authMiddleware, async (req, res) => {
 // GET: Pobierz wszystkie zakupy dla zalogowanego użytkownika (z automatycznym dodawaniem wydatków cyklicznych)
 app.get('/api/purchases', authMiddleware, async (req, res) => {
     try {
-        const today = new Date();
-        const recurringSnapshot = await recurringExpensesCollection.where('userId', '==', req.userId).get();
-        const batch = db.batch();
-        let anyNewPurchases = false;
+        const { lastVisible, keyword, category, shop, budget, minAmount, maxAmount, startDate, endDate } = req.query;
+        const limit = 30; // Liczba zakupów na stronę dla paginacji
 
-        for (const doc of recurringSnapshot.docs) {
-            const expense = doc.data();
-            const expenseId = doc.id;
+        const isAnyFilterActive = keyword || category || shop || budget || minAmount || maxAmount || startDate || endDate;
 
-            let dateToCheck;
-            if (expense.lastAdded) {
-                dateToCheck = new Date(expense.lastAdded + '-01T12:00:00Z');
-                dateToCheck.setUTCMonth(dateToCheck.getUTCMonth() + 1);
-            } else {
-                dateToCheck = new Date(expense.createdAt.toDate());
-                dateToCheck.setUTCMonth(dateToCheck.getUTCMonth() - 1);
+        let query = purchasesCollection.where('userId', '==', req.userId);
+
+        // Jeśli filtry są aktywne, pobieramy wszystkie pasujące dane bez paginacji.
+        // Jeśli nie, stosujemy paginację.
+        if (isAnyFilterActive) {
+            // Kolejność nie ma znaczenia, bo filtrujemy w kodzie po pobraniu wszystkich dokumentów
+            const snapshot = await query.orderBy('date', 'desc').get();
+            let purchases = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+            // Filtrowanie w kodzie - mniej wydajne, ale konieczne dla złożonych zapytań
+            if (startDate && endDate) {
+                const start = new Date(startDate);
+                const end = new Date(endDate);
+                end.setHours(23, 59, 59, 999);
+                purchases = purchases.filter(p => {
+                    const pDate = new Date(p.date);
+                    return pDate >= start && pDate <= end;
+                });
             }
-            dateToCheck.setUTCDate(1);
-
-            let latestProcessedMonth = expense.lastAdded;
-
-            while (dateToCheck <= today) {
-                const year = dateToCheck.getUTCFullYear();
-                const month = dateToCheck.getUTCMonth();
-                const currentMonthStr = `${year}-${String(month + 1).padStart(2, '0')}`;
-
-                // *** NOWY WARUNEK ***
-                // Sprawdź, czy już nadszedł dzień płatności w bieżącym miesiącu
-                const isSameMonthAsToday = (today.getUTCFullYear() === year && today.getUTCMonth() === month);
-                if (isSameMonthAsToday && today.getUTCDate() < expense.dayOfMonth) {
-                    dateToCheck.setUTCMonth(dateToCheck.getUTCMonth() + 1);
-                    continue; // Przejdź do następnego miesiąca, jeśli dzień płatności jeszcze nie nadszedł
+            if (shop) purchases = purchases.filter(p => p.shop === shop);
+            if (budget) {
+                if (budget === 'monthly') {
+                    purchases = purchases.filter(p => !p.specialBudgetId);
+                } else {
+                    purchases = purchases.filter(p => p.specialBudgetId === budget);
                 }
-                // *** KONIEC NOWEGO WARUNKU ***
-
-                const daysInMonth = new Date(year, month + 1, 0).getDate();
-                const actualDay = Math.min(expense.dayOfMonth, daysInMonth);
-                const newPurchaseDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(actualDay).padStart(2, '0')}`;
-
-                const newPurchase = {
-                    userId: req.userId,
-                    shop: "Wydatek cykliczny",
-                    date: newPurchaseDate,
-                    items: [{ name: expense.name, price: expense.amount, category: expense.category }],
-                    totalAmount: expense.amount,
-                    createdAt: new Date(),
-                    isRecurring: true
-                };
-
-                const newPurchaseRef = purchasesCollection.doc();
-                batch.set(newPurchaseRef, newPurchase);
-
-                anyNewPurchases = true;
-                latestProcessedMonth = currentMonthStr;
-
-                dateToCheck.setUTCMonth(dateToCheck.getUTCMonth() + 1);
+            }
+            if (minAmount) purchases = purchases.filter(p => p.totalAmount >= parseFloat(minAmount));
+            if (maxAmount) purchases = purchases.filter(p => p.totalAmount <= parseFloat(maxAmount));
+            if (keyword) {
+                const lowerKeyword = keyword.toLowerCase();
+                purchases = purchases.filter(p => 
+                    p.items.some(item => item.name.toLowerCase().includes(lowerKeyword))
+                );
+            }
+            if (category) {
+                purchases = purchases.filter(p => 
+                    p.items.some(item => item.category === category)
+                );
             }
 
-            if (latestProcessedMonth !== expense.lastAdded) {
-                const expenseRef = recurringExpensesCollection.doc(expenseId);
-                batch.update(expenseRef, { lastAdded: latestProcessedMonth });
+            res.json({ purchases, nextCursor: null }); // Brak kursora, bo to wszystkie wyniki
+
+        } else {
+            // Logika paginacji, gdy nie ma filtrów
+            let paginatedQuery = query.orderBy('date', 'desc').limit(limit);
+
+            if (lastVisible) {
+                const lastDocSnapshot = await purchasesCollection.doc(lastVisible).get();
+                if (lastDocSnapshot.exists) {
+                    paginatedQuery = paginatedQuery.startAfter(lastDocSnapshot);
+                }
             }
-        }
 
-        if (anyNewPurchases) {
-            await batch.commit();
-        }
+            const snapshot = await paginatedQuery.get();
+            const purchases = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            const nextCursor = snapshot.docs.length === limit ? snapshot.docs[snapshot.docs.length - 1].id : null;
 
-        const snapshot = await purchasesCollection.where('userId', '==', req.userId).orderBy('date', 'desc').get();
-        const purchases = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        res.json(purchases);
+            res.json({ purchases, nextCursor });
+        }
     } catch (error) {
         console.error("Błąd pobierania zakupów:", error);
         res.status(500).json({ error: 'Błąd serwera podczas pobierania zakupów' });
@@ -1142,6 +1137,100 @@ app.post('/api/analyze-receipt', authMiddleware, async (req, res) => {
             error: error.message || 'Wystąpił nieznany błąd podczas analizy paragonu.'
         });
     }
+});
+
+// --- Funkcja Cykliczna (CRON) ---
+exports.addRecurringExpensesScheduled = onSchedule('every 24 hours', async (event) => {
+    console.log('Uruchomiono zaplanowane dodawanie wydatków cyklicznych.');
+    const today = new Date();
+    const recurringSnapshot = await recurringExpensesCollection.get();
+
+    if (recurringSnapshot.empty) {
+        console.log('Brak zdefiniowanych wydatków cyklicznych. Zakończono.');
+        return null;
+    }
+
+    // Grupuj wydatki po userId, aby zminimalizować liczbę zapisów batch
+    const expensesByUser = {};
+    recurringSnapshot.forEach(doc => {
+        const expense = doc.data();
+        if (!expensesByUser[expense.userId]) {
+            expensesByUser[expense.userId] = [];
+        }
+        expensesByUser[expense.userId].push({ id: doc.id, ...expense });
+    });
+
+    for (const userId in expensesByUser) {
+        const userExpenses = expensesByUser[userId];
+        const batch = db.batch();
+        let anyNewPurchases = false;
+
+        console.log(`Przetwarzanie wydatków dla użytkownika: ${userId}`);
+
+        for (const expense of userExpenses) {
+            let dateToCheck;
+            if (expense.lastAdded) {
+                dateToCheck = new Date(expense.lastAdded + '-01T12:00:00Z');
+                dateToCheck.setUTCMonth(dateToCheck.getUTCMonth() + 1);
+            } else {
+                dateToCheck = new Date(expense.createdAt.toDate());
+                dateToCheck.setUTCMonth(dateToCheck.getUTCMonth() - 1);
+            }
+            dateToCheck.setUTCDate(1);
+
+            let latestProcessedMonth = expense.lastAdded;
+
+            while (dateToCheck <= today) {
+                const year = dateToCheck.getUTCFullYear();
+                const month = dateToCheck.getUTCMonth();
+                const currentMonthStr = `${year}-${String(month + 1).padStart(2, '0')}`;
+
+                const isSameMonthAsToday = (today.getUTCFullYear() === year && today.getUTCMonth() === month);
+                if (isSameMonthAsToday && today.getUTCDate() < expense.dayOfMonth) {
+                    dateToCheck.setUTCMonth(dateToCheck.getUTCMonth() + 1);
+                    continue;
+                }
+
+                const daysInMonth = new Date(year, month + 1, 0).getDate();
+                const actualDay = Math.min(expense.dayOfMonth, daysInMonth);
+                const newPurchaseDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(actualDay).padStart(2, '0')}`;
+
+                const newPurchase = {
+                    userId: userId,
+                    shop: "Wydatek cykliczny",
+                    date: newPurchaseDate,
+                    items: [{ name: expense.name, price: expense.amount, category: expense.category }],
+                    totalAmount: expense.amount,
+                    createdAt: new Date(),
+                    isRecurring: true
+                };
+
+                const newPurchaseRef = purchasesCollection.doc();
+                batch.set(newPurchaseRef, newPurchase);
+                anyNewPurchases = true;
+                latestProcessedMonth = currentMonthStr;
+
+                dateToCheck.setUTCMonth(dateToCheck.getUTCMonth() + 1);
+            }
+
+            if (latestProcessedMonth !== expense.lastAdded) {
+                const expenseRef = recurringExpensesCollection.doc(expense.id);
+                batch.update(expenseRef, { lastAdded: latestProcessedMonth });
+            }
+        }
+
+        if (anyNewPurchases) {
+            try {
+                await batch.commit();
+                console.log(`Pomyślnie dodano nowe wydatki cykliczne dla użytkownika: ${userId}`);
+            } catch (error) {
+                console.error(`Błąd podczas zapisu batch dla użytkownika ${userId}:`, error);
+            }
+        }
+    }
+
+    console.log('Zakończono zaplanowane dodawanie wydatków cyklicznych.');
+    return null;
 });
 
 // --- Trasy Główne ---

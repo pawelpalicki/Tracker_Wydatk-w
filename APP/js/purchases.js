@@ -147,69 +147,22 @@ async function handlePurchaseFormSubmit(e) {
 }
 
 // --- Logika Listy Zakupów ---
-function applyFilters() {
-    const keyword = filterKeyword.value.toLowerCase();
-    const category = filterCategory.value;
-    const shop = filterShop.value;
-    const budget = filterBudget.value;
-    const minAmount = parseFloat(filterMinAmount.value) || 0;
-    const maxAmount = parseFloat(filterMaxAmount.value) || Infinity;
-    const dateRange = fp_range.selectedDates;
-
-    let filtered = allPurchases;
-
-    // 1. Filtrowanie po dacie zakupu (poprawione, aby uwzględniać cały dzień)
-    if (dateRange.length === 2) {
-        const startDate = dateRange[0];
-        const endDate = new Date(dateRange[1]); // Utwórz kopię, aby nie modyfikować oryginału
-        endDate.setHours(23, 59, 59, 999); // Ustaw czas na koniec dnia dla pełnej inkluzywności
-
-        filtered = filtered.filter(p => {
-            // Parsuj datę zakupu jako lokalną, aby uniknąć problemów ze strefą czasową
-            const parts = p.date.split('-').map(Number);
-            const purchaseDate = new Date(parts[0], parts[1] - 1, parts[2]);
-            return purchaseDate >= startDate && purchaseDate <= endDate;
-        });
+function renderPurchasesList(append = false) {
+    // Jeśli nie dołączamy, wyczyść listę i pokaż nagłówek filtrów
+    if (!append) {
+        purchasesList.innerHTML = '';
     }
 
-    // 2. Filtrowanie po sklepie, kwocie i budżecie
-    if (shop) filtered = filtered.filter(p => p.shop === shop);
-    if (budget) {
-        if (budget === 'monthly') {
-            filtered = filtered.filter(p => !p.specialBudgetId);
-        } else {
-            filtered = filtered.filter(p => p.specialBudgetId === budget);
-        }
-    }
-    filtered = filtered.filter(p => p.totalAmount >= minAmount && p.totalAmount <= maxAmount);
+    const purchasesToRender = append 
+        ? allPurchases.slice(Math.max(0, allPurchases.length - 30)) // Pokaż tylko nowo dodane, zakładając stały rozmiar strony
+        : allPurchases;
 
-    // 3. Filtrowanie po produktach (słowo kluczowe, kategoria)
-    if (keyword || category) {
-        filtered = filtered.map(p => {
-            const matchingItems = p.items.filter(item => {
-                const keywordMatch = !keyword || item.name.toLowerCase().includes(keyword);
-                const categoryMatch = !category || item.category === category;
-                return keywordMatch && categoryMatch;
-            });
-
-            if (matchingItems.length > 0) {
-                // Zwróć kopię zakupu tylko z pasującymi produktami
-                return { ...p, items: matchingItems };
-            }
-            return null;
-        }).filter(p => p !== null); // Usuń zakupy, które nie mają pasujących produktów
-    }
-
-    return filtered;
-}
-
-function renderPurchasesList() {
-    const filteredPurchases = applyFilters();
-    if (filteredPurchases.length === 0) {
-        purchasesList.innerHTML = '<div class="text-center py-12"><svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg><h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">Brak zakupów</h3><p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Zacznij dodawać wydatki, aby zobaczyć je tutaj.</p></div>';
+    if (purchasesToRender.length === 0 && !append) {
+        purchasesList.innerHTML = '<div class="text-center py-12"><svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg><h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">Brak zakupów</h3><p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Brak wyników dla podanych kryteriów.</p></div>';
         return;
     }
-    purchasesList.innerHTML = filteredPurchases.map(p => {
+
+    const newContent = purchasesToRender.map(p => {
         const specialBudgetName = p.specialBudgetId ? (allSpecialBudgets.find(b => b.id === p.specialBudgetId) || {}).name : null;
         const budgetIcon = specialBudgetName
             ? `<span class="ml-2 text-xs text-blue-500" title="Budżet: ${specialBudgetName}">
@@ -254,6 +207,12 @@ function renderPurchasesList() {
             </div>
         </div>
     `}).join('');
+
+    if (append) {
+        purchasesList.insertAdjacentHTML('beforeend', newContent);
+    } else {
+        purchasesList.innerHTML = newContent;
+    }
 }
 
 // --- Logika Zarządzania Kategoriami ---

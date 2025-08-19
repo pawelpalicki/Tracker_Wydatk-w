@@ -26,6 +26,8 @@ let allCategories = [];
 let allShops = [];
 let allSpecialBudgets = [];
 let editingSpecialBudgetId = null;
+let nextPurchaseCursor = null;
+let isLoadingPurchases = false;
 let editMode = { active: false, purchaseId: null };
 let currentFile = null;
 let cameraStream = null;
@@ -333,19 +335,20 @@ function setupAppEventListeners() {
         filterArrow.classList.toggle('rotate-180');
     });
 
-    [filterKeyword, filterCategory, filterShop, filterBudget, filterMinAmount, filterMaxAmount].forEach(el => {
-        el.addEventListener('input', () => renderPurchasesList());
+    const filterElements = [filterKeyword, filterCategory, filterShop, filterBudget, filterMinAmount, filterMaxAmount, filterDateRange];
+    filterElements.forEach(el => {
+        el.addEventListener('change', handleFilterChange); // Użyj 'change', aby reagować po zakończeniu edycji
     });
-    filterDateRange.addEventListener('change', () => renderPurchasesList()); // Flatpickr trigger
 
     clearFiltersBtn.addEventListener('click', () => {
         filterKeyword.value = '';
         if (fp_range) fp_range.clear();
         filterCategory.value = '';
         filterShop.value = '';
+        filterBudget.value = '';
         filterMinAmount.value = '';
         filterMaxAmount.value = '';
-        renderPurchasesList();
+        handleFilterChange(); // Wywołaj zmianę, aby przeładować do paginacji
     });
 
     // Logika wydatków cyklicznych
@@ -361,6 +364,56 @@ function setupAppEventListeners() {
 
     // DODAJ TEN EVENT LISTENER TUTAJ:
     document.getElementById('toggle-budget-details').addEventListener('click', toggleBudgetDetails);
+
+    // Infinite scroll
+    window.addEventListener('scroll', handleInfiniteScroll);
+}
+
+const handleInfiniteScroll = () => {
+    if (!document.getElementById('list-tab').classList.contains('active')) {
+        return;
+    }
+    if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 200) {
+        fetchMorePurchases();
+    }
+};
+
+async function handleFilterChange() {
+    const params = new URLSearchParams();
+    if (filterKeyword.value) params.append('keyword', filterKeyword.value);
+    if (filterCategory.value) params.append('category', filterCategory.value);
+    if (filterShop.value) params.append('shop', filterShop.value);
+    if (filterBudget.value) params.append('budget', filterBudget.value);
+    if (filterMinAmount.value) params.append('minAmount', filterMinAmount.value);
+    if (filterMaxAmount.value) params.append('maxAmount', filterMaxAmount.value);
+    if (fp_range.selectedDates.length === 2) {
+        params.append('startDate', fp_range.selectedDates[0].toISOString().split('T')[0]);
+        params.append('endDate', fp_range.selectedDates[1].toISOString().split('T')[0]);
+    }
+
+    const queryString = params.toString();
+
+    if (!queryString) {
+        window.addEventListener('scroll', handleInfiniteScroll);
+        await loadInitialPurchases();
+        return;
+    }
+
+    window.removeEventListener('scroll', handleInfiniteScroll);
+    isLoadingPurchases = true;
+    purchasesList.innerHTML = '<div class="text-center py-12">Filtrowanie...</div>';
+
+    try {
+        const { purchases } = await apiCall(`/api/purchases?${queryString}`);
+        allPurchases = purchases;
+        nextPurchaseCursor = null;
+        renderPurchasesList(false);
+    } catch (error) {
+        console.error('Błąd podczas filtrowania zakupów:', error);
+        purchasesList.innerHTML = '<div class="text-center py-12 text-red-500">Wystąpił błąd podczas filtrowania.</div>';
+    } finally {
+        isLoadingPurchases = false;
+    }
 }
 
 function populateAllSelects() {
@@ -386,20 +439,58 @@ function populateBudgetFilterSelect() {
 
 async function fetchInitialData(shouldSwitchToDefault = true) {
     try {
-        [allPurchases, allCategories, allShops, allSpecialBudgets] = await Promise.all([
-            apiCall('/api/purchases'),
+        // Pobierz dane, które nie wymagają paginacji
+        [allCategories, allShops, allSpecialBudgets] = await Promise.all([
             apiCall('/api/categories'),
             apiCall('/api/shops'),
             apiCall('/api/special-budgets')
         ]);
+
+        // Załaduj pierwszą stronę zakupów
+        await loadInitialPurchases();
+
+        // Renderuj wszystko po załadowaniu wszystkich danych
         renderAll();
         populateAllSelects();
-        populateBudgetMonthSelector(); // Wypełnij selektor miesięcy w budżecie
+        populateBudgetMonthSelector();
         if (shouldSwitchToDefault) {
-            switchTab('stats'); // Domyślna zakładka to kokpit
+            switchTab('stats');
         }
     } catch (error) {
         alert(error.message);
+    }
+}
+
+async function loadInitialPurchases() {
+    isLoadingPurchases = true;
+    try {
+        const { purchases, nextCursor } = await apiCall('/api/purchases');
+        allPurchases = purchases;
+        nextPurchaseCursor = nextCursor;
+        renderPurchasesList(); // Renderuj tylko listę zakupów
+    } catch (error) {
+        console.error('Błąd ładowania początkowych zakupów:', error);
+    } finally {
+        isLoadingPurchases = false;
+    }
+}
+
+async function fetchMorePurchases() {
+    if (isLoadingPurchases || !nextPurchaseCursor) return;
+
+    isLoadingPurchases = true;
+    // Opcjonalnie: pokaż spinner ładowania na dole listy
+
+    try {
+        const { purchases, nextCursor } = await apiCall(`/api/purchases?lastVisible=${nextPurchaseCursor}`);
+        allPurchases.push(...purchases);
+        nextPurchaseCursor = nextCursor;
+        renderPurchasesList(true); // Renderuj z flagą dołączania
+    } catch (error) {
+        console.error('Błąd doładowywania zakupów:', error);
+    } finally {
+        isLoadingPurchases = false;
+        // Ukryj spinner ładowania
     }
 }
 
