@@ -24,6 +24,8 @@ const API_BASE_URL = ''; // Puste, bo Firebase Hosting automatycznie przekierowu
 let allPurchases = [];
 let allCategories = [];
 let allShops = [];
+let allSpecialBudgets = [];
+let editingSpecialBudgetId = null;
 let editMode = { active: false, purchaseId: null };
 let currentFile = null;
 let cameraStream = null;
@@ -102,6 +104,7 @@ const filterKeyword = document.getElementById('filter-keyword');
 const filterDateRange = document.getElementById('filter-date-range');
 const filterCategory = document.getElementById('filter-category');
 const filterShop = document.getElementById('filter-shop');
+const filterBudget = document.getElementById('filter-budget');
 const filterMinAmount = document.getElementById('filter-min-amount');
 const filterMaxAmount = document.getElementById('filter-max-amount');
 const clearFiltersBtn = document.getElementById('clear-filters-btn');
@@ -116,6 +119,19 @@ const recurringName = document.getElementById('recurring-name');
 const recurringAmount = document.getElementById('recurring-amount');
 const recurringCategory = document.getElementById('recurring-category');
 const recurringDay = document.getElementById('recurring-day');
+
+// Elementy budżetów specjalnych
+const specialBudgetsList = document.getElementById('special-budgets-list');
+const addSpecialBudgetForm = document.getElementById('add-special-budget-form');
+const budgetTypeSelect = document.getElementById('budget-type-select');
+
+// Elementy modala edycji budżetu specjalnego
+const editSpecialBudgetModal = document.getElementById('edit-special-budget-modal');
+const editSpecialBudgetForm = document.getElementById('edit-special-budget-form');
+const closeEditSpecialBudgetModalBtn = document.getElementById('close-edit-special-budget-modal');
+const cancelEditSpecialBudgetBtn = document.getElementById('cancel-edit-special-budget');
+const editSpecialBudgetNameInput = document.getElementById('edit-special-budget-name');
+const editSpecialBudgetAmountInput = document.getElementById('edit-special-budget-amount');
 
 const shopAutocompleteList = document.getElementById('shop-autocomplete-list');
 
@@ -317,7 +333,7 @@ function setupAppEventListeners() {
         filterArrow.classList.toggle('rotate-180');
     });
 
-    [filterKeyword, filterCategory, filterShop, filterMinAmount, filterMaxAmount].forEach(el => {
+    [filterKeyword, filterCategory, filterShop, filterBudget, filterMinAmount, filterMaxAmount].forEach(el => {
         el.addEventListener('input', () => renderPurchasesList());
     });
     filterDateRange.addEventListener('change', () => renderPurchasesList()); // Flatpickr trigger
@@ -335,6 +351,13 @@ function setupAppEventListeners() {
     // Logika wydatków cyklicznych
     addRecurringExpenseForm.addEventListener('submit', handleAddRecurringExpense);
     recurringExpensesList.addEventListener('click', handleDeleteRecurringExpense);
+
+    // Logika budżetów specjalnych
+    addSpecialBudgetForm.addEventListener('submit', handleAddSpecialBudget);
+    specialBudgetsList.addEventListener('click', handleSpecialBudgetActions);
+    editSpecialBudgetForm.addEventListener('submit', handleEditSpecialBudgetSubmit);
+    closeEditSpecialBudgetModalBtn.addEventListener('click', () => editSpecialBudgetModal.classList.add('hidden'));
+    cancelEditSpecialBudgetBtn.addEventListener('click', () => editSpecialBudgetModal.classList.add('hidden'));
 
     // DODAJ TEN EVENT LISTENER TUTAJ:
     document.getElementById('toggle-budget-details').addEventListener('click', toggleBudgetDetails);
@@ -357,14 +380,27 @@ function populateAllSelects() {
         option.textContent = shop;
         filterShop.appendChild(option);
     });
+
+    populateBudgetFilterSelect();
+}
+
+function populateBudgetFilterSelect() {
+    filterBudget.innerHTML = '<option value="">Wszystkie budżety</option><option value="monthly">Budżet miesięczny</option>';
+    allSpecialBudgets.forEach(budget => {
+        const option = document.createElement('option');
+        option.value = budget.id;
+        option.textContent = budget.name;
+        filterBudget.appendChild(option);
+    });
 }
 
 async function fetchInitialData(shouldSwitchToDefault = true) {
     try {
-        [allPurchases, allCategories, allShops] = await Promise.all([
+        [allPurchases, allCategories, allShops, allSpecialBudgets] = await Promise.all([
             apiCall('/api/purchases'),
             apiCall('/api/categories'),
-            apiCall('/api/shops')
+            apiCall('/api/shops'),
+            apiCall('/api/special-budgets')
         ]);
         renderAll();
         populateAllSelects();
@@ -381,6 +417,113 @@ function renderAll() {
     renderPurchasesList();
     updateMonthlyBalance();
     renderStatistics(); // Od razu renderuj statystyki
+    renderSpecialBudgetsList();
+    populateBudgetTypeSelect();
+}
+
+function populateBudgetTypeSelect() {
+    budgetTypeSelect.innerHTML = '<option value="monthly">Budżet miesięczny</option>';
+    allSpecialBudgets.forEach(budget => {
+        const option = document.createElement('option');
+        option.value = budget.id;
+        option.textContent = budget.name;
+        budgetTypeSelect.appendChild(option);
+    });
+}
+
+function renderSpecialBudgetsList() {
+    specialBudgetsList.innerHTML = '';
+    if (!allSpecialBudgets || allSpecialBudgets.length === 0) {
+        specialBudgetsList.innerHTML = `<p class="text-gray-500 dark:text-gray-400 text-sm">Brak budżetów specjalnych. Dodaj nowy poniżej.</p>`;
+        return;
+    }
+
+    allSpecialBudgets.forEach(budget => {
+        const budgetEl = document.createElement('div');
+        budgetEl.className = 'flex items-center justify-between p-2 rounded-md bg-gray-50 dark:bg-gray-700';
+        budgetEl.innerHTML = `
+            <div>
+                <span class="font-medium text-gray-800 dark:text-gray-200">${budget.name}</span>
+                <span class="text-sm text-gray-500 dark:text-gray-400 ml-2">${budget.amount.toFixed(2)} zł</span>
+            </div>
+            <div class="flex items-center space-x-2">
+                <button class="edit-special-budget-btn p-1 text-gray-500 hover:text-blue-500" data-id="${budget.id}" title="Edytuj">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L15.232 5.232z"></path></svg>
+                </button>
+                <button class="delete-special-budget-btn p-1 text-gray-500 hover:text-red-500" data-id="${budget.id}" title="Usuń">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                </button>
+            </div>
+        `;
+        specialBudgetsList.appendChild(budgetEl);
+    });
+}
+
+async function handleAddSpecialBudget(e) {
+    e.preventDefault();
+    const nameInput = document.getElementById('new-special-budget-name');
+    const amountInput = document.getElementById('new-special-budget-amount');
+    const name = nameInput.value.trim();
+    const amount = parseFloat(amountInput.value);
+
+    if (name && amount > 0) {
+        try {
+            await apiCall('/api/special-budgets', 'POST', { name, amount });
+            nameInput.value = '';
+            amountInput.value = '';
+            await fetchInitialData(false);
+        } catch (error) {
+            alert('Nie udało się dodać budżetu specjalnego: ' + error.message);
+        }
+    }
+}
+
+async function handleSpecialBudgetActions(e) {
+    const deleteBtn = e.target.closest('.delete-special-budget-btn');
+    if (deleteBtn) {
+        const budgetId = deleteBtn.dataset.id;
+        const budget = allSpecialBudgets.find(b => b.id === budgetId);
+        if (confirm(`Czy na pewno chcesz usunąć budżet "${budget.name}"?`)) {
+            try {
+                await apiCall(`/api/special-budgets/${budgetId}`, 'DELETE');
+                await fetchInitialData(false);
+            } catch (error) {
+                alert('Nie udało się usunąć budżetu: ' + error.message);
+            }
+        }
+        return; // Zatrzymaj dalsze wykonywanie
+    }
+
+    const editBtn = e.target.closest('.edit-special-budget-btn');
+    if (editBtn) {
+        const budgetId = editBtn.dataset.id;
+        const budget = allSpecialBudgets.find(b => b.id === budgetId);
+        if (budget) {
+            editingSpecialBudgetId = budgetId;
+            editSpecialBudgetNameInput.value = budget.name;
+            editSpecialBudgetAmountInput.value = budget.amount;
+            editSpecialBudgetModal.classList.remove('hidden');
+        }
+    }
+}
+
+async function handleEditSpecialBudgetSubmit(e) {
+    e.preventDefault();
+    if (!editingSpecialBudgetId) return;
+
+    const name = editSpecialBudgetNameInput.value.trim();
+    const amount = parseFloat(editSpecialBudgetAmountInput.value);
+
+    if (name && amount > 0) {
+        try {
+            await apiCall(`/api/special-budgets/${editingSpecialBudgetId}`, 'PUT', { name, amount });
+            editSpecialBudgetModal.classList.add('hidden');
+            editingSpecialBudgetId = null;
+            await fetchInitialData(false);
+        } catch (error) {
+            alert('Nie udało się zaktualizować budżetu: ' + error.message);
+        }
+    }
 }
 
 function updateMonthlyBalance() {

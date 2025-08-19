@@ -140,6 +140,12 @@
                             d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
                     </svg>
                 </button>
+                <button data-tab="special-budgets" class="nav-btn flex-1 text-center py-3 px-2 rounded-full" title="Budżety Specjalne">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mx-auto" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M2 6a2 2 0 012-2h12a2 2 0 012 2v2a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
+                        <path fill-rule="evenodd" d="M2 11a2 2 0 012-2h12a2 2 0 012 2v5a2 2 0 01-2 2H4a2 2 0 01-2-2v-5zm3.5 2a.5.5 0 00-.5.5v1a.5.5 0 00.5.5h1a.5.5 0 00.5-.5v-1a.5.5 0 00-.5-.5h-1zM9 13.5a.5.5 0 01.5-.5h1a.5.5 0 01.5.5v1a.5.5 0 01-.5.5h-1a.5.5 0 01-.5-.5v-1zM14.5 13a.5.5 0 00-.5.5v1a.5.5 0 00.5.5h1a.5.5 0 00.5-.5v-1a.5.5 0 00-.5-.5h-1z" clip-rule="evenodd" />
+                    </svg>
+                </button>
                 <button data-tab="settings" class="nav-btn flex-1 text-center py-3 px-2 rounded-full"
                     title="Ustawienia">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mx-auto" fill="none" viewBox="0 0 24 24"
@@ -346,6 +352,14 @@
                                 </div>
                             </div>
                             <div>
+                                <label for="budget-type-select"
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">Budżet</label>
+                                <select id="budget-type-select"
+                                    class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-3">
+                                    <!-- Opcje zostaną dodane dynamicznie przez JS -->
+                                </select>
+                            </div>
+                            <div>
                                 <label for="date"
                                     class="block text-sm font-medium text-gray-700 dark:text-gray-300">Data</label>
                                 <div class="relative mt-1">
@@ -405,6 +419,10 @@
                                 class="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2">
                                 <option value="">Wszystkie kategorie</option>
                             </select>
+                            <select id="filter-budget"
+                                class="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2">
+                                <option value="">Wszystkie budżety</option>
+                            </select>
                             <select id="filter-shop"
                                 class="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2">
                                 <option value="">Wszystkie sklepy</option>
@@ -456,6 +474,20 @@
                                 class="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700">Kopiuj na
                                 następne miesiące</button>
                         </div>
+                    </div>
+
+                    <!-- Zarządzanie Budżetami Specjalnymi -->
+                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 md:col-span-2">
+                        <h3 class="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Zarządzaj Budżetami Specjalnymi</h3>
+                        <div id="special-budgets-list" class="space-y-2 mb-4 max-h-96 overflow-y-auto"></div>
+                        <form id="add-special-budget-form" class="flex items-center space-x-2">
+                            <input type="text" id="new-special-budget-name" placeholder="Nazwa (np. Wakacje)"
+                                class="flex-grow mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2" required>
+                            <input type="number" id="new-special-budget-amount" placeholder="Kwota"
+                                class="mt-1 block w-40 rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2" required step="0.01">
+                            <button type="submit"
+                                class="py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700">Dodaj</button>
+                        </form>
                     </div>
                 </div>
 
@@ -601,6 +633,11 @@
                 </div>
             </div>
 
+            <!-- Zakładka Budżety Specjalne -->
+            <div id="special-budgets-tab" class="tab-content">
+                <!-- Treść zostanie wyrenderowana przez special-budgets.js -->
+            </div>
+
             <!-- Stary modal ustawień został usunięty -->
 
         </main>
@@ -626,7 +663,7 @@
                                 class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                 Sklep</th>
                             <th scope="col"
-                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                class_="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                 Data</th>
                             <th scope="col"
                                 class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
@@ -676,6 +713,32 @@
         </div>
     </div>
 
+    <!-- Modal edycji budżetu specjalnego -->
+    <div id="edit-special-budget-modal" class="hidden fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center z-50">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-md">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Edytuj budżet specjalny</h3>
+                <button id="close-edit-special-budget-modal" class="p-2 text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white">&times;</button>
+            </div>
+            <form id="edit-special-budget-form">
+                <div class="space-y-4">
+                    <div>
+                        <label for="edit-special-budget-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Nazwa</label>
+                        <input type="text" id="edit-special-budget-name" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2" required>
+                    </div>
+                    <div>
+                        <label for="edit-special-budget-amount" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Kwota</label>
+                        <input type="number" id="edit-special-budget-amount" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2" required step="0.01">
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-2 pt-6">
+                    <button type="button" id="cancel-edit-special-budget" class="py-2 px-4 bg-gray-500 text-white rounded-md hover:bg-gray-600">Anuluj</button>
+                    <button type="submit" class="py-2 px-4 bg-green-600 text-white rounded-md hover:bg-green-700">Zapisz zmiany</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- All JavaScript functionality moved to separate modules -->
     <script src="js/api.js"></script>
     <script src="js/auth.js"></script>
@@ -684,6 +747,7 @@
     <script src="js/statistics.js"></script>
     <script src="js/purchases.js"></script>
     <script src="js/long-term-budget.js"></script>
+    <script src="js/special-budgets.js"></script>
     <script src="js/app.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/pl.js"></script>

@@ -16,6 +16,9 @@ function switchTab(tabName) {
             initializeLongTermBudget().catch(console.error);
         }
     }
+    if (tabName === 'special-budgets') {
+        renderSpecialBudgetsTab();
+    }
     if (tabName === 'settings') {
         renderCategoriesList();
         populateBudgetMonthSelector(); // Upewnij się, że selektor jest wypełniony
@@ -37,6 +40,13 @@ function enterEditMode(purchaseId) {
     itemsContainer.innerHTML = '';
     purchase.items.forEach(item => addItemRow(item));
 
+    // Set the budget type dropdown
+    if (purchase.specialBudgetId) {
+        budgetTypeSelect.value = purchase.specialBudgetId;
+    } else {
+        budgetTypeSelect.value = 'monthly';
+    }
+
     purchaseFormTitle.textContent = 'Edytuj istniejący zakup';
     purchaseFormSubmitBtn.textContent = 'Zaktualizuj zakup';
     purchaseFormSubmitBtn.classList.replace('bg-blue-600', 'bg-green-600');
@@ -54,6 +64,7 @@ function exitEditMode() {
     purchaseForm.reset();
     itemsContainer.innerHTML = '';
     fp.setDate(new Date()); // Reset date using flatpickr's setDate
+    budgetTypeSelect.value = 'monthly'; // Reset budget dropdown
     addItemRow();
 
     purchaseFormTitle.textContent = 'Dodaj nowy zakup ręcznie';

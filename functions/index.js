@@ -536,7 +536,7 @@ app.get('/api/shops', authMiddleware, async (req, res) => {
 // POST: Dodaj nowy zakup
 app.post('/api/purchases', authMiddleware, async (req, res) => {
     try {
-        const { shop, date, items } = req.body;
+        const { shop, date, items, specialBudgetId } = req.body;
         if (!shop || !date || !items || !Array.isArray(items) || items.length === 0) {
             return res.status(400).json({ error: 'Nieprawidłowe dane zakupu.' });
         }
@@ -549,6 +549,10 @@ app.post('/api/purchases', authMiddleware, async (req, res) => {
             totalAmount,
             createdAt: new Date()
         };
+
+        if (specialBudgetId) {
+            newPurchase.specialBudgetId = specialBudgetId;
+        }
         const docRef = await purchasesCollection.add(newPurchase);
         res.status(201).json({ id: docRef.id, ...newPurchase });
     } catch (error) {
@@ -561,7 +565,7 @@ app.post('/api/purchases', authMiddleware, async (req, res) => {
 app.put('/api/purchases/:id', authMiddleware, async (req, res) => {
     try {
         const { id } = req.params;
-        const { shop, date, items } = req.body;
+        const { shop, date, items, specialBudgetId } = req.body;
 
         if (!shop || !date || !items || !Array.isArray(items)) {
             return res.status(400).json({ error: 'Nieprawidłowe dane do aktualizacji.' });
@@ -587,6 +591,13 @@ app.put('/api/purchases/:id', authMiddleware, async (req, res) => {
             createdAt: doc.data().createdAt,
             updatedAt: new Date()
         };
+
+        if (specialBudgetId) {
+            updatedPurchase.specialBudgetId = specialBudgetId;
+        } else {
+            // Ensure the field is removed if it's not provided
+            updatedPurchase.specialBudgetId = FieldValue.delete();
+        }
 
         await purchaseRef.set(updatedPurchase);
 
@@ -795,6 +806,100 @@ app.post('/api/budgets/:year/:month', authMiddleware, async (req, res) => {
 });
 
 
+// --- API do zarządzania BUDŻETAMI SPECJALNYMI ---
+const specialBudgetsCollection = db.collection('specialBudgets');
+
+// GET: Pobierz wszystkie budżety specjalne
+app.get('/api/special-budgets', authMiddleware, async (req, res) => {
+    try {
+        // Usunięto .orderBy('createdAt', 'desc') aby uniknąć błędu wymaganego indeksu
+        const snapshot = await specialBudgetsCollection.where('userId', '==', req.userId).get();
+        let budgets = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        
+        // Sortowanie po stronie serwera w kodzie
+        budgets.sort((a, b) => b.createdAt.toDate() - a.createdAt.toDate());
+
+        res.json(budgets);
+    } catch (error) {
+        console.error("Błąd pobierania budżetów specjalnych:", error);
+        res.status(500).json({ error: 'Błąd serwera' });
+    }
+});
+
+// POST: Dodaj nowy budżet specjalny
+app.post('/api/special-budgets', authMiddleware, async (req, res) => {
+    try {
+        const { name, amount } = req.body;
+        if (!name || !amount) {
+            return res.status(400).json({ error: 'Nazwa i kwota są wymagane.' });
+        }
+        const newBudget = {
+            userId: req.userId,
+            name,
+            amount: parseFloat(amount),
+            createdAt: new Date()
+        };
+        const docRef = await specialBudgetsCollection.add(newBudget);
+        res.status(201).json({ id: docRef.id, ...newBudget });
+    } catch (error) {
+        console.error("Błąd dodawania budżetu specjalnego:", error);
+        res.status(500).json({ error: 'Błąd serwera' });
+    }
+});
+
+// PUT: Aktualizuj budżet specjalny
+app.put('/api/special-budgets/:id', authMiddleware, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name, amount } = req.body;
+        if (!name || !amount) {
+            return res.status(400).json({ error: 'Nazwa i kwota są wymagane.' });
+        }
+
+        const budgetRef = specialBudgetsCollection.doc(id);
+        const doc = await budgetRef.get();
+
+        if (!doc.exists || doc.data().userId !== req.userId) {
+            return res.status(403).json({ error: 'Brak uprawnień lub budżet nie istnieje.' });
+        }
+
+        await budgetRef.update({ name, amount: parseFloat(amount), updatedAt: new Date() });
+        res.json({ id, name, amount: parseFloat(amount) });
+    } catch (error) {
+        console.error("Błąd aktualizacji budżetu specjalnego:", error);
+        res.status(500).json({ error: 'Błąd serwera' });
+    }
+});
+
+// DELETE: Usuń budżet specjalny
+app.delete('/api/special-budgets/:id', authMiddleware, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const budgetRef = specialBudgetsCollection.doc(id);
+        const doc = await budgetRef.get();
+
+        if (!doc.exists || doc.data().userId !== req.userId) {
+            return res.status(403).json({ error: 'Brak uprawnień lub budżet nie istnieje.' });
+        }
+
+        // Znajdź i odepnij wszystkie wydatki powiązane z tym budżetem
+        const purchasesSnapshot = await purchasesCollection.where('specialBudgetId', '==', id).get();
+        if (!purchasesSnapshot.empty) {
+            const batch = db.batch();
+            purchasesSnapshot.docs.forEach(doc => {
+                batch.update(doc.ref, { specialBudgetId: FieldValue.delete() });
+            });
+            await batch.commit();
+        }
+
+        await budgetRef.delete();
+        res.status(204).send();
+    } catch (error) {
+        console.error("Błąd usuwania budżetu specjalnego:", error);
+        res.status(500).json({ error: 'Błąd serwera' });
+    }
+});
+
 
 // --- API do Statystyk ---
 app.get('/api/statistics', authMiddleware, async (req, res) => {
@@ -806,10 +911,13 @@ app.get('/api/statistics', authMiddleware, async (req, res) => {
             return res.json({ monthlyTotal: 0, spendingByCategory: {}, availableMonths: [] });
         }
 
-        const purchases = snapshot.docs.map(doc => doc.data());
+        const allPurchases = snapshot.docs.map(doc => doc.data());
+        
+        // Filtruj wydatki, aby wykluczyć te ze specjalnych budżetów
+        const purchases = allPurchases.filter(p => !p.specialBudgetId);
 
-        // Tworzenie listy dostępnych miesięcy
-        const availableMonths = [...new Set(purchases.map(p => p.date.substring(0, 7)))].sort().reverse();
+        // Tworzenie listy dostępnych miesięcy (na podstawie wszystkich wydatków, żeby nie ukrywać miesięcy)
+        const availableMonths = [...new Set(allPurchases.map(p => p.date.substring(0, 7)))].sort().reverse();
 
         // Ustalanie okresu do analizy
         const targetDate = (year && month) ? new Date(parseInt(year), parseInt(month) - 1, 15) : new Date();
@@ -847,7 +955,9 @@ app.get('/api/statistics/comparison', authMiddleware, async (req, res) => {
         if (snapshot.empty) {
             return res.json({ monthlyTotals: [] });
         }
-        const purchases = snapshot.docs.map(doc => doc.data());
+        
+        // Wyklucz wydatki ze specjalnych budżetów
+        const purchases = snapshot.docs.map(doc => doc.data()).filter(p => !p.specialBudgetId);
 
         // Agregacja wydatków po miesiącach
         const monthlyTotalsMap = purchases.reduce((acc, p) => {
@@ -882,7 +992,8 @@ app.get('/api/statistics/by-shop', authMiddleware, async (req, res) => {
             return res.json({ spendingByShop: {} });
         }
 
-        const purchases = snapshot.docs.map(doc => doc.data());
+        // Wyklucz wydatki ze specjalnych budżetów
+        const purchases = snapshot.docs.map(doc => doc.data()).filter(p => !p.specialBudgetId);
 
         const firstDayOfMonth = new Date(parseInt(year), parseInt(month) - 1, 1).toISOString().split('T')[0];
         const lastDayOfMonth = new Date(parseInt(year), parseInt(month), 0).toISOString().split('T')[0];
@@ -902,7 +1013,7 @@ app.get('/api/statistics/by-shop', authMiddleware, async (req, res) => {
         console.error("Błąd pobierania statystyk wg sklepów:", error);
         res.status(500).json({ error: 'Błąd serwera' });
     }
-});
+});""
 
 app.get('/api/statistics/category-details', authMiddleware, async (req, res) => {
     try {
