@@ -965,7 +965,8 @@ app.get('/api/statistics/comparison', authMiddleware, async (req, res) => {
         // Sortowanie i formatowanie danych
         const monthlyTotals = Object.entries(monthlyTotalsMap)
             .map(([month, total]) => ({ month, total }))
-            .sort((a, b) => a.month.localeCompare(b.month));
+            .sort((a, b) => a.month.localeCompare(b.month))
+            .slice(-12); // Zwróć tylko ostatnie 12 miesięcy
 
         res.json({ monthlyTotals });
 

@@ -109,7 +109,7 @@
             </div>
         </header>
 
-        <main class="max-w-6xl mx-auto py-6 sm:px-6 lg:px-8">
+        <main class="max-w-screen-xl mx-auto py-6 sm:px-6 lg:px-8">
             <!-- Nawigacja w formie pigułek -->
             <nav
                 class="p-1.5 mb-6 max-w-lg mx-auto bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center space-x-1">
@@ -186,27 +186,35 @@
                     </div>
                 </div>
 
-                <!-- Główne wykresy i budżet w uporządkowanym gridzie -->
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-                    <!-- Wykres wydatków w miesiącu -->
-                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-                        <div class="flex justify-between items-center mb-4">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                    <!-- Kolumna 1: Wykres wydatków w miesiącu -->
+                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 flex flex-col h-full">
+                        <div class="flex justify-between items-center mb-4 flex-shrink-0">
                             <h3 id="stats-title" class="text-lg font-semibold text-gray-900 dark:text-white">Wydatki w
                                 miesiącu</h3>
                             <select id="stats-month-select"
                                 class="block w-auto rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50 text-sm"></select>
                         </div>
-                        <div id="category-chart-container" class="h-48">
+                        <div id="category-chart-container" class="h-48 flex-shrink-0">
                             <canvas id="category-chart"></canvas>
+                        </div>
+                        <div class="text-center mt-2 lg:hidden">
+                            <button id="toggle-legend-details" class="text-sm text-blue-600 dark:text-blue-400 hover:underline">
+                                <span id="toggle-legend-text">Pokaż legendę</span>
+                                <svg id="toggle-legend-icon" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline ml-1 transform transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            </button>
+                        </div>
+                        <div id="interactive-legend-container" class="mt-4 overflow-y-auto flex-grow hidden">
+                            <!-- Interaktywna legenda będzie renderowana tutaj -->
                         </div>
                         <div id="no-data-pie-chart" class="hidden text-center py-12">
                             <p class="text-gray-500 dark:text-gray-400">Brak danych o wydatkach w wybranym miesiącu.</p>
                         </div>
                     </div>
 
-                    <!-- Podsumowanie budżetu -->
-                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-                        <div id="budget-summary-container" class="hidden">
+                    <!-- Kolumna 2: Podsumowanie budżetu -->
+                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 flex flex-col h-full">
+                        <div id="budget-summary-container" class="hidden flex-shrink-0">
                             <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Podsumowanie budżetu
                             </h4>
 
@@ -251,7 +259,7 @@
                             </div>
                         </div>
                         <button id="toggle-budget-details"
-                            class="mt-3 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hidden">
+                            class="mt-3 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hidden lg:hidden">
                             <span id="toggle-budget-text">Pokaż szczegóły budżetu</span>
                             <svg id="toggle-budget-icon" xmlns="http://www.w3.org/2000/svg"
                                 class="h-4 w-4 inline ml-1 transform transition-transform" fill="none"
@@ -260,40 +268,35 @@
                                     d="M19 9l-7 7-7-7" />
                             </svg>
                         </button>
-                        <div id="budget-progress-container" class="mt-4 space-y-3 hidden">
+                        <div class="hidden lg:block mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+                            <h4 class="text-base font-semibold text-gray-900 dark:text-white">Szczegóły budżetu</h4>
+                        </div>
+                        <div id="budget-progress-container" class="mt-4 space-y-3 flex-grow overflow-y-auto hidden">
                             <!-- Paski postępu budżetu zostaną wyrenderowane tutaj -->
                         </div>
                     </div>
-                </div>
-
-
-
-                <!-- Dodatkowe wykresy w osobnym gridzie -->
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <!-- Porównanie wydatków -->
-                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-                        <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Porównanie wydatków w
-                            ostatnich
-                            miesiącach</h3>
-                        <div id="comparison-chart-container">
-                            <canvas id="comparison-chart"></canvas>
+                    <!-- Kolumna 3: Pozostałe analizy -->
+                    <div class="space-y-6 flex flex-col h-full">
+                        <!-- Porównanie wydatków -->
+                        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+                            <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Porównanie wydatków</h3>
+                            <div id="comparison-chart-container">
+                                <canvas id="comparison-chart"></canvas>
+                            </div>
+                            <div id="no-data-bar-chart" class="hidden text-center py-12">
+                                <p class="text-gray-500 dark:text-gray-400">Brak historii wydatków do porównania.</p>
+                            </div>
                         </div>
-                        <div id="no-data-bar-chart" class="hidden text-center py-12">
-                            <p class="text-gray-500 dark:text-gray-400">Brak historii wydatków do porównania.</p>
-                        </div>
-                    </div>
 
-                    <!-- Wydatki w sklepach -->
-                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-                        <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Wydatki w podziale na
-                            sklepy
-                        </h3>
-                        <div id="shop-chart-container">
-                            <canvas id="shop-chart"></canvas>
-                        </div>
-                        <div id="no-data-shop-chart" class="hidden text-center py-12">
-                            <p class="text-gray-500 dark:text-gray-400">Brak danych o wydatkach w sklepach w wybranym
-                                miesiącu.</p>
+                        <!-- Wydatki w sklepach -->
+                        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 flex-grow flex flex-col">
+                            <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Wydatki w sklepach</h3>
+                            <div id="shop-chart-container" class="flex-grow overflow-y-auto">
+                                <canvas id="shop-chart"></canvas>
+                            </div>
+                            <div id="no-data-shop-chart" class="hidden text-center py-12">
+                                <p class="text-gray-500 dark:text-gray-400">Brak danych o wydatkach w sklepach.</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -317,7 +320,7 @@
                         </div>
                     </div>
                     <div id="image-preview-container" class="hidden mt-4">
-                        <img id="image-preview" class="max-h-48 mx-auto rounded-lg" />
+                        <img id="image-preview" class="max-h-48 mx-auto rounded-lg" alt="Podgląd paragonu" />
                     </div>
                     <div id="analysis-spinner" class="hidden text-center mt-4">
                         <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
@@ -591,7 +594,7 @@
                     </div>
 
                     <!-- Tabela szczegółów miesięcznych -->
-                    <div id="monthly-details-container" class="hidden"></div>
+                    <div id="monthly-details-container" class="hidden">
                         <button id="toggle-monthly-details"
                             class="mb-3 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300">
                             <span id="toggle-monthly-text">Pokaż szczegóły miesięczne</span>
@@ -663,7 +666,7 @@
                                 class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                 Sklep</th>
                             <th scope="col"
-                                class_="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                 Data</th>
                             <th scope="col"
                                 class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
@@ -696,7 +699,8 @@
                         class="copy-months-btn py-3 px-4 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-800 font-medium"
                         data-months="1">1 miesiąc</button>
                     <button
-                        class="copy-months-btn py-3 px-4 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-800 font-medium"
+                        class="copy-months-btn py-3 px-4 bg-blue-100 dark:bg-blue-900 text-blue-8
+                        00 dark:text-blue-200 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-800 font-medium"
                         data-months="3">3 miesiące</button>
                     <button
                         class="copy-months-btn py-3 px-4 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-800 font-medium"

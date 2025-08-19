@@ -364,6 +364,7 @@ function setupAppEventListeners() {
 
     // DODAJ TEN EVENT LISTENER TUTAJ:
     document.getElementById('toggle-budget-details').addEventListener('click', toggleBudgetDetails);
+    document.getElementById('toggle-legend-details').addEventListener('click', toggleChartLegend);
 
     // Infinite scroll
     window.addEventListener('scroll', handleInfiniteScroll);

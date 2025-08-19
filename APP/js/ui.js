@@ -169,13 +169,17 @@ function renderShopAutocomplete(query) {
 }
 // --- Przełączanie szczegółów budżetu ---
 function toggleBudgetDetails() {
+    // Funkcja działa tylko na urządzeniach mobilnych
+    if (window.innerWidth >= 1024) {
+        return;
+    }
+
     const container = document.getElementById('budget-progress-container');
-    const button = document.getElementById('toggle-budget-details');
     const text = document.getElementById('toggle-budget-text');
     const icon = document.getElementById('toggle-budget-icon');
     
     const isHidden = container.classList.contains('hidden');
-    
+
     if (isHidden) {
         container.classList.remove('hidden');
         text.textContent = 'Ukryj szczegóły budżetu';
@@ -184,5 +188,22 @@ function toggleBudgetDetails() {
         container.classList.add('hidden');
         text.textContent = 'Pokaż szczegóły budżetu';
         icon.classList.remove('rotate-180');
+    }
+}
+
+function toggleChartLegend() {
+    const legendContainer = document.getElementById('interactive-legend-container');
+    const icon = document.getElementById('toggle-legend-icon');
+    const text = document.getElementById('toggle-legend-text');
+    
+    const isHidden = legendContainer.classList.contains('hidden');
+    
+    legendContainer.classList.toggle('hidden');
+    icon.classList.toggle('rotate-180');
+    
+    if (legendContainer.classList.contains('hidden')) {
+        text.textContent = 'Pokaż legendę';
+    } else {
+        text.textContent = 'Ukryj legendę';
     }
 }

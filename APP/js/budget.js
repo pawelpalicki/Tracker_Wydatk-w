@@ -180,8 +180,11 @@ function renderBudgetProgress(spending, budgets) {
         container.appendChild(progressElement);
     });
 
-    // DODANE - domyślnie ukryj szczegóły (paski będą ukryte do momentu kliknięcia)
-    container.classList.add('hidden');
+    // The container is hidden by default in the HTML (for mobile-first).
+    // We remove the 'hidden' class on desktop screens.
+    if (window.innerWidth >= 1024) {
+        container.classList.remove('hidden');
+    }
 }
 
 function renderBudgetSummary(spending, budgets) {

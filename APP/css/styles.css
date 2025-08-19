@@ -59,3 +59,38 @@ input:-webkit-autofill:active {
     /* gray-600 */
     -webkit-text-fill-color: #fff !important;
 }
+
+.legend-expanded {
+    /* A large enough value to allow the legend to fill the available space */
+    max-height: 600px !important; 
+    transition: max-height 0.5s ease-in-out;
+}
+
+/* Custom Scrollbar Styles */
+/* For Webkit-based browsers (Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #4b5563; /* gray-600 */
+    border-radius: 4px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #6b7280; /* gray-500 */
+    background-clip: content-box;
+}
+
+/* For Firefox */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: #4b5563 transparent; /* thumb and track */
+}

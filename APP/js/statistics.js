@@ -33,6 +33,7 @@ async function updateCategoryPieChart() {
     if (!selectedMonth || selectedMonth === 'Brak danych') {
         noDataPieChart.classList.remove('hidden');
         categoryChartContainer.classList.add('hidden');
+        document.getElementById('interactive-legend-container').classList.add('hidden');
         document.getElementById('budget-progress-container').innerHTML = ''; // Wyczyść paski postępu
         document.getElementById('budget-summary-container').classList.add('hidden'); // Ukryj podsumowanie
         return;
@@ -40,7 +41,6 @@ async function updateCategoryPieChart() {
 
     const [year, month] = selectedMonth.split('-');
 
-    // Pobierz jednocześnie statystyki wydatków i dane budżetu
     const [stats, budgetData] = await Promise.all([
         apiCall(`/api/statistics?year=${year}&month=${month}`),
         apiCall(`/api/budgets/${year}/${month}`)
@@ -49,13 +49,13 @@ async function updateCategoryPieChart() {
     const spendingByCategory = stats.spendingByCategory;
     const budgets = budgetData.budgets || {};
 
-    // Renderuj paski postępu budżetu i podsumowanie
     renderBudgetProgress(spendingByCategory, budgets);
     renderBudgetSummary(spendingByCategory, budgets);
 
     const ctx = document.getElementById('category-chart').getContext('2d');
     const labels = Object.keys(spendingByCategory);
     const data = Object.values(spendingByCategory);
+    const total = data.reduce((a, b) => a + b, 0);
     const backgroundColors = labels.map(label => getCategoryColor(label));
 
     if (categoryChart) categoryChart.destroy();
@@ -63,27 +63,81 @@ async function updateCategoryPieChart() {
     if (labels.length === 0) {
         noDataPieChart.classList.remove('hidden');
         categoryChartContainer.classList.add('hidden');
+        document.getElementById('interactive-legend-container').classList.add('hidden');
     } else {
         noDataPieChart.classList.add('hidden');
         categoryChartContainer.classList.remove('hidden');
+        
+        const doughnutLabelsPlugin = {
+            id: 'doughnut-labels-plugin',
+            afterDraw: (chart) => {
+                if (window.innerWidth >= 1024 || !chart.chartArea) {
+                    return; // Only run on mobile and if chartArea is defined
+                }
+
+                const { ctx, data, chartArea } = chart;
+                if (chart.getDatasetMeta(0).data.length === 0) return;
+
+                const { datasets } = data;
+                const chartData = datasets[0].data;
+                const totalSum = chartData.reduce((a, b) => a + b, 0);
+
+                const sortedData = data.labels.map((label, index) => ({
+                    label: label,
+                    value: chartData[index],
+                    percentage: totalSum > 0 ? (chartData[index] / totalSum * 100) : 0
+                })).sort((a, b) => b.value - a.value);
+
+                const topItems = sortedData.slice(0, 4);
+
+                ctx.save();
+                ctx.font = 'bold 11px sans-serif';
+                
+                const chartCenter = {
+                    x: (chartArea.left + chartArea.right) / 2,
+                    y: (chartArea.top + chartArea.bottom) / 2,
+                };
+                const radius = chart.getDatasetMeta(0).data[0].outerRadius;
+
+                topItems.forEach(item => {
+                    const originalIndex = data.labels.indexOf(item.label);
+                    const arc = chart.getDatasetMeta(0).data[originalIndex];
+                    if (!arc || item.percentage < 5) return; // Do not draw for small segments
+
+                    const angle = (arc.startAngle + arc.endAngle) / 2;
+                    
+                    const x = chartCenter.x + Math.cos(angle) * (radius * 0.7);
+                    const y = chartCenter.y + Math.sin(angle) * (radius * 0.7);
+
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillStyle = '#ffffff';
+                    
+                    ctx.fillText(`${item.label}`, x, y);
+                });
+
+                ctx.restore();
+            }
+        };
+
         categoryChart = new Chart(ctx, {
-            type: 'pie',
+            type: 'doughnut',
             data: {
                 labels: labels.map(l => l.charAt(0).toUpperCase() + l.slice(1)),
-                datasets: [{ data, backgroundColor: backgroundColors }]
+                datasets: [{ 
+                    data, 
+                    backgroundColor: backgroundColors,
+                    borderWidth: 2,
+                    borderColor: document.body.classList.contains('dark') ? '#1f2937' : '#f9fafb'
+                }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                cutout: '60%',
                 plugins: {
                     legend: {
-                        position: 'bottom',
-                        labels: {
-                            boxWidth: 12,
-                            padding: 8,
-                            color: 'white',
-                            usePointStyle: true
-                        }
+                        display: false
                     },
                     tooltip: {
                         callbacks: {
@@ -93,19 +147,107 @@ async function updateCategoryPieChart() {
                                     label += ': ';
                                 }
                                 if (context.parsed !== null) {
-                                    label += new Intl.NumberFormat('pl-PL', { style: 'currency', currency: 'PLN' }).format(context.parsed);
+                                    const percentage = (context.parsed / total * 100).toFixed(2);
+                                    label += `${new Intl.NumberFormat('pl-PL', { style: 'currency', currency: 'PLN' }).format(context.parsed)} (${percentage}%)`;
                                 }
                                 return label;
                             }
                         }
                     }
                 }
-            }
+            },
+            plugins: [{
+                id: 'doughnut-center-text',
+                beforeDraw: function(chart) {
+                    const { width, height, ctx } = chart;
+                    ctx.restore();
+                    const fontSize = (height / 120).toFixed(2);
+                    ctx.font = `bold ${fontSize}em sans-serif`;
+                    ctx.textBaseline = 'middle';
+
+                    const text = `${total.toFixed(2)} zł`;
+                    const textX = Math.round((width - ctx.measureText(text).width) / 2);
+                    const textY = height / 2;
+                    
+                    ctx.fillStyle = document.body.classList.contains('dark') ? 'white' : '#1f2937';
+                    ctx.fillText(text, textX, textY);
+                    ctx.save();
+                }
+            }, doughnutLabelsPlugin]
         });
+        renderInteractiveLegend(categoryChart, total);
     }
-    // Po zmianie miesiąca, zaktualizuj też wykres sklepów
     await renderShopBarChart();
 }
+
+function renderInteractiveLegend(chart, total) {
+    const legendContainer = document.getElementById('interactive-legend-container');
+    const { labels, datasets } = chart.data;
+    const originalBorderWidths = datasets[0].borderWidth;
+    let highlightedIndex = -1;
+
+    if (window.innerWidth >= 1024) {
+        legendContainer.classList.remove('hidden');
+    }
+
+    const sortedData = labels.map((label, index) => ({
+        label: label,
+        value: datasets[0].data[index],
+        color: datasets[0].backgroundColor[index],
+        percentage: total > 0 ? (datasets[0].data[index] / total * 100).toFixed(2) : 0
+    })).sort((a, b) => b.value - a.value);
+
+    legendContainer.innerHTML = `
+        <ul class="space-y-1 pr-2">
+            ${sortedData.map(item => {
+                const originalIndex = labels.indexOf(item.label);
+                return `
+                <li data-index="${originalIndex}" class="flex items-center justify-between py-1.5 px-2 rounded-md cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+                    <div class="flex items-center truncate">
+                        <span class="w-3 h-3 rounded-full mr-3 flex-shrink-0" style="background-color: ${item.color}"></span>
+                        <span class="font-medium text-gray-800 dark:text-gray-200 truncate" title="${item.label}">${item.label}</span>
+                    </div>
+                    <div class="text-right flex-shrink-0 ml-2">
+                        <p class="font-bold text-sm text-gray-900 dark:text-white">${item.value.toFixed(2)} zł</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">${item.percentage}%</p>
+                    </div>
+                </li>
+            `}).join('')}
+        </ul>
+    `;
+
+    const highlightSegment = (index) => {
+        if (highlightedIndex === index) return;
+
+        const newBorderWidths = Array(chart.data.labels.length).fill(originalBorderWidths);
+        if (index !== -1) {
+            newBorderWidths[index] = 8; // Highlighted border
+        }
+        
+        chart.data.datasets[0].borderWidth = newBorderWidths;
+        highlightedIndex = index;
+        chart.update();
+    };
+
+    legendContainer.querySelectorAll('li').forEach(li => {
+        const index = parseInt(li.dataset.index);
+        if ('ontouchstart' in window) {
+            li.addEventListener('click', (e) => {
+                e.stopPropagation();
+                highlightSegment(index);
+            });
+        } else {
+            li.addEventListener('mouseover', () => highlightSegment(index));
+        }
+    });
+
+    if (!('ontouchstart' in window)) {
+        legendContainer.addEventListener('mouseout', () => {
+            highlightSegment(-1);
+        });
+    }
+}
+
 
 async function handleCategoryChartClick(event) {
     if (!categoryChart) return;
@@ -140,7 +282,8 @@ async function renderComparisonBarChart() {
         comparisonChartContainer.classList.remove('hidden');
         const labels = stats.monthlyTotals.map(item => {
             const [y, m] = item.month.split('-');
-            return new Date(y, m - 1).toLocaleString('pl-PL', { month: 'short', year: 'numeric' });
+            const year = y.slice(-2);
+            return `${m}/${year}`;
         });
         const data = stats.monthlyTotals.map(item => item.total);
 
@@ -198,10 +341,9 @@ async function renderShopBarChart() {
         noDataShopChart.classList.add('hidden');
         shopChartContainer.classList.remove('hidden');
 
-        // Dynamiczne ustawianie wysokości kontenera wykresu
-        const barHeight = 25; // Wysokość jednego słupka w pikselach
+        const barHeight = 25;
         const chartHeight = labels.length * barHeight;
-        shopChartContainer.style.height = `${Math.max(chartHeight, 200)}px`; // Minimalna wysokość 200px
+        shopChartContainer.style.height = `${Math.max(chartHeight, 200)}px`;
 
         shopChart = new Chart(ctx, {
             type: 'bar',
@@ -215,14 +357,14 @@ async function renderShopBarChart() {
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: false, // Pozwala na niestandardowe wymiary
+                maintainAspectRatio: false,
                 plugins: { legend: { display: false } },
-                indexAxis: 'y', // Wykres horyzontalny dla lepszej czytelności nazw sklepów
+                indexAxis: 'y',
                 scales: {
                     y: {
                         ticks: {
                             color: 'white',
-                            autoSkip: false // Wyświetla wszystkie etykiety
+                            autoSkip: false
                         },
                         grid: {
                             color: 'rgba(255, 255, 255, 0.1)'
