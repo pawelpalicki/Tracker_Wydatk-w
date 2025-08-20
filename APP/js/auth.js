@@ -35,8 +35,23 @@ function setupAuthEventListeners() {
         e.preventDefault();
         authErrorDiv.classList.add('hidden');
         try {
-            // Użyj Firebase Auth do rejestracji
-            await auth.createUserWithEmailAndPassword(registerEmail.value, registerPassword.value);
+            // Rejestracja w Firebase Auth
+            const cred = await auth.createUserWithEmailAndPassword(registerEmail.value, registerPassword.value);
+            
+            // Utwórz profil użytkownika w Firestore (frontend-only, opcja 1)
+            try {
+                // Wstępne kategorie przypisywane do użytkownika (edytowalne)
+                const INITIAL_CATEGORIES = ['spożywcze', 'chemia', 'transport', 'rozrywka', 'zdrowie', 'ubrania', 'dom', 'rachunki', 'inne'];
+                await db.collection('users').doc(cred.user.uid).set({
+                    uid: cred.user.uid,
+                    email: cred.user.email,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    customCategories: INITIAL_CATEGORIES
+                }, { merge: true });
+            } catch (profileErr) {
+                console.error('Nie udało się utworzyć profilu użytkownika w Firestore:', profileErr);
+            }
+            
             // onAuthStateChanged automatycznie przełączy na aplikację
         } catch (error) {
             let message = 'Wystąpił błąd rejestracji.';

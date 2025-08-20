@@ -94,7 +94,10 @@ async function getUserCategories(userId) {
     const snapshot = await purchasesCollection.where('userId', '==', userId).get();
     const allItems = snapshot.docs.flatMap(doc => doc.data().items || []);
     const userCategories = allItems.map(item => item.category).filter(Boolean);
-    return [...new Set([...DEFAULT_CATEGORIES, ...customCategories, ...userCategories])].sort();
+
+    // Zwracaj wyłącznie kategorie przypisane do użytkownika + te istniejące w jego danych
+    // (usunięto globalne DEFAULT_CATEGORIES, aby użytkownik mógł w pełni edytować listę)
+    return [...new Set([...customCategories, ...userCategories])].sort();
 }
 
 function validateDate(dateStr) {
