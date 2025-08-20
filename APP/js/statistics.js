@@ -68,58 +68,6 @@ async function updateCategoryPieChart() {
         noDataPieChart.classList.add('hidden');
         categoryChartContainer.classList.remove('hidden');
         
-        const doughnutLabelsPlugin = {
-            id: 'doughnut-labels-plugin',
-            afterDraw: (chart) => {
-                if (window.innerWidth >= 1024 || !chart.chartArea) {
-                    return; // Only run on mobile and if chartArea is defined
-                }
-
-                const { ctx, data, chartArea } = chart;
-                if (chart.getDatasetMeta(0).data.length === 0) return;
-
-                const { datasets } = data;
-                const chartData = datasets[0].data;
-                const totalSum = chartData.reduce((a, b) => a + b, 0);
-
-                const sortedData = data.labels.map((label, index) => ({
-                    label: label,
-                    value: chartData[index],
-                    percentage: totalSum > 0 ? (chartData[index] / totalSum * 100) : 0
-                })).sort((a, b) => b.value - a.value);
-
-                const topItems = sortedData.slice(0, 4);
-
-                ctx.save();
-                ctx.font = 'bold 11px sans-serif';
-                
-                const chartCenter = {
-                    x: (chartArea.left + chartArea.right) / 2,
-                    y: (chartArea.top + chartArea.bottom) / 2,
-                };
-                const radius = chart.getDatasetMeta(0).data[0].outerRadius;
-
-                topItems.forEach(item => {
-                    const originalIndex = data.labels.indexOf(item.label);
-                    const arc = chart.getDatasetMeta(0).data[originalIndex];
-                    if (!arc || item.percentage < 5) return; // Do not draw for small segments
-
-                    const angle = (arc.startAngle + arc.endAngle) / 2;
-                    
-                    const x = chartCenter.x + Math.cos(angle) * (radius * 0.7);
-                    const y = chartCenter.y + Math.sin(angle) * (radius * 0.7);
-
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillStyle = '#ffffff';
-                    
-                    ctx.fillText(`${item.label}`, x, y);
-                });
-
-                ctx.restore();
-            }
-        };
-
         categoryChart = new Chart(ctx, {
             type: 'doughnut',
             data: {
@@ -173,7 +121,7 @@ async function updateCategoryPieChart() {
                     ctx.fillText(text, textX, textY);
                     ctx.save();
                 }
-            }, doughnutLabelsPlugin]
+            }]
         });
         renderInteractiveLegend(categoryChart, total);
     }

@@ -1,13 +1,45 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Users can only read and write their own expenses
+    // Users can read, create and write their own document
+    match /users/{userId} {
+      // Pozwól na tworzenie dokumentu użytkownika podczas rejestracji (bez auth)
+      allow create: if true;
+      // Pozwól na czytanie i aktualizację tylko swoich danych
+      allow read, update: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Users can only read and write their own expenses  
     match /expenses/{expenseId} {
       allow read, update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
       allow create: if request.auth != null;
     }
 
-    // Users can only read and write their own categories
+    // Users can only read and write their own purchases
+    match /purchases/{purchaseId} {
+      allow read, update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null;
+    }
+
+    // Users can only read and write their own budgets
+    match /budgets/{budgetId} {
+      allow read, update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null;
+    }
+
+    // Users can only read and write their own special budgets
+    match /specialBudgets/{budgetId} {
+      allow read, update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null;
+    }
+
+    // Users can only read and write their own recurring expenses
+    match /recurringExpenses/{expenseId} {
+      allow read, update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null;
+    }
+
+    // Categories - jeśli używasz osobnej kolekcji
     match /categories/{categoryId} {
       allow read, update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
       allow create: if request.auth != null;
