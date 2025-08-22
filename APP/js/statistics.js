@@ -29,6 +29,7 @@ function populateMonthSelector(availableMonths) {
 }
 
 async function updateCategoryPieChart() {
+    Chart.register(ChartDataLabels);
     const selectedMonth = statsMonthSelect.value;
     if (!selectedMonth || selectedMonth === 'Brak danych') {
         noDataPieChart.classList.remove('hidden');
@@ -80,6 +81,7 @@ async function updateCategoryPieChart() {
                 }]
             },
             options: {
+                animation: false,
                 responsive: true,
                 maintainAspectRatio: false,
                 cutout: '60%',
@@ -100,6 +102,33 @@ async function updateCategoryPieChart() {
                                 }
                                 return label;
                             }
+                        }
+                    },
+                    datalabels: {
+                        display: function(context) {
+                            const value = context.dataset.data[context.dataIndex];
+                            const total = context.chart.getDatasetMeta(0).total;
+                            const percentage = (value / total) * 100;
+                            // Ukryj etykietę, jeśli jest za mała lub gdy tooltip jest aktywny dla tego segmentu
+                            const activeElements = context.chart.getActiveElements();
+                            if (activeElements.length > 0) {
+                                if (activeElements[0].datasetIndex === context.datasetIndex && activeElements[0].index === context.dataIndex) {
+                                    return false;
+                                }
+                            }
+                            return percentage > 4;
+                        },
+                        formatter: (value, context) => {
+                            const label = context.chart.data.labels[context.dataIndex];
+                            const total = context.chart.getDatasetMeta(0).total;
+                            const percentage = (value / total * 100).toFixed(1) + '%';
+                            return label + '\n' + percentage;
+                        },
+                        color: '#fff',
+                        textAlign: 'center',
+                        font: {
+                            weight: 'bold',
+                            size: 11
                         }
                     }
                 }
@@ -132,7 +161,6 @@ function renderInteractiveLegend(chart, total) {
     const legendContainer = document.getElementById('interactive-legend-container');
     const { labels, datasets } = chart.data;
     const originalBorderWidths = datasets[0].borderWidth;
-    let highlightedIndex = -1;
 
     if (window.innerWidth >= 1024) {
         legendContainer.classList.remove('hidden');
@@ -150,7 +178,7 @@ function renderInteractiveLegend(chart, total) {
             ${sortedData.map(item => {
                 const originalIndex = labels.indexOf(item.label);
                 return `
-                <li data-index="${originalIndex}" class="flex items-center justify-between py-1.5 px-2 rounded-md cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+                <li data-index="${originalIndex}" data-label="${item.label.toLowerCase()}" class="flex items-center justify-between py-1.5 px-2 rounded-md cursor-pointer transition-colors select-none">
                     <div class="flex items-center truncate">
                         <span class="w-3 h-3 rounded-full mr-3 flex-shrink-0" style="background-color: ${item.color}"></span>
                         <span class="font-medium text-gray-800 dark:text-gray-200 truncate" title="${item.label}">${item.label}</span>
@@ -165,27 +193,61 @@ function renderInteractiveLegend(chart, total) {
     `;
 
     const highlightSegment = (index) => {
-        if (highlightedIndex === index) return;
-
+        // Aktualizuj podświetlenie na wykresie
         const newBorderWidths = Array(chart.data.labels.length).fill(originalBorderWidths);
         if (index !== -1) {
-            newBorderWidths[index] = 8; // Highlighted border
+            newBorderWidths[index] = 8;
         }
-        
         chart.data.datasets[0].borderWidth = newBorderWidths;
-        highlightedIndex = index;
-        chart.update();
+        chart.update('none');
+
+        // Aktualizuj podświetlenie tła w legendzie
+        const listItems = legendContainer.querySelectorAll('li');
+        listItems.forEach(li => {
+            li.classList.remove('bg-gray-200', 'dark:bg-gray-700');
+            if (parseInt(li.dataset.index) === index) {
+                li.classList.add('bg-gray-200', 'dark:bg-gray-700');
+            }
+        });
+    };
+
+    const openDetailsModal = async (label) => {
+        const selectedMonth = statsMonthSelect.value;
+        const [year, month] = selectedMonth.split('-');
+        try {
+            const { items } = await apiCall(`/api/statistics/category-details?year=${year}&month=${month}&category=${label}`);
+            renderCategoryDetailsModal(label, items);
+        } catch (error) {
+            alert('Błąd pobierania szczegółów kategorii: ' + error.message);
+        }
     };
 
     legendContainer.querySelectorAll('li').forEach(li => {
         const index = parseInt(li.dataset.index);
+        const label = li.dataset.label;
+        
         if ('ontouchstart' in window) {
-            li.addEventListener('click', (e) => {
-                e.stopPropagation();
-                highlightSegment(index);
+            let pressTimer;
+            let longPress = false;
+            li.addEventListener('touchstart', (e) => {
+                longPress = false;
+                pressTimer = window.setTimeout(() => {
+                    longPress = true;
+                    highlightSegment(index); // DODANE: Podświetl przy długim przytrzymaniu
+                    openDetailsModal(label);
+                }, 500);
+            }, { passive: true });
+            li.addEventListener('touchend', (e) => {
+                clearTimeout(pressTimer);
+                if (!longPress) {
+                    e.preventDefault();
+                    highlightSegment(index);
+                }
             });
+            li.addEventListener('touchmove', () => clearTimeout(pressTimer));
         } else {
             li.addEventListener('mouseover', () => highlightSegment(index));
+            li.addEventListener('click', () => openDetailsModal(label));
         }
     });
 
@@ -247,7 +309,18 @@ async function renderComparisonBarChart() {
             },
             options: {
                 responsive: true,
-                plugins: { legend: { display: false } },
+                plugins: {
+                    legend: { display: false },
+                    datalabels: {
+                        display: context => context.dataset.data[context.dataIndex] > 0,
+                        color: '#fff',
+                        anchor: 'end',
+                        align: 'end',
+                        formatter: (value) => value.toFixed(2),
+                        overlap: false, // Ukrywaj nakładające się etykiety
+                        clamp: true // Upewnij się, że etykiety nie wychodzą poza obszar wykresu
+                    }
+                },
                 scales: {
                     y: {
                         ticks: { color: 'white' },
@@ -306,7 +379,18 @@ async function renderShopBarChart() {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
+                plugins: {
+                    legend: { display: false },
+                    datalabels: {
+                        display: context => context.dataset.data[context.dataIndex] > 0,
+                        color: '#fff',
+                        anchor: 'end',
+                        align: 'end',
+                        formatter: (value) => value.toFixed(2),
+                        overlap: false, // Ukrywaj nakładające się etykiety
+                        clamp: true // Upewnij się, że etykiety nie wychodzą poza obszar wykresu
+                    }
+                },
                 indexAxis: 'y',
                 scales: {
                     y: {
