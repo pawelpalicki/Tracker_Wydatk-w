@@ -1,5 +1,7 @@
 // Tracker Wydatków - Statistics Functions
 
+let legendMouseoutHandler = null;
+
 // --- Logika Statystyk ---
 async function renderStatistics() {
     try {
@@ -73,8 +75,8 @@ async function updateCategoryPieChart() {
             type: 'doughnut',
             data: {
                 labels: labels.map(l => l.charAt(0).toUpperCase() + l.slice(1)),
-                datasets: [{ 
-                    data, 
+                datasets: [{
+                    data,
                     backgroundColor: backgroundColors,
                     borderWidth: 2,
                     borderColor: document.body.classList.contains('dark') ? '#1f2937' : '#f9fafb'
@@ -193,6 +195,7 @@ function renderInteractiveLegend(chart, total) {
     `;
 
     const highlightSegment = (index) => {
+        if (!chart || chart.destroyed) return; // <-- THE FIX
         // Aktualizuj podświetlenie na wykresie
         const newBorderWidths = Array(chart.data.labels.length).fill(originalBorderWidths);
         if (index !== -1) {
@@ -251,10 +254,16 @@ function renderInteractiveLegend(chart, total) {
         }
     });
 
+    // Remove the old listener before adding a new one
+    if (legendMouseoutHandler) {
+        legendContainer.removeEventListener('mouseout', legendMouseoutHandler);
+    }
+
     if (!('ontouchstart' in window)) {
-        legendContainer.addEventListener('mouseout', () => {
+        legendMouseoutHandler = () => {
             highlightSegment(-1);
-        });
+        };
+        legendContainer.addEventListener('mouseout', legendMouseoutHandler);
     }
 }
 
@@ -323,6 +332,7 @@ async function renderComparisonBarChart() {
                 },
                 scales: {
                     y: {
+                        suggestedMax: Math.max(...data) * 1.1, // Add 10% padding to the top
                         ticks: { color: 'white' },
                         grid: {
                             color: 'rgba(255, 255, 255, 0.1)'

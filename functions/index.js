@@ -561,6 +561,7 @@ app.post('/api/purchases', authMiddleware, async (req, res) => {
 
 // PUT: Aktualizuj istniejący zakup
 app.put('/api/purchases/:id', authMiddleware, async (req, res) => {
+    console.log('Executing purchase update - v4'); // New version
     try {
         const { id } = req.params;
         const { shop, date, items, specialBudgetId } = req.body;
@@ -580,29 +581,44 @@ app.put('/api/purchases/:id', authMiddleware, async (req, res) => {
         }
 
         const totalAmount = items.reduce((sum, item) => sum + (item.price || 0), 0);
-        const updatedPurchase = {
+        // We don't need to include fields that don't change, like createdAt
+        const updatedPurchaseData = {
+            shop,
+            date,
+            items,
+            totalAmount,
+            updatedAt: new Date()
+        };
+
+        if (specialBudgetId) {
+            updatedPurchaseData.specialBudgetId = specialBudgetId;
+        } else {
+            updatedPurchaseData.specialBudgetId = FieldValue.delete();
+        }
+
+        // Use update() instead of set()
+        await purchaseRef.update(updatedPurchaseData);
+
+        // Create a clean object for the JSON response
+        const responseData = {
+            id: doc.id,
             shop,
             date,
             items,
             totalAmount,
             userId: doc.data().userId,
-            createdAt: doc.data().createdAt,
-            updatedAt: new Date()
+            createdAt: doc.data().createdAt.toDate().toISOString(),
+            updatedAt: updatedPurchaseData.updatedAt
         };
-
-        if (specialBudgetId) {
-            updatedPurchase.specialBudgetId = specialBudgetId;
-        } else {
-            // Ensure the field is removed if it's not provided
-            updatedPurchase.specialBudgetId = FieldValue.delete();
+         if (specialBudgetId) {
+            responseData.specialBudgetId = specialBudgetId;
         }
 
-        await purchaseRef.set(updatedPurchase);
 
-        res.json({ id: doc.id, ...updatedPurchase });
+        res.json(responseData);
 
     } catch (error) {
-        console.error("Błąd aktualizacji zakupu:", error);
+        console.error("Błąd aktualizacji zakupu (v4):", error); // Added version to error log
         res.status(500).json({ error: 'Błąd serwera podczas aktualizacji zakupu' });
     }
 });
