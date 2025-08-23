@@ -408,7 +408,7 @@ async function handleFilterChange() {
         const { purchases } = await apiCall(`/api/purchases?${queryString}`);
         allPurchases = purchases;
         nextPurchaseCursor = null;
-        renderPurchasesList(false);
+        renderPurchasesList(allPurchases, false);
     } catch (error) {
         console.error('Błąd podczas filtrowania zakupów:', error);
         purchasesList.innerHTML = '<div class="text-center py-12 text-red-500">Wystąpił błąd podczas filtrowania.</div>';
@@ -468,7 +468,7 @@ async function loadInitialPurchases() {
         const { purchases, nextCursor } = await apiCall('/api/purchases');
         allPurchases = purchases;
         nextPurchaseCursor = nextCursor;
-        renderPurchasesList(); // Renderuj tylko listę zakupów
+        renderPurchasesList(allPurchases); // Renderuj tylko listę zakupów
     } catch (error) {
         console.error('Błąd ładowania początkowych zakupów:', error);
     } finally {
@@ -484,9 +484,14 @@ async function fetchMorePurchases() {
 
     try {
         const { purchases, nextCursor } = await apiCall(`/api/purchases?lastVisible=${nextPurchaseCursor}`);
-        allPurchases.push(...purchases);
-        nextPurchaseCursor = nextCursor;
-        renderPurchasesList(true); // Renderuj z flagą dołączania
+        if (purchases && purchases.length > 0) {
+            allPurchases.push(...purchases);
+            renderPurchasesList(purchases, true); // Renderuj tylko nowe zakupy
+        }
+        nextPurchaseCursor = nextCursor; // Zaktualizuj kursor nawet jeśli jest null
+        if (!nextCursor) {
+            window.removeEventListener('scroll', handleInfiniteScroll);
+        }
     } catch (error) {
         console.error('Błąd doładowywania zakupów:', error);
     } finally {
@@ -495,10 +500,9 @@ async function fetchMorePurchases() {
     }
 }
 
-function renderAll() {
-    renderPurchasesList();
-    updateMonthlyBalance();
-    renderStatistics(); // Od razu renderuj statystyki
+async function renderAll() {
+    await updateMonthlyBalance();
+    await renderStatistics(); // Od razu renderuj statystyki
     renderSpecialBudgetsList();
     populateBudgetTypeSelect();
 }
@@ -522,17 +526,17 @@ function renderSpecialBudgetsList() {
 
     allSpecialBudgets.forEach(budget => {
         const budgetEl = document.createElement('div');
-        budgetEl.className = 'flex items-center justify-between p-2 rounded-md bg-gray-50 dark:bg-gray-700';
+        budgetEl.className = 'flex items-center justify-between p-2 border-b border-gray-200 dark:border-gray-700';
         budgetEl.innerHTML = `
             <div>
                 <span class="font-medium text-gray-800 dark:text-gray-200">${budget.name}</span>
                 <span class="text-sm text-gray-500 dark:text-gray-400 ml-2">${budget.amount.toFixed(2)} zł</span>
             </div>
             <div class="flex items-center space-x-2">
-                <button class="edit-special-budget-btn p-1 text-gray-500 hover:text-blue-500" data-id="${budget.id}" title="Edytuj">
+                <button class="edit-special-budget-btn p-1 text-blue-500 hover:text-blue-700" data-id="${budget.id}" title="Edytuj">
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L15.232 5.232z"></path></svg>
                 </button>
-                <button class="delete-special-budget-btn p-1 text-gray-500 hover:text-red-500" data-id="${budget.id}" title="Usuń">
+                <button class="delete-special-budget-btn p-1 text-red-500 hover:text-red-700" data-id="${budget.id}" title="Usuń">
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                 </button>
             </div>
@@ -608,20 +612,45 @@ async function handleEditSpecialBudgetSubmit(e) {
     }
 }
 
-function updateMonthlyBalance() {
+async function updateMonthlyBalance() {
     const now = new Date();
-    // Użyj roku i miesiąca z `now` do stworzenia daty w lokalnej strefie czasowej, unikając problemów z UTC
-    const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const year = firstDayOfMonth.getFullYear();
-    const month = (firstDayOfMonth.getMonth() + 1).toString().padStart(2, '0');
-    const firstDayOfMonthStr = `${year}-${month}-01`;
+    const year = now.getFullYear();
+    const month = now.getMonth() + 1;
+    const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
+    const lastDay = new Date(year, month, 0).getDate();
+    const endDate = `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
 
-    const monthlyPurchases = allPurchases.filter(p => p.date >= firstDayOfMonthStr);
-    const total = monthlyPurchases.reduce((sum, p) => sum + (p.totalAmount || 0), 0);
-    monthlyBalanceValue.textContent = `${total.toFixed(2)} zł`;
+    try {
+        let allMonthlyPurchases = [];
+        let lastVisible = null;
+        let hasMore = true;
 
-    const monthName = now.toLocaleString('pl-PL', { month: 'long' });
-    monthlyBalanceLabel.textContent = `Wydatki w ${monthName.charAt(0).toUpperCase() + monthName.slice(1)}`;
+        // Fetch all purchases for the current month, handling pagination
+        while(hasMore) {
+            const queryString = `startDate=${startDate}&endDate=${endDate}` + (lastVisible ? `&lastVisible=${lastVisible}` : '');
+            const { purchases, nextCursor } = await apiCall(`/api/purchases?${queryString}`);
+            
+            if (purchases && purchases.length > 0) {
+                allMonthlyPurchases.push(...purchases);
+            }
+            
+            if (nextCursor) {
+                lastVisible = nextCursor;
+            } else {
+                hasMore = false;
+            }
+        }
+        
+        const total = allMonthlyPurchases.reduce((sum, p) => sum + (p.totalAmount || 0), 0);
+        monthlyBalanceValue.textContent = `${total.toFixed(2)} zł`;
+        
+        const monthName = now.toLocaleString('pl-PL', { month: 'long' });
+        monthlyBalanceLabel.textContent = `Wydatki w ${monthName.charAt(0).toUpperCase() + monthName.slice(1)}`;
+
+    } catch (error) {
+        console.error('Failed to fetch all monthly purchases for header balance:', error);
+        monthlyBalanceValue.textContent = `Błąd`;
+    }
 }
 
 // --- Inicjalizacja Aplikacji ---
