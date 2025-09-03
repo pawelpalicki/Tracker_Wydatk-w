@@ -396,9 +396,9 @@ async function renderShopBarChart() {
                         color: '#fff',
                         anchor: 'end',
                         align: 'end',
-                        formatter: (value) => value.toFixed(2),
-                        overlap: false, // Ukrywaj nakładające się etykiety
-                        clamp: true // Upewnij się, że etykiety nie wychodzą poza obszar wykresu
+                        formatter: (value) => value.toFixed(2) + ' zł',
+                        overlap: false,
+                        clamp: true
                     }
                 },
                 indexAxis: 'y',
@@ -413,6 +413,7 @@ async function renderShopBarChart() {
                         }
                     },
                     x: {
+                        suggestedMax: Math.max(...data) * 1.20, // Dodaj 20% marginesu na końcu osi
                         ticks: { color: 'white' },
                         grid: { color: 'rgba(255, 255, 255, 0.1)' }
                     }

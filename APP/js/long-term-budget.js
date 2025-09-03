@@ -5,6 +5,9 @@ let longTermBudgetInitialized = false;
 
 // --- Funkcje analizy długoterminowej ---
 async function initializeLongTermBudget() {
+    // Rejestrujemy wtyczkę, aby mieć pewność, że jest dostępna
+    Chart.register(ChartDataLabels);
+
     // Sprawdź czy już zainicjalizowano
     if (longTermBudgetInitialized) {
         return;
@@ -248,10 +251,24 @@ function renderLongTermChart(data) {
                             return context.dataset.label + ': ' +
                                 new Intl.NumberFormat('pl-PL', {
                                     style: 'currency',
-                                    currency: 'PLN'
+                                    currency: 'PLN',
+                                    minimumFractionDigits: 2
                                 }).format(context.parsed.y);
                         }
                     }
+                },
+                datalabels: {
+                    display: context => context.dataset.data[context.dataIndex] > 0,
+                    formatter: (value) => value.toFixed(2) + ' zł',
+                    color: 'white',
+                    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                    borderRadius: 4,
+                    padding: 4,
+                    font: {
+                        weight: 'bold'
+                    },
+                    align: 'top',
+                    anchor: 'end'
                 }
             },
             scales: {
@@ -262,7 +279,8 @@ function renderLongTermChart(data) {
                         callback: function (value) {
                             return new Intl.NumberFormat('pl-PL', {
                                 style: 'currency',
-                                currency: 'PLN'
+                                currency: 'PLN',
+                                minimumFractionDigits: 2
                             }).format(value);
                         }
                     },
@@ -366,22 +384,23 @@ function renderCategoryProgressBars(data) {
 
     // Renderuj paski postępu
     sortedCategories.forEach(([category, totals]) => {
-        const percentage = totals.budget > 0 ? Math.min((totals.spending / totals.budget) * 100, 100) : 0;
+        const rawPercentage = totals.budget > 0 ? (totals.spending / totals.budget) * 100 : 0;
+        const visualPercentage = Math.min(rawPercentage, 100);
         const remaining = totals.budget - totals.spending;
 
         let progressColor = 'bg-green-500';
-        if (percentage > 90) progressColor = 'bg-red-500';
-        else if (percentage > 75) progressColor = 'bg-yellow-500';
+        if (rawPercentage > 100) progressColor = 'bg-red-500';
+        else if (rawPercentage > 75) progressColor = 'bg-yellow-500';
 
         const progressBar = document.createElement('div');
         progressBar.className = 'bg-gray-200 dark:bg-gray-600 rounded-lg p-3';
         progressBar.innerHTML = `
             <div class="flex justify-between items-center mb-2">
                 <span class="text-sm font-medium text-gray-900 dark:text-white">${category.charAt(0).toUpperCase() + category.slice(1)}</span>
-                <span class="text-sm text-gray-600 dark:text-gray-400">${percentage.toFixed(1)}%</span>
+                <span class="text-sm text-gray-600 dark:text-gray-400">${rawPercentage.toFixed(1)}%</span>
             </div>
             <div class="w-full bg-gray-300 dark:bg-gray-700 rounded-full h-2 mb-2">
-                <div class="${progressColor} h-2 rounded-full transition-all duration-300" style="width: ${percentage}%"></div>
+                <div class="${progressColor} h-2 rounded-full transition-all duration-300" style="width: ${visualPercentage}%"></div>
             </div>
             <div class="flex justify-between text-xs text-gray-600 dark:text-gray-400">
                 <span>Wydano: ${new Intl.NumberFormat('pl-PL', { style: 'currency', currency: 'PLN' }).format(totals.spending)}</span>
