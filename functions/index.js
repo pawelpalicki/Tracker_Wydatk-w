@@ -18,7 +18,7 @@ const app = express();
 // Użyj Firebase Secrets (bezpieczne)
 const JWT_SECRET = process.env.JWT_SECRET;
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const MIGRATION_SECRET_KEY = process.env.MIGRATION_SECRET_KEY;
+
 
 
 // --- Inicjalizacja Firebase ---
@@ -190,66 +190,7 @@ async function updateCategoryInPurchases(userId, oldName, newName, deleteMode = 
     await batch.commit();
 }
 
-// --- Endpoint Migracyjny (jednorazowe użycie) ---
-app.post('/admin/migrate-users', async (req, res) => {
-    const providedKey = req.headers['x-migration-key'];
-    if (providedKey !== MIGRATION_SECRET_KEY) {
-        return res.status(403).json({ success: false, error: 'Brak uprawnień.' });
-    }
 
-    console.log('Rozpoczynam migrację użytkowników...');
-
-    try {
-        const usersSnapshot = await usersCollection.get();
-        if (usersSnapshot.empty) {
-            return res.status(200).json({ success: true, message: 'Brak użytkowników do migracji.' });
-        }
-
-        const usersToImport = usersSnapshot.docs.map(doc => {
-            const userData = doc.data();
-            return {
-                uid: doc.id,
-                email: userData.email,
-                passwordHash: Buffer.from(userData.password, 'utf8'),
-            };
-        });
-
-        console.log(`Przygotowano ${usersToImport.length} użytkowników do importu.`);
-
-        const result = await getAuth().importUsers(usersToImport, {
-            hash: {
-                algorithm: 'BCRYPT'
-            }
-        });
-
-        console.log(`Pomyślnie zaimportowano ${result.successCount} użytkowników.`);
-        if (result.failureCount > 0) {
-            console.error('Błędy importu:', result.errors);
-        }
-
-        console.log('Rozpoczynam usuwanie haseł z Firestore...');
-        const batch = db.batch();
-        usersSnapshot.docs.forEach(doc => {
-            batch.update(doc.ref, {
-                uid: doc.id,
-                password: FieldValue.delete()
-            });
-        });
-        await batch.commit();
-        console.log('✅ Hasła zostały usunięte z Firestore.');
-
-        res.status(200).json({
-            success: true,
-            message: 'Migracja zakończona pomyślnie!',
-            imported: result.successCount,
-            failed: result.failureCount
-        });
-
-    } catch (error) {
-        console.error("Błąd krytyczny podczas migracji:", error);
-        res.status(500).json({ success: false, error: 'Błąd serwera podczas migracji.', details: error.message });
-    }
-});
 
 
 // --- API Uwierzytelniania ---
