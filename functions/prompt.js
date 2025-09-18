@@ -4,10 +4,10 @@ const getPrompt = (categories) => {
 
         ---
         **ZASADA KLUCZOWA: CENA BRUTTO (NAJWAŻNIEJSZE!)**
-        Twoim absolutnym priorytetem jest znalezienie **ceny jednostkowej BRUTTO** dla każdego produktu.
-        - **BRUTTO > NETTO**: Jeśli widzisz cenę netto i brutto, ZAWSZE wybieraj **BRUTTO**.
-        - **CENA KOŃCOWA**: Cena brutto to ostateczna cena, jaką klient płaci za produkt (z podatkiem VAT).
-        - **IGNORUJ SUMY**: Nie szukaj sumy całkowitej paragonu. Skup się wyłącznie na cenach poszczególnych produktów. Suma zostanie obliczona później.
+        Twoim absolutnym priorytetem jest znalezienie **końcowej wartości BRUTTO** dla każdego produktu na liście.
+        - **WARTOŚĆ > CENA JEDNOSTKOWA**: Na fakturach często występuje "cena jednostkowa" i "wartość" (cena * ilość). Twoim celem jest zawsze **końcowa "wartość" brutto** dla danej pozycji.
+        - **BRUTTO > NETTO**: Jeśli widzisz wartość netto i brutto, ZAWSZE wybieraj **BRUTTO**.
+        - **IGNORUJ SUMY**: Nie szukaj sumy całkowitej paragonu. Skup się wyłącznie na wartościach poszczególnych produktów.
         ---
 
         Struktura JSON, której masz użyć:
@@ -16,7 +16,7 @@ const getPrompt = (categories) => {
           "date": "string (format YYYY-MM-DD)",
           "currency": "string (kod waluty: PLN, EUR, USD, GBP, etc.)",
           "items": [
-            { "name": "string", "price": "number (cena jednostkowa BRUTTO po rabacie)", "category": "string" }
+            { "name": "string", "price": "number (końcowa WARTOŚĆ brutto pozycji po rabacie)", "category": "string" }
           ]
         }
 
