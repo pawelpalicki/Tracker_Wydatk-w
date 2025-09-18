@@ -10,6 +10,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const path = require('path');
 const cors = require('cors');
+const { getPrompt } = require('./prompt.js');
 
 // --- Konfiguracja ---
 const app = express();
@@ -129,60 +130,7 @@ async function retryWithBackoff(fn, retries = 2, delay = 1000) {
 
 async function extractAndCategorizePurchase(file, categories) {
     const imagePart = { inlineData: { data: file.buffer.toString("base64"), mimeType: file.mimetype } };
-    const prompt = `
-        Twoim zadaniem jest BARDZO DOKŁADNA analiza paragonu lub faktury i zwrócenie danych WYŁĄCZNIE w formacie JSON.
-
-        Struktura JSON, której masz użyć:
-        {
-          "shop": "string",
-          "date": "string (format YYYY-MM-DD)",
-          "currency": "string (kod waluty: PLN, EUR, USD, GBP, etc.)",
-          "items": [
-            { "name": "string", "price": number (cena PO RABACIE), "category": "string" }
-          ]
-        }
-
-        Postępuj DOKŁADNIE według tych kroków:
-        1.  **Dane Główne**: Wyodrębnij nazwę sklepu ('shop'), datę transakcji ('date') w formacie YYYY-MM-DD i walutę ('currency') - użyj kodu waluty (PLN, EUR, USD, GBP, etc.).
-        2.  **Analiza Rabatów (NAJWAŻNIEJSZE)**: Znajdź wszystkie rabaty na paragonie i dopasuj je do odpowiednich produktów:
-            -   Rabaty bezpośrednio przy produkcie (pod, obok, w tej samej linii)
-            -   Rabaty na dole paragonu z nazwą produktu (np. "Rabat Mleko"), 
-            -   Rabaty ogólne - rozdziel proporcjonalnie między produkty
-        3.  **Kategoryzacja**: Dla każdego produktu przypisz kategorię ('category') z tej listy: ${JSON.stringify(categories)}. Jeśli żadna nie pasuje, użyj "inne".
-        4.  **Format Wyjściowy**: Zwróć ostateczną listę produktów w formacie JSON. Nie dodawaj żadnych wyjaśnień ani tekstu przed lub po bloku JSON. Twoja odpowiedź musi być czystym JSON-em.
-
-        **PRZYKŁADY RABATÓW:**
-        - Produkt z rabatem bezpośrednio przy nim = odejmij rabat od ceny produktu
-        - Rabat z nazwą produktu gdziekolwiek na paragonie = przypisz do tego produktu
-        - Rabat ogólny bez nazwy produktu = rozdziel między wszystkie produkty
-
-        **Obsługa Błędów**: Jeśli plik jest nieczytelny lub nie jest paragonem/fakturą, zwróć DOKŁADNIE ten JSON:
-        { "error": "Nie udało się odczytać danych z dokumentu. Obraz może być nieczytelny lub nie jest paragonem." }
-        
-        **Przykłady idealnych odpowiedzi**:
-        
-        Polski paragon:
-        {
-          "shop": "Biedronka",
-          "date": "2025-07-25",
-          "currency": "PLN",
-          "items": [
-            {"name": "Sok pomarańczowy", "price": 4.50, "category": "spożywcze"},
-            {"name": "Mleko 2%", "price": 2.00, "category": "spożywcze"}
-          ]
-        }
-        
-        Zagraniczny paragon:
-        {
-          "shop": "Carrefour",
-          "date": "2025-07-25", 
-          "currency": "EUR",
-          "items": [
-            {"name": "Orange Juice", "price": 2.50, "category": "spożywcze"},
-            {"name": "Milk", "price": 1.20, "category": "spożywcze"}
-          ]
-        }
-    `;
+    const prompt = getPrompt(categories);
 
     try {
         const generationFn = () => model.generateContent([prompt, imagePart]);
