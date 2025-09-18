@@ -464,11 +464,18 @@ async function fetchInitialData(shouldSwitchToDefault = true) {
 
 async function loadInitialPurchases() {
     isLoadingPurchases = true;
+    // Zawsze usuń listener, aby uniknąć duplikatów i zresetować stan
+    window.removeEventListener('scroll', handleInfiniteScroll);
     try {
         const { purchases, nextCursor } = await apiCall('/api/purchases');
         allPurchases = purchases;
         nextPurchaseCursor = nextCursor;
         renderPurchasesList(allPurchases); // Renderuj tylko listę zakupów
+
+        // Jeśli jest następna strona, ponownie dodaj listener
+        if (nextCursor) {
+            window.addEventListener('scroll', handleInfiniteScroll);
+        }
     } catch (error) {
         console.error('Błąd ładowania początkowych zakupów:', error);
     } finally {
