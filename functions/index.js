@@ -36,7 +36,7 @@ const recurringExpensesCollection = db.collection('recurringExpenses');
 // --- Inicjalizacja Gemini AI ---
 const gemini = new GoogleGenerativeAI(GEMINI_API_KEY);
 const model = gemini.getGenerativeModel({ model: "gemini-2.5-flash" });
-pr
+
 // --- Middleware ---
 // Użyj cors z opcjami, aby zezwolić na żądania z Twojej domeny Firebase
 app.use(cors({ origin: true }));
@@ -279,9 +279,39 @@ app.get('/api/recurring-expenses', authMiddleware, async (req, res) => {
 // POST: Dodaj nową definicję wydatku cyklicznego
 app.post('/api/recurring-expenses', authMiddleware, async (req, res) => {
     try {
-        const { name, amount, category, dayOfMonth } = req.body;
-        if (!name || !amount || !category || !dayOfMonth) {
-            return res.status(400).json({ error: 'Wszystkie pola są wymagane.' });
+        const { name, amount, category, schedule } = req.body;
+
+        // Walidacja podstawowych pól
+        if (!name || !amount || !category || !schedule) {
+            return res.status(400).json({ error: 'Pola nazwa, kwota, kategoria i harmonogram są wymagane.' });
+        }
+
+        // Walidacja obiektu harmonogramu
+        if (typeof schedule !== 'object') {
+            return res.status(400).json({ error: 'Harmonogram musi być obiektem.' });
+        }
+
+        switch (schedule.type) {
+            case 'monthly':
+                if (!schedule.dayOfMonth || schedule.dayOfMonth < 1 || schedule.dayOfMonth > 31) {
+                    return res.status(400).json({ error: 'Dla harmonogramu miesięcznego wymagany jest prawidłowy dzień miesiąca (1-31).' });
+                }
+                break;
+            case 'weekly':
+                if (schedule.dayOfWeek === undefined || schedule.dayOfWeek < 0 || schedule.dayOfWeek > 6) {
+                    return res.status(400).json({ error: 'Dla harmonogramu tygodniowego wymagany jest prawidłowy dzień tygodnia (0-6, gdzie 0 to niedziela).' });
+                }
+                break;
+            case 'daily_interval':
+                if (!schedule.interval || schedule.interval < 1) {
+                    return res.status(400).json({ error: 'Dla harmonogramu interwałowego wymagana jest dodatnia liczba dni.' });
+                }
+                if (!schedule.startDate) {
+                    return res.status(400).json({ error: 'Dla harmonogramu interwałowego wymagana jest data początkowa.' });
+                }
+                break;
+            default:
+                return res.status(400).json({ error: `Nieznany typ harmonogramu: ${schedule.type}` });
         }
 
         const createdAt = new Date();
@@ -295,7 +325,7 @@ app.post('/api/recurring-expenses', authMiddleware, async (req, res) => {
             name,
             amount: parseFloat(amount),
             category,
-            dayOfMonth: parseInt(dayOfMonth),
+            schedule, // Zapisujemy cały obiekt harmonogramu
             createdAt: createdAt,
             lastAdded: lastAdded
         };
@@ -304,6 +334,68 @@ app.post('/api/recurring-expenses', authMiddleware, async (req, res) => {
         res.status(201).json({ id: docRef.id, ...newExpense });
     } catch (error) {
         console.error("Błąd dodawania wydatku cyklicznego:", error);
+        res.status(500).json({ error: 'Błąd serwera' });
+    }
+});
+
+// PUT: Aktualizuj definicję wydatku cyklicznego
+app.put('/api/recurring-expenses/:id', authMiddleware, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name, amount, category, schedule } = req.body;
+
+        // Walidacja podstawowych pól
+        if (!name || !amount || !category || !schedule) {
+            return res.status(400).json({ error: 'Pola nazwa, kwota, kategoria i harmonogram są wymagane.' });
+        }
+
+        // Walidacja obiektu harmonogramu
+        if (typeof schedule !== 'object') {
+            return res.status(400).json({ error: 'Harmonogram musi być obiektem.' });
+        }
+
+        switch (schedule.type) {
+            case 'monthly':
+                if (!schedule.dayOfMonth || schedule.dayOfMonth < 1 || schedule.dayOfMonth > 31) {
+                    return res.status(400).json({ error: 'Dla harmonogramu miesięcznego wymagany jest prawidłowy dzień miesiąca (1-31).' });
+                }
+                break;
+            case 'weekly':
+                if (schedule.dayOfWeek === undefined || schedule.dayOfWeek < 0 || schedule.dayOfWeek > 6) {
+                    return res.status(400).json({ error: 'Dla harmonogramu tygodniowego wymagany jest prawidłowy dzień tygodnia (0-6, gdzie 0 to niedziela).' });
+                }
+                break;
+            case 'daily_interval':
+                if (!schedule.interval || schedule.interval < 1) {
+                    return res.status(400).json({ error: 'Dla harmonogramu interwałowego wymagana jest dodatnia liczba dni.' });
+                }
+                if (!schedule.startDate) {
+                    return res.status(400).json({ error: 'Dla harmonogramu interwałowego wymagana jest data początkowa.' });
+                }
+                break;
+            default:
+                return res.status(400).json({ error: `Nieznany typ harmonogramu: ${schedule.type}` });
+        }
+
+        const expenseRef = recurringExpensesCollection.doc(id);
+        const doc = await expenseRef.get();
+
+        if (!doc.exists || doc.data().userId !== req.userId) {
+            return res.status(403).json({ error: 'Brak uprawnień lub wydatek nie istnieje.' });
+        }
+
+        const updatedExpense = {
+            name,
+            amount: parseFloat(amount),
+            category,
+            schedule, // Zapisujemy cały obiekt harmonogramu
+            updatedAt: new Date()
+        };
+
+        await expenseRef.update(updatedExpense);
+        res.json({ id, ...updatedExpense });
+    } catch (error) {
+        console.error("Błąd aktualizacji wydatku cyklicznego:", error);
         res.status(500).json({ error: 'Błąd serwera' });
     }
 });
@@ -1049,6 +1141,48 @@ app.post('/api/analyze-receipt', authMiddleware, async (req, res) => {
 });
 
 // --- Funkcja Cykliczna (CRON) ---
+
+// Funkcja pomocnicza do określania, czy wydatek cykliczny powinien zostać dodany dzisiaj
+function shouldAddExpenseToday(expense, today) {
+    const lastAddedDate = expense.lastAdded ? new Date(expense.lastAdded) : new Date(expense.createdAt.toDate());
+    const todayUTC = new Date(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate()));
+
+    // Upewnij się, że lastAddedDate jest również w UTC dla spójności
+    const lastAddedUTC = new Date(Date.UTC(lastAddedDate.getFullYear(), lastAddedDate.getMonth(), lastAddedDate.getDate()));
+
+    // Jeśli wydatek został już dodany dzisiaj, pomiń
+    if (lastAddedUTC.getTime() === todayUTC.getTime()) {
+        return false;
+    }
+
+    switch (expense.schedule.type) {
+        case 'monthly':
+            // Dodaj, jeśli dzisiaj jest dzień miesiąca zgodny z harmonogramem
+            // i ostatnie dodanie było w poprzednim miesiącu lub wcześniej
+            return today.getDate() === expense.schedule.dayOfMonth &&
+                   (todayUTC.getMonth() !== lastAddedUTC.getMonth() || todayUTC.getFullYear() !== lastAddedUTC.getFullYear());
+
+        case 'weekly':
+            // Dodaj, jeśli dzisiaj jest dzień tygodnia zgodny z harmonogramem
+            // i minął co najmniej tydzień od ostatniego dodania
+            const daysSinceLastAdded = Math.floor((todayUTC - lastAddedUTC) / (1000 * 60 * 60 * 24));
+            return today.getDay() === expense.schedule.dayOfWeek && daysSinceLastAdded >= 7;
+
+        case 'daily_interval':
+            // Dodaj, jeśli minął odpowiedni interwał od daty początkowej
+            const startDate = new Date(expense.schedule.startDate);
+            const startDateTime = Date.UTC(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+            const daysSinceStart = Math.floor((todayUTC - startDateTime) / (1000 * 60 * 60 * 24));
+            
+            // Jeśli dzisiaj jest dzień, w którym interwał się zgadza i nie dodano jeszcze dzisiaj
+            return daysSinceStart >= 0 && (daysSinceStart % expense.schedule.interval === 0) &&
+                   (todayUTC.getTime() !== lastAddedUTC.getTime());
+
+        default:
+            return false;
+    }
+}
+
 exports.addRecurringExpensesScheduled = onSchedule('every 24 hours', async (event) => {
     console.log('Uruchomiono zaplanowane dodawanie wydatków cyklicznych.');
     const today = new Date();
@@ -1059,7 +1193,6 @@ exports.addRecurringExpensesScheduled = onSchedule('every 24 hours', async (even
         return null;
     }
 
-    // Grupuj wydatki po userId, aby zminimalizować liczbę zapisów batch
     const expensesByUser = {};
     recurringSnapshot.forEach(doc => {
         const expense = doc.data();
@@ -1077,32 +1210,8 @@ exports.addRecurringExpensesScheduled = onSchedule('every 24 hours', async (even
         console.log(`Przetwarzanie wydatków dla użytkownika: ${userId}`);
 
         for (const expense of userExpenses) {
-            let dateToCheck;
-            if (expense.lastAdded) {
-                dateToCheck = new Date(expense.lastAdded + '-01T12:00:00Z');
-                dateToCheck.setUTCMonth(dateToCheck.getUTCMonth() + 1);
-            } else {
-                dateToCheck = new Date(expense.createdAt.toDate());
-                dateToCheck.setUTCMonth(dateToCheck.getUTCMonth() - 1);
-            }
-            dateToCheck.setUTCDate(1);
-
-            let latestProcessedMonth = expense.lastAdded;
-
-            while (dateToCheck <= today) {
-                const year = dateToCheck.getUTCFullYear();
-                const month = dateToCheck.getUTCMonth();
-                const currentMonthStr = `${year}-${String(month + 1).padStart(2, '0')}`;
-
-                const isSameMonthAsToday = (today.getUTCFullYear() === year && today.getUTCMonth() === month);
-                if (isSameMonthAsToday && today.getUTCDate() < expense.dayOfMonth) {
-                    dateToCheck.setUTCMonth(dateToCheck.getUTCMonth() + 1);
-                    continue;
-                }
-
-                const daysInMonth = new Date(year, month + 1, 0).getDate();
-                const actualDay = Math.min(expense.dayOfMonth, daysInMonth);
-                const newPurchaseDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(actualDay).padStart(2, '0')}`;
+            if (shouldAddExpenseToday(expense, today)) {
+                const newPurchaseDate = today.toISOString().split('T')[0];
 
                 const newPurchase = {
                     userId: userId,
@@ -1117,14 +1226,10 @@ exports.addRecurringExpensesScheduled = onSchedule('every 24 hours', async (even
                 const newPurchaseRef = purchasesCollection.doc();
                 batch.set(newPurchaseRef, newPurchase);
                 anyNewPurchases = true;
-                latestProcessedMonth = currentMonthStr;
 
-                dateToCheck.setUTCMonth(dateToCheck.getUTCMonth() + 1);
-            }
-
-            if (latestProcessedMonth !== expense.lastAdded) {
+                // Zaktualizuj lastAdded na dzisiejszą datę
                 const expenseRef = recurringExpensesCollection.doc(expense.id);
-                batch.update(expenseRef, { lastAdded: latestProcessedMonth });
+                batch.update(expenseRef, { lastAdded: newPurchaseDate });
             }
         }
 

@@ -504,15 +504,44 @@
                     <div id="recurring-expenses-list" class="space-y-3 mb-4"></div>
                     <form id="add-recurring-expense-form" class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg space-y-4">
                         <h4 class="font-semibold text-gray-800 dark:text-white">Dodaj nowy wydatek cykliczny</h4>
-                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <input type="text" id="recurring-name" placeholder="Nazwa (np. Netflix)" required
-                                class="md:col-span-2 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2">
+                                class="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2">
                             <input type="number" id="recurring-amount" placeholder="Kwota" required step="0.01"
                                 class="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2">
                             <select id="recurring-category" required
                                 class="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2"></select>
-                            <input type="number" id="recurring-day" placeholder="Dzień miesiąca (1-31)" required min="1"
-                                max="31"
+                            
+                            <select id="recurring-schedule-type" required
+                                class="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2">
+                                <option value="monthly">Co miesiąc</option>
+                                <option value="weekly">Co tydzień</option>
+                                <option value="daily_interval">Interwał dni</option>
+                            </select>
+                        </div>
+                        <!-- Ustawienia dla harmonogramu miesięcznego -->
+                        <div id="recurring-monthly-settings" class="grid grid-cols-1 gap-4 mt-4">
+                            <input type="number" id="recurring-day-of-month" placeholder="Dzień miesiąca (1-31)" min="1" max="31"
+                                class="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2">
+                        </div>
+                        <!-- Ustawienia dla harmonogramu tygodniowego -->
+                        <div id="recurring-weekly-settings" class="hidden grid grid-cols-1 gap-4 mt-4">
+                            <select id="recurring-day-of-week"
+                                class="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2">
+                                <option value="1">Poniedziałek</option>
+                                <option value="2">Wtorek</option>
+                                <option value="3">Środa</option>
+                                <option value="4">Czwartek</option>
+                                <option value="5">Piątek</option>
+                                <option value="6">Sobota</option>
+                                <option value="0">Niedziela</option>
+                            </select>
+                        </div>
+                        <!-- Ustawienia dla interwału -->
+                        <div id="recurring-interval-settings" class="hidden grid grid-cols-2 gap-4 mt-4">
+                            <input type="number" id="recurring-interval" placeholder="Co ile dni?" min="1"
+                                class="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2">
+                            <input type="date" id="recurring-start-date" placeholder="Data początkowa"
                                 class="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2">
                         </div>
                         <button type="submit"
