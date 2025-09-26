@@ -203,6 +203,7 @@ function renderBudgetSummary(spending, budgets) {
     const totalSpentInBudget = Object.keys(budgets).reduce((sum, cat) => sum + (spending[cat] || 0), 0);
     const totalRemaining = totalBudget - totalSpentInBudget;
     const percentage = totalBudget > 0 ? (totalSpentInBudget / totalBudget) * 100 : 0;
+    const progressBarPercentage = Math.min(percentage, 100);
 
     // Znajdź wydatki bez budżetu
     const unbudgetedCategories = Object.keys(spending).filter(cat => !budgets[cat]);
@@ -213,7 +214,7 @@ function renderBudgetSummary(spending, budgets) {
     summaryBudget.textContent = `${totalBudget.toFixed(2)} zł`;
     summaryRemaining.textContent = `${totalRemaining.toFixed(2)} zł`;
     budgetPercentage.textContent = `${percentage.toFixed(0)}%`;
-    budgetProgressBar.style.width = `${percentage}%`;
+    budgetProgressBar.style.width = `${progressBarPercentage}%`;
 
     // Kolor dla paska postępu i pozostałej kwoty
     if (percentage > 100) {

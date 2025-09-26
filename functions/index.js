@@ -35,8 +35,8 @@ const recurringExpensesCollection = db.collection('recurringExpenses');
 
 // --- Inicjalizacja Gemini AI ---
 const gemini = new GoogleGenerativeAI(GEMINI_API_KEY);
-const model = gemini.getGenerativeModel({ model: "gemini-1.5-flash" });
-
+const model = gemini.getGenerativeModel({ model: "gemini-2.5-flash" });
+pr
 // --- Middleware ---
 // Użyj cors z opcjami, aby zezwolić na żądania z Twojej domeny Firebase
 app.use(cors({ origin: true }));

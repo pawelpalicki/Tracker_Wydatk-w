@@ -139,7 +139,7 @@ const shopAutocompleteList = document.getElementById('shop-autocomplete-list');
 
 // --- Funkcje Pomocnicze ---
 const categoryColors = {};
-const colorPalette = ['#3b82f6', '#10b981', '#ef4444', '#f97316', '#8b5cf6', '#ec4899', '#f59e0b', '#14b8a6', '#64748b', '#06b6d4'];
+const colorPalette = ['#3b82f6', '#10b981', '#ef4444', '#f97316', '#8b5cf6', '#ec4899', '#f59e0b', '#14b8a6', '#64748b', '#06b6d4', '#a855f7', '#eab308', '#0ea5e9', '#be185d', '#16a34a', '#f43f5e', '#84cc16', '#6366f1', '#d946ef', '#fb7185'];
 let colorIndex = 0;
 
 function getCategoryColor(category) {
