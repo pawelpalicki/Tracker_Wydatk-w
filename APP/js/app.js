@@ -2,13 +2,13 @@
 
 // --- Konfiguracja Firebase ---
 const firebaseConfig = {
-  apiKey: "AIzaSyCLwUZBI4N31kz4UKWmOyqNvszzygKFvWE",
-  authDomain: "trackerwydatkowapp.firebaseapp.com",
-  projectId: "trackerwydatkowapp",
-  storageBucket: "trackerwydatkowapp.firebasestorage.app",
-  messagingSenderId: "985262621512",
-  appId: "1:985262621512:web:87348caca12ca4c453297d",
-  measurementId: "G-SSDG9QGDL4"
+    apiKey: "AIzaSyCotoNKJ1Y9BCt6N8ZKCXny9PTcgCJc2fk",
+    authDomain: "trackerwydatkowapp.firebaseapp.com",
+    projectId: "trackerwydatkowapp",
+    storageBucket: "trackerwydatkowapp.firebasestorage.app",
+    messagingSenderId: "985262621512",
+    appId: "1:985262621512:web:87348caca12ca4c453297d",
+    measurementId: "G-SSDG9QGDL4"
 };
 
 firebase.initializeApp(firebaseConfig);
@@ -92,6 +92,8 @@ const categoryDetailsModal = document.getElementById('category-details-modal');
 const closeCategoryDetailsBtn = document.getElementById('close-category-details-btn');
 const categoryDetailsTitle = document.getElementById('category-details-title');
 const categoryDetailsTableBody = document.getElementById('category-details-table-body');
+const quickAddManualBtn = document.getElementById('quick-add-manual-btn');
+const quickAddScanBtn = document.getElementById('quick-add-scan-btn');
 const budgetMonthSelect = document.getElementById('budget-month-select');
 const budgetsList = document.getElementById('budgets-list');
 const saveBudgetBtn = document.getElementById('save-budget-btn');
@@ -285,6 +287,16 @@ function setupAppEventListeners() {
         }
     });
     document.getElementById('category-chart').addEventListener('click', handleCategoryChartClick);
+
+    // Szybkie akcje z kokpitu
+    quickAddManualBtn.addEventListener('click', () => {
+        switchTab('add');
+        setTimeout(() => shopInput.focus(), 100);
+    });
+    quickAddScanBtn.addEventListener('click', () => {
+        switchTab('add');
+        setTimeout(() => startCamera(), 100);
+    });
 
     // Autouzupełnianie sklepu
     shopInput.addEventListener('input', () => renderShopAutocomplete(shopInput.value));

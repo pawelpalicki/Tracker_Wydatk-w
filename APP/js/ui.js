@@ -109,15 +109,6 @@ async function startCamera() {
         cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
         cameraView.classList.remove('hidden');
         cameraStreamEl.srcObject = cameraStream;
-
-        // Po włączeniu kamery przewiń, aby przycisk był widoczny
-        setTimeout(() => {
-            const captureBtn = document.getElementById('capture-photo-btn');
-            if (captureBtn) {
-                captureBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            }
-        }, 100);
-
     } catch (err) {
         alert("Nie udało się uzyskać dostępu do aparatu. Sprawdź uprawnienia w przeglądarce.");
     }
@@ -214,57 +205,5 @@ function toggleChartLegend() {
         text.textContent = 'Pokaż legendę';
     } else {
         text.textContent = 'Ukryj legendę';
-    }
-}
-
-// --- Floating Action Button (FAB) ---
-const fabMain = document.getElementById('fab-main');
-const fabOptions = document.getElementById('fab-options');
-const fabIcon = document.getElementById('fab-icon');
-const fabScanBtn = document.getElementById('fab-scan');
-const fabAddManualBtn = document.getElementById('fab-add-manual');
-const fabLoadDeviceBtn = document.getElementById('fab-load-device');
-const receiptFileInput = document.getElementById('receipt-file-input');
-
-if (fabMain) {
-    fabMain.addEventListener('click', (event) => {
-        event.stopPropagation(); // Zapobiegaj propagacji do document
-        fabOptions.classList.toggle('active');
-        fabMain.classList.toggle('active');
-    });
-
-    fabScanBtn.addEventListener('click', () => {
-        switchTab('add');
-        // Daj czas na przełączenie zakładki przed uruchomieniem kamery
-        setTimeout(startCamera, 100);
-        closeFabMenu();
-    });
-
-    fabAddManualBtn.addEventListener('click', () => {
-        switchTab('add');
-        // Upewnij się, że formularz jest gotowy do ręcznego wprowadzania
-        setTimeout(() => document.getElementById('shop').focus(), 100);
-        closeFabMenu();
-    });
-
-    fabLoadDeviceBtn.addEventListener('click', () => {
-        switchTab('add');
-        // Daj czas na przełączenie zakładki przed kliknięciem inputa
-        setTimeout(() => receiptFileInput.click(), 100);
-        closeFabMenu();
-    });
-
-    // Zamknij menu FAB po kliknięciu poza nim
-    document.addEventListener('click', (event) => {
-        if (fabOptions.classList.contains('active') && !fabMain.contains(event.target) && !fabOptions.contains(event.target)) {
-            closeFabMenu();
-        }
-    });
-}
-
-function closeFabMenu() {
-    if (fabOptions && fabOptions.classList.contains('active')) {
-        fabOptions.classList.remove('active');
-        fabMain.classList.remove('active');
     }
 }

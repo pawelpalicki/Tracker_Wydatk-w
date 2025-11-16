@@ -94,14 +94,3 @@ input:-webkit-autofill:active {
     scrollbar-width: thin;
     scrollbar-color: #4b5563 transparent; /* thumb and track */
 }
-
-/* Floating Action Button */
-#fab-options.active {
-    transform: scale(1) translateY(0);
-    opacity: 1;
-    pointer-events: auto;
-}
-
-#fab-main.active #fab-icon {
-    transform: rotate(45deg);
-}
