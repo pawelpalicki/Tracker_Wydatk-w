@@ -2,7 +2,7 @@
 
 // --- Konfiguracja Firebase ---
 const firebaseConfig = {
-    apiKey: "AIzaSyCotoNKJ1Y9BCt6N8ZKCXny9PTcgCJc2fk",
+    apiKey: "AIzaSyCLwUZBI4N31kz4UKWmOyqNvszzygKFvWE",
     authDomain: "trackerwydatkowapp.firebaseapp.com",
     projectId: "trackerwydatkowapp",
     storageBucket: "trackerwydatkowapp.firebasestorage.app",

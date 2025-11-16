@@ -109,6 +109,15 @@ async function startCamera() {
         cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
         cameraView.classList.remove('hidden');
         cameraStreamEl.srcObject = cameraStream;
+
+         // Po włączeniu kamery przewiń, aby przycisk był widoczny
+        setTimeout(() => {
+            const captureBtn = document.getElementById('capture-photo-btn');
+            if (captureBtn) {
+                captureBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        }, 100);
+
     } catch (err) {
         alert("Nie udało się uzyskać dostępu do aparatu. Sprawdź uprawnienia w przeglądarce.");
     }
