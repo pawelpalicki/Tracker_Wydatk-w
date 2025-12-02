@@ -74,27 +74,57 @@ function getDateRange() {
         return { startMonth, endMonth };
     } else {
         const monthsBack = parseInt(periodType);
-        const endDate = new Date(today.getFullYear(), today.getMonth(), 1);
-        const startDate = new Date(today.getFullYear(), today.getMonth() - monthsBack + 1, 1);
+        
+        let endYear = today.getFullYear();
+        let endMonth = today.getMonth(); // 0-indexed current month
+
+        // Adjust to the last day of the previous month
+        if (endMonth === 0) { // If current month is January
+            endMonth = 11; // Previous month is December
+            endYear--;     // Previous year
+        } else {
+            endMonth--; // Previous month
+        }
+
+        // endMonth is now 0-indexed month of the *previous* month (e.g., 10 for November if today is December)
+        // endYear is the year of that previous month
+
+        let startYear = endYear;
+        let startMonth = endMonth - monthsBack + 1; // Calculate start month index
+
+        if (startMonth < 0) {
+            startYear += Math.floor(startMonth / 12); // Adjust year if startMonth goes into previous year
+            startMonth = (startMonth % 12 + 12) % 12; // Normalize month to 0-11 range
+        }
+
+        const startMonthStr = `${startYear}-${String(startMonth + 1).padStart(2, '0')}`; // +1 because months are 1-indexed for display
+        const endMonthStr = `${endYear}-${String(endMonth + 1).padStart(2, '0')}`; // +1 because months are 1-indexed for display
 
         return {
-            startMonth: startDate.toISOString().substring(0, 7),
-            endMonth: endDate.toISOString().substring(0, 7)
+            startMonth: startMonthStr,
+            endMonth: endMonthStr
         };
     }
 }
 
 function generateMonthRange(startMonth, endMonth) {
     const months = [];
-    const start = new Date(startMonth + '-01');
-    const end = new Date(endMonth + '-01');
+    const [startYear, startM] = startMonth.split('-').map(Number);
+    const [endYear, endM] = endMonth.split('-').map(Number);
 
-    const current = new Date(start);
-    while (current <= end) {
-        months.push(current.toISOString().substring(0, 7));
-        current.setMonth(current.getMonth() + 1);
+    let currentYear = startYear;
+    let currentMonth = startM;
+
+    while (currentYear < endYear || (currentYear === endYear && currentMonth <= endM)) {
+        const monthStr = String(currentMonth).padStart(2, '0');
+        months.push(`${currentYear}-${monthStr}`);
+
+        currentMonth++;
+        if (currentMonth > 12) {
+            currentMonth = 1;
+            currentYear++;
+        }
     }
-
     return months;
 }
 
