@@ -94,3 +94,39 @@ input:-webkit-autofill:active {
     scrollbar-width: thin;
     scrollbar-color: #4b5563 transparent; /* thumb and track */
 }
+
+/* Floating Action Button (FAB) styles */
+#fab-container {
+    transition: transform 0.3s ease-in-out;
+}
+
+#fab-container.hide {
+    transform: translateY(100px); /* Adjust based on FAB height + spacing */
+}
+
+#fab-actions {
+    /* Initially hidden, will be shown/hidden by JS */
+    /* Adjusted for better visual spacing when expanded */
+}
+
+#fab-actions.expanded .fab-sub-btn {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+#fab-add-manual-btn {
+    transition-delay: 50ms;
+}
+
+#fab-select-file-btn {
+    transition-delay: 0ms;
+}
+
+#main-fab-btn.expanded svg {
+    transform: rotate(45deg);
+    transition: transform 0.3s ease-in-out;
+}
+
+#main-fab-btn svg {
+    transition: transform 0.3s ease-in-out;
+}

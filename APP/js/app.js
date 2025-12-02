@@ -38,6 +38,7 @@ let comparisonChart = null;
 let shopChart = null;
 let fp; // Declare fp globally
 let fp_range; // For date range filter
+let lastScrollY = 0; // For FAB scroll detection
 
 // --- Elementy DOM ---
 const loadingSection = document.getElementById('loading-section');
@@ -92,8 +93,6 @@ const categoryDetailsModal = document.getElementById('category-details-modal');
 const closeCategoryDetailsBtn = document.getElementById('close-category-details-btn');
 const categoryDetailsTitle = document.getElementById('category-details-title');
 const categoryDetailsTableBody = document.getElementById('category-details-table-body');
-const quickAddManualBtn = document.getElementById('quick-add-manual-btn');
-const quickAddScanBtn = document.getElementById('quick-add-scan-btn');
 const budgetMonthSelect = document.getElementById('budget-month-select');
 const budgetsList = document.getElementById('budgets-list');
 const saveBudgetBtn = document.getElementById('save-budget-btn');
@@ -102,6 +101,14 @@ const copyBudgetModal = document.getElementById('copy-budget-modal');
 const closeCopyBudgetModal = document.getElementById('close-copy-budget-modal');
 const cancelCopyBudget = document.getElementById('cancel-copy-budget');
 const copyMonthsBtns = document.querySelectorAll('.copy-months-btn');
+
+// Floating Action Button (FAB) elements
+const fabContainer = document.getElementById('fab-container');
+const mainFabBtn = document.getElementById('main-fab-btn');
+const fabActions = document.getElementById('fab-actions');
+const fabAddManualBtn = document.getElementById('fab-add-manual-btn');
+const fabSelectFileBtn = document.getElementById('fab-select-file-btn');
+const fabScanReceiptBtn = document.getElementById('fab-scan-receipt-btn'); // New FAB scan button
 
 // Elementy filtrów
 const filterKeyword = document.getElementById('filter-keyword');
@@ -288,16 +295,6 @@ function setupAppEventListeners() {
     });
     document.getElementById('category-chart').addEventListener('click', handleCategoryChartClick);
 
-    // Szybkie akcje z kokpitu
-    quickAddManualBtn.addEventListener('click', () => {
-        switchTab('add');
-        setTimeout(() => shopInput.focus(), 100);
-    });
-    quickAddScanBtn.addEventListener('click', () => {
-        switchTab('add');
-        setTimeout(() => startCamera(), 100);
-    });
-
     // Autouzupełnianie sklepu
     shopInput.addEventListener('input', () => renderShopAutocomplete(shopInput.value));
     shopInput.addEventListener('focus', () => renderShopAutocomplete(shopInput.value));
@@ -375,6 +372,62 @@ function setupAppEventListeners() {
     // DODAJ TEN EVENT LISTENER TUTAJ:
     document.getElementById('toggle-budget-details').addEventListener('click', toggleBudgetDetails);
     document.getElementById('toggle-legend-details').addEventListener('click', toggleChartLegend);
+
+    // Floating Action Button (FAB) logic
+    let isFabExpanded = false;
+
+    function toggleFab() {
+        isFabExpanded = !isFabExpanded;
+        fabActions.classList.toggle('hidden', !isFabExpanded);
+        fabActions.classList.toggle('expanded', isFabExpanded);
+        mainFabBtn.classList.toggle('expanded', isFabExpanded);
+
+        // Animate sub-buttons
+        const subBtns = fabActions.querySelectorAll('.fab-sub-btn');
+        subBtns.forEach((btn, index) => {
+            if (isFabExpanded) {
+                btn.style.transitionDelay = `${index * 50}ms`;
+            } else {
+                btn.style.transitionDelay = `${(subBtns.length - 1 - index) * 50}ms`;
+            }
+        });
+    }
+
+    mainFabBtn.addEventListener('click', () => {
+        toggleFab();
+    });
+
+    fabAddManualBtn.addEventListener('click', () => {
+        switchTab('add');
+        setTimeout(() => shopInput.focus(), 100);
+        toggleFab();
+    });
+
+    fabSelectFileBtn.addEventListener('click', () => {
+        receiptFileInput.click(); // Trigger the hidden file input
+        toggleFab();
+    });
+
+    fabScanReceiptBtn.addEventListener('click', () => {
+        switchTab('add');
+        setTimeout(() => startCamera(), 100);
+        toggleFab();
+    });
+
+    // Scroll detection for FAB visibility
+    window.addEventListener('scroll', () => {
+        const currentScrollY = window.scrollY;
+
+        if (currentScrollY > lastScrollY && currentScrollY > 100) { // Scrolling down and not at the very top
+            fabContainer.classList.add('hide');
+            if (isFabExpanded) {
+                toggleFab(); // Collapse FAB if scrolling down while expanded
+            }
+        } else {
+            fabContainer.classList.remove('hide');
+        }
+        lastScrollY = currentScrollY;
+    });
 
     // Infinite scroll
     window.addEventListener('scroll', handleInfiniteScroll);
