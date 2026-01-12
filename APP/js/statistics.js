@@ -8,7 +8,19 @@ async function renderStatistics() {
         const initialStats = await apiCall('/api/statistics');
         populateMonthSelector(initialStats.availableMonths);
         await updateCategoryPieChart();
-        await renderComparisonBarChart();
+        
+        const comparisonToggle = document.getElementById('comparison-mode-toggle');
+        const initialMode = comparisonToggle && comparisonToggle.checked ? 'mtd' : 'full';
+        await renderComparisonBarChart(initialMode);
+
+        if (comparisonToggle && !comparisonToggle.hasAttribute('data-listener-attached')) {
+            comparisonToggle.addEventListener('change', (e) => {
+                const newMode = e.target.checked ? 'mtd' : 'full';
+                renderComparisonBarChart(newMode);
+            });
+            comparisonToggle.setAttribute('data-listener-attached', 'true');
+        }
+
         await renderShopBarChart(); // Dodane wywołanie
     } catch (error) {
         console.error("Błąd ładowania statystyk:", error);
@@ -287,9 +299,15 @@ async function handleCategoryChartClick(event) {
     }
 }
 
-async function renderComparisonBarChart() {
-    const stats = await apiCall('/api/statistics/comparison');
+async function renderComparisonBarChart(mode = 'full') {
+    const stats = await apiCall(`/api/statistics/comparison?mode=${mode}`);
     const ctx = document.getElementById('comparison-chart').getContext('2d');
+    const currentDay = new Date().getDate();
+
+    // Wymuszamy jasne kolory dla ciemnego motywu aplikacji
+    const textColor = '#e5e7eb'; // Jasnoszary (Tailwind gray-200)
+    const gridColor = 'rgba(255, 255, 255, 0.1)'; 
+    const mutedTextColor = '#9ca3af'; // Szary (Tailwind gray-400)
 
     if (comparisonChart) comparisonChart.destroy();
 
@@ -306,41 +324,62 @@ async function renderComparisonBarChart() {
         });
         const data = stats.monthlyTotals.map(item => item.total);
 
+        const chartTitle = mode === 'mtd' 
+            ? `Porównanie do ${currentDay}. dnia każdego miesiąca` 
+            : 'Pełne sumy miesięczne';
+        
+        const datasetLabel = mode === 'mtd'
+            ? `Wydatki (do ${currentDay}. dnia)`
+            : 'Suma wydatków';
+
         comparisonChart = new Chart(ctx, {
             type: 'bar',
             data: {
                 labels,
                 datasets: [{
-                    label: 'Suma wydatków',
+                    label: datasetLabel,
                     data,
-                    backgroundColor: '#3B82F6'
+                    backgroundColor: '#3B82F6',
+                    borderRadius: 4
                 }]
             },
             options: {
                 responsive: true,
                 plugins: {
-                    legend: { display: false },
+                    legend: {
+                        display: true,
+                        labels: { color: textColor, font: { weight: '500' } }
+                    },
+                    title: {
+                        display: true,
+                        text: chartTitle,
+                        color: textColor,
+                        font: { size: 14, weight: 'bold' },
+                        padding: { bottom: 15 }
+                    },
                     datalabels: {
                         display: context => context.dataset.data[context.dataIndex] > 0,
-                        color: '#fff',
+                        color: textColor,
                         anchor: 'end',
                         align: 'end',
-                        formatter: (value) => value.toFixed(2),
-                        overlap: false, // Ukrywaj nakładające się etykiety
-                        clamp: true // Upewnij się, że etykiety nie wychodzą poza obszar wykresu
+                        offset: -4,
+                        formatter: (value) => Math.round(value) + ' zł',
+                        font: { weight: 'bold', size: 11 }
                     }
                 },
                 scales: {
                     y: {
-                        suggestedMax: Math.max(...data) * 1.1, // Add 10% padding to the top
-                        ticks: { color: 'white' },
+                        beginAtZero: true,
+                        suggestedMax: Math.max(...data) * 1.2,
+                        ticks: { color: mutedTextColor },
                         grid: {
-                            color: 'rgba(255, 255, 255, 0.1)'
+                            color: gridColor,
+                            drawBorder: false
                         }
                     },
                     x: {
-                        ticks: { color: 'white' },
-                        grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                        ticks: { color: mutedTextColor },
+                        grid: { display: false }
                     }
                 }
             }

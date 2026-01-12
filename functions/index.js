@@ -946,6 +946,8 @@ app.get('/api/statistics', authMiddleware, async (req, res) => {
 
 app.get('/api/statistics/comparison', authMiddleware, async (req, res) => {
     try {
+        const { mode } = req.query; // 'mtd' lub 'full' (domyślnie)
+
         const snapshot = await purchasesCollection.where('userId', '==', req.userId).get();
         if (snapshot.empty) {
             return res.json({ monthlyTotals: [] });
@@ -954,11 +956,26 @@ app.get('/api/statistics/comparison', authMiddleware, async (req, res) => {
         // Wyklucz wydatki ze specjalnych budżetów
         const purchases = snapshot.docs.map(doc => doc.data()).filter(p => !p.specialBudgetId);
 
+        const today = new Date();
+        const targetDay = today.getDate();
+        console.log(`Generowanie porównania. Tryb: ${mode || 'full'}`);
+
         // Agregacja wydatków po miesiącach
         const monthlyTotalsMap = purchases.reduce((acc, p) => {
-            const month = p.date.substring(0, 7);
+            const month = p.date.substring(0, 7); // YYYY-MM
             const amount = p.totalAmount || 0;
-            acc[month] = (acc[month] || 0) + amount;
+
+            if (mode === 'mtd') {
+                // Tryb Month-To-Date: uwzględnij tylko jeśli dzień <= dzisiejszemu
+                const purchaseDate = new Date(p.date);
+                if (purchaseDate.getDate() <= targetDay) {
+                    acc[month] = (acc[month] || 0) + amount;
+                }
+            } else {
+                // Tryb domyślny (full): uwzględnij wszystko
+                acc[month] = (acc[month] || 0) + amount;
+            }
+            
             return acc;
         }, {});
 
