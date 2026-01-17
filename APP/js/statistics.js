@@ -347,7 +347,7 @@ async function renderComparisonBarChart(mode = 'full') {
                 responsive: true,
                 plugins: {
                     legend: {
-                        display: true,
+                        display: false,
                         labels: { color: textColor, font: { weight: '500' } }
                     },
                     title: {
