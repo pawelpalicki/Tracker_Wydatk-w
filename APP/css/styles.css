@@ -225,7 +225,7 @@ input:-webkit-autofill:active {
 }
 
 #fab-container.hide {
-    transform: translateY(120px);
+    transform: translateY(150px) !important;
 }
 
 #fab-actions.expanded .fab-sub-btn {
