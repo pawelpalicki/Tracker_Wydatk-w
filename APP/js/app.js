@@ -214,41 +214,66 @@ async function resizeImage(file, maxSize = 1920, quality = 0.92) {
 }
 
 // --- FAB Scroll Logic ---
-// --- FAB Scroll Logic ---
+// --- FAB Scroll Logic (Multi-Container Support) ---
+const lastScrollPositions = new WeakMap();
+
 function handleFABScroll(e) {
-    // Determine the scroll position based on the target or window
-    let currentScrollY;
-    if (e && e.target && e.target.scrollTop !== undefined) {
-        currentScrollY = e.target.scrollTop;
-    } else {
-        currentScrollY = window.pageYOffset || document.documentElement.scrollTop || window.scrollY;
+    const target = e.target;
+    // Determine current scroll position
+    let currentScrollY = 0;
+
+    if (target === window || target === document) {
+        currentScrollY = window.pageYOffset || document.documentElement.scrollTop || window.scrollY || 0;
+    } else if (target instanceof Element) {
+        currentScrollY = target.scrollTop;
     }
 
-    // Auto-show FAB at the very bottom of the page (approximation)
-    // We use a generous buffer because mobile safe areas can be tricky
-    if ((window.innerHeight + currentScrollY) >= (document.body.offsetHeight - 100)) {
-        fabContainer.classList.remove('hide');
-        lastScrollY = currentScrollY;
+    // Get last scroll position for this specific target
+    let lastScrollY = lastScrollPositions.get(target) || 0;
+
+    // Update last scroll position immediately
+    lastScrollPositions.set(target, currentScrollY);
+
+    // Skip if difference is negligible (e.g. overscroll or tiny movements)
+    if (Math.abs(currentScrollY - lastScrollY) < 5) return;
+
+    // Auto-show FAB at the very bottom (of the specific container or window)
+    let containerHeight = 0;
+    let contentHeight = 0;
+
+    if (target === window || target === document) {
+        containerHeight = window.innerHeight;
+        contentHeight = document.body.offsetHeight;
+    } else if (target instanceof Element) {
+        containerHeight = target.clientHeight;
+        contentHeight = target.scrollHeight;
+    }
+
+    // If near bottom, show
+    if (containerHeight + currentScrollY >= contentHeight - 50) {
+        if (fabContainer.classList.contains('hide')) {
+            console.log('FAB: Default Show (Bottom Reached)');
+            fabContainer.classList.remove('hide');
+        }
         return;
     }
 
-    if (currentScrollY > lastScrollY && currentScrollY > 50) { // Reduced threshold
-        // Scrolling down: hide FAB
+    // Direction check
+    if (currentScrollY > lastScrollY && currentScrollY > 50) {
+        // Scrolling DOWN
         if (!fabContainer.classList.contains('hide')) {
-            console.log('FAB: Hiding', currentScrollY);
+            console.log('FAB: Hiding (Down)', currentScrollY);
             fabContainer.classList.add('hide');
-            // Also collapse sub-buttons if hiding
             fabActions.classList.add('hidden');
             mainFabBtn.classList.remove('expanded');
         }
     } else if (currentScrollY < lastScrollY) {
-        // Scrolling up: show FAB
+        // Scrolling UP
         if (fabContainer.classList.contains('hide')) {
-            console.log('FAB: Showing', currentScrollY);
+            console.log('FAB: Showing (Up)', currentScrollY);
             fabContainer.classList.remove('hide');
         }
     }
-    lastScrollY = currentScrollY;
 }
 
 // --- Główna Logika Aplikacji ---
