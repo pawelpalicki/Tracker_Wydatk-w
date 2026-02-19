@@ -8,7 +8,7 @@ async function renderStatistics() {
         const initialStats = await apiCall('/api/statistics');
         populateMonthSelector(initialStats.availableMonths);
         await updateCategoryPieChart();
-        
+
         const comparisonToggle = document.getElementById('comparison-mode-toggle');
         const initialMode = comparisonToggle && comparisonToggle.checked ? 'mtd' : 'full';
         await renderComparisonBarChart(initialMode);
@@ -82,7 +82,7 @@ async function updateCategoryPieChart() {
     } else {
         noDataPieChart.classList.add('hidden');
         categoryChartContainer.classList.remove('hidden');
-        
+
         categoryChart = new Chart(ctx, {
             type: 'doughnut',
             data: {
@@ -98,6 +98,7 @@ async function updateCategoryPieChart() {
                 animation: false,
                 responsive: true,
                 maintainAspectRatio: false,
+                resizeDelay: 0,
                 cutout: '60%',
                 plugins: {
                     legend: {
@@ -119,7 +120,7 @@ async function updateCategoryPieChart() {
                         }
                     },
                     datalabels: {
-                        display: function(context) {
+                        display: function (context) {
                             const value = context.dataset.data[context.dataIndex];
                             const total = context.chart.getDatasetMeta(0).total;
                             const percentage = (value / total) * 100;
@@ -149,17 +150,31 @@ async function updateCategoryPieChart() {
             },
             plugins: [{
                 id: 'doughnut-center-text',
-                beforeDraw: function(chart) {
+                beforeDraw: function (chart) {
                     const { width, height, ctx } = chart;
                     ctx.restore();
-                    const fontSize = (height / 120).toFixed(2);
-                    ctx.font = `bold ${fontSize}em sans-serif`;
-                    ctx.textBaseline = 'middle';
+
+                    // Calculate available space in the middle (cutout)
+                    const innerRadius = chart.getDatasetMeta(0).data[0].innerRadius;
+                    const maxTextWidth = innerRadius * 2 * 0.9; // 90% of inner diameter
 
                     const text = `${total.toFixed(2)} zł`;
+
+                    // Dynamic font size calculation
+                    let fontSize = (height / 150).toFixed(2);
+                    ctx.font = `bold ${fontSize}em sans-serif`;
+
+                    // Ensure text fits within maxTextWidth
+                    let textWidth = ctx.measureText(text).width;
+                    if (textWidth > maxTextWidth) {
+                        fontSize = (fontSize * (maxTextWidth / textWidth)).toFixed(2);
+                        ctx.font = `bold ${fontSize}em sans-serif`;
+                    }
+
+                    ctx.textBaseline = 'middle';
                     const textX = Math.round((width - ctx.measureText(text).width) / 2);
                     const textY = height / 2;
-                    
+
                     ctx.fillStyle = document.body.classList.contains('dark') ? 'white' : '#1f2937';
                     ctx.fillText(text, textX, textY);
                     ctx.save();
@@ -190,8 +205,8 @@ function renderInteractiveLegend(chart, total) {
     legendContainer.innerHTML = `
         <ul class="space-y-1 pr-2">
             ${sortedData.map(item => {
-                const originalIndex = labels.indexOf(item.label);
-                return `
+        const originalIndex = labels.indexOf(item.label);
+        return `
                 <li data-index="${originalIndex}" data-label="${item.label.toLowerCase()}" class="flex items-center justify-between py-1.5 px-2 rounded-md cursor-pointer transition-colors select-none">
                     <div class="flex items-center truncate">
                         <span class="w-3 h-3 rounded-full mr-3 flex-shrink-0" style="background-color: ${item.color}"></span>
@@ -240,7 +255,7 @@ function renderInteractiveLegend(chart, total) {
     legendContainer.querySelectorAll('li').forEach(li => {
         const index = parseInt(li.dataset.index);
         const label = li.dataset.label;
-        
+
         if ('ontouchstart' in window) {
             let pressTimer;
             let longPress = false;
@@ -306,7 +321,7 @@ async function renderComparisonBarChart(mode = 'full') {
 
     // Wymuszamy jasne kolory dla ciemnego motywu aplikacji
     const textColor = '#e5e7eb'; // Jasnoszary (Tailwind gray-200)
-    const gridColor = 'rgba(255, 255, 255, 0.1)'; 
+    const gridColor = 'rgba(255, 255, 255, 0.1)';
     const mutedTextColor = '#9ca3af'; // Szary (Tailwind gray-400)
 
     if (comparisonChart) comparisonChart.destroy();
@@ -324,10 +339,10 @@ async function renderComparisonBarChart(mode = 'full') {
         });
         const data = stats.monthlyTotals.map(item => item.total);
 
-        const chartTitle = mode === 'mtd' 
-            ? `Porównanie do ${currentDay}. dnia każdego miesiąca` 
+        const chartTitle = mode === 'mtd'
+            ? `Porównanie do ${currentDay}. dnia każdego miesiąca`
             : 'Pełne sumy miesięczne';
-        
+
         const datasetLabel = mode === 'mtd'
             ? `Wydatki (do ${currentDay}. dnia)`
             : 'Suma wydatków';
@@ -345,6 +360,8 @@ async function renderComparisonBarChart(mode = 'full') {
             },
             options: {
                 responsive: true,
+                maintainAspectRatio: false,
+                resizeDelay: 0,
                 plugins: {
                     legend: {
                         display: false,

@@ -82,8 +82,15 @@
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(8px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* ===== Swipe Container ===== */
@@ -92,9 +99,15 @@
     overflow-x: auto;
     scroll-snap-type: x mandatory;
     -webkit-overflow-scrolling: touch;
-    gap: 16px;
+    gap: 12px;
     padding-bottom: 4px;
     scrollbar-width: none;
+}
+
+@media (min-width: 640px) {
+    .swipe-container {
+        gap: 16px;
+    }
 }
 
 .swipe-container::-webkit-scrollbar {
@@ -182,7 +195,7 @@ input:-webkit-autofill:active {
 
 * {
     scrollbar-width: thin;
-    scrollbar-color: rgba(255,255,255,0.1) transparent;
+    scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
 }
 
 /* ===== FAB ===== */
