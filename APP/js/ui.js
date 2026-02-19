@@ -11,6 +11,14 @@ function switchTab(tabName) {
         content.classList.toggle('active', content.id === `${tabName}-tab`);
     });
     if (tabName !== 'add') exitEditMode();
+    if (tabName === 'add') {
+        // Trigger resize for textareas that might have been rendered while hidden
+        setTimeout(() => {
+            document.querySelectorAll('#items-container textarea.item-name').forEach(textarea => {
+                textarea.dispatchEvent(new Event('input'));
+            });
+        }, 50);
+    }
     if (tabName === 'stats') {
         renderStatistics();
     }
@@ -158,7 +166,7 @@ async function startCamera() {
         cameraView.classList.remove('hidden');
         cameraStreamEl.srcObject = cameraStream;
 
-         // Po włączeniu kamery przewiń, aby przycisk był widoczny
+        // Po włączeniu kamery przewiń, aby przycisk był widoczny
         setTimeout(() => {
             const captureBtn = document.getElementById('capture-photo-btn');
             if (captureBtn) {
@@ -205,7 +213,7 @@ function handleFileSelect(event) {
             imagePreviewContainer.classList.add('hidden');
             console.log("Non-image file selected, hiding preview.");
         }
-        
+
         // --- FIX: Automatically trigger analysis and switch to 'add' tab ---
         console.log("Attempting to call handleAnalyzeReceipt...");
         try {
@@ -213,7 +221,7 @@ function handleFileSelect(event) {
             if (typeof handleAnalyzeReceipt === 'function') {
                 handleAnalyzeReceipt();
                 console.log("handleAnalyzeReceipt() called successfully.");
-                
+
                 // --- NEW: Switch to 'add' tab after analysis starts ---
                 console.log("Switching to 'add' tab.");
                 switchTab('add');
@@ -262,7 +270,7 @@ function toggleBudgetDetails() {
     const container = document.getElementById('budget-progress-container');
     const text = document.getElementById('toggle-budget-text');
     const icon = document.getElementById('toggle-budget-icon');
-    
+
     const isHidden = container.classList.contains('hidden');
 
     if (isHidden) {
@@ -280,12 +288,12 @@ function toggleChartLegend() {
     const legendContainer = document.getElementById('interactive-legend-container');
     const icon = document.getElementById('toggle-legend-icon');
     const text = document.getElementById('toggle-legend-text');
-    
+
     const isHidden = legendContainer.classList.contains('hidden');
-    
+
     legendContainer.classList.toggle('hidden');
     icon.classList.toggle('rotate-180');
-    
+
     if (legendContainer.classList.contains('hidden')) {
         text.textContent = 'Pokaż legendę';
     } else {
