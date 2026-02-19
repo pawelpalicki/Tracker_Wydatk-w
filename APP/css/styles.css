@@ -96,6 +96,7 @@
 /* ===== Swipe Container ===== */
 .swipe-container {
     display: flex;
+    align-items: flex-start;
     overflow-x: auto;
     scroll-snap-type: x mandatory;
     -webkit-overflow-scrolling: touch;
@@ -149,14 +150,25 @@
 }
 
 /* ===== Form elements ===== */
-.item-name {
-    min-height: 48px;
-}
-
 input,
 textarea,
 select {
     padding-left: 0.75rem !important;
+}
+
+select {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+select option {
+    background-color: #ffffff;
+    color: #1a1a2e;
+}
+
+.dark select option {
+    background-color: #1a1a2e;
+    color: #ffffff;
 }
 
 /* ===== Autofill styles ===== */
