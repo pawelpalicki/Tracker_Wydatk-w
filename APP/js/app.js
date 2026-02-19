@@ -213,6 +213,33 @@ async function resizeImage(file, maxSize = 1920, quality = 0.92) {
     });
 }
 
+// --- FAB Scroll Logic ---
+function handleFABScroll() {
+    const currentScrollY = window.scrollY;
+
+    // Auto-show FAB at the very bottom of the page
+    if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 50) {
+        fabContainer.classList.remove('hide');
+        lastScrollY = currentScrollY;
+        return;
+    }
+
+    if (currentScrollY > lastScrollY && currentScrollY > 100) {
+        // Scrolling down: hide FAB
+        if (!fabContainer.classList.contains('hide')) {
+            fabContainer.classList.add('hide');
+            // Also collapse sub-buttons if hiding
+            fabActions.classList.add('hidden');
+            mainFabBtn.classList.remove('expanded');
+        }
+    } else {
+        // Scrolling up: show FAB
+        fabContainer.classList.remove('remove');
+        fabContainer.classList.remove('hide');
+    }
+    lastScrollY = currentScrollY;
+}
+
 // --- Główna Logika Aplikacji ---
 function setupAppEventListeners() {
     // Bottom nav tabs
@@ -232,6 +259,10 @@ function setupAppEventListeners() {
     });
     // Initialize swipe container
     initSwipeContainer();
+
+    // FAB scroll handling
+    window.addEventListener('scroll', handleFABScroll, { passive: true });
+
     purchaseForm.addEventListener('submit', handlePurchaseFormSubmit);
     addItemBtn.addEventListener('click', () => addItemRow());
     itemsContainer.addEventListener('input', (e) => {

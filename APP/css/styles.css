@@ -221,11 +221,11 @@ input:-webkit-autofill:active {
 
 /* ===== FAB ===== */
 #fab-container {
-    transition: transform 0.3s ease-in-out;
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 #fab-container.hide {
-    transform: translateY(100px);
+    transform: translateY(120px);
 }
 
 #fab-actions.expanded .fab-sub-btn {
