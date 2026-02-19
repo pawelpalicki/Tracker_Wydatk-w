@@ -214,17 +214,25 @@ async function resizeImage(file, maxSize = 1920, quality = 0.92) {
 }
 
 // --- FAB Scroll Logic ---
-function handleFABScroll() {
-    const currentScrollY = window.pageYOffset || document.documentElement.scrollTop || window.scrollY;
+// --- FAB Scroll Logic ---
+function handleFABScroll(e) {
+    // Determine the scroll position based on the target or window
+    let currentScrollY;
+    if (e && e.target && e.target.scrollTop !== undefined) {
+        currentScrollY = e.target.scrollTop;
+    } else {
+        currentScrollY = window.pageYOffset || document.documentElement.scrollTop || window.scrollY;
+    }
 
-    // Auto-show FAB at the very bottom of the page
-    if ((window.innerHeight + currentScrollY) >= document.body.offsetHeight - 50) {
+    // Auto-show FAB at the very bottom of the page (approximation)
+    // We use a generous buffer because mobile safe areas can be tricky
+    if ((window.innerHeight + currentScrollY) >= (document.body.offsetHeight - 100)) {
         fabContainer.classList.remove('hide');
         lastScrollY = currentScrollY;
         return;
     }
 
-    if (currentScrollY > lastScrollY && currentScrollY > 100) {
+    if (currentScrollY > lastScrollY && currentScrollY > 50) { // Reduced threshold
         // Scrolling down: hide FAB
         if (!fabContainer.classList.contains('hide')) {
             console.log('FAB: Hiding', currentScrollY);
@@ -263,8 +271,40 @@ function setupAppEventListeners() {
     // Initialize swipe container
     initSwipeContainer();
 
-    // FAB scroll handling
+    // Initialize swipe container
+    initSwipeContainer();
+
+    // FAB scroll handling - attach to ALL potential scroll containers
     window.addEventListener('scroll', handleFABScroll, { passive: true });
+    document.body.addEventListener('scroll', handleFABScroll, { passive: true });
+
+    // Attach to specific scrollable elements (like legends and budget details)
+    const scrollableElements = document.querySelectorAll('.overflow-y-auto');
+    scrollableElements.forEach(el => {
+        el.addEventListener('scroll', handleFABScroll, { passive: true });
+    });
+
+    // Re-attach listeners when DOM might change (e.g. after rendering stats)
+    const observer = new MutationObserver(() => {
+        const newScrollables = document.querySelectorAll('.overflow-y-auto');
+        newScrollables.forEach(el => {
+            el.removeEventListener('scroll', handleFABScroll); // avoid duplicates
+            el.addEventListener('scroll', handleFABScroll, { passive: true });
+        });
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+
+    // Handle Resize for Charts
+    let resizeTimer;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => {
+            console.log('Resize detected, re-rendering charts...');
+            if (document.getElementById('stats-tab').classList.contains('active')) {
+                renderStatistics();
+            }
+        }, 300); // Wait 300ms for rotation animation to finish
+    });
 
     purchaseForm.addEventListener('submit', handlePurchaseFormSubmit);
     addItemBtn.addEventListener('click', () => addItemRow());

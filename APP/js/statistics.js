@@ -445,6 +445,7 @@ async function renderShopBarChart() {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                resizeDelay: 0,
                 plugins: {
                     legend: { display: false },
                     datalabels: {
