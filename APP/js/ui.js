@@ -22,6 +22,8 @@ function switchTab(tabName) {
         }, 50);
     }
     if (tabName === 'stats') {
+        const container = document.getElementById('stats-swipe-container');
+        if (container) container.scrollTo({ left: 0, behavior: 'instant' });
         renderStatistics();
     }
     if (tabName === 'analysis') {
@@ -66,11 +68,18 @@ function initSwipeContainer() {
     const dots = document.querySelectorAll('.swipe-dot');
     if (!container || dots.length === 0) return;
 
-    // Sync dots on scroll
+    // Sync dots and reset vertical scroll on slide change
+    let lastIndex = 0;
     container.addEventListener('scroll', () => {
         const scrollLeft = container.scrollLeft;
         const slideWidth = container.offsetWidth;
         const activeIndex = Math.round(scrollLeft / slideWidth);
+
+        if (activeIndex !== lastIndex) {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            lastIndex = activeIndex;
+        }
+
         dots.forEach((dot, i) => dot.classList.toggle('active', i === activeIndex));
     });
 
