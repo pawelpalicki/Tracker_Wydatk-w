@@ -50,13 +50,22 @@
 }
 
 /* ===== Bottom Navigation ===== */
+#bottom-nav {
+    background: rgba(10, 10, 25, 0.9);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
 .bottom-nav-btn {
-    color: #6b7280;
+    color: #94a3b8;
+    /* Zwiększona jasność dla nieaktywnych przycisków */
     position: relative;
 }
 
 .bottom-nav-btn.active {
-    color: #818cf8;
+    color: #a5b4fc;
+    /* Nieco jaśniejszy fiolet dla lepszej czytelności */
 }
 
 .bottom-nav-btn.active::after {
