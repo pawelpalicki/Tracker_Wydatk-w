@@ -224,7 +224,7 @@ function setupAppEventListeners() {
     // Drawer overlay close
     document.getElementById('drawer-overlay').addEventListener('click', closeDrawer);
     // Drawer close button
-    document.getElementById('drawer-close-btn').addEventListener('click', closeDrawer);
+    document.getElementById('close-drawer-btn').addEventListener('click', closeDrawer);
     // Drawer logout
     document.getElementById('drawer-logout-btn').addEventListener('click', () => {
         closeDrawer();
