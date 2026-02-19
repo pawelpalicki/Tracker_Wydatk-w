@@ -2,6 +2,8 @@
 
 // --- Nawigacja i zakładki ---
 function switchTab(tabName) {
+    // Reset scroll to top
+    window.scrollTo({ top: 0, behavior: 'instant' });
     // Update bottom nav buttons
     document.querySelectorAll('.bottom-nav-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tabName));
     // Update drawer nav buttons
