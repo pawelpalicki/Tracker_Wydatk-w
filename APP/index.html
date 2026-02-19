@@ -6,11 +6,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tracker Wydatków</title>
     <meta name="description" content="Aplikacja do śledzenia wydatków z inteligentną analizą paragonów.">
-    <meta name="theme-color" content="#4F46E5" />
+    <meta name="theme-color" content="#0f0f23" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
+                    colors: {
+                        brand: { 50: '#eef2ff', 100: '#e0e7ff', 200: '#c7d2fe', 300: '#a5b4fc', 400: '#818cf8', 500: '#667eea', 600: '#5b5bd6', 700: '#764ba2', 800: '#5b3d8f', 900: '#3c2466' }
+                    }
+                }
+            }
+        }
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.1.0/dist/chartjs-plugin-datalabels.min.js"></script>
+    <script
+        src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.1.0/dist/chartjs-plugin-datalabels.min.js"></script>
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
@@ -23,16 +41,15 @@
     <link rel="stylesheet" href="css/styles.css">
 </head>
 
-<body class="bg-gray-50 dark:bg-gray-900">
+<body class="dark bg-[#0f0f23] font-sans text-white">
 
-    <div id="loading-section"
-        class="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900">
-        <div class="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600"></div>
-        <p class="mt-4 text-lg text-gray-600 dark:text-gray-300">Wczytuję aplikację...</p>
+    <div id="loading-section" class="min-h-screen flex flex-col items-center justify-center bg-[#0f0f23]">
+        <div class="animate-spin rounded-full h-16 w-16 border-b-4 border-brand-500"></div>
+        <p class="mt-4 text-lg text-gray-300">Wczytuję aplikację...</p>
     </div>
 
     <div id="auth-section"
-        class="hidden min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+        class="hidden min-h-screen flex items-center justify-center bg-[#0f0f23] py-12 px-4 sm:px-6 lg:px-8">
         <div class="max-w-md w-full space-y-8">
             <div>
                 <h2 id="auth-title" class="mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-white">
@@ -90,201 +107,213 @@
     </div>
 
     <div id="app-section" class="hidden">
-        <header class="bg-white dark:bg-gray-800 shadow-sm">
-            <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-20">
-                <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Tracker Wydatków</h1>
-                <div id="monthly-balance" class="text-right mr-4">
-                    <p id="monthly-balance-label" class="text-sm text-gray-500 dark:text-gray-400">Wydatki w miesiącu
-                    </p>
-                    <p id="monthly-balance-value" class="text-xl font-bold text-blue-600 dark:text-blue-400">0.00 zł</p>
+        <!-- Side Drawer Overlay -->
+        <div id="drawer-overlay" class="drawer-overlay hidden"></div>
+        <!-- Side Drawer -->
+        <div id="side-drawer" class="side-drawer">
+            <div class="p-6">
+                <div class="flex items-center justify-between mb-8">
+                    <h2
+                        class="text-xl font-bold bg-gradient-to-r from-brand-400 to-brand-700 bg-clip-text text-transparent">
+                        Menu</h2>
+                    <button id="close-drawer-btn" class="p-2 text-gray-400 hover:text-white transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
                 </div>
-                <button id="logout-btn"
-                    class="p-2 text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-white"
-                    title="Wyloguj się">
+                <nav class="space-y-2">
+                    <button data-tab="settings"
+                        class="drawer-nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-gray-300 hover:bg-white/10 hover:text-white transition-all">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        <span>Ustawienia</span>
+                    </button>
+                    <button data-tab="add"
+                        class="drawer-nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-gray-300 hover:bg-white/10 hover:text-white transition-all">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                        </svg>
+                        <span>Dodaj wydatek</span>
+                    </button>
+                </nav>
+                <div class="mt-auto pt-8 border-t border-white/10">
+                    <button id="drawer-logout-btn"
+                        class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-all">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                        </svg>
+                        <span>Wyloguj się</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slim Header -->
+        <header class="sticky top-0 z-30 glass-card border-b border-white/10">
+            <div class="max-w-4xl mx-auto px-4 flex justify-between items-center h-14">
+                <button id="hamburger-btn" class="p-2 text-gray-400 hover:text-white transition-colors">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
                         stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
                     </svg>
                 </button>
+                <h1
+                    class="text-lg font-bold bg-gradient-to-r from-brand-400 to-brand-700 bg-clip-text text-transparent">
+                    Tracker Wydatków</h1>
+                <div id="monthly-balance" class="text-right">
+                    <p id="monthly-balance-label" class="text-[10px] text-gray-400 leading-tight">Wydatki</p>
+                    <p id="monthly-balance-value" class="text-sm font-bold text-brand-400">0.00 zł</p>
+                </div>
             </div>
         </header>
 
-        <main class="max-w-screen-xl mx-auto py-6 sm:px-6 lg:px-8">
-            <!-- Nawigacja w formie pigułek -->
-            <nav
-                class="p-1.5 mb-6 max-w-lg mx-auto bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center space-x-1">
-                <button data-tab="stats" class="nav-btn flex-1 text-center py-3 px-2 rounded-full" title="Kokpit">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mx-auto" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                    </svg>
-                </button>
-                <button data-tab="list" class="nav-btn flex-1 text-center py-3 px-2 rounded-full" title="Lista">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mx-auto" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-                    </svg>
-                </button>
-                <button data-tab="add" class="nav-btn flex-1 text-center py-3 px-2 rounded-full" title="Dodaj">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mx-auto" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                    </svg>
-                </button>
-                <button data-tab="analysis" class="nav-btn flex-1 text-center py-3 px-2 rounded-full" title="Analiza">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mx-auto" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
-                    </svg>
-                </button>
-                <button data-tab="special-budgets" class="nav-btn flex-1 text-center py-3 px-2 rounded-full" title="Budżety Specjalne">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mx-auto" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M2 6a2 2 0 012-2h12a2 2 0 012 2v2a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
-                        <path fill-rule="evenodd" d="M2 11a2 2 0 012-2h12a2 2 0 012 2v5a2 2 0 01-2 2H4a2 2 0 01-2-2v-5zm3.5 2a.5.5 0 00-.5.5v1a.5.5 0 00.5.5h1a.5.5 0 00.5-.5v-1a.5.5 0 00-.5-.5h-1zM9 13.5a.5.5 0 01.5-.5h1a.5.5 0 01.5.5v1a.5.5 0 01-.5.5h-1a.5.5 0 01-.5-.5v-1zM14.5 13a.5.5 0 00-.5.5v1a.5.5 0 00.5.5h1a.5.5 0 00.5-.5v-1a.5.5 0 00-.5-.5h-1z" clip-rule="evenodd" />
-                    </svg>
-                </button>
-                <button data-tab="settings" class="nav-btn flex-1 text-center py-3 px-2 rounded-full"
-                    title="Ustawienia">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mx-auto" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                </button>
-            </nav>
+        <main class="max-w-screen-xl mx-auto pt-4 pb-24 px-4 sm:px-6 lg:px-8">
 
             <!-- Kokpit / Statystyki -->
-            <div id="stats-tab" class="tab-content">
+            <div id="stats-tab" class="tab-content active">
+                <!-- Month selector - shared across all stat slides -->
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-semibold text-white">Kokpit</h2>
+                    <select id="stats-month-select"
+                        class="block w-auto rounded-lg border-0 bg-white/10 text-white shadow-sm focus:ring-2 focus:ring-brand-500 text-sm py-1.5 px-3"></select>
+                </div>
 
+                <!-- Swipeable Stats Container -->
+                <div id="stats-swipe-container" class="swipe-container">
+                    <!-- Slide 1: Wykres wydatków w miesiącu -->
+                    <div class="swipe-slide">
+                        <div class="glass-card rounded-2xl p-5 h-full flex flex-col">
+                            <h3 id="stats-title" class="text-base font-semibold text-white mb-3">Wydatki w miesiącu</h3>
+                            <div id="category-chart-container" class="h-48 flex-shrink-0">
+                                <canvas id="category-chart"></canvas>
+                            </div>
+                            <div class="text-center mt-2 lg:hidden">
+                                <button id="toggle-legend-details"
+                                    class="text-sm text-blue-600 dark:text-blue-400 hover:underline">
+                                    <span id="toggle-legend-text">Pokaż legendę</span>
+                                    <svg id="toggle-legend-icon" xmlns="http://www.w3.org/2000/svg"
+                                        class="h-4 w-4 inline ml-1 transform transition-transform" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M19 9l-7 7-7-7"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div id="interactive-legend-container" class="mt-4 overflow-y-auto flex-grow hidden">
+                                <!-- Interaktywna legenda będzie renderowana tutaj -->
+                            </div>
+                            <div id="no-data-pie-chart" class="hidden text-center py-8">
+                                <p class="text-gray-400">Brak danych o wydatkach w wybranym miesiącu.</p>
+                            </div>
+                        </div>
+                    </div>
 
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-                    <!-- Kolumna 1: Wykres wydatków w miesiącu -->
-                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 flex flex-col h-full">
-                        <div class="flex justify-between items-center mb-4 flex-shrink-0">
-                            <h3 id="stats-title" class="text-lg font-semibold text-gray-900 dark:text-white">Wydatki w
-                                miesiącu</h3>
-                            <select id="stats-month-select"
-                                class="block w-auto rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50 text-sm"></select>
-                        </div>
-                        <div id="category-chart-container" class="h-48 flex-shrink-0">
-                            <canvas id="category-chart"></canvas>
-                        </div>
-                        <div class="text-center mt-2 lg:hidden">
-                            <button id="toggle-legend-details" class="text-sm text-blue-600 dark:text-blue-400 hover:underline">
-                                <span id="toggle-legend-text">Pokaż legendę</span>
-                                <svg id="toggle-legend-icon" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline ml-1 transform transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    <!-- Slide 2: Podsumowanie budżetu -->
+                    <div class="swipe-slide">
+                        <div class="glass-card rounded-2xl p-5 h-full flex flex-col">
+                            <h3 class="text-base font-semibold text-white mb-3">Podsumowanie budżetu</h3>
+                            <div id="budget-summary-container" class="hidden flex-shrink-0">
+                                <div class="mb-3">
+                                    <div class="flex justify-between mb-1">
+                                        <span class="text-sm font-medium text-gray-300">Postęp</span>
+                                        <span id="budget-percentage" class="text-sm font-medium text-gray-300">0%</span>
+                                    </div>
+                                    <div class="w-full bg-white/10 rounded-full h-2.5">
+                                        <div id="budget-progress-bar"
+                                            class="bg-gradient-to-r from-brand-500 to-brand-700 h-2.5 rounded-full transition-all duration-500"
+                                            style="width: 0%"></div>
+                                    </div>
+                                </div>
+                                <div class="mt-4 grid grid-cols-3 gap-3 text-center">
+                                    <div class="glass-card rounded-xl p-3">
+                                        <p class="text-xs text-gray-400">Budżet</p>
+                                        <p id="summary-budget" class="text-base font-bold text-white">0.00 zł</p>
+                                    </div>
+                                    <div class="glass-card rounded-xl p-3">
+                                        <p class="text-xs text-gray-400">Wydano</p>
+                                        <p id="summary-spent" class="text-base font-bold text-brand-400">0.00 zł</p>
+                                    </div>
+                                    <div class="glass-card rounded-xl p-3">
+                                        <p class="text-xs text-gray-400">Pozostało</p>
+                                        <p id="summary-remaining" class="text-base font-bold text-green-400">0.00 zł</p>
+                                    </div>
+                                </div>
+                                <div id="unbudgeted-expenses"
+                                    class="mt-3 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-xl hidden">
+                                    <p class="text-sm font-medium text-yellow-300">⚠️ Wydatki bez budżetu</p>
+                                    <p id="unbudgeted-amount" class="text-lg font-bold text-yellow-400">0.00 zł</p>
+                                    <p id="unbudgeted-categories" class="text-xs text-yellow-500 mt-1"></p>
+                                </div>
+                            </div>
+                            <button id="toggle-budget-details"
+                                class="mt-3 text-sm text-brand-400 hover:text-brand-300 hidden">
+                                <span id="toggle-budget-text">Pokaż szczegóły budżetu</span>
+                                <svg id="toggle-budget-icon" xmlns="http://www.w3.org/2000/svg"
+                                    class="h-4 w-4 inline ml-1 transform transition-transform" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M19 9l-7 7-7-7" />
+                                </svg>
                             </button>
-                        </div>
-                        <div id="interactive-legend-container" class="mt-4 overflow-y-auto flex-grow hidden">
-                            <!-- Interaktywna legenda będzie renderowana tutaj -->
-                        </div>
-                        <div id="no-data-pie-chart" class="hidden text-center py-12">
-                            <p class="text-gray-500 dark:text-gray-400">Brak danych o wydatkach w wybranym miesiącu.</p>
+                            <div id="budget-progress-container" class="mt-4 space-y-3 flex-grow overflow-y-auto hidden">
+                                <!-- Paski postępu budżetu zostaną wyrenderowane tutaj -->
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Kolumna 2: Podsumowanie budżetu -->
-                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 flex flex-col h-full">
-                        <div id="budget-summary-container" class="hidden flex-shrink-0">
-                            <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Podsumowanie budżetu
-                            </h4>
-
-                            <div class="mb-2">
-                                <div class="flex justify-between mb-1">
-                                    <span class="text-base font-medium text-gray-700 dark:text-gray-300">Postęp</span>
-                                    <span id="budget-percentage"
-                                        class="text-sm font-medium text-gray-700 dark:text-gray-300">0%</span>
-                                </div>
-                                <div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
-                                    <div id="budget-progress-bar" class="bg-blue-600 h-2.5 rounded-full"
-                                        style="width: 0%"></div>
-                                </div>
-                            </div>
-
-                            <div class="mt-4 grid grid-cols-3 gap-4 text-center">
-                                <div>
-                                    <p class="text-sm text-gray-600 dark:text-gray-400">Budżet</p>
-                                    <p id="summary-budget" class="text-lg font-bold text-gray-900 dark:text-white">0.00
-                                        zł</p>
-                                </div>
-                                <div>
-                                    <p class="text-sm text-gray-600 dark:text-gray-400">Wydano</p>
-                                    <p id="summary-spent" class="text-lg font-bold text-blue-600 dark:text-blue-400">
-                                        0.00 zł</p>
-                                </div>
-                                <div>
-                                    <p class="text-sm text-gray-600 dark:text-gray-400">Pozostało</p>
-                                    <p id="summary-remaining"
-                                        class="text-lg font-bold text-green-600 dark:text-green-400">0.00 zł</p>
-                                </div>
-                            </div>
-
-                            <div id="unbudgeted-expenses"
-                                class="mt-4 p-3 bg-yellow-100 dark:bg-yellow-900 rounded-lg hidden">
-                                <p class="text-sm font-medium text-yellow-800 dark:text-yellow-200">⚠️ Wydatki bez
-                                    budżetu</p>
-                                <p id="unbudgeted-amount"
-                                    class="text-lg font-bold text-yellow-700 dark:text-yellow-300">0.00 zł</p>
-                                <p id="unbudgeted-categories" class="text-xs text-yellow-600 dark:text-yellow-400 mt-1">
-                                </p>
-                            </div>
-                        </div>
-                        <button id="toggle-budget-details"
-                            class="mt-3 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hidden lg:hidden">
-                            <span id="toggle-budget-text">Pokaż szczegóły budżetu</span>
-                            <svg id="toggle-budget-icon" xmlns="http://www.w3.org/2000/svg"
-                                class="h-4 w-4 inline ml-1 transform transition-transform" fill="none"
-                                viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M19 9l-7 7-7-7" />
-                            </svg>
-                        </button>
-                        <div class="hidden lg:block mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
-                            <h4 class="text-base font-semibold text-gray-900 dark:text-white">Szczegóły budżetu</h4>
-                        </div>
-                        <div id="budget-progress-container" class="mt-4 space-y-3 flex-grow overflow-y-auto hidden">
-                            <!-- Paski postępu budżetu zostaną wyrenderowane tutaj -->
-                        </div>
-                    </div>
-                    <!-- Kolumna 3: Pozostałe analizy -->
-                    <div class="space-y-6 flex flex-col h-full">
-                        <!-- Porównanie wydatków -->
-                        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-                            <div class="flex justify-between items-center mb-4">
-                                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Porównanie wydatków</h3>
+                    <!-- Slide 3: Porównanie wydatków -->
+                    <div class="swipe-slide">
+                        <div class="glass-card rounded-2xl p-5 h-full flex flex-col">
+                            <div class="flex justify-between items-center mb-3">
+                                <h3 class="text-base font-semibold text-white">Porównanie wydatków</h3>
                                 <div class="flex items-center">
-                                    <span class="mr-3 text-sm font-medium text-gray-900 dark:text-gray-300">Do dzisiaj</span>
+                                    <span class="mr-2 text-xs font-medium text-gray-400">Do dziś</span>
                                     <label class="relative inline-flex items-center cursor-pointer">
                                         <input type="checkbox" id="comparison-mode-toggle" class="sr-only peer">
-                                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                                        <div
+                                            class="w-9 h-5 bg-white/10 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-brand-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-brand-600">
+                                        </div>
                                     </label>
                                 </div>
                             </div>
-                            <div id="comparison-chart-container">
+                            <div id="comparison-chart-container" class="flex-grow">
                                 <canvas id="comparison-chart"></canvas>
                             </div>
-                            <div id="no-data-bar-chart" class="hidden text-center py-12">
-                                <p class="text-gray-500 dark:text-gray-400">Brak historii wydatków do porównania.</p>
-                            </div>
-                        </div>
-
-                        <!-- Wydatki w sklepach -->
-                        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 flex-grow flex flex-col">
-                            <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Wydatki w sklepach</h3>
-                            <div id="shop-chart-container" class="flex-grow overflow-y-auto">
-                                <canvas id="shop-chart"></canvas>
-                            </div>
-                            <div id="no-data-shop-chart" class="hidden text-center py-12">
-                                <p class="text-gray-500 dark:text-gray-400">Brak danych o wydatkach w sklepach.</p>
+                            <div id="no-data-bar-chart" class="hidden text-center py-8">
+                                <p class="text-gray-400">Brak historii wydatków do porównania.</p>
                             </div>
                         </div>
                     </div>
+
+                    <!-- Slide 4: Wydatki w sklepach -->
+                    <div class="swipe-slide">
+                        <div class="glass-card rounded-2xl p-5 h-full flex flex-col">
+                            <h3 class="text-base font-semibold mb-3 text-white">Wydatki w sklepach</h3>
+                            <div id="shop-chart-container" class="flex-grow overflow-y-auto">
+                                <canvas id="shop-chart"></canvas>
+                            </div>
+                            <div id="no-data-shop-chart" class="hidden text-center py-8">
+                                <p class="text-gray-400">Brak danych o wydatkach w sklepach.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Swipe Dots Indicator -->
+                <div id="swipe-dots" class="flex justify-center space-x-2 mt-4">
+                    <button class="swipe-dot active" data-slide="0"></button>
+                    <button class="swipe-dot" data-slide="1"></button>
+                    <button class="swipe-dot" data-slide="2"></button>
+                    <button class="swipe-dot" data-slide="3"></button>
                 </div>
             </div>
 
@@ -467,14 +496,17 @@
 
                     <!-- Zarządzanie Budżetami Specjalnymi -->
                     <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 md:col-span-2">
-                        <h3 class="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Zarządzaj Budżetami Specjalnymi</h3>
+                        <h3 class="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Zarządzaj Budżetami
+                            Specjalnymi</h3>
                         <div id="special-budgets-list" class="space-y-2 mb-4 max-h-96 overflow-y-auto"></div>
                         <form id="add-special-budget-form" class="space-y-2">
                             <input type="text" id="new-special-budget-name" placeholder="Nazwa (np. Wakacje)"
-                                class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2" required>
+                                class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2"
+                                required>
                             <div class="flex items-center space-x-2">
                                 <input type="number" id="new-special-budget-amount" placeholder="Kwota"
-                                    class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2" required step="0.01">
+                                    class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2"
+                                    required step="0.01">
                                 <button type="submit"
                                     class="py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700">Dodaj</button>
                             </div>
@@ -496,7 +528,7 @@
                                 class="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2">
                             <select id="recurring-category" required
                                 class="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2"></select>
-                            
+
                             <select id="recurring-schedule-type" required
                                 class="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2">
                                 <option value="monthly">Co miesiąc</option>
@@ -506,7 +538,8 @@
                         </div>
                         <!-- Ustawienia dla harmonogramu miesięcznego -->
                         <div id="recurring-monthly-settings" class="grid grid-cols-1 gap-4 mt-4">
-                            <input type="number" id="recurring-day-of-month" placeholder="Dzień miesiąca (1-31)" min="1" max="31"
+                            <input type="number" id="recurring-day-of-month" placeholder="Dzień miesiąca (1-31)" min="1"
+                                max="31"
                                 class="block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2">
                         </div>
                         <!-- Ustawienia dla harmonogramu tygodniowego -->
@@ -541,9 +574,11 @@
                 <!-- Analiza budżetu długoterminowego -->
                 <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-6">
                     <div class="mb-4">
-                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-3">Analiza budżetu długoterminowego</h3>
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-3">Analiza budżetu
+                            długoterminowego</h3>
                         <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-2">
-                            <select id="period-type-select" class="block w-full sm:w-auto rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50 text-sm py-3 sm:py-1">
+                            <select id="period-type-select"
+                                class="block w-full sm:w-auto rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50 text-sm py-3 sm:py-1">
                                 <option value="3">Ostatnie 3 miesiące</option>
                                 <option value="6">Ostatnie 6 miesięcy</option>
                                 <option value="9">Ostatnie 9 miesięcy</option>
@@ -715,8 +750,7 @@
                     <button
                         class="copy-months-btn py-3 px-4 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-800 font-medium"
                         data-months="1">1 miesiąc</button>
-                    <button
-                        class="copy-months-btn py-3 px-4 bg-blue-100 dark:bg-blue-900 text-blue-8
+                    <button class="copy-months-btn py-3 px-4 bg-blue-100 dark:bg-blue-900 text-blue-8
                         00 dark:text-blue-200 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-800 font-medium"
                         data-months="3">3 miesiące</button>
                     <button
@@ -735,55 +769,122 @@
     </div>
 
     <!-- Modal edycji budżetu specjalnego -->
-    <div id="edit-special-budget-modal" class="hidden fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center z-50">
+    <div id="edit-special-budget-modal"
+        class="hidden fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center z-50">
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-md">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Edytuj budżet specjalny</h3>
-                <button id="close-edit-special-budget-modal" class="p-2 text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white">&times;</button>
+                <button id="close-edit-special-budget-modal"
+                    class="p-2 text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white">&times;</button>
             </div>
             <form id="edit-special-budget-form">
                 <div class="space-y-4">
                     <div>
-                        <label for="edit-special-budget-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Nazwa</label>
-                        <input type="text" id="edit-special-budget-name" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2" required>
+                        <label for="edit-special-budget-name"
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">Nazwa</label>
+                        <input type="text" id="edit-special-budget-name"
+                            class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2"
+                            required>
                     </div>
                     <div>
-                        <label for="edit-special-budget-amount" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Kwota</label>
-                        <input type="number" id="edit-special-budget-amount" class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2" required step="0.01">
+                        <label for="edit-special-budget-amount"
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">Kwota</label>
+                        <input type="number" id="edit-special-budget-amount"
+                            class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2"
+                            required step="0.01">
                     </div>
                 </div>
                 <div class="flex justify-end space-x-2 pt-6">
-                    <button type="button" id="cancel-edit-special-budget" class="py-2 px-4 bg-gray-500 text-white rounded-md hover:bg-gray-600">Anuluj</button>
-                    <button type="submit" class="py-2 px-4 bg-green-600 text-white rounded-md hover:bg-green-700">Zapisz zmiany</button>
+                    <button type="button" id="cancel-edit-special-budget"
+                        class="py-2 px-4 bg-gray-500 text-white rounded-md hover:bg-gray-600">Anuluj</button>
+                    <button type="submit" class="py-2 px-4 bg-green-600 text-white rounded-md hover:bg-green-700">Zapisz
+                        zmiany</button>
                 </div>
             </form>
         </div>
     </div>
 
+    <!-- Bottom Navigation Bar -->
+    <nav id="bottom-nav" class="fixed bottom-0 left-0 right-0 z-40 glass-card border-t border-white/10">
+        <div class="max-w-lg mx-auto flex justify-around items-center h-16 px-2">
+            <button data-tab="stats"
+                class="bottom-nav-btn active flex flex-col items-center justify-center py-2 px-3 rounded-xl transition-all"
+                title="Kokpit">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                <span class="text-[10px] mt-0.5 font-medium">Kokpit</span>
+            </button>
+            <button data-tab="list"
+                class="bottom-nav-btn flex flex-col items-center justify-center py-2 px-3 rounded-xl transition-all"
+                title="Lista">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                </svg>
+                <span class="text-[10px] mt-0.5 font-medium">Lista</span>
+            </button>
+            <button data-tab="analysis"
+                class="bottom-nav-btn flex flex-col items-center justify-center py-2 px-3 rounded-xl transition-all"
+                title="Analiza">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
+                </svg>
+                <span class="text-[10px] mt-0.5 font-medium">Analiza</span>
+            </button>
+            <button data-tab="special-budgets"
+                class="bottom-nav-btn flex flex-col items-center justify-center py-2 px-3 rounded-xl transition-all"
+                title="Budżety">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M2 6a2 2 0 012-2h12a2 2 0 012 2v2a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
+                    <path fill-rule="evenodd"
+                        d="M2 11a2 2 0 012-2h12a2 2 0 012 2v5a2 2 0 01-2 2H4a2 2 0 01-2-2v-5zm3.5 2a.5.5 0 00-.5.5v1a.5.5 0 00.5.5h1a.5.5 0 00.5-.5v-1a.5.5 0 00-.5-.5h-1z"
+                        clip-rule="evenodd" />
+                </svg>
+                <span class="text-[10px] mt-0.5 font-medium">Budżety</span>
+            </button>
+        </div>
+    </nav>
+
     <!-- Floating Action Button -->
-    <div id="fab-container" class="fixed bottom-6 right-6 z-40 flex flex-col items-end space-y-3">
+    <div id="fab-container" class="fixed bottom-20 right-4 z-50 flex flex-col items-end space-y-3">
         <div id="fab-actions" class="flex flex-col items-end space-y-3 mb-2 hidden">
-            <button id="fab-add-manual-btn" class="fab-sub-btn bg-blue-500 text-white rounded-full shadow-lg p-3 text-sm flex items-center space-x-2 opacity-0 translate-y-4 transition-all duration-200 ease-out">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            <button id="fab-add-manual-btn"
+                class="fab-sub-btn bg-blue-500 text-white rounded-full shadow-lg p-3 text-sm flex items-center space-x-2 opacity-0 translate-y-4 transition-all duration-200 ease-out">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                 </svg>
                 <span>Dodaj ręcznie</span>
             </button>
-            <button id="fab-select-file-btn" class="fab-sub-btn bg-purple-500 text-white rounded-full shadow-lg p-3 text-sm flex items-center space-x-2 opacity-0 translate-y-4 transition-all duration-200 ease-out">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+            <button id="fab-select-file-btn"
+                class="fab-sub-btn bg-purple-500 text-white rounded-full shadow-lg p-3 text-sm flex items-center space-x-2 opacity-0 translate-y-4 transition-all duration-200 ease-out">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                 </svg>
                 <span>Wybierz plik</span>
             </button>
-            <button id="fab-scan-receipt-btn" class="fab-sub-btn bg-green-500 text-white rounded-full shadow-lg p-3 text-sm flex items-center space-x-2 opacity-0 translate-y-4 transition-all duration-200 ease-out">
+            <button id="fab-scan-receipt-btn"
+                class="fab-sub-btn bg-green-500 text-white rounded-full shadow-lg p-3 text-sm flex items-center space-x-2 opacity-0 translate-y-4 transition-all duration-200 ease-out">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M4 2a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V4a2 2 0 00-2-2H4zm1.5 4a.5.5 0 00-.5.5v3a.5.5 0 00.5.5h3a.5.5 0 00.5-.5v-3a.5.5 0 00-.5-.5h-3zM8 8a.5.5 0 01.5-.5h5a.5.5 0 010 1h-5A.5.5 0 018 8zm.5 3.5a.5.5 0 00-.5.5v3a.5.5 0 00.5.5h3a.5.5 0 00.5-.5v-3a.5.5 0 00-.5-.5h-3z" clip-rule="evenodd" />
+                    <path fill-rule="evenodd"
+                        d="M4 2a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V4a2 2 0 00-2-2H4zm1.5 4a.5.5 0 00-.5.5v3a.5.5 0 00.5.5h3a.5.5 0 00.5-.5v-3a.5.5 0 00-.5-.5h-3zM8 8a.5.5 0 01.5-.5h5a.5.5 0 010 1h-5A.5.5 0 018 8zm.5 3.5a.5.5 0 00-.5.5v3a.5.5 0 00.5.5h3a.5.5 0 00.5-.5v-3a.5.5 0 00-.5-.5h-3z"
+                        clip-rule="evenodd" />
                 </svg>
                 <span>Skanuj paragon</span>
             </button>
         </div>
-        <button id="main-fab-btn" class="bg-green-600 text-white rounded-full w-16 h-16 flex items-center justify-center shadow-xl hover:bg-green-700 transition-all duration-300 ease-in-out transform hover:scale-105">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <button id="main-fab-btn"
+            class="bg-green-600 text-white rounded-full w-16 h-16 flex items-center justify-center shadow-xl hover:bg-green-700 transition-all duration-300 ease-in-out transform hover:scale-105">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
             </svg>
         </button>

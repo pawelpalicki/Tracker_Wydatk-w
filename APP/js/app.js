@@ -55,8 +55,8 @@ const switchAuthLink = document.getElementById('switch-auth-link');
 const authErrorDiv = document.getElementById('auth-error');
 
 // Elementy Głównej Aplikacji
-const logoutBtn = document.getElementById('logout-btn');
-const navBtns = document.querySelectorAll('.nav-btn');
+const bottomNavBtns = document.querySelectorAll('.bottom-nav-btn');
+const drawerNavBtns = document.querySelectorAll('.drawer-nav-btn');
 const purchaseForm = document.getElementById('purchase-form');
 const purchaseFormTitle = document.getElementById('purchase-form-title');
 const purchaseFormSubmitBtn = purchaseForm.querySelector('button[type="submit"]');
@@ -215,7 +215,23 @@ async function resizeImage(file, maxSize = 1920, quality = 0.92) {
 
 // --- Główna Logika Aplikacji ---
 function setupAppEventListeners() {
-    navBtns.forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
+    // Bottom nav tabs
+    bottomNavBtns.forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
+    // Drawer nav tabs
+    drawerNavBtns.forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
+    // Hamburger menu
+    document.getElementById('hamburger-btn').addEventListener('click', openDrawer);
+    // Drawer overlay close
+    document.getElementById('drawer-overlay').addEventListener('click', closeDrawer);
+    // Drawer close button
+    document.getElementById('drawer-close-btn').addEventListener('click', closeDrawer);
+    // Drawer logout
+    document.getElementById('drawer-logout-btn').addEventListener('click', () => {
+        closeDrawer();
+        auth.signOut();
+    });
+    // Initialize swipe container
+    initSwipeContainer();
     purchaseForm.addEventListener('submit', handlePurchaseFormSubmit);
     addItemBtn.addEventListener('click', () => addItemRow());
     itemsContainer.addEventListener('input', (e) => {
@@ -786,7 +802,7 @@ async function handleAddOrUpdateRecurringExpense(e) {
         } else {
             await apiCall('/api/recurring-expenses', 'POST', expenseData);
         }
-        
+
         exitRecurringExpenseEditMode();
         allRecurringExpenses = await apiCall('/api/recurring-expenses');
         renderRecurringExpenses();
@@ -817,7 +833,7 @@ function handleRecurringExpenseActions(e) {
 }
 
 async function deleteRecurringExpense(expenseId) {
-     try {
+    try {
         await apiCall(`/api/recurring-expenses/${expenseId}`, 'DELETE');
         allRecurringExpenses = await apiCall('/api/recurring-expenses');
         renderRecurringExpenses();
@@ -835,7 +851,7 @@ function enterRecurringExpenseEditMode(expenseId) {
     recurringName.value = expense.name;
     recurringAmount.value = expense.amount;
     recurringCategory.value = expense.category;
-    
+
     if (expense.schedule) {
         scheduleTypeSelect.value = expense.schedule.type;
         handleScheduleTypeChange(); // Update visibility and required attributes
@@ -870,7 +886,7 @@ function exitRecurringExpenseEditMode() {
 
 function handleScheduleTypeChange() {
     const type = scheduleTypeSelect.value;
-    
+
     // Toggle visibility
     monthlySettings.classList.toggle('hidden', type !== 'monthly');
     weeklySettings.classList.toggle('hidden', type !== 'weekly');
@@ -898,24 +914,24 @@ async function updateMonthlyBalance() {
         let hasMore = true;
 
         // Fetch all purchases for the current month, handling pagination
-        while(hasMore) {
+        while (hasMore) {
             const queryString = `startDate=${startDate}&endDate=${endDate}` + (lastVisible ? `&lastVisible=${lastVisible}` : '');
             const { purchases, nextCursor } = await apiCall(`/api/purchases?${queryString}`);
-            
+
             if (purchases && purchases.length > 0) {
                 allMonthlyPurchases.push(...purchases);
             }
-            
+
             if (nextCursor) {
                 lastVisible = nextCursor;
             } else {
                 hasMore = false;
             }
         }
-        
+
         const total = allMonthlyPurchases.reduce((sum, p) => sum + (p.totalAmount || 0), 0);
         monthlyBalanceValue.textContent = `${total.toFixed(2)} zł`;
-        
+
         const monthName = now.toLocaleString('pl-PL', { month: 'long' });
         monthlyBalanceLabel.textContent = `Wydatki w ${monthName.charAt(0).toUpperCase() + monthName.slice(1)}`;
 

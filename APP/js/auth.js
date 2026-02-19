@@ -37,7 +37,7 @@ function setupAuthEventListeners() {
         try {
             // Rejestracja w Firebase Auth
             const cred = await auth.createUserWithEmailAndPassword(registerEmail.value, registerPassword.value);
-            
+
             // Utwórz profil użytkownika w Firestore (frontend-only, opcja 1)
             try {
                 // Wstępne kategorie przypisywane do użytkownika (edytowalne)
@@ -51,7 +51,7 @@ function setupAuthEventListeners() {
             } catch (profileErr) {
                 console.error('Nie udało się utworzyć profilu użytkownika w Firestore:', profileErr);
             }
-            
+
             // onAuthStateChanged automatycznie przełączy na aplikację
         } catch (error) {
             let message = 'Wystąpił błąd rejestracji.';
@@ -73,7 +73,7 @@ function setupAuthEventListeners() {
         switchAuthForm(isLogin ? 'register' : 'login');
     });
 
-    logoutBtn.addEventListener('click', logout);
+    // Logout is handled by drawer-logout-btn in setupAppEventListeners
 }
 
 function switchAuthForm(form) {

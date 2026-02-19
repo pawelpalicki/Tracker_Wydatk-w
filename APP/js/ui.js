@@ -2,7 +2,11 @@
 
 // --- Nawigacja i zakładki ---
 function switchTab(tabName) {
-    navBtns.forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tabName));
+    // Update bottom nav buttons
+    document.querySelectorAll('.bottom-nav-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tabName));
+    // Update drawer nav buttons
+    document.querySelectorAll('.drawer-nav-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tabName));
+    // Show/hide tab content
     document.querySelectorAll('.tab-content').forEach(content => {
         content.classList.toggle('active', content.id === `${tabName}-tab`);
     });
@@ -11,7 +15,6 @@ function switchTab(tabName) {
         renderStatistics();
     }
     if (tabName === 'analysis') {
-        // Inicjalizuj analizę długoterminową budżetu przy pierwszym wejściu na zakładkę analysis
         if (typeof initializeLongTermBudget === 'function') {
             initializeLongTermBudget().catch(console.error);
         }
@@ -21,11 +24,56 @@ function switchTab(tabName) {
     }
     if (tabName === 'settings') {
         renderCategoriesList();
-        populateBudgetMonthSelector(); // Upewnij się, że selektor jest wypełniony
+        populateBudgetMonthSelector();
         renderBudgetInputs();
         renderRecurringExpenses();
     }
+    // Close drawer if open
+    closeDrawer();
 }
+
+// --- Drawer ---
+function openDrawer() {
+    const drawer = document.getElementById('side-drawer');
+    const overlay = document.getElementById('drawer-overlay');
+    drawer.classList.add('open');
+    overlay.classList.remove('hidden');
+    // Small delay for CSS transition
+    requestAnimationFrame(() => overlay.classList.add('visible'));
+}
+
+function closeDrawer() {
+    const drawer = document.getElementById('side-drawer');
+    const overlay = document.getElementById('drawer-overlay');
+    drawer.classList.remove('open');
+    overlay.classList.remove('visible');
+    setTimeout(() => overlay.classList.add('hidden'), 300);
+}
+
+// --- Swipe Container ---
+function initSwipeContainer() {
+    const container = document.getElementById('stats-swipe-container');
+    const dots = document.querySelectorAll('.swipe-dot');
+    if (!container || dots.length === 0) return;
+
+    // Sync dots on scroll
+    container.addEventListener('scroll', () => {
+        const scrollLeft = container.scrollLeft;
+        const slideWidth = container.offsetWidth;
+        const activeIndex = Math.round(scrollLeft / slideWidth);
+        dots.forEach((dot, i) => dot.classList.toggle('active', i === activeIndex));
+    });
+
+    // Click on dot to scroll to slide
+    dots.forEach(dot => {
+        dot.addEventListener('click', () => {
+            const slideIndex = parseInt(dot.dataset.slide);
+            const slideWidth = container.offsetWidth;
+            container.scrollTo({ left: slideIndex * slideWidth, behavior: 'smooth' });
+        });
+    });
+}
+
 
 // --- Tryb edycji ---
 function enterEditMode(purchaseId) {
