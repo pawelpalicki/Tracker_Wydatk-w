@@ -215,10 +215,10 @@ async function resizeImage(file, maxSize = 1920, quality = 0.92) {
 
 // --- FAB Scroll Logic ---
 function handleFABScroll() {
-    const currentScrollY = window.scrollY;
+    const currentScrollY = window.pageYOffset || document.documentElement.scrollTop || window.scrollY;
 
     // Auto-show FAB at the very bottom of the page
-    if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 50) {
+    if ((window.innerHeight + currentScrollY) >= document.body.offsetHeight - 50) {
         fabContainer.classList.remove('hide');
         lastScrollY = currentScrollY;
         return;
@@ -227,15 +227,18 @@ function handleFABScroll() {
     if (currentScrollY > lastScrollY && currentScrollY > 100) {
         // Scrolling down: hide FAB
         if (!fabContainer.classList.contains('hide')) {
+            console.log('FAB: Hiding', currentScrollY);
             fabContainer.classList.add('hide');
             // Also collapse sub-buttons if hiding
             fabActions.classList.add('hidden');
             mainFabBtn.classList.remove('expanded');
         }
-    } else {
+    } else if (currentScrollY < lastScrollY) {
         // Scrolling up: show FAB
-        fabContainer.classList.remove('remove');
-        fabContainer.classList.remove('hide');
+        if (fabContainer.classList.contains('hide')) {
+            console.log('FAB: Showing', currentScrollY);
+            fabContainer.classList.remove('hide');
+        }
     }
     lastScrollY = currentScrollY;
 }
