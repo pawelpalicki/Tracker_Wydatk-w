@@ -229,7 +229,7 @@
                     <div class="swipe-slide">
                         <div class="glass-card rounded-2xl p-4 sm:p-5 flex flex-col">
                             <h3 class="text-base font-semibold text-white mb-3">Podsumowanie budżetu</h3>
-                            <div id="budget-summary-container" class="hidden flex-shrink-0">
+                            <div id="budget-summary-container" class="flex-shrink-0">
                                 <div class="mb-3">
                                     <div class="flex justify-between mb-1">
                                         <span class="text-sm font-medium text-gray-300">Postęp</span>
@@ -264,15 +264,15 @@
                             </div>
                             <button id="toggle-budget-details"
                                 class="mt-3 text-sm text-brand-400 hover:text-brand-300 hidden">
-                                <span id="toggle-budget-text">Pokaż szczegóły budżetu</span>
+                                <span id="toggle-budget-text">Ukryj szczegóły budżetu</span>
                                 <svg id="toggle-budget-icon" xmlns="http://www.w3.org/2000/svg"
-                                    class="h-4 w-4 inline ml-1 transform transition-transform" fill="none"
+                                    class="h-4 w-4 inline ml-1 transform transition-transform rotate-180" fill="none"
                                     viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M19 9l-7 7-7-7" />
                                 </svg>
                             </button>
-                            <div id="budget-progress-container" class="mt-4 space-y-3 flex-grow overflow-y-auto hidden">
+                            <div id="budget-progress-container" class="mt-4 space-y-3 flex-grow overflow-y-auto">
                                 <!-- Paski postępu budżetu zostaną wyrenderowane tutaj -->
                             </div>
                         </div>

@@ -135,11 +135,11 @@ function renderBudgetProgress(spending, budgets) {
     console.log('renderBudgetProgress called with:', { spending, budgets }); // DEBUG
     const container = document.getElementById('budget-progress-container');
     const toggleButton = document.getElementById('toggle-budget-details');
-    
+
     console.log('Toggle button found:', toggleButton); // DEBUG
     console.log('Categories with budget:', Object.keys(budgets)); // DEBUG
 
-    
+
     container.innerHTML = ''; // Wyczyść poprzednie paski
 
     const categoriesWithBudget = Object.keys(budgets);
@@ -180,11 +180,8 @@ function renderBudgetProgress(spending, budgets) {
         container.appendChild(progressElement);
     });
 
-    // The container is hidden by default in the HTML (for mobile-first).
-    // We remove the 'hidden' class on desktop screens.
-    if (window.innerWidth >= 1024) {
-        container.classList.remove('hidden');
-    }
+    // Always show the budget progress container if we have budgets defined
+    container.classList.remove('hidden');
 }
 
 function renderBudgetSummary(spending, budgets) {
