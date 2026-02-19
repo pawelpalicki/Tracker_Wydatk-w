@@ -187,8 +187,16 @@
                         class="block w-auto rounded-lg border-0 bg-white/10 text-white shadow-sm focus:ring-2 focus:ring-brand-500 text-sm py-1.5 px-3"></select>
                 </div>
 
+                <!-- Swipe Dots Indicator - Moved to top for consistency with dynamic height -->
+                <div id="swipe-dots" class="flex justify-center space-x-2 mb-4">
+                    <button class="swipe-dot active" data-slide="0"></button>
+                    <button class="swipe-dot" data-slide="1"></button>
+                    <button class="swipe-dot" data-slide="2"></button>
+                    <button class="swipe-dot" data-slide="3"></button>
+                </div>
+
                 <!-- Swipeable Stats Container -->
-                <div id="stats-swipe-container" class="swipe-container">
+                <div id="stats-swipe-container" class="swipe-container mt-2">
                     <!-- Slide 1: Wykres wydatków w miesiącu -->
                     <div class="swipe-slide">
                         <div class="glass-card rounded-2xl p-4 sm:p-5 flex flex-col">
@@ -308,13 +316,7 @@
                     </div>
                 </div>
 
-                <!-- Swipe Dots Indicator -->
-                <div id="swipe-dots" class="flex justify-center space-x-2 mt-4">
-                    <button class="swipe-dot active" data-slide="0"></button>
-                    <button class="swipe-dot" data-slide="1"></button>
-                    <button class="swipe-dot" data-slide="2"></button>
-                    <button class="swipe-dot" data-slide="3"></button>
-                </div>
+
             </div>
 
             <div id="add-tab" class="tab-content">
