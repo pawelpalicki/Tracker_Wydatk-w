@@ -105,7 +105,7 @@ function setupSwipeTracking(containerId, dotsSelector) {
 
 function initSwipeContainer() {
     // Statystyki
-    setupSwipeTracking('stats-swipe-container', '#stats-swipe-dots .swipe-dot');
+    setupSwipeTracking('stats-swipe-container', '#swipe-dots .swipe-dot');
     // Ustawienia
     setupSwipeTracking('settings-swipe-container', '.settings-swipe-dot');
 }

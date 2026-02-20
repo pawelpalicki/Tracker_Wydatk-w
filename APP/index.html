@@ -189,10 +189,10 @@
 
                 <!-- Swipe Dots Indicator - Moved to top for consistency with dynamic height -->
                 <div id="swipe-dots" class="flex justify-center space-x-2 mb-4">
-                    <button class="swipe-dot active" data-slide="0"></button>
-                    <button class="swipe-dot" data-slide="1"></button>
-                    <button class="swipe-dot" data-slide="2"></button>
-                    <button class="swipe-dot" data-slide="3"></button>
+                    <button class="swipe-dot active" data-index="0"></button>
+                    <button class="swipe-dot" data-index="1"></button>
+                    <button class="swipe-dot" data-index="2"></button>
+                    <button class="swipe-dot" data-index="3"></button>
                 </div>
 
                 <!-- Swipeable Stats Container -->
@@ -480,8 +480,8 @@
 
                 <div id="settings-swipe-container" class="swipe-container mb-4 w-full">
                     <!-- Slide 1: Zarządzanie Kategoriami -->
-                    <div class="swipe-slide px-4 w-full flex-shrink-0">
-                        <div class="glass-card rounded-2xl p-6 h-full">
+                    <div class="swipe-slide px-2 w-full flex-shrink-0">
+                        <div class="glass-card rounded-2xl p-4 h-full">
                             <h3 class="text-lg font-semibold mb-4 text-white">Zarządzaj Kategoriami</h3>
                             <div id="categories-list" class="space-y-2 mb-4 max-h-[380px] overflow-y-auto"></div>
                             <form id="add-category-form" class="flex items-center space-x-2 mt-auto">
@@ -494,8 +494,8 @@
                     </div>
 
                     <!-- Slide 2: Zarządzanie Budżetem -->
-                    <div class="swipe-slide px-4 w-full flex-shrink-0">
-                        <div class="glass-card rounded-2xl p-6 h-full">
+                    <div class="swipe-slide px-2 w-full flex-shrink-0">
+                        <div class="glass-card rounded-2xl p-4 h-full">
                             <h3 class="text-lg font-semibold mb-4 text-white">Zarządzaj Budżetem</h3>
                             <div class="flex items-center justify-between mb-3 bg-white/5 p-2 rounded-lg">
                                 <label for="budget-month-select"
@@ -517,8 +517,8 @@
                     </div>
 
                     <!-- Slide 3: Zarządzanie Budżetami Specjalnymi -->
-                    <div class="swipe-slide px-4 w-full flex-shrink-0">
-                        <div class="glass-card rounded-2xl p-6 h-full">
+                    <div class="swipe-slide px-2 w-full flex-shrink-0">
+                        <div class="glass-card rounded-2xl p-4 h-full">
                             <h3 class="text-lg font-semibold mb-4 text-white">Budżety Specjalne</h3>
                             <div id="special-budgets-list" class="space-y-2 mb-4 max-h-[300px] overflow-y-auto"></div>
                             <form id="add-special-budget-form" class="space-y-3 mt-auto">
@@ -537,10 +537,10 @@
                     </div>
 
                     <!-- Slide 4: Wydatki Cykliczne -->
-                    <div class="swipe-slide px-4 w-full flex-shrink-0">
-                        <div class="glass-card rounded-2xl p-6 h-full overflow-y-auto">
+                    <div class="swipe-slide px-2 w-full flex-shrink-0">
+                        <div class="glass-card rounded-2xl p-4 h-full overflow-y-auto">
                             <h3 class="text-lg font-semibold mb-4 text-white">Subskrypcje</h3>
-                            <div id="recurring-expenses-list" class="space-y-3 mb-4 max-h-[220px] overflow-y-auto">
+                            <div id="recurring-expenses-list" class="space-y-3 mb-4 max-h-[350px] overflow-y-auto">
                             </div>
                             <form id="add-recurring-expense-form"
                                 class="bg-white/5 p-4 rounded-xl space-y-4 border border-white/10 mt-auto">
@@ -548,14 +548,14 @@
                                 </h4>
                                 <div class="grid grid-cols-1 gap-2">
                                     <input type="text" id="recurring-name" placeholder="Nazwa (np. Netflix)" required
-                                        class="block w-full rounded-md border-gray-650 bg-gray-800 text-white text-sm py-2 px-3">
+                                        class="block w-full rounded-md border-white/10 bg-gray-900/40 text-white text-sm py-2 px-3 focus:bg-gray-900/60 transition-all">
                                     <input type="number" id="recurring-amount" placeholder="Kwota" required step="0.01"
-                                        class="block w-full rounded-md border-gray-650 bg-gray-800 text-white text-sm py-2 px-3">
+                                        class="block w-full rounded-md border-white/10 bg-gray-900/40 text-white text-sm py-2 px-3 focus:bg-gray-900/60 transition-all">
                                     <select id="recurring-category" required
-                                        class="block w-full rounded-md border-gray-650 bg-gray-800 text-white text-sm py-2 px-3"></select>
+                                        class="block w-full rounded-md border-white/10 bg-gray-900/40 text-white text-sm py-2 px-3 focus:bg-gray-900/60 transition-all"></select>
 
                                     <select id="recurring-schedule-type" required
-                                        class="block w-full rounded-md border-gray-650 bg-gray-800 text-white text-sm py-2 px-3">
+                                        class="block w-full rounded-md border-white/10 bg-gray-900/40 text-white text-sm py-2 px-3 focus:bg-gray-900/60 transition-all">
                                         <option value="monthly">Co miesiąc</option>
                                         <option value="weekly">Co tydzień</option>
                                         <option value="daily_interval">Interwał dni</option>
@@ -564,11 +564,11 @@
                                 <div id="recurring-monthly-settings" class="mt-1">
                                     <input type="number" id="recurring-day-of-month" placeholder="Dzień (1-31)" min="1"
                                         max="31"
-                                        class="block w-full rounded-md border-gray-650 bg-gray-800 text-white text-sm py-2 px-3">
+                                        class="block w-full rounded-md border-white/10 bg-gray-900/40 text-white text-sm py-2 px-3 focus:bg-gray-900/60 transition-all">
                                 </div>
                                 <div id="recurring-weekly-settings" class="hidden mt-1">
                                     <select id="recurring-day-of-week"
-                                        class="block w-full rounded-md border-gray-650 bg-gray-800 text-white text-sm py-2 px-3">
+                                        class="block w-full rounded-md border-white/10 bg-gray-900/40 text-white text-sm py-2 px-3 focus:bg-gray-900/60 transition-all">
                                         <option value="1">Poniedziałek</option>
                                         <option value="2">Wtorek</option>
                                         <option value="3">Środa</option>
@@ -580,9 +580,9 @@
                                 </div>
                                 <div id="recurring-interval-settings" class="hidden grid grid-cols-2 gap-2 mt-1">
                                     <input type="number" id="recurring-interval" placeholder="Dni" min="1"
-                                        class="block w-full rounded-md border-gray-650 bg-gray-800 text-white text-sm py-2 px-3">
+                                        class="block w-full rounded-md border-white/10 bg-gray-900/40 text-white text-sm py-2 px-3 focus:bg-gray-900/60 transition-all">
                                     <input type="date" id="recurring-start-date"
-                                        class="block w-full rounded-md border-gray-650 bg-gray-800 text-white text-sm py-2 px-3">
+                                        class="block w-full rounded-md border-white/10 bg-gray-900/40 text-white text-sm py-2 px-3 focus:bg-gray-900/60 transition-all">
                                 </div>
                                 <button type="submit"
                                     class="w-full py-2 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium shadow-lg transition-transform active:scale-95">Dodaj</button>
