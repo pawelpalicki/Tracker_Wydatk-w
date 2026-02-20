@@ -263,6 +263,51 @@ input:-webkit-autofill:active {
     box-shadow: 0 6px 25px rgba(102, 126, 234, 0.6);
 }
 
+/* Enhanced FAB Sub-buttons */
+.fab-sub-btn {
+    background: rgba(15, 15, 35, 0.8) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    color: white !important;
+    padding: 10px 18px !important;
+    border-radius: 999px !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
+    font-weight: 500 !important;
+    letter-spacing: 0.3px !important;
+    transform: translateY(10px);
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+
+#fab-actions.expanded .fab-sub-btn {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.fab-sub-btn:hover {
+    background: rgba(30, 30, 60, 0.9) !important;
+    border-color: rgba(255, 255, 255, 0.25) !important;
+    transform: scale(1.05) !important;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4) !important;
+}
+
+.fab-sub-btn svg {
+    filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.2));
+}
+
+#fab-add-manual-btn svg {
+    color: #60a5fa;
+}
+
+#fab-select-file-btn svg {
+    color: #c084fc;
+}
+
+#fab-scan-receipt-btn svg {
+    color: #4ade80;
+}
+
 /* ===== Card Hover Effects ===== */
 .glass-card {
     transition: border-color 0.3s ease, box-shadow 0.3s ease;
@@ -279,4 +324,33 @@ input:-webkit-autofill:active {
     #bottom-nav {
         padding-bottom: env(safe-area-inset-bottom);
     }
+}
+
+/* ===== Kokpit Scrollable Legends ===== */
+#interactive-legend-container,
+#budget-progress-container {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+}
+
+#interactive-legend-container::-webkit-scrollbar,
+#budget-progress-container::-webkit-scrollbar {
+    width: 4px;
+}
+
+#interactive-legend-container::-webkit-scrollbar-thumb,
+#budget-progress-container::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 10px;
+}
+
+#interactive-legend-container::-webkit-scrollbar-thumb:hover,
+#budget-progress-container::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* Ensure chart containers don't shrink too much */
+#category-chart-container,
+#budget-summary-container {
+    flex-shrink: 0;
 }

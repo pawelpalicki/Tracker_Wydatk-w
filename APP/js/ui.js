@@ -26,6 +26,14 @@ function switchTab(tabName) {
         if (container) container.scrollTo({ left: 0, behavior: 'instant' });
         renderStatistics();
     }
+    if (tabName === 'settings') {
+        const container = document.getElementById('settings-swipe-container');
+        if (container) container.scrollTo({ left: 0, behavior: 'instant' });
+        renderCategoriesList();
+        populateBudgetMonthSelector();
+        renderBudgetInputs();
+        renderRecurringExpenses();
+    }
     if (tabName === 'analysis') {
         if (typeof initializeLongTermBudget === 'function') {
             initializeLongTermBudget().catch(console.error);
@@ -63,16 +71,16 @@ function closeDrawer() {
 }
 
 // --- Swipe Container ---
-function initSwipeContainer() {
-    const container = document.getElementById('stats-swipe-container');
-    const dots = document.querySelectorAll('.swipe-dot');
+function setupSwipeTracking(containerId, dotsSelector) {
+    const container = document.getElementById(containerId);
+    const dots = document.querySelectorAll(dotsSelector);
     if (!container || dots.length === 0) return;
 
-    // Sync dots and reset vertical scroll on slide change
     let lastIndex = 0;
     container.addEventListener('scroll', () => {
         const scrollLeft = container.scrollLeft;
         const slideWidth = container.offsetWidth;
+        if (slideWidth === 0) return;
         const activeIndex = Math.round(scrollLeft / slideWidth);
 
         if (activeIndex !== lastIndex) {
@@ -81,16 +89,25 @@ function initSwipeContainer() {
         }
 
         dots.forEach((dot, i) => dot.classList.toggle('active', i === activeIndex));
-    });
+    }, { passive: true });
 
-    // Click on dot to scroll to slide
     dots.forEach(dot => {
         dot.addEventListener('click', () => {
-            const slideIndex = parseInt(dot.dataset.slide);
+            const index = parseInt(dot.dataset.index);
             const slideWidth = container.offsetWidth;
-            container.scrollTo({ left: slideIndex * slideWidth, behavior: 'smooth' });
+            container.scrollTo({
+                left: index * slideWidth,
+                behavior: 'smooth'
+            });
         });
     });
+}
+
+function initSwipeContainer() {
+    // Statystyki
+    setupSwipeTracking('stats-swipe-container', '#stats-swipe-dots .swipe-dot');
+    // Ustawienia
+    setupSwipeTracking('settings-swipe-container', '.settings-swipe-dot');
 }
 
 

@@ -17,7 +17,10 @@ function renderSpecialBudgetsTab() {
                     <path stroke-linecap="round" stroke-linejoin="round" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                 </svg>
                 <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">Brak budżetów specjalnych</h3>
-                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Przejdź do Ustawień, aby dodać swój pierwszy budżet specjalny.</p>
+                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Możesz dodać budżet specjalny w ustawieniach.</p>
+                <button onclick="switchTab('settings')" class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium transition-colors">
+                    Idź do ustawień
+                </button>
             </div>
         `;
         return;
@@ -72,13 +75,35 @@ function renderSpecialBudgetsTab() {
                 </div>
                 <div class="mt-6 h-48 flex items-center justify-center">
                     ${hasSpending ? `<canvas id="chart-special-${budget.id}"></canvas>` : '<p class="text-sm text-gray-500 dark:text-gray-400">Brak wydatków w tym budżecie.</p>'
-                    }
+            }
                 </div>
             </div>
         `;
     }).join('');
 
-    tabContent.innerHTML = `<div class="flex justify-center"><div class="w-full max-w-4xl grid grid-cols-1 lg:grid-cols-2 gap-6">${budgetCards}</div></div>`;
+    const header = `
+        <div class="flex justify-between items-center mb-6 max-w-4xl mx-auto px-4">
+            <h2 class="text-2xl font-bold text-white">Budżety Specjalne</h2>
+            <button onclick="switchTab('settings')" class="flex items-center space-x-2 text-blue-400 hover:text-blue-300 transition-colors text-sm font-medium">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                <span>Zarządzaj</span>
+            </button>
+        </div>
+    `;
+
+    tabContent.innerHTML = `
+        <div class="py-4">
+            ${header}
+            <div class="flex justify-center">
+                <div class="w-full max-w-4xl grid grid-cols-1 lg:grid-cols-2 gap-6 px-4 pb-20">
+                    ${budgetCards}
+                </div>
+            </div>
+        </div>
+    `;
 
     // Renderuj wykresy po dodaniu canvasów do DOM
     budgetsWithData.forEach(budget => {
