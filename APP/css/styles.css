@@ -331,6 +331,7 @@ input:-webkit-autofill:active {
 #budget-progress-container {
     scrollbar-width: thin;
     scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+    transition: max-height 0.3s ease;
 }
 
 #interactive-legend-container::-webkit-scrollbar,
@@ -353,4 +354,22 @@ input:-webkit-autofill:active {
 #category-chart-container,
 #budget-summary-container {
     flex-shrink: 0;
+}
+
+/* Settings Tab Specifics */
+#settings-tab .swipe-container {
+    width: 100%;
+    max-width: 100vw;
+}
+
+#settings-tab .swipe-slide {
+    width: 100%;
+    flex: 0 0 100%;
+}
+
+#settings-tab .glass-card {
+    height: auto;
+    min-height: 450px;
+    display: flex;
+    flex-direction: column;
 }
