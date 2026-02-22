@@ -56,7 +56,7 @@ const authErrorDiv = document.getElementById('auth-error');
 
 // Elementy Głównej Aplikacji
 const bottomNavBtns = document.querySelectorAll('.bottom-nav-btn');
-const drawerNavBtns = document.querySelectorAll('.drawer-nav-btn');
+
 const purchaseForm = document.getElementById('purchase-form');
 const purchaseFormTitle = document.getElementById('purchase-form-title');
 const purchaseFormSubmitBtn = purchaseForm.querySelector('button[type="submit"]');
@@ -280,19 +280,13 @@ function handleFABScroll(e) {
 function setupAppEventListeners() {
     // Bottom nav tabs
     bottomNavBtns.forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
-    // Drawer nav tabs
-    drawerNavBtns.forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
-    // Hamburger menu
-    document.getElementById('hamburger-btn').addEventListener('click', openDrawer);
-    // Drawer overlay close
-    document.getElementById('drawer-overlay').addEventListener('click', closeDrawer);
-    // Drawer close button
-    document.getElementById('close-drawer-btn').addEventListener('click', closeDrawer);
-    // Drawer logout
-    document.getElementById('drawer-logout-btn').addEventListener('click', () => {
-        closeDrawer();
-        auth.signOut();
-    });
+    // Logout in more tab
+    const moreLogoutBtn = document.getElementById('more-logout-btn');
+    if (moreLogoutBtn) {
+        moreLogoutBtn.addEventListener('click', () => {
+            auth.signOut();
+        });
+    }
     // Initialize swipe container
     initSwipeContainer();
 

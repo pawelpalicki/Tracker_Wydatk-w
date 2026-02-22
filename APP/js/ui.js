@@ -6,13 +6,14 @@ function switchTab(tabName) {
     window.scrollTo({ top: 0, behavior: 'instant' });
     // Update bottom nav buttons
     document.querySelectorAll('.bottom-nav-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tabName));
-    // Update drawer nav buttons
-    document.querySelectorAll('.drawer-nav-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tabName));
+
     // Show/hide tab content
     document.querySelectorAll('.tab-content').forEach(content => {
         content.classList.toggle('active', content.id === `${tabName}-tab`);
     });
+
     if (tabName !== 'add') exitEditMode();
+
     if (tabName === 'add') {
         // Trigger resize for textareas that might have been rendered while hidden
         setTimeout(() => {
@@ -21,54 +22,33 @@ function switchTab(tabName) {
             });
         }, 50);
     }
+
     if (tabName === 'stats') {
         const container = document.getElementById('stats-swipe-container');
         if (container) container.scrollTo({ left: 0, behavior: 'instant' });
         renderStatistics();
     }
-    if (tabName === 'settings') {
-        const container = document.getElementById('settings-swipe-container');
-        if (container) container.scrollTo({ left: 0, behavior: 'instant' });
-        renderCategoriesList();
-        populateBudgetMonthSelector();
-        renderBudgetInputs();
-        renderRecurringExpenses();
-    }
+
     if (tabName === 'analysis') {
         if (typeof initializeLongTermBudget === 'function') {
             initializeLongTermBudget().catch(console.error);
         }
     }
+
     if (tabName === 'special-budgets') {
         renderSpecialBudgetsTab();
     }
-    if (tabName === 'settings') {
+
+    // Settings sub-tabs logic
+    if (tabName === 'settings' || tabName.startsWith('settings-')) {
         renderCategoriesList();
         populateBudgetMonthSelector();
         renderBudgetInputs();
         renderRecurringExpenses();
     }
-    // Close drawer if open
-    closeDrawer();
 }
 
-// --- Drawer ---
-function openDrawer() {
-    const drawer = document.getElementById('side-drawer');
-    const overlay = document.getElementById('drawer-overlay');
-    drawer.classList.add('open');
-    overlay.classList.remove('hidden');
-    // Small delay for CSS transition
-    requestAnimationFrame(() => overlay.classList.add('visible'));
-}
 
-function closeDrawer() {
-    const drawer = document.getElementById('side-drawer');
-    const overlay = document.getElementById('drawer-overlay');
-    drawer.classList.remove('open');
-    overlay.classList.remove('visible');
-    setTimeout(() => overlay.classList.add('hidden'), 300);
-}
 
 // --- Swipe Container ---
 function setupSwipeTracking(containerId, dotsSelector) {
@@ -106,8 +86,6 @@ function setupSwipeTracking(containerId, dotsSelector) {
 function initSwipeContainer() {
     // Statystyki
     setupSwipeTracking('stats-swipe-container', '#swipe-dots .swipe-dot');
-    // Ustawienia
-    setupSwipeTracking('settings-swipe-container', '.settings-swipe-dot');
 }
 
 
@@ -328,3 +306,30 @@ function toggleChartLegend() {
         text.textContent = 'Ukryj legendę';
     }
 }
+
+// --- Obsługa gestu powrotu (swipe w prawo) ---
+let touchstartX = 0;
+let touchendX = 0;
+
+function checkSwipe() {
+    // Jeśli swipujemy od lewej do prawej (min 100px)
+    if (touchendX - touchstartX > 100) {
+        const activeTab = document.querySelector('.tab-content.active');
+        if (activeTab) {
+            if (activeTab.id.startsWith('settings-')) {
+                switchTab('settings');
+            } else if (activeTab.id === 'settings-tab') {
+                switchTab('more');
+            }
+        }
+    }
+}
+
+document.addEventListener('touchstart', e => {
+    touchstartX = e.changedTouches[0].screenX;
+}, { passive: true });
+
+document.addEventListener('touchend', e => {
+    touchendX = e.changedTouches[0].screenX;
+    checkSwipe();
+}, { passive: true });

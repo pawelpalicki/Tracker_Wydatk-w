@@ -8,46 +8,7 @@
     border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-/* ===== Side Drawer ===== */
-.side-drawer {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 280px;
-    height: 100%;
-    background: rgba(15, 15, 35, 0.98);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border-right: 1px solid rgba(255, 255, 255, 0.08);
-    z-index: 60;
-    transform: translateX(-100%);
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    display: flex;
-    flex-direction: column;
-}
 
-.side-drawer.open {
-    transform: translateX(0);
-}
-
-.drawer-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(2px);
-    z-index: 55;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-}
-
-.drawer-overlay.visible {
-    opacity: 1;
-}
-
-.drawer-nav-btn.active {
-    background: rgba(102, 126, 234, 0.15);
-    color: #818cf8;
-}
 
 /* ===== Bottom Navigation ===== */
 #bottom-nav {
@@ -264,36 +225,38 @@ input:-webkit-autofill:active {
 }
 
 /* Enhanced FAB Sub-buttons */
-.fab-sub-btn {
-    background: rgba(15, 15, 35, 0.8) !important;
-    backdrop-filter: blur(12px) !important;
-    -webkit-backdrop-filter: blur(12px) !important;
-    border: 1px solid rgba(255, 255, 255, 0.12) !important;
-    color: white !important;
-    padding: 10px 18px !important;
-    border-radius: 999px !important;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
-    font-weight: 500 !important;
-    letter-spacing: 0.3px !important;
-    transform: translateY(10px);
+.fab-sub-item {
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transform: translateY(20px);
     opacity: 0;
-    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+    pointer-events: none;
 }
 
-#fab-actions.expanded .fab-sub-btn {
+#fab-actions.expanded .fab-sub-item {
     opacity: 1;
     transform: translateY(0);
+    pointer-events: auto;
+}
+
+.fab-label {
+    white-space: nowrap;
+    transition: transform 0.2s ease;
+}
+
+.fab-sub-btn {
+    flex-shrink: 0;
+    background: rgba(25, 25, 50, 0.9) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    color: white !important;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4) !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
 .fab-sub-btn:hover {
-    background: rgba(30, 30, 60, 0.9) !important;
-    border-color: rgba(255, 255, 255, 0.25) !important;
-    transform: scale(1.05) !important;
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4) !important;
-}
-
-.fab-sub-btn svg {
-    filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.2));
+    transform: scale(1.1) !important;
+    background: rgba(40, 40, 80, 0.95) !important;
 }
 
 #fab-add-manual-btn svg {
@@ -414,4 +377,22 @@ h6 {
 .btn-secondary:hover {
     background: rgba(255, 255, 255, 0.2);
     transform: translateY(-2px);
+}
+/* ===== Scanner Hide ===== */
+#scanner-container.hidden {
+    display: none !important;
+}
+
+.fab-label {
+    white-space: nowrap;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+
+/* Fix for overlapping buttons on mobile */
+@media (max-width: 640px) {
+    #fab-container {
+        right: 1rem;
+        bottom: 5rem;
+    }
 }

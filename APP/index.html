@@ -107,65 +107,12 @@
     </div>
 
     <div id="app-section" class="hidden">
-        <!-- Side Drawer Overlay -->
-        <div id="drawer-overlay" class="drawer-overlay hidden"></div>
-        <!-- Side Drawer -->
-        <div id="side-drawer" class="side-drawer">
-            <div class="p-6">
-                <div class="flex items-center justify-between mb-8">
-                    <h2
-                        class="text-xl font-bold bg-gradient-to-r from-brand-400 to-brand-700 bg-clip-text text-transparent">
-                        Menu</h2>
-                    <button id="close-drawer-btn" class="p-2 text-gray-400 hover:text-white transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    </button>
-                </div>
-                <nav class="space-y-2">
-                    <button data-tab="settings"
-                        class="drawer-nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-gray-300 hover:bg-white/10 hover:text-white transition-all">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
-                        <span>Ustawienia</span>
-                    </button>
-                    <button data-tab="add"
-                        class="drawer-nav-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-gray-300 hover:bg-white/10 hover:text-white transition-all">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
-                        </svg>
-                        <span>Dodaj wydatek</span>
-                    </button>
-                </nav>
-                <div class="mt-auto pt-8 border-t border-white/10">
-                    <button id="drawer-logout-btn"
-                        class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-all">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                        </svg>
-                        <span>Wyloguj się</span>
-                    </button>
-                </div>
-            </div>
-        </div>
+
 
         <!-- Slim Header -->
         <header class="sticky top-0 z-30 glass-card border-b border-white/10">
             <div class="max-w-4xl mx-auto px-4 flex justify-between items-center h-14">
-                <button id="hamburger-btn" class="p-2 text-gray-400 hover:text-white transition-colors">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-                    </svg>
-                </button>
+
                 <h1
                     class="text-lg font-bold bg-gradient-to-r from-brand-400 to-brand-700 bg-clip-text text-transparent">
                     Tracker Wydatków</h1>
@@ -321,8 +268,8 @@
             </div>
 
             <div id="add-tab" class="tab-content">
-                <div class="glass-card rounded-2xl p-6 mb-6">
-                    <h3 class="text-lg font-semibold mb-4 text-white">Dodaj paragon skanując go</h3>
+                <div id="scanner-container" class="glass-card rounded-2xl p-6 mb-6 hidden">
+                    <h3 class="text-lg font-semibold mb-4 text-white">Skanowanie paragonu</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
                         <div>
                             <input type="file" id="receipt-file-input" accept="image/*,application/pdf"
@@ -347,8 +294,7 @@
                     <div id="camera-view" class="hidden mt-4">
                         <video id="camera-stream" class="w-full rounded-lg" autoplay></video>
                         <div class="flex items-center space-x-2 mt-2">
-                            <button id="capture-photo-btn"
-                                class="w-full py-2 px-4 btn-secondary rounded-xl">Zrób
+                            <button id="capture-photo-btn" class="w-full py-2 px-4 btn-secondary rounded-xl">Zrób
                                 zdjęcie</button>
                             <button id="cancel-camera-btn"
                                 class="w-full py-2 px-4 bg-gray-500 text-white rounded-md hover:bg-gray-600">Anuluj</button>
@@ -402,8 +348,7 @@
                                 class="border-t border-gray-200 dark:border-gray-700 mt-4 pt-4 flex justify-between items-center flex-wrap">
                                 <div id="purchase-summary" class="text-lg font-bold text-gray-800 dark:text-gray-200">
                                     Suma: 0.00 zł</div>
-                                <button type="button" id="add-item-btn"
-                                    class="py-2 px-4 btn-primary rounded-xl">+
+                                <button type="button" id="add-item-btn" class="py-2 px-4 btn-primary rounded-xl">+
                                     Dodaj</button>
                             </div>
                         </div>
@@ -411,8 +356,7 @@
                             <div class="flex items-center space-x-2">
                                 <button type="button" id="cancel-edit-btn"
                                     class="py-2 px-4 bg-gray-500 text-white rounded-md hover:bg-gray-600 hidden">Anuluj</button>
-                                <button type="submit"
-                                    class="py-2 px-4 btn-primary rounded-xl">Zapisz cały
+                                <button type="submit" class="py-2 px-4 btn-primary rounded-xl">Zapisz cały
                                     zakup</button>
                             </div>
                         </div>
@@ -487,8 +431,7 @@
                             <form id="add-category-form" class="flex items-center space-x-2 mt-auto">
                                 <input type="text" id="new-category-name" placeholder="Nazwa nowej kategorii"
                                     class="flex-grow mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2 px-3">
-                                <button type="submit"
-                                    class="py-2 px-4 btn-primary rounded-xl shadow-lg">Dodaj</button>
+                                <button type="submit" class="py-2 px-4 btn-primary rounded-xl shadow-lg">Dodaj</button>
                             </form>
                         </div>
                     </div>
@@ -716,6 +659,45 @@
                 <!-- Treść zostanie wyrenderowana przez special-budgets.js -->
             </div>
 
+            <!-- Zakładka Więcej -->
+            <div id="more-tab" class="tab-content">
+                <div class="glass-card rounded-2xl p-6 mb-6">
+                    <h2 class="text-xl font-bold text-white mb-6">Więcej</h2>
+                    <div class="space-y-4">
+                        <button id="more-settings-btn"
+                            class="w-full flex items-center justify-between p-4 bg-white/5 hover:bg-white/10 rounded-xl transition-all">
+                            <div class="flex items-center space-x-3 text-white">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-400" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                                <span class="font-medium">Ustawienia</span>
+                            </div>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500" viewBox="0 0 20 20"
+                                fill="currentColor">
+                                <path fill-rule="evenodd"
+                                    d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                                    clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                        <button id="more-logout-btn"
+                            class="w-full flex items-center justify-between p-4 bg-white/5 hover:bg-white/10 rounded-xl transition-all">
+                            <div class="flex items-center space-x-3 text-red-400">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                                    stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                                </svg>
+                                <span class="font-medium">Wyloguj się</span>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <!-- Stary modal ustawień został usunięty -->
 
         </main>
@@ -770,18 +752,15 @@
                 <p class="text-gray-600 dark:text-gray-300">Na ile miesięcy do przodu chcesz skopiować obecny budżet?
                 </p>
                 <div class="grid grid-cols-2 gap-3">
-                    <button
-                        class="copy-months-btn py-3 px-4 btn-secondary rounded-xl font-medium"
-                        data-months="1">1 miesiąc</button>
+                    <button class="copy-months-btn py-3 px-4 btn-secondary rounded-xl font-medium" data-months="1">1
+                        miesiąc</button>
                     <button class="copy-months-btn py-3 px-4 bg-blue-100 dark:bg-blue-900 text-blue-8
                         00 dark:text-blue-200 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-800 font-medium"
                         data-months="3">3 miesiące</button>
-                    <button
-                        class="copy-months-btn py-3 px-4 btn-secondary rounded-xl font-medium"
-                        data-months="6">6 miesięcy</button>
-                    <button
-                        class="copy-months-btn py-3 px-4 btn-secondary rounded-xl font-medium"
-                        data-months="12">12 miesięcy</button>
+                    <button class="copy-months-btn py-3 px-4 btn-secondary rounded-xl font-medium" data-months="6">6
+                        miesięcy</button>
+                    <button class="copy-months-btn py-3 px-4 btn-secondary rounded-xl font-medium" data-months="12">12
+                        miesięcy</button>
                 </div>
                 <div class="flex justify-end space-x-2 pt-4">
                     <button id="cancel-copy-budget"
@@ -870,38 +849,64 @@
                 </svg>
                 <span class="text-[10px] mt-0.5 font-medium">Budżety</span>
             </button>
+            <button data-tab="more"
+                class="bottom-nav-btn flex flex-col items-center justify-center py-2 px-3 rounded-xl transition-all"
+                title="Więcej">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+                <span class="text-[10px] mt-0.5 font-medium">Więcej</span>
+            </button>
         </div>
     </nav>
 
     <!-- Floating Action Button -->
     <div id="fab-container" class="fixed bottom-20 right-4 z-50 flex flex-col items-end space-y-3">
-        <div id="fab-actions" class="flex flex-col items-end space-y-3 mb-2 hidden">
-            <button id="fab-add-manual-btn"
-                class="fab-sub-btn bg-blue-500 text-white rounded-full shadow-lg p-3 text-sm flex items-center space-x-2 transition-all duration-200 ease-out">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                </svg>
-                <span>Dodaj ręcznie</span>
+        <div id="fab-actions" class="flex flex-col items-end space-y-4 mb-2 hidden">
+            <!-- Dodaj Ręcznie -->
+            <button id="fab-add-manual-btn" class="fab-sub-item flex items-center justify-end space-x-3 group">
+                <span
+                    class="fab-label px-3 py-1.5 bg-gray-900/80 text-white text-sm font-medium rounded-lg shadow border border-white/10 backdrop-blur-md opacity-90 group-hover:opacity-100 transition-opacity">Dodaj
+                    ręcznie</span>
+                <div
+                    class="fab-sub-btn w-12 h-12 bg-blue-500 text-white rounded-full shadow-lg flex items-center justify-center transition-all duration-200 transform hover:scale-105 active:scale-95">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                </div>
             </button>
-            <button id="fab-select-file-btn"
-                class="fab-sub-btn bg-purple-500 text-white rounded-full shadow-lg p-3 text-sm flex items-center space-x-2 transition-all duration-200 ease-out">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                        d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                </svg>
-                <span>Wybierz plik</span>
+
+            <!-- Wybierz File -->
+            <button id="fab-select-file-btn" class="fab-sub-item flex items-center justify-end space-x-3 group">
+                <span
+                    class="fab-label px-3 py-1.5 bg-gray-900/80 text-white text-sm font-medium rounded-lg shadow border border-white/10 backdrop-blur-md opacity-90 group-hover:opacity-100 transition-opacity">Wybierz
+                    plik</span>
+                <div
+                    class="fab-sub-btn w-12 h-12 bg-purple-500 text-white rounded-full shadow-lg flex items-center justify-center transition-all duration-200 transform hover:scale-105 active:scale-95">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                </div>
             </button>
-            <button id="fab-scan-receipt-btn"
-                class="fab-sub-btn bg-green-500 text-white rounded-full shadow-lg p-3 text-sm flex items-center space-x-2 transition-all duration-200 ease-out">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd"
-                        d="M4 2a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V4a2 2 0 00-2-2H4zm1.5 4a.5.5 0 00-.5.5v3a.5.5 0 00.5.5h3a.5.5 0 00.5-.5v-3a.5.5 0 00-.5-.5h-3zM8 8a.5.5 0 01.5-.5h5a.5.5 0 010 1h-5A.5.5 0 018 8zm.5 3.5a.5.5 0 00-.5.5v3a.5.5 0 00.5.5h3a.5.5 0 00.5-.5v-3a.5.5 0 00-.5-.5h-3z"
-                        clip-rule="evenodd" />
-                </svg>
-                <span>Skanuj paragon</span>
+
+            <!-- Aparat -->
+            <button id="fab-scan-receipt-btn" class="fab-sub-item flex items-center justify-end space-x-3 group">
+                <span
+                    class="fab-label px-3 py-1.5 bg-gray-900/80 text-white text-sm font-medium rounded-lg shadow border border-white/10 backdrop-blur-md opacity-90 group-hover:opacity-100 transition-opacity">Skanuj
+                    aparat</span>
+                <div
+                    class="fab-sub-btn w-12 h-12 bg-green-500 text-white rounded-full shadow-lg flex items-center justify-center transition-all duration-200 transform hover:scale-105 active:scale-95">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd"
+                            d="M4 5a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V7a2 2 0 00-2-2h-1.586a1 1 0 01-.707-.293l-1.121-1.121A2 2 0 0011.172 3H8.828a2 2 0 00-1.414.586L6.293 4.707A1 1 0 015.586 5H4zm6 9a3 3 0 100-6 3 3 0 000 6z"
+                            clip-rule="evenodd" />
+                    </svg>
+                </div>
             </button>
         </div>
         <button id="main-fab-btn"
