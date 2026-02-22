@@ -1,6 +1,7 @@
 // Tracker Wydatków - Statistics Functions
 
 let legendMouseoutHandler = null;
+let currentComparisonCategory = null; // null means 'All'
 
 // --- Logika Statystyk ---
 async function renderStatistics() {
@@ -315,9 +316,17 @@ async function handleCategoryChartClick(event) {
 }
 
 async function renderComparisonBarChart(mode = 'full') {
-    const stats = await apiCall(`/api/statistics/comparison?mode=${mode}`);
+    const url = currentComparisonCategory
+        ? `/api/statistics/comparison?mode=${mode}&category=${encodeURIComponent(currentComparisonCategory)}`
+        : `/api/statistics/comparison?mode=${mode}`;
+
+    const stats = await apiCall(url);
     const ctx = document.getElementById('comparison-chart').getContext('2d');
     const currentDay = new Date().getDate();
+
+    // Render category filters if not already there
+    renderComparisonCategoryFilters(mode);
+
 
     // Wymuszamy jasne kolory dla ciemnego motywu aplikacji
     const textColor = '#e5e7eb'; // Jasnoszary (Tailwind gray-200)
@@ -339,13 +348,10 @@ async function renderComparisonBarChart(mode = 'full') {
         });
         const data = stats.monthlyTotals.map(item => item.total);
 
-        const chartTitle = mode === 'mtd'
-            ? `Porównanie do ${currentDay}. dnia każdego miesiąca`
-            : 'Pełne sumy miesięczne';
-
-        const datasetLabel = mode === 'mtd'
-            ? `Wydatki (do ${currentDay}. dnia)`
-            : 'Suma wydatków';
+        const barColor = currentComparisonCategory ? getCategoryColor(currentComparisonCategory) : '#3B82F6';
+        const chartTitle = currentComparisonCategory
+            ? `Porównanie: ${currentComparisonCategory.charAt(0).toUpperCase() + currentComparisonCategory.slice(1)}`
+            : (mode === 'mtd' ? `Porównanie do ${currentDay}. dnia miesiąca` : 'Pełne sumy miesięczne');
 
         comparisonChart = new Chart(ctx, {
             type: 'bar',
@@ -354,7 +360,7 @@ async function renderComparisonBarChart(mode = 'full') {
                 datasets: [{
                     label: datasetLabel,
                     data,
-                    backgroundColor: '#3B82F6',
+                    backgroundColor: barColor,
                     borderRadius: 4
                 }]
             },

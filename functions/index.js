@@ -50,16 +50,16 @@ const DEFAULT_CATEGORIES = ['spożywcze', 'chemia', 'transport', 'rozrywka', 'zd
 // Funkcja do pobierania kursu waluty
 async function getExchangeRate(fromCurrency, toCurrency = 'PLN') {
     if (fromCurrency === toCurrency) return { rate: 1, success: true };
-    
+
     try {
         // Używamy darmowego API exchangerate-api.com
         const response = await fetch(`https://api.exchangerate-api.com/v4/latest/${fromCurrency}`);
         const data = await response.json();
-        
+
         if (data.rates && data.rates[toCurrency]) {
             return { rate: data.rates[toCurrency], success: true };
         }
-        
+
         console.warn(`Nie znaleziono kursu ${fromCurrency} -> ${toCurrency}, używam 1:1`);
         return { rate: 1, success: false };
     } catch (error) {
@@ -73,16 +73,16 @@ async function convertCurrencyToPLN(items, currency) {
     if (currency === 'PLN') {
         return { items, exchangeRate: 1, originalCurrency: 'PLN', rateSuccess: true };
     }
-    
+
     const { rate: exchangeRate, success: rateSuccess } = await getExchangeRate(currency, 'PLN');
     const convertedItems = items.map(item => ({
         ...item,
         price: Math.round(item.price * exchangeRate * 100) / 100 // Zaokrąglij do 2 miejsc
     }));
-    
-    return { 
-        items: convertedItems, 
-        exchangeRate, 
+
+    return {
+        items: convertedItems,
+        exchangeRate,
         originalCurrency: currency,
         rateSuccess
     };
@@ -461,12 +461,12 @@ app.get('/api/purchases', authMiddleware, async (req, res) => {
             if (maxAmount) purchases = purchases.filter(p => p.totalAmount <= parseFloat(maxAmount));
             if (keyword) {
                 const lowerKeyword = keyword.toLowerCase();
-                purchases = purchases.filter(p => 
+                purchases = purchases.filter(p =>
                     p.items.some(item => item.name.toLowerCase().includes(lowerKeyword))
                 );
             }
             if (category) {
-                purchases = purchases.filter(p => 
+                purchases = purchases.filter(p =>
                     p.items.some(item => item.category === category)
                 );
             }
@@ -591,7 +591,7 @@ app.put('/api/purchases/:id', authMiddleware, async (req, res) => {
             createdAt: doc.data().createdAt.toDate().toISOString(),
             updatedAt: updatedPurchaseData.updatedAt
         };
-         if (specialBudgetId) {
+        if (specialBudgetId) {
             responseData.specialBudgetId = specialBudgetId;
         }
 
@@ -810,7 +810,7 @@ app.get('/api/special-budgets', authMiddleware, async (req, res) => {
         // Usunięto .orderBy('createdAt', 'desc') aby uniknąć błędu wymaganego indeksu
         const snapshot = await specialBudgetsCollection.where('userId', '==', req.userId).get();
         let budgets = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        
+
         // Sortowanie po stronie serwera w kodzie
         budgets.sort((a, b) => b.createdAt.toDate() - a.createdAt.toDate());
 
@@ -907,7 +907,7 @@ app.get('/api/statistics', authMiddleware, async (req, res) => {
         }
 
         const allPurchases = snapshot.docs.map(doc => doc.data());
-        
+
         // Filtruj wydatki, aby wykluczyć te ze specjalnych budżetów
         const purchases = allPurchases.filter(p => !p.specialBudgetId);
 
@@ -952,7 +952,7 @@ app.get('/api/statistics/comparison', authMiddleware, async (req, res) => {
         if (snapshot.empty) {
             return res.json({ monthlyTotals: [] });
         }
-        
+
         // Wyklucz wydatki ze specjalnych budżetów
         const purchases = snapshot.docs.map(doc => doc.data()).filter(p => !p.specialBudgetId);
 
@@ -961,9 +961,21 @@ app.get('/api/statistics/comparison', authMiddleware, async (req, res) => {
         console.log(`Generowanie porównania. Tryb: ${mode || 'full'}`);
 
         // Agregacja wydatków po miesiącach
+        const { category } = req.query;
         const monthlyTotalsMap = purchases.reduce((acc, p) => {
             const month = p.date.substring(0, 7); // YYYY-MM
-            const amount = p.totalAmount || 0;
+
+            let amount = 0;
+            if (category) {
+                // Sumuj tylko przedmioty z wybranej kategorii
+                amount = (p.items || [])
+                    .filter(item => (item.category || 'inne') === category)
+                    .reduce((sum, item) => sum + (item.price || 0), 0);
+            } else {
+                amount = p.totalAmount || 0;
+            }
+
+            if (amount === 0) return acc;
 
             if (mode === 'mtd') {
                 // Tryb Month-To-Date: uwzględnij tylko jeśli dzień <= dzisiejszemu
@@ -975,7 +987,7 @@ app.get('/api/statistics/comparison', authMiddleware, async (req, res) => {
                 // Tryb domyślny (full): uwzględnij wszystko
                 acc[month] = (acc[month] || 0) + amount;
             }
-            
+
             return acc;
         }, {});
 
@@ -1026,7 +1038,7 @@ app.get('/api/statistics/by-shop', authMiddleware, async (req, res) => {
         console.error("Błąd pobierania statystyk wg sklepów:", error);
         res.status(500).json({ error: 'Błąd serwera' });
     }
-});""
+}); ""
 
 app.get('/api/statistics/category-details', authMiddleware, async (req, res) => {
     try {
@@ -1065,21 +1077,21 @@ app.get('/api/statistics/category-details', authMiddleware, async (req, res) => 
 app.post('/api/convert-currency', authMiddleware, async (req, res) => {
     try {
         const { items, fromCurrency, toCurrency = 'PLN', exchangeRate } = req.body;
-        
+
         if (!items || !Array.isArray(items) || !fromCurrency || !exchangeRate) {
             return res.status(400).json({ error: 'Brak wymaganych danych (items, fromCurrency, exchangeRate).' });
         }
-        
+
         const rate = parseFloat(exchangeRate);
         if (isNaN(rate) || rate <= 0) {
             return res.status(400).json({ error: 'Kurs wymiany musi być liczbą większą od zera.' });
         }
-        
+
         const convertedItems = items.map(item => ({
             ...item,
             price: Math.round(item.price * rate * 100) / 100 // Zaokrąglij do 2 miejsc
         }));
-        
+
         res.json({
             success: true,
             items: convertedItems,
@@ -1087,7 +1099,7 @@ app.post('/api/convert-currency', authMiddleware, async (req, res) => {
             originalCurrency: fromCurrency,
             currency: toCurrency
         });
-        
+
     } catch (error) {
         console.error("Błąd ręcznego przeliczenia kursu:", error);
         res.status(500).json({ error: 'Błąd serwera podczas przeliczania kursu.' });
@@ -1177,7 +1189,7 @@ function shouldAddExpenseToday(expense, today) {
             // Dodaj, jeśli dzisiaj jest dzień miesiąca zgodny z harmonogramem
             // i ostatnie dodanie było w poprzednim miesiącu lub wcześniej
             return today.getDate() === expense.schedule.dayOfMonth &&
-                   (todayUTC.getMonth() !== lastAddedUTC.getMonth() || todayUTC.getFullYear() !== lastAddedUTC.getFullYear());
+                (todayUTC.getMonth() !== lastAddedUTC.getMonth() || todayUTC.getFullYear() !== lastAddedUTC.getFullYear());
 
         case 'weekly':
             // Dodaj, jeśli dzisiaj jest dzień tygodnia zgodny z harmonogramem
@@ -1190,10 +1202,10 @@ function shouldAddExpenseToday(expense, today) {
             const startDate = new Date(expense.schedule.startDate);
             const startDateTime = Date.UTC(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
             const daysSinceStart = Math.floor((todayUTC - startDateTime) / (1000 * 60 * 60 * 24));
-            
+
             // Jeśli dzisiaj jest dzień, w którym interwał się zgadza i nie dodano jeszcze dzisiaj
             return daysSinceStart >= 0 && (daysSinceStart % expense.schedule.interval === 0) &&
-                   (todayUTC.getTime() !== lastAddedUTC.getTime());
+                (todayUTC.getTime() !== lastAddedUTC.getTime());
 
         default:
             return false;
