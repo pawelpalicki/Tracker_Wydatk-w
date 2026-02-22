@@ -497,7 +497,7 @@ select option {
 
 /* Camera Preview Refinement (Phase 4.1) */
 #camera-stream {
-    height: 600px !important;
+    height: 550px !important;
     min-height: 500px;
     max-height: 80vh;
     object-fit: cover;
