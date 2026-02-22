@@ -446,8 +446,11 @@ select option {
 /* Category Chips (Phase 4.1 Comparison) */
 #comparison-category-filters {
     width: 100%;
+    min-width: 0;
+    /* Important for flex containers */
     display: flex;
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
     gap: 8px;
     padding-bottom: 8px;
 }
