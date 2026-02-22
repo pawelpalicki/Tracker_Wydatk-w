@@ -321,8 +321,8 @@
             </div>
 
             <div id="add-tab" class="tab-content">
-                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-6">
-                    <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Dodaj paragon skanując go</h3>
+                <div class="glass-card rounded-2xl p-6 mb-6">
+                    <h3 class="text-lg font-semibold mb-4 text-white">Dodaj paragon skanując go</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
                         <div>
                             <input type="file" id="receipt-file-input" accept="image/*,application/pdf"
@@ -330,10 +330,10 @@
                         </div>
                         <div class="flex items-center space-x-2">
                             <button id="analyze-receipt-btn"
-                                class="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 whitespace-nowrap">Analizuj
+                                class="w-full py-2 px-4 btn-primary rounded-xl whitespace-nowrap">Analizuj
                                 paragon</button>
                             <button id="start-camera-btn"
-                                class="w-full py-2 px-4 bg-green-600 text-white rounded-md hover:bg-green-700 whitespace-nowrap">Użyj
+                                class="w-full py-2 px-4 btn-secondary rounded-xl whitespace-nowrap">Użyj
                                 aparatu</button>
                         </div>
                     </div>
@@ -348,7 +348,7 @@
                         <video id="camera-stream" class="w-full rounded-lg" autoplay></video>
                         <div class="flex items-center space-x-2 mt-2">
                             <button id="capture-photo-btn"
-                                class="w-full py-2 px-4 bg-green-600 text-white rounded-md hover:bg-green-700">Zrób
+                                class="w-full py-2 px-4 btn-secondary rounded-xl">Zrób
                                 zdjęcie</button>
                             <button id="cancel-camera-btn"
                                 class="w-full py-2 px-4 bg-gray-500 text-white rounded-md hover:bg-gray-600">Anuluj</button>
@@ -356,8 +356,8 @@
                     </div>
                 </div>
 
-                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-                    <h3 id="purchase-form-title" class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Dodaj
+                <div class="glass-card rounded-2xl p-6">
+                    <h3 id="purchase-form-title" class="text-lg font-semibold mb-4 text-white">Dodaj
                         nowy zakup ręcznie</h3>
                     <form id="purchase-form">
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
@@ -403,7 +403,7 @@
                                 <div id="purchase-summary" class="text-lg font-bold text-gray-800 dark:text-gray-200">
                                     Suma: 0.00 zł</div>
                                 <button type="button" id="add-item-btn"
-                                    class="py-2 px-4 bg-blue-500 text-white rounded-md hover:bg-blue-600">+
+                                    class="py-2 px-4 btn-primary rounded-xl">+
                                     Dodaj</button>
                             </div>
                         </div>
@@ -412,7 +412,7 @@
                                 <button type="button" id="cancel-edit-btn"
                                     class="py-2 px-4 bg-gray-500 text-white rounded-md hover:bg-gray-600 hidden">Anuluj</button>
                                 <button type="submit"
-                                    class="py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700">Zapisz cały
+                                    class="py-2 px-4 btn-primary rounded-xl">Zapisz cały
                                     zakup</button>
                             </div>
                         </div>
@@ -421,9 +421,9 @@
             </div>
 
             <div id="list-tab" class="tab-content">
-                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 mb-6">
+                <div class="glass-card rounded-2xl p-5 mb-6">
                     <div id="filter-toggle" class="cursor-pointer flex justify-between items-center">
-                        <h4 class="text-lg font-semibold text-gray-900 dark:text-white">Filtry</h4>
+                        <h4 class="text-lg font-semibold text-white">Filtry</h4>
                         <svg id="filter-arrow" xmlns="http://www.w3.org/2000/svg"
                             class="h-6 w-6 text-gray-500 dark:text-gray-400 transition-transform" fill="none"
                             viewBox="0 0 24 24" stroke="currentColor">
@@ -488,7 +488,7 @@
                                 <input type="text" id="new-category-name" placeholder="Nazwa nowej kategorii"
                                     class="flex-grow mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2 px-3">
                                 <button type="submit"
-                                    class="py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 shadow-lg">Dodaj</button>
+                                    class="py-2 px-4 btn-primary rounded-xl shadow-lg">Dodaj</button>
                             </form>
                         </div>
                     </div>
@@ -506,10 +506,10 @@
                             <div id="budgets-list" class="space-y-2 mb-4 max-h-[220px] overflow-y-auto"></div>
                             <div class="space-y-2 mt-auto">
                                 <button id="save-budget-btn"
-                                    class="w-full py-2.5 px-4 bg-green-600 text-white rounded-xl hover:bg-green-700 shadow-lg transition-all active:scale-95 font-medium">Zapisz
+                                    class="w-full py-2.5 px-4 btn-secondary rounded-xl shadow-lg transition-all active:scale-95 font-medium">Zapisz
                                     budżet</button>
                                 <button id="copy-budget-btn"
-                                    class="w-full py-2.5 px-4 bg-blue-600 text-white rounded-xl hover:bg-blue-700 shadow-lg transition-all active:scale-95 font-medium">Kopiuj
+                                    class="w-full py-2.5 px-4 btn-primary rounded-xl shadow-lg transition-all active:scale-95 font-medium">Kopiuj
                                     na
                                     następne miesiące</button>
                             </div>
@@ -530,7 +530,7 @@
                                         class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2 px-3"
                                         required step="0.01">
                                     <button type="submit"
-                                        class="py-2 px-5 bg-blue-600 text-white rounded-md hover:bg-blue-700 shadow-lg">Dodaj</button>
+                                        class="py-2 px-5 btn-primary rounded-xl shadow-lg">Dodaj</button>
                                 </div>
                             </form>
                         </div>
@@ -595,9 +595,9 @@
             <!-- Zakładka Analiza Budżetu -->
             <div id="analysis-tab" class="tab-content">
                 <!-- Analiza budżetu długoterminowego -->
-                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-6">
+                <div class="glass-card rounded-2xl p-6 mb-6">
                     <div class="mb-4">
-                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-3">Analiza budżetu
+                        <h3 class="text-lg font-semibold text-white mb-3">Analiza budżetu
                             długoterminowego</h3>
                         <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-2">
                             <select id="period-type-select"
@@ -609,7 +609,7 @@
                                 <option value="custom">Zakres niestandardowy</option>
                             </select>
                             <button id="refresh-long-term-btn"
-                                class="w-full sm:w-auto px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm">
+                                class="w-full sm:w-auto px-3 py-2 btn-primary rounded-xl text-sm">
                                 Odśwież
                             </button>
                         </div>
@@ -771,16 +771,16 @@
                 </p>
                 <div class="grid grid-cols-2 gap-3">
                     <button
-                        class="copy-months-btn py-3 px-4 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-800 font-medium"
+                        class="copy-months-btn py-3 px-4 btn-secondary rounded-xl font-medium"
                         data-months="1">1 miesiąc</button>
                     <button class="copy-months-btn py-3 px-4 bg-blue-100 dark:bg-blue-900 text-blue-8
                         00 dark:text-blue-200 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-800 font-medium"
                         data-months="3">3 miesiące</button>
                     <button
-                        class="copy-months-btn py-3 px-4 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-800 font-medium"
+                        class="copy-months-btn py-3 px-4 btn-secondary rounded-xl font-medium"
                         data-months="6">6 miesięcy</button>
                     <button
-                        class="copy-months-btn py-3 px-4 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-800 font-medium"
+                        class="copy-months-btn py-3 px-4 btn-secondary rounded-xl font-medium"
                         data-months="12">12 miesięcy</button>
                 </div>
                 <div class="flex justify-end space-x-2 pt-4">
@@ -820,7 +820,7 @@
                 <div class="flex justify-end space-x-2 pt-6">
                     <button type="button" id="cancel-edit-special-budget"
                         class="py-2 px-4 bg-gray-500 text-white rounded-md hover:bg-gray-600">Anuluj</button>
-                    <button type="submit" class="py-2 px-4 bg-green-600 text-white rounded-md hover:bg-green-700">Zapisz
+                    <button type="submit" class="py-2 px-4 btn-secondary rounded-xl">Zapisz
                         zmiany</button>
                 </div>
             </form>
