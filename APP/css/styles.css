@@ -399,6 +399,103 @@ h6 {
     transform: translateY(-2px);
 }
 
+/* ===== Scanner Hide ===== */
+#scanner-container.hidden {
+    display: none !important;
+}
+
+.fab-label {
+    white-space: nowrap;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+/* ===== Refined Controls (Phase 4.1) ===== */
+select {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    color: white !important;
+    backdrop-filter: blur(5px);
+}
+
+select option {
+    background-color: #1f2937;
+    color: white;
+}
+
+#add-recurring-expense-form select,
+#budget-month-select {
+    background-color: rgba(0, 0, 0, 0.2) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+/* History List Item Redesign */
+.category-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 6px;
+    flex-shrink: 0;
+}
+
+.category-tag-mini {
+    display: flex;
+    align-items: center;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+/* Category Chips (Phase 4.1 Comparison) */
+#comparison-category-filters {
+    display: flex;
+    overflow-x: auto;
+    gap: 8px;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+}
+
+#comparison-category-filters::-webkit-scrollbar {
+    display: none;
+}
+
+.category-chip {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    padding: 6px 12px;
+    border-radius: 9999px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 12px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.category-chip.active {
+    background: rgba(59, 130, 246, 0.2);
+    border-color: rgba(59, 130, 246, 0.4);
+    color: #3B82F6;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+}
+
+.category-chip:not(.active):hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+/* Camera Preview (Phase 4.1 Refinement) */
+#camera-stream {
+    height: 550px !important;
+    max-height: 70vh;
+    object-fit: cover;
+    background-color: #000;
+}
+
 .btn-primary:active {
     transform: translateY(0);
 }
