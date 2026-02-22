@@ -353,6 +353,10 @@ async function renderComparisonBarChart(mode = 'full') {
             ? `Porównanie: ${currentComparisonCategory.charAt(0).toUpperCase() + currentComparisonCategory.slice(1)}`
             : (mode === 'mtd' ? `Porównanie do ${currentDay}. dnia miesiąca` : 'Pełne sumy miesięczne');
 
+        const datasetLabel = mode === 'mtd'
+            ? `Wydatki (do ${currentDay}. dnia)`
+            : 'Suma wydatków';
+
         comparisonChart = new Chart(ctx, {
             type: 'bar',
             data: {
