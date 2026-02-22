@@ -1,7 +1,10 @@
 // Tracker Wydatków - UI Functions
 
 // --- Nawigacja i zakładki ---
-function switchTab(tabName) {
+function switchTab(tabName, pushToHistory = true) {
+    if (pushToHistory) {
+        history.pushState({ tab: tabName }, "", "");
+    }
     // Reset scroll to top
     window.scrollTo({ top: 0, behavior: 'instant' });
     // Update bottom nav buttons

@@ -280,7 +280,14 @@ function handleFABScroll(e) {
 function setupAppEventListeners() {
     // Bottom nav tabs
     bottomNavBtns.forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
-    // Logout in more tab
+    // More tab buttons
+    const moreSettingsBtn = document.getElementById('more-settings-btn');
+    if (moreSettingsBtn) {
+        moreSettingsBtn.addEventListener('click', () => {
+            switchTab('settings');
+        });
+    }
+
     const moreLogoutBtn = document.getElementById('more-logout-btn');
     if (moreLogoutBtn) {
         moreLogoutBtn.addEventListener('click', () => {
@@ -290,7 +297,18 @@ function setupAppEventListeners() {
     // Initialize swipe container
     initSwipeContainer();
 
+    // Browser back button support
+    window.addEventListener('popstate', (event) => {
+        if (event.state && event.state.tab) {
+            switchTab(event.state.tab, false);
+        } else {
+            // Default to cockpit if no state
+            switchTab('stats', false);
+        }
+    });
+
     // Initialize swipe container
+    initSwipeContainer();
     initSwipeContainer();
 
     // FAB scroll handling - attach to ALL potential scroll containers
@@ -492,12 +510,12 @@ function setupAppEventListeners() {
         mainFabBtn.classList.toggle('expanded', isFabExpanded);
 
         // Animate sub-buttons
-        const subBtns = fabActions.querySelectorAll('.fab-sub-btn');
-        subBtns.forEach((btn, index) => {
+        const subItems = fabActions.querySelectorAll('.fab-sub-item');
+        subItems.forEach((item, index) => {
             if (isFabExpanded) {
-                btn.style.transitionDelay = `${index * 50}ms`;
+                item.style.transitionDelay = `${index * 50}ms`;
             } else {
-                btn.style.transitionDelay = `${(subBtns.length - 1 - index) * 50}ms`;
+                item.style.transitionDelay = `${(subItems.length - 1 - index) * 50}ms`;
             }
         });
     }
@@ -1037,6 +1055,11 @@ async function updateMonthlyBalance() {
 // --- Inicjalizacja Aplikacji ---
 async function initializeApp() {
     setupAppEventListeners();
+
+    // Set initial history state
+    const currentTab = document.querySelector('.bottom-nav-btn.active')?.dataset.tab || 'stats';
+    history.replaceState({ tab: currentTab }, "", "");
+
     // Dodaj małe opóźnienie, żeby token Firebase Auth był gotowy
     await new Promise(resolve => setTimeout(resolve, 100));
     await fetchInitialData();
