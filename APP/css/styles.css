@@ -396,3 +396,46 @@ h6 {
         bottom: 5rem;
     }
 }
+
+/* ===== Refined Controls (Phase 4.1) ===== */
+select {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    color: white !important;
+    backdrop-filter: blur(5px);
+}
+
+select option {
+    background-color: #1f2937; /* Gray-800 for visibility */
+    color: white;
+}
+
+#add-recurring-expense-form select,
+#budget-month-select {
+    background-color: rgba(0, 0, 0, 0.2) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+/* History List Item Redesign */
+.purchase-item-row {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.category-tag-mini {
+    display: flex;
+    items-center;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.category-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    margin-right: 6px;
+}

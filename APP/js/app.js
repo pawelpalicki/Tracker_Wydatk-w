@@ -309,7 +309,6 @@ function setupAppEventListeners() {
 
     // Initialize swipe container
     initSwipeContainer();
-    initSwipeContainer();
 
     // FAB scroll handling - attach to ALL potential scroll containers
     window.addEventListener('scroll', handleFABScroll, { passive: true });

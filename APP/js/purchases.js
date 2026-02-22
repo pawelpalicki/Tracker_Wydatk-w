@@ -187,14 +187,17 @@ function renderPurchasesList(purchasesToRender, append = false) {
                     </div>
                 </div>
             </div>
-            <div class="purchase-items hidden border-t border-gray-200 dark:border-gray-700 p-4 space-y-2">
+            <div class="purchase-items hidden border-t border-gray-200 dark:border-gray-700 p-4 space-y-4">
                 ${(p.items || []).map(item => `
-                    <div class="flex justify-between items-center">
-                        <span class="text-gray-800 dark:text-gray-200 break-words">${item.name}</span>
-                        <div class="flex items-center space-x-2 flex-shrink-0">
-                            <span class="category-tag text-white text-xs font-semibold" style="background-color: ${getCategoryColor(item.category)}; padding: 3px 10px; border-radius: 9999px;">${item.category}</span>
-                             <span class="font-medium text-gray-900 dark:text-white whitespace-nowrap">${(item.price || 0).toFixed(2)}&nbsp;zł</span>
+                    <div class="flex justify-between items-end">
+                        <div class="flex flex-col">
+                            <div class="category-tag-mini">
+                                <span class="category-dot" style="background-color: ${getCategoryColor(item.category)}"></span>
+                                ${item.category}
+                            </div>
+                            <div class="text-sm font-medium text-white">${item.name}</div>
                         </div>
+                        <div class="font-medium text-gray-900 dark:text-white whitespace-nowrap text-base">${(item.price || 0).toFixed(2)}&nbsp;zł</div>
                     </div>
                 `).join('')}
             </div>

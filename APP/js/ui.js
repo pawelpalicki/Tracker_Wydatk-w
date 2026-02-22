@@ -15,7 +15,11 @@ function switchTab(tabName, pushToHistory = true) {
         content.classList.toggle('active', content.id === `${tabName}-tab`);
     });
 
-    if (tabName !== 'add') exitEditMode();
+    if (tabName !== 'add') {
+        exitEditMode();
+        // Hide scanner when leaving add tab
+        document.getElementById('scanner-container')?.classList.add('hidden');
+    }
 
     if (tabName === 'add') {
         // Trigger resize for textareas that might have been rendered while hidden
@@ -138,6 +142,9 @@ function exitEditMode() {
     purchaseFormSubmitBtn.classList.replace('hover:bg-green-700', 'hover:bg-blue-700');
     document.getElementById('cancel-edit-btn').classList.add('hidden');
 
+    // Ensure scanner is hidden when resetting form
+    document.getElementById('scanner-container')?.classList.add('hidden');
+
     updatePurchaseSummary();
 }
 
@@ -173,6 +180,7 @@ async function startCamera() {
     try {
         cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
         document.getElementById('scanner-container').classList.remove('hidden');
+        document.getElementById('scanner-controls').classList.add('hidden');
         cameraView.classList.remove('hidden');
         cameraStreamEl.srcObject = cameraStream;
 
@@ -194,6 +202,7 @@ function stopCamera() {
         cameraStream.getTracks().forEach(track => track.stop());
     }
     cameraView.classList.add('hidden');
+    document.getElementById('scanner-controls').classList.remove('hidden');
     cameraStream = null;
 }
 
