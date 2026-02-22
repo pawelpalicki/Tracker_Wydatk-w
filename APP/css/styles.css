@@ -494,3 +494,9 @@ select option {
     -ms-overflow-style: none;
     scrollbar-width: none;
 }
+/* Camera Preview (Phase 4.1 Refinement) */
+#camera-stream {
+    height: 400px;
+    object-fit: cover;
+    background-color: #000;
+}
