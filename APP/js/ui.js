@@ -169,6 +169,7 @@ async function startCamera() {
     }
     try {
         cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+        document.getElementById('scanner-container').classList.remove('hidden');
         cameraView.classList.remove('hidden');
         cameraStreamEl.srcObject = cameraStream;
 
