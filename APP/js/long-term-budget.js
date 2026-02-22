@@ -74,7 +74,7 @@ function getDateRange() {
         return { startMonth, endMonth };
     } else {
         const monthsBack = parseInt(periodType);
-        
+
         let endYear = today.getFullYear();
         let endMonth = today.getMonth(); // 0-indexed current month
 
@@ -241,6 +241,11 @@ function renderLongTermChart(data) {
     const budgetData = data.map(item => item.budget);
     const spendingData = data.map(item => item.spending);
 
+    // Oblicz dynamiczne minimum (zaokrąglone w dół do pełnego tysiąca)
+    const allValues = [...budgetData, ...spendingData].filter(v => v > 0);
+    const minVal = allValues.length > 0 ? Math.min(...allValues) : 0;
+    const yAxisMin = Math.max(0, Math.floor(minVal / 1000) * 1000);
+
     longTermBudgetChart = new Chart(ctx, {
         type: 'line',
         data: {
@@ -252,7 +257,8 @@ function renderLongTermChart(data) {
                     borderColor: '#10B981',
                     backgroundColor: 'rgba(16, 185, 129, 0.1)',
                     fill: false,
-                    tension: 0.1
+                    tension: 0.1,
+                    pointRadius: data.length > 9 ? 2 : 4
                 },
                 {
                     label: 'Wydatki',
@@ -260,7 +266,8 @@ function renderLongTermChart(data) {
                     borderColor: '#3B82F6',
                     backgroundColor: 'rgba(59, 130, 246, 0.1)',
                     fill: false,
-                    tension: 0.1
+                    tension: 0.1,
+                    pointRadius: data.length > 9 ? 2 : 4
                 }
             ]
         },
@@ -272,10 +279,13 @@ function renderLongTermChart(data) {
                     position: 'top',
                     labels: {
                         color: 'white',
-                        usePointStyle: true
+                        usePointStyle: true,
+                        font: { size: 11 }
                     }
                 },
                 tooltip: {
+                    mode: 'index',
+                    intersect: false,
                     callbacks: {
                         label: function (context) {
                             return context.dataset.label + ': ' +
@@ -288,30 +298,37 @@ function renderLongTermChart(data) {
                     }
                 },
                 datalabels: {
-                    display: context => context.dataset.data[context.dataIndex] > 0,
-                    formatter: (value) => value.toFixed(2) + ' zł',
+                    display: context => {
+                        // Jeśli mamy dużo punktów, wyświetlaj co drugi labelek dla czytelności
+                        if (data.length > 9) {
+                            return context.dataIndex % 2 === 0 && context.dataset.data[context.dataIndex] > 0;
+                        }
+                        return context.dataset.data[context.dataIndex] > 0;
+                    },
+                    formatter: (value) => Math.round(value) + ' zł',
                     color: 'white',
-                    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                    backgroundColor: 'rgba(0, 0, 0, 0.4)',
                     borderRadius: 4,
-                    padding: 4,
+                    padding: 3,
                     font: {
-                        weight: 'bold'
+                        weight: 'bold',
+                        size: data.length > 8 ? 9 : 10
                     },
                     align: 'top',
-                    anchor: 'end'
+                    anchor: 'end',
+                    offset: 2,
+                    clip: false
                 }
             },
             scales: {
                 y: {
-                    beginAtZero: true,
+                    beginAtZero: false,
+                    min: yAxisMin,
                     ticks: {
                         color: 'white',
+                        font: { size: 10 },
                         callback: function (value) {
-                            return new Intl.NumberFormat('pl-PL', {
-                                style: 'currency',
-                                currency: 'PLN',
-                                minimumFractionDigits: 2
-                            }).format(value);
+                            return Math.round(value) + ' zł';
                         }
                     },
                     grid: {
@@ -319,7 +336,12 @@ function renderLongTermChart(data) {
                     }
                 },
                 x: {
-                    ticks: { color: 'white' },
+                    ticks: {
+                        color: 'white',
+                        font: { size: 10 },
+                        maxRotation: 45,
+                        minRotation: 0
+                    },
                     grid: { color: 'rgba(255, 255, 255, 0.1)' }
                 }
             }

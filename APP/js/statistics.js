@@ -357,9 +357,6 @@ async function renderComparisonBarChart(mode = 'full') {
             ? `Wydatki (do ${currentDay}. dnia)`
             : 'Suma wydatków';
 
-        // Oblicz dynamiczne minimum (zaokrąglone w dół do pełnego tysiąca)
-        const minDataValue = Math.min(...data);
-        const yAxisMin = Math.max(0, Math.floor(minDataValue / 1000) * 1000);
 
         comparisonChart = new Chart(ctx, {
             type: 'bar',
@@ -386,24 +383,22 @@ async function renderComparisonBarChart(mode = 'full') {
                         text: chartTitle,
                         color: textColor,
                         font: { size: 14, weight: 'bold' },
-                        padding: { bottom: 25 } // Zwiększony padding
+                        padding: { bottom: 15 }
                     },
                     datalabels: {
                         display: context => context.dataset.data[context.dataIndex] > 0,
                         color: textColor,
                         anchor: 'end',
                         align: 'end',
-                        offset: -2,
+                        offset: -4,
                         formatter: (value) => Math.round(value) + ' zł',
-                        font: { weight: 'bold', size: 10 }, // Mniejszy font
-                        clip: false
+                        font: { weight: 'bold', size: 11 }
                     }
                 },
                 scales: {
                     y: {
-                        beginAtZero: false,
-                        min: yAxisMin,
-                        suggestedMax: Math.max(...data) * 1.15,
+                        beginAtZero: true,
+                        suggestedMax: Math.max(...data) * 1.2,
                         ticks: { color: mutedTextColor },
                         grid: {
                             color: gridColor,
