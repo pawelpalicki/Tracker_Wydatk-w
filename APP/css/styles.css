@@ -378,6 +378,7 @@ h6 {
     background: rgba(255, 255, 255, 0.2);
     transform: translateY(-2px);
 }
+
 /* ===== Scanner Hide ===== */
 #scanner-container.hidden {
     display: none !important;
@@ -386,7 +387,7 @@ h6 {
 .fab-label {
     white-space: nowrap;
     transition: opacity 0.2s ease, transform 0.2s ease;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
 }
 
 /* Fix for overlapping buttons on mobile */
@@ -406,7 +407,8 @@ select {
 }
 
 select option {
-    background-color: #1f2937; /* Gray-800 for visibility */
+    background-color: #1f2937;
+    /* Gray-800 for visibility */
     color: white;
 }
 
@@ -425,7 +427,7 @@ select option {
 
 .category-tag-mini {
     display: flex;
-    items-center;
+    align-items: center;
     font-size: 10px;
     font-weight: 600;
     text-transform: uppercase;
@@ -434,8 +436,9 @@ select option {
 }
 
 .category-dot {
-    width: 6px;
-    height: 6px;
+    width: 8px;
+    height: 8px;
     border-radius: 50%;
     margin-right: 6px;
+    flex-shrink: 0;
 }
