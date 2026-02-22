@@ -9,6 +9,7 @@
 }
 
 
+
 /* ===== Bottom Navigation ===== */
 #bottom-nav {
     background: rgba(10, 10, 25, 0.9);
@@ -224,36 +225,38 @@ input:-webkit-autofill:active {
 }
 
 /* Enhanced FAB Sub-buttons */
-.fab-sub-btn {
-    background: rgba(15, 15, 35, 0.8) !important;
-    backdrop-filter: blur(12px) !important;
-    -webkit-backdrop-filter: blur(12px) !important;
-    border: 1px solid rgba(255, 255, 255, 0.12) !important;
-    color: white !important;
-    padding: 10px 18px !important;
-    border-radius: 999px !important;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
-    font-weight: 500 !important;
-    letter-spacing: 0.3px !important;
-    transform: translateY(10px);
+.fab-sub-item {
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transform: translateY(20px);
     opacity: 0;
-    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+    pointer-events: none;
 }
 
-#fab-actions.expanded .fab-sub-btn {
+#fab-actions.expanded .fab-sub-item {
     opacity: 1;
     transform: translateY(0);
+    pointer-events: auto;
+}
+
+.fab-label {
+    white-space: nowrap;
+    transition: transform 0.2s ease;
+}
+
+.fab-sub-btn {
+    flex-shrink: 0;
+    background: rgba(25, 25, 50, 0.9) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    color: white !important;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4) !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
 .fab-sub-btn:hover {
-    background: rgba(30, 30, 60, 0.9) !important;
-    border-color: rgba(255, 255, 255, 0.25) !important;
-    transform: scale(1.05) !important;
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4) !important;
-}
-
-.fab-sub-btn svg {
-    filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.2));
+    transform: scale(1.1) !important;
+    background: rgba(40, 40, 80, 0.95) !important;
 }
 
 #fab-add-manual-btn svg {
@@ -359,6 +362,23 @@ h6 {
     transform: translateY(-2px);
 }
 
+.btn-primary:active {
+    transform: translateY(0);
+}
+
+.btn-secondary {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: white;
+    transition: all 0.3s ease;
+}
+
+.btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+}
+
 /* ===== Scanner Hide ===== */
 #scanner-container.hidden {
     display: none !important;
@@ -368,6 +388,14 @@ h6 {
     white-space: nowrap;
     transition: opacity 0.2s ease, transform 0.2s ease;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+/* Fix for overlapping buttons on mobile */
+@media (max-width: 640px) {
+    #fab-container {
+        right: 1rem;
+        bottom: 5rem;
+    }
 }
 
 /* ===== Refined Controls (Phase 4.1) ===== */
@@ -380,6 +408,7 @@ select {
 
 select option {
     background-color: #1f2937;
+    /* Gray-800 for visibility */
     color: white;
 }
 
@@ -390,12 +419,10 @@ select option {
 }
 
 /* History List Item Redesign */
-.category-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    margin-right: 6px;
-    flex-shrink: 0;
+.purchase-item-row {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
 }
 
 .category-tag-mini {
@@ -408,12 +435,23 @@ select option {
     color: rgba(255, 255, 255, 0.5);
 }
 
+.category-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 6px;
+    flex-shrink: 0;
+}
+
 /* Category Chips (Phase 4.1 Comparison) */
 #comparison-category-filters {
+    width: 0;
+    min-width: 100%;
     display: flex;
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
     gap: 8px;
-    padding-bottom: 4px;
+    padding-bottom: 8px;
     scrollbar-width: none;
 }
 
@@ -448,28 +486,11 @@ select option {
     color: white;
 }
 
-/* Camera Preview (Phase 4.1 Refinement) */
-#camera-stream {
-    height: 550px !important;
-    max-height: 70vh;
-    object-fit: cover;
-    background-color: #000;
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;
 }
 
-
-.btn-primary:active {
-    transform: translateY(0);
-}
-
-.btn-secondary {
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    color: white;
-    transition: all 0.3s ease;
-}
-
-.btn-secondary:hover {
-    background: rgba(255, 255, 255, 0.2);
-    transform: translateY(-2px);
+.scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
 }
