@@ -485,3 +485,38 @@ async function renderShopBarChart() {
         });
     }
 }
+
+async function renderComparisonCategoryFilters(mode) {
+    const filterContainer = document.getElementById('comparison-category-filters');
+    if (!filterContainer) return;
+
+    // Pobierz kategorie użytkownika
+    const categories = await apiCall('/api/categories');
+
+    let html = `
+        <button class="category-chip ${!currentComparisonCategory ? 'active' : ''}" data-category="all">
+            Wszystkie
+        </button>
+    `;
+
+    categories.forEach(cat => {
+        const isActive = currentComparisonCategory === cat;
+        const color = getCategoryColor(cat);
+        html += `
+            <button class="category-chip ${isActive ? 'active' : ''}" data-category="${cat}">
+                <span class="w-2 h-2 rounded-full mr-1.5" style="background-color: ${color}"></span>
+                ${cat.charAt(0).toUpperCase() + cat.slice(1)}
+            </button>
+        `;
+    });
+
+    filterContainer.innerHTML = html;
+
+    filterContainer.querySelectorAll('.category-chip').forEach(chip => {
+        chip.onclick = () => {
+            const cat = chip.dataset.category;
+            currentComparisonCategory = cat === 'all' ? null : cat;
+            renderComparisonBarChart(mode);
+        };
+    });
+}
