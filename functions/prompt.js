@@ -1,5 +1,5 @@
 const getPrompt = (categories) => {
-    return `
+  return `
         Twoim zadaniem jest BARDZO DOKŁADNA analiza paragonu lub faktury i zwrócenie danych WYŁĄCZNIE w formacie JSON.
 
         ---
@@ -27,7 +27,8 @@ const getPrompt = (categories) => {
             -   Rabaty na dole paragonu z nazwą produktu (np. "Rabat Mleko").
             -   Rabaty ogólne (bez nazwy produktu) - rozdziel proporcjonalnie między wszystkie produkty.
         3.  **Kategoryzacja**: Dla każdego produktu przypisz kategorię ('category') z tej listy: ${JSON.stringify(categories)}. Jeśli żadna nie pasuje, użyj "inne".
-        4.  **Format Wyjściowy**: Złóż ostateczną listę ('items') i zwróć ją w wymaganym formacie JSON. Nie dodawaj żadnych wyjaśnień.
+        4.  **Czytelność Nazw (WAŻNE)**: Spróbuj rozwinąć skróty i enigmatyczne nazwy produktów na bardziej oczywiste i czytelne (np. 'NapOwsianGoVege' -> 'Napój Owsiany GoVege', 'ChlebŻytRaz' -> 'Chleb Żytni Razowy'). Jeśli nazwa jest jasna, pozostaw ją bez zmian.
+        5.  **Format Wyjściowy**: Złóż ostateczną listę ('items') i zwróć ją w wymaganym formacie JSON. Nie dodawaj żadnych wyjaśnień.
 
         **PRZYKŁADY RABATÓW:**
         - Produkt z rabatem bezpośrednio przy nim = odejmij rabat od ceny produktu.
