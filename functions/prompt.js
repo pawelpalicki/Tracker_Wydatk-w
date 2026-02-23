@@ -27,7 +27,7 @@ const getPrompt = (categories) => {
             -   Rabaty na dole paragonu z nazwą produktu (np. "Rabat Mleko").
             -   Rabaty ogólne (bez nazwy produktu) - rozdziel proporcjonalnie między wszystkie produkty.
         3.  **Kategoryzacja**: Dla każdego produktu przypisz kategorię ('category') z tej listy: ${JSON.stringify(categories)}. Jeśli żadna nie pasuje, użyj "inne".
-        4.  **Czytelność Nazw (WAŻNE)**: Spróbuj rozwinąć skróty i enigmatyczne nazwy produktów na bardziej oczywiste i czytelne (np. 'NapOwsianGoVege' -> 'Napój Owsiany GoVege', 'ChlebŻytRaz' -> 'Chleb Żytni Razowy'). Jeśli nazwa jest jasna, pozostaw ją bez zmian.
+        4.  **Nazwy Produktów (WAŻNE)**: Domyślnie zachowaj nazwy produktów DOKŁADNIE tak, jak widnieją na paragonie. Możesz rozwinąć skrót lub poprawić nazwę na bardziej czytelną WYŁĄCZNIE, jeśli jesteś w 100% pewien znaczenia (np. 'CHLEB ŻYT RAZ' -> 'Chleb Żytni Razowy'). Jeśli masz jakiekolwiek wątpliwości, pozostaw nazwę oryginalną. Nie zmieniaj produktów na inne.
         5.  **Format Wyjściowy**: Złóż ostateczną listę ('items') i zwróć ją w wymaganym formacie JSON. Nie dodawaj żadnych wyjaśnień.
 
         **PRZYKŁADY RABATÓW:**
