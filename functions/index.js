@@ -88,17 +88,52 @@ async function convertCurrencyToPLN(items, currency) {
     };
 }
 
-async function getUserCategories(userId) {
-    const userDoc = await usersCollection.doc(userId).get();
-    const customCategories = userDoc.exists && userDoc.data().customCategories ? userDoc.data().customCategories : [];
+async function getUserMetadata(userId) {
+    const userRef = usersCollection.doc(userId);
+    const userDoc = await userRef.get();
+    const userData = userDoc.exists ? userDoc.data() : {};
 
+    if (userData.metadataInitialized) {
+        return {
+            categories: userData.customCategories || [],
+            shops: userData.shops || [],
+            availableMonths: userData.availableMonths || []
+        };
+    }
+
+    // Leniwa inicjalizacja: wykonaj zapytanie kosztowne TYLKO RAZ
+    console.log(`Inicjalizacja metadanych dla użytkownika ${userId}`);
     const snapshot = await purchasesCollection.where('userId', '==', userId).get();
-    const allItems = snapshot.docs.flatMap(doc => doc.data().items || []);
-    const userCategories = allItems.map(item => item.category).filter(Boolean);
+    const allPurchases = snapshot.docs.map(doc => doc.data());
 
-    // Zwracaj wyłącznie kategorie przypisane do użytkownika + te istniejące w jego danych
-    // (usunięto globalne DEFAULT_CATEGORIES, aby użytkownik mógł w pełni edytować listę)
-    return [...new Set([...customCategories, ...userCategories])].sort();
+    const allItems = allPurchases.flatMap(p => p.items || []);
+    const userCategories = allItems.map(item => item.category).filter(Boolean);
+    const existingCustomCats = userData.customCategories || [];
+    const combinedCategories = [...new Set([...existingCustomCats, ...userCategories])].sort();
+
+    const shops = [...new Set(allPurchases.map(p => p.shop).filter(Boolean))].sort();
+
+    // Sortuj dostępne miesiące malejąco
+    const availableMonths = [...new Set(allPurchases.map(p => p.date ? p.date.substring(0, 7) : null).filter(Boolean))].sort().reverse();
+
+    // Zapisz do profilu użytkownika by nie czytać wszystkich zakupów ponownie
+    await userRef.set({
+        customCategories: combinedCategories,
+        shops: shops,
+        availableMonths: availableMonths,
+        metadataInitialized: true
+    }, { merge: true });
+
+    return {
+        categories: combinedCategories,
+        shops: shops,
+        availableMonths: availableMonths
+    };
+}
+
+async function getUserCategories(userId) {
+    const metadata = await getUserMetadata(userId);
+    return metadata.categories;
 }
 
 function validateDate(dateStr) {
@@ -432,10 +467,17 @@ app.get('/api/purchases', authMiddleware, async (req, res) => {
 
         let query = purchasesCollection.where('userId', '==', req.userId);
 
+        if (startDate) {
+            query = query.where('date', '>=', startDate);
+        }
+        if (endDate) {
+            query = query.where('date', '<=', endDate);
+        }
+
         // Jeśli filtry są aktywne, pobieramy wszystkie pasujące dane bez paginacji.
         // Jeśli nie, stosujemy paginację.
         if (isAnyFilterActive) {
-            // Kolejność nie ma znaczenia, bo filtrujemy w kodzie po pobraniu wszystkich dokumentów
+            // Firestore pobierze już znacznie mniejszą ilość danych ze względu na `where('date')`
             const snapshot = await query.orderBy('date', 'desc').get();
             let purchases = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
@@ -499,13 +541,8 @@ app.get('/api/purchases', authMiddleware, async (req, res) => {
 // GET: Pobierz wszystkie unikalne nazwy sklepów
 app.get('/api/shops', authMiddleware, async (req, res) => {
     try {
-        const snapshot = await purchasesCollection.where('userId', '==', req.userId).get();
-        if (snapshot.empty) {
-            return res.json([]);
-        }
-        const shops = snapshot.docs.map(doc => doc.data().shop);
-        const uniqueShops = [...new Set(shops)].filter(Boolean).sort(); // Usuwa puste wpisy i sortuje
-        res.json(uniqueShops);
+        const metadata = await getUserMetadata(req.userId);
+        res.json(metadata.shops || []);
     } catch (error) {
         console.error("Błąd pobierania sklepów:", error);
         res.status(500).json({ error: 'Błąd serwera podczas pobierania sklepów' });
@@ -533,6 +570,19 @@ app.post('/api/purchases', authMiddleware, async (req, res) => {
             newPurchase.specialBudgetId = specialBudgetId;
         }
         const docRef = await purchasesCollection.add(newPurchase);
+
+        // Zaktualizuj metadane użytkownika
+        const dateMonth = date.substring(0, 7);
+        const newCategories = items.map(item => item.category).filter(Boolean);
+        const updateData = {
+            shops: FieldValue.arrayUnion(shop),
+            availableMonths: FieldValue.arrayUnion(dateMonth)
+        };
+        if (newCategories.length > 0) {
+            updateData.customCategories = FieldValue.arrayUnion(...newCategories);
+        }
+        await usersCollection.doc(req.userId).set(updateData, { merge: true });
+
         res.status(201).json({ id: docRef.id, ...newPurchase });
     } catch (error) {
         console.error("Błąd dodawania zakupu:", error);
@@ -579,6 +629,18 @@ app.put('/api/purchases/:id', authMiddleware, async (req, res) => {
 
         // Use update() instead of set()
         await purchaseRef.update(updatedPurchaseData);
+
+        // Zaktualizuj metadane użytkownika
+        const dateMonth = date.substring(0, 7);
+        const newCategories = items.map(item => item.category).filter(Boolean);
+        const updateData = {
+            shops: FieldValue.arrayUnion(shop),
+            availableMonths: FieldValue.arrayUnion(dateMonth)
+        };
+        if (newCategories.length > 0) {
+            updateData.customCategories = FieldValue.arrayUnion(...newCategories);
+        }
+        await usersCollection.doc(req.userId).set(updateData, { merge: true });
 
         // Create a clean object for the JSON response
         const responseData = {
@@ -901,25 +963,26 @@ app.get('/api/statistics', authMiddleware, async (req, res) => {
     try {
         const { year, month } = req.query;
 
-        const snapshot = await purchasesCollection.where('userId', '==', req.userId).get();
-        if (snapshot.empty) {
-            return res.json({ monthlyTotal: 0, spendingByCategory: {}, availableMonths: [] });
-        }
-
-        const allPurchases = snapshot.docs.map(doc => doc.data());
-
-        // Filtruj wydatki, aby wykluczyć te ze specjalnych budżetów
-        const purchases = allPurchases.filter(p => !p.specialBudgetId);
-
-        // Tworzenie listy dostępnych miesięcy (na podstawie wszystkich wydatków, żeby nie ukrywać miesięcy)
-        const availableMonths = [...new Set(allPurchases.map(p => p.date.substring(0, 7)))].sort().reverse();
+        // Pobranie dostępnych miesięcy z metadanych zamiast skanowania całej bazy
+        const metadata = await getUserMetadata(req.userId);
+        const availableMonths = metadata.availableMonths || [];
 
         // Ustalanie okresu do analizy
         const targetDate = (year && month) ? new Date(parseInt(year), parseInt(month) - 1, 15) : new Date();
         const firstDayOfMonth = new Date(targetDate.getFullYear(), targetDate.getMonth(), 1).toISOString().split('T')[0];
         const lastDayOfMonth = new Date(targetDate.getFullYear(), targetDate.getMonth() + 1, 0).toISOString().split('T')[0];
 
-        const monthlyPurchases = purchases.filter(p => p.date >= firstDayOfMonth && p.date <= lastDayOfMonth);
+        // Pobranie TYLKO zakupów z danego miesiąca, by zoptymalizować reads
+        const snapshot = await purchasesCollection
+            .where('userId', '==', req.userId)
+            .where('date', '>=', firstDayOfMonth)
+            .where('date', '<=', lastDayOfMonth)
+            .get();
+
+        const purchasesInMonth = snapshot.docs.map(doc => doc.data());
+
+        // Filtruj wydatki, aby wykluczyć te ze specjalnych budżetów
+        const monthlyPurchases = purchasesInMonth.filter(p => !p.specialBudgetId);
 
         const monthlyTotal = monthlyPurchases.reduce((sum, p) => sum + (p.totalAmount || 0), 0);
 
@@ -948,7 +1011,15 @@ app.get('/api/statistics/comparison', authMiddleware, async (req, res) => {
     try {
         const { mode } = req.query; // 'mtd' lub 'full' (domyślnie)
 
-        const snapshot = await purchasesCollection.where('userId', '==', req.userId).get();
+        // Pobieramy tylko ostanie 12 miesięcy by zoptymalizować czytanie bazy
+        const todayForComparison = new Date();
+        const twelveMonthsAgo = new Date(todayForComparison.getFullYear() - 1, todayForComparison.getMonth(), 1).toISOString().split('T')[0];
+
+        const snapshot = await purchasesCollection
+            .where('userId', '==', req.userId)
+            .where('date', '>=', twelveMonthsAgo)
+            .get();
+
         if (snapshot.empty) {
             return res.json({ monthlyTotals: [] });
         }
@@ -1012,18 +1083,21 @@ app.get('/api/statistics/by-shop', authMiddleware, async (req, res) => {
             return res.status(400).json({ error: 'Rok i miesiąc są wymagane.' });
         }
 
-        const snapshot = await purchasesCollection.where('userId', '==', req.userId).get();
+        const firstDayOfMonth = new Date(parseInt(year), parseInt(month) - 1, 1).toISOString().split('T')[0];
+        const lastDayOfMonth = new Date(parseInt(year), parseInt(month), 0).toISOString().split('T')[0];
+
+        const snapshot = await purchasesCollection
+            .where('userId', '==', req.userId)
+            .where('date', '>=', firstDayOfMonth)
+            .where('date', '<=', lastDayOfMonth)
+            .get();
+
         if (snapshot.empty) {
             return res.json({ spendingByShop: {} });
         }
 
         // Wyklucz wydatki ze specjalnych budżetów
-        const purchases = snapshot.docs.map(doc => doc.data()).filter(p => !p.specialBudgetId);
-
-        const firstDayOfMonth = new Date(parseInt(year), parseInt(month) - 1, 1).toISOString().split('T')[0];
-        const lastDayOfMonth = new Date(parseInt(year), parseInt(month), 0).toISOString().split('T')[0];
-
-        const monthlyPurchases = purchases.filter(p => p.date >= firstDayOfMonth && p.date <= lastDayOfMonth);
+        const monthlyPurchases = snapshot.docs.map(doc => doc.data()).filter(p => !p.specialBudgetId);
 
         const spendingByShop = monthlyPurchases.reduce((acc, p) => {
             const shop = p.shop || 'Nieznany sklep';
@@ -1047,17 +1121,20 @@ app.get('/api/statistics/category-details', authMiddleware, async (req, res) => 
             return res.status(400).json({ error: 'Rok, miesiąc i kategoria są wymagane.' });
         }
 
-        const snapshot = await purchasesCollection.where('userId', '==', req.userId).get();
+        const firstDayOfMonth = new Date(parseInt(year), parseInt(month) - 1, 1).toISOString().split('T')[0];
+        const lastDayOfMonth = new Date(parseInt(year), parseInt(month), 0).toISOString().split('T')[0];
+
+        const snapshot = await purchasesCollection
+            .where('userId', '==', req.userId)
+            .where('date', '>=', firstDayOfMonth)
+            .where('date', '<=', lastDayOfMonth)
+            .get();
+
         if (snapshot.empty) {
             return res.json({ items: [] });
         }
 
-        const purchases = snapshot.docs.map(doc => doc.data());
-
-        const firstDayOfMonth = new Date(parseInt(year), parseInt(month) - 1, 1).toISOString().split('T')[0];
-        const lastDayOfMonth = new Date(parseInt(year), parseInt(month), 0).toISOString().split('T')[0];
-
-        const monthlyPurchases = purchases.filter(p => p.date >= firstDayOfMonth && p.date <= lastDayOfMonth);
+        const monthlyPurchases = snapshot.docs.map(doc => doc.data());
 
         const categoryItems = monthlyPurchases
             .flatMap(p => (p.items || []).map(item => ({ ...item, purchaseDate: p.date, shop: p.shop })))
