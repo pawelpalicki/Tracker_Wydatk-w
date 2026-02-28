@@ -1009,36 +1009,61 @@ app.get('/api/statistics', authMiddleware, async (req, res) => {
 
 app.get('/api/statistics/comparison', authMiddleware, async (req, res) => {
     try {
-        const { mode } = req.query; // 'mtd' lub 'full' (domyślnie)
-
-        // Pobieramy tylko ostanie 12 miesięcy by zoptymalizować czytanie bazy
-        const todayForComparison = new Date();
-        const twelveMonthsAgo = new Date(todayForComparison.getFullYear() - 1, todayForComparison.getMonth(), 1).toISOString().split('T')[0];
-
-        const snapshot = await purchasesCollection
-            .where('userId', '==', req.userId)
-            .where('date', '>=', twelveMonthsAgo)
-            .get();
-
-        if (snapshot.empty) {
-            return res.json({ monthlyTotals: [] });
-        }
-
-        // Wyklucz wydatki ze specjalnych budżetów
-        const purchases = snapshot.docs.map(doc => doc.data()).filter(p => !p.specialBudgetId);
-
+        const { mode, category, mtd } = req.query; // 'full' (12 months domyślnie), '6months', 'year'
+        const isMtdMode = mtd === 'true' || mode === 'mtd';
         const today = new Date();
         const targetDay = today.getDate();
+
+        let startDateStr;
+        let endDateStr;
+        let expectedMonths = [];
+
+        if (mode === '6months') {
+            const d = new Date(today.getFullYear(), today.getMonth() - 5, 1);
+            startDateStr = d.toISOString().split('T')[0];
+            endDateStr = new Date(today.getFullYear(), today.getMonth() + 1, 0).toISOString().split('T')[0];
+            for (let i = 5; i >= 0; i--) {
+                const m = new Date(today.getFullYear(), today.getMonth() - i, 1);
+                expectedMonths.push(m.toISOString().substring(0, 7));
+            }
+        } else if (mode === 'year') {
+            const targetYear = req.query.year || today.getFullYear();
+            startDateStr = `${targetYear}-01-01`;
+            endDateStr = `${targetYear}-12-31`;
+            for (let i = 1; i <= 12; i++) {
+                expectedMonths.push(`${targetYear}-${String(i).padStart(2, '0')}`);
+            }
+        } else {
+            // Default: last 12 months
+            const d = new Date(today.getFullYear() - 1, today.getMonth() + 1, 1);
+            startDateStr = d.toISOString().split('T')[0];
+            endDateStr = new Date(today.getFullYear(), today.getMonth() + 1, 0).toISOString().split('T')[0];
+            for (let i = 11; i >= 0; i--) {
+                const m = new Date(today.getFullYear(), today.getMonth() - i, 1);
+                expectedMonths.push(m.toISOString().substring(0, 7));
+            }
+        }
+
+        let query = purchasesCollection
+            .where('userId', '==', req.userId)
+            .where('date', '>=', startDateStr)
+            .where('date', '<=', endDateStr);
+
+        const snapshot = await query.get();
+
+        if (snapshot.empty) {
+            const emptyTotals = expectedMonths.map(month => ({ month, total: 0 }));
+            return res.json({ monthlyTotals: emptyTotals });
+        }
+
+        const purchases = snapshot.docs.map(doc => doc.data()).filter(p => !p.specialBudgetId);
+
         console.log(`Generowanie porównania. Tryb: ${mode || 'full'}`);
 
-        // Agregacja wydatków po miesiącach
-        const { category } = req.query;
         const monthlyTotalsMap = purchases.reduce((acc, p) => {
             const month = p.date.substring(0, 7); // YYYY-MM
-
             let amount = 0;
             if (category) {
-                // Sumuj tylko przedmioty z wybranej kategorii
                 amount = (p.items || [])
                     .filter(item => (item.category || 'inne') === category)
                     .reduce((sum, item) => sum + (item.price || 0), 0);
@@ -1048,25 +1073,22 @@ app.get('/api/statistics/comparison', authMiddleware, async (req, res) => {
 
             if (amount === 0) return acc;
 
-            if (mode === 'mtd') {
-                // Tryb Month-To-Date: uwzględnij tylko jeśli dzień <= dzisiejszemu
+            if (isMtdMode) {
                 const purchaseDate = new Date(p.date);
                 if (purchaseDate.getDate() <= targetDay) {
                     acc[month] = (acc[month] || 0) + amount;
                 }
             } else {
-                // Tryb domyślny (full): uwzględnij wszystko
                 acc[month] = (acc[month] || 0) + amount;
             }
 
             return acc;
         }, {});
 
-        // Sortowanie i formatowanie danych
-        const monthlyTotals = Object.entries(monthlyTotalsMap)
-            .map(([month, total]) => ({ month, total }))
-            .sort((a, b) => a.month.localeCompare(b.month))
-            .slice(-12); // Zwróć tylko ostatnie 12 miesięcy
+        const monthlyTotals = expectedMonths.map(month => ({
+            month,
+            total: monthlyTotalsMap[month] || 0
+        }));
 
         res.json({ monthlyTotals });
 

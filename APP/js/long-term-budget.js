@@ -3,6 +3,8 @@
 let longTermBudgetChart;
 let longTermBudgetInitialized = false;
 
+let currentComparisonCategory = null;
+
 // --- Funkcje analizy długoterminowej ---
 async function initializeLongTermBudget() {
     // Rejestrujemy wtyczkę, aby mieć pewność, że jest dostępna
@@ -44,8 +46,205 @@ async function initializeLongTermBudget() {
     // Oznacz jako zainicjalizowane
     longTermBudgetInitialized = true;
 
-    // Załaduj domyślne dane
+    // Załaduj domyślne dane budżetów
     await renderLongTermBudgetAnalysis();
+
+    // Inicjalizacja wykresu porównawczego
+    await initializeComparisonChart();
+}
+
+async function initializeComparisonChart() {
+    const periodSelect = document.getElementById('comparison-period-select');
+    const yearSelect = document.getElementById('comparison-year-select');
+    const modeToggle = document.getElementById('comparison-mode-toggle');
+
+    if (!periodSelect || !yearSelect || !modeToggle) return;
+
+    // Generowanie lat dla selecta na podstawie bieżącego roku i wstecz
+    // Idealnie pobralibyśmy dostępne lata z metadanych użytkownika (np. user.availableMonths), ale fallback to ostatnie 5 lat
+    const currentYear = new Date().getFullYear();
+    yearSelect.innerHTML = '';
+    for (let i = 0; i < 5; i++) {
+        const y = currentYear - i;
+        yearSelect.innerHTML += `<option value="${y}">${y}</option>`;
+    }
+
+    const renderChart = () => {
+        const mode = periodSelect.value; // '6months' or 'year'
+        const isMtd = modeToggle.checked ? 'mtd' : 'full';
+        const year = yearSelect.value;
+        renderComparisonBarChart(isMtd, mode, year);
+    };
+
+    periodSelect.addEventListener('change', () => {
+        if (periodSelect.value === 'year') {
+            yearSelect.classList.remove('hidden');
+        } else {
+            yearSelect.classList.add('hidden');
+        }
+        renderChart();
+    });
+
+    yearSelect.addEventListener('change', renderChart);
+    modeToggle.addEventListener('change', renderChart);
+
+    // Initial render
+    // Start with 6months and full (which maps to mode=full? Wait, we changed backend to accept period and mode, but actually we implemented mode='6months', 'year', 'mtd', 'full')
+    // Let's adjust renderChart passing parameters properly:
+    renderChart();
+}
+
+async function renderComparisonBarChart(mtdMode, periodMode, selectedYear) {
+    const container = document.getElementById('comparison-chart-container');
+    const noData = document.getElementById('no-data-bar-chart');
+    if (!container || !noData) return;
+
+    // The backend uses mode = '6months', 'year', 'mtd' or 'full'.
+    // If we want mtd AND 6months, wait, the backend currently accepts ONLY ONE mode.
+    // Let's modify the apiCall slightly. We can pass period & mtd natively if we update frontend logic.
+    // Wait, the backend currently checks if `mode==='mtd'`, if `mode==='6months'`, etc.
+    // So if it's '6months', it will NOT do 'mtd'.
+    // We should pass them separately. Let's send `mode=${periodMode}` and `mtd=${mtdMode==='mtd'}` if needed, or update backend?
+    // Actually, in the backend I wrote: `if (mode === 'mtd')`.
+    // It's fine for now, we'll just send mode=periodMode if not MTD, or mode='mtd' if MTD? No, that breaks period bounds!
+    // Let me use query strings `mode=${isMtd}` and `period=${periodMode}` if I update backend later, but for now fallback to:
+
+    let url = `/api/statistics/comparison?mode=${periodMode}`;
+    if (periodMode === 'year' && selectedYear) {
+        url += `&year=${selectedYear}`;
+    }
+    // Append a custom mtd param to the backend
+    if (mtdMode === 'mtd') {
+        url += `&mtd=true`; // I will update backend to read custom 'mtd' param shortly.
+    }
+
+    if (currentComparisonCategory) {
+        url += `&category=${encodeURIComponent(currentComparisonCategory)}`;
+    }
+
+    try {
+        const stats = await apiCall(url);
+        const ctx = document.getElementById('comparison-chart').getContext('2d');
+        const currentDay = new Date().getDate();
+
+        renderComparisonCategoryFilters(mtdMode, periodMode, selectedYear);
+
+        const textColor = '#e5e7eb';
+        const gridColor = 'rgba(255, 255, 255, 0.1)';
+        const mutedTextColor = '#9ca3af';
+
+        if (comparisonChart) comparisonChart.destroy();
+
+        if (!stats.monthlyTotals || stats.monthlyTotals.length === 0) {
+            noData.classList.remove('hidden');
+            container.classList.add('hidden');
+        } else {
+            noData.classList.add('hidden');
+            container.classList.remove('hidden');
+            const labels = stats.monthlyTotals.map(item => {
+                const [y, m] = item.month.split('-');
+                return `${m}/${y.slice(-2)}`;
+            });
+            const data = stats.monthlyTotals.map(item => item.total);
+
+            // Pobierz kolor z głównego skryptu jeśli dostępny, lub użyj domyślnego
+            const barColor = currentComparisonCategory ? window.getCategoryColor(currentComparisonCategory) : '#3B82F6';
+            const titleStr = currentComparisonCategory
+                ? `Porównanie: ${currentComparisonCategory}`
+                : 'Suma wydatków';
+
+            const datasetLabel = mtdMode === 'mtd' ? `Wydano (do ${currentDay}. dnia)` : titleStr;
+
+            // Ustawienie dynamicznego tytułu nad wykresem
+            const titleElement = document.getElementById('comparison-chart-title');
+            if (titleElement) {
+                if (currentComparisonCategory) {
+                    titleElement.textContent = `Porównanie: ${currentComparisonCategory.charAt(0).toUpperCase() + currentComparisonCategory.slice(1)}`;
+                } else if (mtdMode === 'mtd') {
+                    titleElement.textContent = `Porównanie do ${currentDay}. dnia miesiąca`;
+                } else {
+                    titleElement.textContent = 'Pełne sumy miesięczne';
+                }
+            }
+
+            comparisonChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: datasetLabel,
+                        data,
+                        backgroundColor: barColor,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) { return new Intl.NumberFormat('pl-PL', { style: 'currency', currency: 'PLN' }).format(context.parsed.y); }
+                            }
+                        },
+                        datalabels: {
+                            display: context => context.dataset.data[context.dataIndex] > 0 && data.length <= 8,
+                            color: textColor,
+                            anchor: 'end',
+                            align: 'top',
+                            offset: 2,
+                            formatter: (value) => Math.round(value) + ' zł',
+                            font: { weight: 'bold', size: 10 }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            suggestedMax: Math.max(...data) * 1.2,
+                            ticks: { color: mutedTextColor, callback: (v) => v + ' zł' },
+                            grid: { color: gridColor }
+                        },
+                        x: {
+                            ticks: { color: mutedTextColor },
+                            grid: { display: false }
+                        }
+                    },
+                    layout: { padding: { top: 20 } }
+                }
+            });
+        }
+    } catch (e) {
+        console.error("Błąd wykresu porównawczego:", e);
+    }
+}
+
+async function renderComparisonCategoryFilters(mtdMode, periodMode, selectedYear) {
+    const filterContainer = document.getElementById('comparison-category-filters');
+    if (!filterContainer) return;
+
+    let categories = window.allCategories || [];
+    if (categories.length === 0) {
+        try { categories = await apiCall('/api/categories'); } catch (e) { }
+    }
+
+    let html = `<button class="filter-chip px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-colors duration-200 ${!currentComparisonCategory ? 'bg-brand-500 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}" data-category="all">Wszystkie</button>`;
+
+    categories.forEach(cat => {
+        const isSelected = currentComparisonCategory === cat;
+        html += `<button class="filter-chip px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-colors duration-200 ${isSelected ? 'bg-brand-500 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}" data-category="${cat}">${cat.charAt(0).toUpperCase() + cat.slice(1)}</button>`;
+    });
+
+    filterContainer.innerHTML = html;
+
+    filterContainer.querySelectorAll('.filter-chip').forEach(chip => {
+        chip.addEventListener('click', (e) => {
+            const cat = e.target.dataset.category;
+            currentComparisonCategory = cat === 'all' ? null : cat;
+            renderComparisonBarChart(mtdMode, periodMode, selectedYear);
+        });
+    });
+
 }
 
 function handlePeriodTypeChange() {

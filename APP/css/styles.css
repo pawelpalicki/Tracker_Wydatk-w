@@ -443,6 +443,30 @@ select option {
     flex-shrink: 0;
 }
 
+/* ===== Analysis Tab Swipe Container ===== */
+#analysis-swipe-container {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    box-sizing: border-box;
+}
+
+#analysis-swipe-container .swipe-slide {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+/* Prevent Chart.js canvas from overflowing its parent */
+#comparison-chart-container,
+#comparison-chart-container canvas {
+    max-width: 100% !important;
+    width: 100% !important;
+    box-sizing: border-box;
+}
+
 /* Category Chips (Phase 4.1 Comparison) */
 #comparison-category-filters {
     width: 0;

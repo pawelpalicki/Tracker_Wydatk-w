@@ -37,6 +37,9 @@ function switchTab(tabName, pushToHistory = true) {
     }
 
     if (tabName === 'analysis') {
+        const container = document.getElementById('analysis-swipe-container');
+        if (container) container.scrollTo({ left: 0, behavior: 'instant' });
+
         if (typeof initializeLongTermBudget === 'function') {
             initializeLongTermBudget().catch(console.error);
         }
@@ -93,6 +96,8 @@ function setupSwipeTracking(containerId, dotsSelector) {
 function initSwipeContainer() {
     // Statystyki
     setupSwipeTracking('stats-swipe-container', '#swipe-dots .swipe-dot');
+    // Analiza
+    setupSwipeTracking('analysis-swipe-container', '#analysis-swipe-dots .swipe-dot');
 }
 
 

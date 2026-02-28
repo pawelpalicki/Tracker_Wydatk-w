@@ -1,7 +1,8 @@
 // Tracker Wydatków - Statistics Functions
 
 let legendMouseoutHandler = null;
-let currentComparisonCategory = null; // null means 'All'
+let timeChartMode = 'week'; // 'week' lub 'day'
+let currentMonthlyPurchases = [];
 
 // --- Logika Statystyk ---
 async function renderStatistics() {
@@ -10,19 +11,10 @@ async function renderStatistics() {
         populateMonthSelector(initialStats.availableMonths);
         await updateCategoryPieChart();
 
-        const comparisonToggle = document.getElementById('comparison-mode-toggle');
-        const initialMode = comparisonToggle && comparisonToggle.checked ? 'mtd' : 'full';
-        await renderComparisonBarChart(initialMode);
+        setupTimeChartListeners();
+        renderTimeChart(); // Nowy wykres w czasie (zastępuje comparison)
 
-        if (comparisonToggle && !comparisonToggle.hasAttribute('data-listener-attached')) {
-            comparisonToggle.addEventListener('change', (e) => {
-                const newMode = e.target.checked ? 'mtd' : 'full';
-                renderComparisonBarChart(newMode);
-            });
-            comparisonToggle.setAttribute('data-listener-attached', 'true');
-        }
-
-        await renderShopBarChart(); // Dodane wywołanie
+        await renderShopBarChart();
     } catch (error) {
         console.error("Błąd ładowania statystyk:", error);
     }
@@ -64,6 +56,14 @@ async function updateCategoryPieChart() {
 
     const spendingByCategory = stats.spendingByCategory;
     const budgets = budgetData.budgets || {};
+
+    // Fetch purchases for Time Chart
+    const startObj = new Date(year, month - 1, 1);
+    const endObj = new Date(year, month, 0);
+    const { purchases } = await apiCall(`/api/purchases?startDate=${startObj.toISOString().split('T')[0]}&endDate=${endObj.toISOString().split('T')[0]}`);
+    currentMonthlyPurchases = purchases.filter(p => !p.specialBudgetId);
+
+    renderTimeChart();
 
     renderBudgetProgress(spendingByCategory, budgets);
     renderBudgetSummary(spendingByCategory, budgets);
@@ -315,104 +315,163 @@ async function handleCategoryChartClick(event) {
     }
 }
 
-async function renderComparisonBarChart(mode = 'full') {
-    const url = currentComparisonCategory
-        ? `/api/statistics/comparison?mode=${mode}&category=${encodeURIComponent(currentComparisonCategory)}`
-        : `/api/statistics/comparison?mode=${mode}`;
+// --- Wydatki w czasie (Time Chart) ---
+function setupTimeChartListeners() {
+    const weekBtn = document.getElementById('time-chart-week-btn');
+    const dayBtn = document.getElementById('time-chart-day-btn');
+    if (!weekBtn || !dayBtn) return;
 
-    const stats = await apiCall(url);
-    const ctx = document.getElementById('comparison-chart').getContext('2d');
-    const currentDay = new Date().getDate();
+    if (!weekBtn.hasAttribute('data-listener')) {
+        weekBtn.addEventListener('click', () => {
+            timeChartMode = 'week';
+            weekBtn.classList.replace('text-gray-400', 'text-white');
+            weekBtn.classList.replace('hover:text-white', 'shadow');
+            weekBtn.classList.add('bg-white/10', 'font-medium');
 
-    // Render category filters if not already there
-    renderComparisonCategoryFilters(mode);
+            dayBtn.classList.replace('text-white', 'text-gray-400');
+            dayBtn.classList.replace('shadow', 'hover:text-white');
+            dayBtn.classList.remove('bg-white/10', 'font-medium');
 
-
-    // Wymuszamy jasne kolory dla ciemnego motywu aplikacji
-    const textColor = '#e5e7eb'; // Jasnoszary (Tailwind gray-200)
-    const gridColor = 'rgba(255, 255, 255, 0.1)';
-    const mutedTextColor = '#9ca3af'; // Szary (Tailwind gray-400)
-
-    if (comparisonChart) comparisonChart.destroy();
-
-    if (!stats.monthlyTotals || stats.monthlyTotals.length === 0) {
-        noDataBarChart.classList.remove('hidden');
-        comparisonChartContainer.classList.add('hidden');
-    } else {
-        noDataBarChart.classList.add('hidden');
-        comparisonChartContainer.classList.remove('hidden');
-        const labels = stats.monthlyTotals.map(item => {
-            const [y, m] = item.month.split('-');
-            const year = y.slice(-2);
-            return `${m}/${year}`;
+            renderTimeChart();
         });
-        const data = stats.monthlyTotals.map(item => item.total);
+        weekBtn.setAttribute('data-listener', 'true');
+    }
 
-        const barColor = currentComparisonCategory ? getCategoryColor(currentComparisonCategory) : '#3B82F6';
-        const chartTitle = currentComparisonCategory
-            ? `Porównanie: ${currentComparisonCategory.charAt(0).toUpperCase() + currentComparisonCategory.slice(1)}`
-            : (mode === 'mtd' ? `Porównanie do ${currentDay}. dnia miesiąca` : 'Pełne sumy miesięczne');
+    if (!dayBtn.hasAttribute('data-listener')) {
+        dayBtn.addEventListener('click', () => {
+            timeChartMode = 'day';
+            dayBtn.classList.replace('text-gray-400', 'text-white');
+            dayBtn.classList.replace('hover:text-white', 'shadow');
+            dayBtn.classList.add('bg-white/10', 'font-medium');
 
-        const datasetLabel = mode === 'mtd'
-            ? `Wydatki (do ${currentDay}. dnia)`
-            : 'Suma wydatków';
+            weekBtn.classList.replace('text-white', 'text-gray-400');
+            weekBtn.classList.replace('shadow', 'hover:text-white');
+            weekBtn.classList.remove('bg-white/10', 'font-medium');
 
+            renderTimeChart();
+        });
+        dayBtn.setAttribute('data-listener', 'true');
+    }
+}
 
-        comparisonChart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels,
-                datasets: [{
-                    label: datasetLabel,
-                    data,
-                    backgroundColor: barColor,
-                    borderRadius: 4
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                resizeDelay: 0,
-                plugins: {
-                    legend: {
-                        display: false,
-                        labels: { color: textColor, font: { weight: '500' } }
-                    },
-                    title: {
-                        display: true,
-                        text: chartTitle,
-                        color: textColor,
-                        font: { size: 14, weight: 'bold' },
-                        padding: { bottom: 15 }
-                    },
-                    datalabels: {
-                        display: context => context.dataset.data[context.dataIndex] > 0,
-                        color: textColor,
-                        anchor: 'end',
-                        align: 'end',
-                        offset: -4,
-                        formatter: (value) => Math.round(value) + ' zł',
-                        font: { weight: 'bold', size: 11 }
+function renderTimeChart() {
+    const container = document.getElementById('time-chart-container');
+    const noData = document.getElementById('no-data-time-chart');
+    const ctx = document.getElementById('time-chart')?.getContext('2d');
+
+    if (!container || !noData || !ctx) return;
+
+    if (window.timeChartInstance) {
+        window.timeChartInstance.destroy();
+    }
+
+    if (!currentMonthlyPurchases || currentMonthlyPurchases.length === 0) {
+        container.classList.add('hidden');
+        noData.classList.remove('hidden');
+        return;
+    }
+
+    container.classList.remove('hidden');
+    noData.classList.add('hidden');
+
+    let labels = [];
+    let dataSeries = [];
+
+    const selectedMonth = document.getElementById('stats-month-select').value;
+    const [y, m] = selectedMonth.split('-');
+    const endOfMonth = new Date(y, m, 0).getDate();
+
+    if (timeChartMode === 'week') {
+        const weekLabels = ['1-7', '8-14', '15-21', '22-28'];
+        if (endOfMonth > 28) {
+            weekLabels.push(`29-${endOfMonth}`);
+        }
+
+        const weeks = {};
+        weekLabels.forEach(l => weeks[l] = 0);
+
+        currentMonthlyPurchases.forEach(p => {
+            const day = new Date(p.date).getDate();
+            const weekNum = Math.ceil(day / 7);
+            const idx = Math.min(weekNum - 1, weekLabels.length - 1);
+            weeks[weekLabels[idx]] += p.totalAmount || 0;
+        });
+
+        labels = weekLabels;
+        dataSeries = labels.map(l => weeks[l] || 0);
+
+    } else {
+        // Agregacja dzienna
+        const days = {};
+
+        for (let i = 1; i <= endOfMonth; i++) {
+            days[i] = 0;
+        }
+
+        currentMonthlyPurchases.forEach(p => {
+            const day = new Date(p.date).getDate();
+            days[day] += p.totalAmount || 0;
+        });
+
+        labels = Object.keys(days);
+        dataSeries = Object.values(days);
+    }
+
+    const showDatalabels = (timeChartMode === 'week');
+
+    window.timeChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels.map(l => isNaN(l) ? l : `${l}.`),
+            datasets: [{
+                data: dataSeries,
+                backgroundColor: '#3b82f6',
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: (context) => new Intl.NumberFormat('pl-PL', { style: 'currency', currency: 'PLN' }).format(context.parsed.y)
                     }
                 },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        suggestedMax: Math.max(...data) * 1.2,
-                        ticks: { color: mutedTextColor },
-                        grid: {
-                            color: gridColor,
-                            drawBorder: false
-                        }
-                    },
-                    x: {
-                        ticks: { color: mutedTextColor },
-                        grid: { display: false }
-                    }
+                datalabels: {
+                    display: showDatalabels,
+                    color: 'white',
+                    anchor: 'end',
+                    align: 'top',
+                    offset: 4,
+                    formatter: (value) => value > 0 ? Math.round(value) + ' zł' : '',
+                    font: { size: 10, weight: 'bold' }
                 }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        color: 'rgba(255, 255, 255, 0.7)',
+                        font: { size: 10 },
+                        callback: (value) => Math.round(value) + ' zł'
+                    },
+                    grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                },
+                x: {
+                    ticks: {
+                        color: 'rgba(255, 255, 255, 0.7)',
+                        font: { size: 10 }
+                    },
+                    grid: { display: false }
+                }
+            },
+            layout: {
+                padding: { top: 20 }
             }
-        });
-    }
+        }
+    });
 }
 
 async function renderShopBarChart() {
@@ -481,7 +540,7 @@ async function renderShopBarChart() {
                         }
                     },
                     x: {
-                        suggestedMax: Math.max(...data) * 1.20, // Dodaj 20% marginesu na końcu osi
+                        suggestedMax: Math.max(...data) * 1.20,
                         ticks: { color: 'white' },
                         grid: { color: 'rgba(255, 255, 255, 0.1)' }
                     }
@@ -489,39 +548,4 @@ async function renderShopBarChart() {
             }
         });
     }
-}
-
-async function renderComparisonCategoryFilters(mode) {
-    const filterContainer = document.getElementById('comparison-category-filters');
-    if (!filterContainer) return;
-
-    // Pobierz kategorie użytkownika
-    const categories = await apiCall('/api/categories');
-
-    let html = `
-        <button class="category-chip ${!currentComparisonCategory ? 'active' : ''}" data-category="all">
-            Wszystkie
-        </button>
-    `;
-
-    categories.forEach(cat => {
-        const isActive = currentComparisonCategory === cat;
-        const color = getCategoryColor(cat);
-        html += `
-            <button class="category-chip ${isActive ? 'active' : ''}" data-category="${cat}">
-                <span class="w-2 h-2 rounded-full mr-1.5" style="background-color: ${color}"></span>
-                ${cat.charAt(0).toUpperCase() + cat.slice(1)}
-            </button>
-        `;
-    });
-
-    filterContainer.innerHTML = html;
-
-    filterContainer.querySelectorAll('.category-chip').forEach(chip => {
-        chip.onclick = () => {
-            const cat = chip.dataset.category;
-            currentComparisonCategory = cat === 'all' ? null : cat;
-            renderComparisonBarChart(mode);
-        };
-    });
 }
