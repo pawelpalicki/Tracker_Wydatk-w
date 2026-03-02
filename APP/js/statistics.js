@@ -26,13 +26,27 @@ function populateMonthSelector(availableMonths) {
         statsMonthSelect.innerHTML = '<option>Brak danych</option>';
         return;
     }
-    availableMonths.forEach(monthStr => {
+
+    // Zawsze sortuj malejąco (najnowsze miesiące na górze), niezależnie od kolejności z backendu
+    const sortedMonths = [...availableMonths].sort().reverse();
+    const currentMonth = new Date().toISOString().substring(0, 7);
+
+    sortedMonths.forEach(monthStr => {
         const option = document.createElement('option');
         option.value = monthStr;
         const [y, m] = monthStr.split('-');
         option.textContent = new Date(y, m - 1).toLocaleString('pl-PL', { month: 'long', year: 'numeric' });
+        // Zaznacz bieżący miesiąc lub najnowszy dostępny
+        if (monthStr === currentMonth) {
+            option.selected = true;
+        }
         statsMonthSelect.appendChild(option);
     });
+
+    // Jeśli bieżący miesiąc nie jest w liście, wybierz pierwszy (najnowszy)
+    if (!sortedMonths.includes(currentMonth)) {
+        statsMonthSelect.options[0].selected = true;
+    }
 }
 
 async function updateCategoryPieChart() {
@@ -58,9 +72,12 @@ async function updateCategoryPieChart() {
     const budgets = budgetData.budgets || {};
 
     // Fetch purchases for Time Chart
-    const startObj = new Date(year, month - 1, 1);
-    const endObj = new Date(year, month, 0);
-    const { purchases } = await apiCall(`/api/purchases?startDate=${startObj.toISOString().split('T')[0]}&endDate=${endObj.toISOString().split('T')[0]}`);
+    // WAŻNE: nie konwertuj przez new Date().toISOString() - to przesuwa czas do UTC i zmienia datę!
+    // Użyj daty bezpośrednio jako string w formacie YYYY-MM-DD
+    const daysInMonth = new Date(parseInt(year), parseInt(month), 0).getDate();
+    const startDate = `${year}-${month.padStart(2, '0')}-01`;
+    const endDate = `${year}-${month.padStart(2, '0')}-${String(daysInMonth).padStart(2, '0')}`;
+    const { purchases } = await apiCall(`/api/purchases?startDate=${startDate}&endDate=${endDate}`);
     currentMonthlyPurchases = purchases.filter(p => !p.specialBudgetId);
 
     renderTimeChart();
@@ -391,7 +408,8 @@ function renderTimeChart() {
         weekLabels.forEach(l => weeks[l] = 0);
 
         currentMonthlyPurchases.forEach(p => {
-            const day = new Date(p.date).getDate();
+            // Parsuj datę bezpośrednio ze stringa aby uniknąć przesunięcia strefy czasowej
+            const day = parseInt(p.date.split('-')[2], 10);
             const weekNum = Math.ceil(day / 7);
             const idx = Math.min(weekNum - 1, weekLabels.length - 1);
             weeks[weekLabels[idx]] += p.totalAmount || 0;
@@ -409,7 +427,8 @@ function renderTimeChart() {
         }
 
         currentMonthlyPurchases.forEach(p => {
-            const day = new Date(p.date).getDate();
+            // Parsuj datę bezpośrednio ze stringa aby uniknąć przesunięcia strefy czasowej
+            const day = parseInt(p.date.split('-')[2], 10);
             days[day] += p.totalAmount || 0;
         });
 

@@ -265,6 +265,11 @@ async function handleAnalyzeReceipt() {
         alert('Najpierw wybierz plik z paragonem.');
         return;
     }
+    const globalLoader = document.getElementById('global-analysis-loader');
+    if (globalLoader) globalLoader.classList.remove('hidden');
+    const scannerContainer = document.getElementById('scanner-container');
+    if (scannerContainer) scannerContainer.classList.remove('hidden');
+
     analysisSpinner.classList.remove('hidden');
     analyzeReceiptBtn.disabled = true;
     imagePreviewContainer.classList.add('hidden');
@@ -278,6 +283,11 @@ async function handleAnalyzeReceipt() {
     } catch (error) {
         alert('Błąd analizy paragonu: ' + error.message);
     } finally {
+        const globalLoader = document.getElementById('global-analysis-loader');
+        if (globalLoader) globalLoader.classList.add('hidden');
+        const scannerContainer = document.getElementById('scanner-container');
+        if (scannerContainer) scannerContainer.classList.add('hidden');
+
         analysisSpinner.classList.add('hidden');
         analyzeReceiptBtn.disabled = false;
         receiptFileInput.value = '';

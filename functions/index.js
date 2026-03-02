@@ -94,10 +94,16 @@ async function getUserMetadata(userId) {
     const userData = userDoc.exists ? userDoc.data() : {};
 
     if (userData.metadataInitialized) {
+        const currentMonth = new Date().toISOString().substring(0, 7);
+        const availableMonths = userData.availableMonths || [];
+        if (!availableMonths.includes(currentMonth)) {
+            availableMonths.push(currentMonth);
+            availableMonths.sort().reverse();
+        }
         return {
             categories: userData.customCategories || [],
             shops: userData.shops || [],
-            availableMonths: userData.availableMonths || []
+            availableMonths: availableMonths
         };
     }
 
@@ -114,7 +120,8 @@ async function getUserMetadata(userId) {
     const shops = [...new Set(allPurchases.map(p => p.shop).filter(Boolean))].sort();
 
     // Sortuj dostępne miesiące malejąco
-    const availableMonths = [...new Set(allPurchases.map(p => p.date ? p.date.substring(0, 7) : null).filter(Boolean))].sort().reverse();
+    const currentMonth = new Date().toISOString().substring(0, 7);
+    const availableMonths = [...new Set([...allPurchases.map(p => p.date ? p.date.substring(0, 7) : null), currentMonth].filter(Boolean))].sort().reverse();
 
     // Zapisz do profilu użytkownika by nie czytać wszystkich zakupów ponownie
     await userRef.set({
@@ -1365,6 +1372,12 @@ exports.addRecurringExpensesScheduled = onSchedule('every 24 hours', async (even
             try {
                 await batch.commit();
                 console.log(`Pomyślnie dodano nowe wydatki cykliczne dla użytkownika: ${userId}`);
+
+                // Zaktualizuj metadane użytkownika (dostępne miesiące)
+                const dateMonth = today.toISOString().substring(0, 7);
+                await usersCollection.doc(userId).set({
+                    availableMonths: FieldValue.arrayUnion(dateMonth)
+                }, { merge: true });
             } catch (error) {
                 console.error(`Błąd podczas zapisu batch dla użytkownika ${userId}:`, error);
             }
