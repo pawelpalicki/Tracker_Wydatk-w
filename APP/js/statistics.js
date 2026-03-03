@@ -9,6 +9,7 @@ async function renderStatistics() {
     try {
         const initialStats = await apiCall('/api/statistics');
         populateMonthSelector(initialStats.availableMonths);
+        initMonthNavigator(); // Podepnij event listenery dla nawigacji miesiąca
         await updateCategoryPieChart();
 
         setupTimeChartListeners();
@@ -20,34 +21,195 @@ async function renderStatistics() {
     }
 }
 
+// Tablica dostępnych miesięcy (potrzebna do month navigator)
+let availableMonthsList = [];
+
 function populateMonthSelector(availableMonths) {
     statsMonthSelect.innerHTML = '';
     if (!availableMonths || availableMonths.length === 0) {
         statsMonthSelect.innerHTML = '<option>Brak danych</option>';
+        availableMonthsList = [];
+        syncMonthNavigatorUI();
         return;
     }
 
     // Zawsze sortuj malejąco (najnowsze miesiące na górze), niezależnie od kolejności z backendu
     const sortedMonths = [...availableMonths].sort().reverse();
+    availableMonthsList = sortedMonths;
     const currentMonth = new Date().toISOString().substring(0, 7);
+    let selectedMonth = sortedMonths.includes(currentMonth) ? currentMonth : sortedMonths[0];
 
     sortedMonths.forEach(monthStr => {
         const option = document.createElement('option');
         option.value = monthStr;
         const [y, m] = monthStr.split('-');
         option.textContent = new Date(y, m - 1).toLocaleString('pl-PL', { month: 'long', year: 'numeric' });
-        // Zaznacz bieżący miesiąc lub najnowszy dostępny
-        if (monthStr === currentMonth) {
-            option.selected = true;
-        }
+        if (monthStr === selectedMonth) option.selected = true;
         statsMonthSelect.appendChild(option);
     });
 
-    // Jeśli bieżący miesiąc nie jest w liście, wybierz pierwszy (najnowszy)
-    if (!sortedMonths.includes(currentMonth)) {
-        statsMonthSelect.options[0].selected = true;
+    // Zbuduj popup i zsynchronizuj UI navigatora
+    buildMonthPickerPopup(sortedMonths);
+    syncMonthNavigatorUI();
+}
+
+let currentPickerYear = null;
+
+function buildMonthPickerPopup(sortedMonths) {
+    const body = document.getElementById('month-picker-body');
+    if (!body) return;
+
+    // Grupuj miesiące po roku (sortedMonths jest malejąco)
+    const byYear = {};
+    sortedMonths.forEach(ms => {
+        const y = ms.split('-')[0];
+        if (!byYear[y]) byYear[y] = [];
+        byYear[y].push(ms);
+    });
+
+    const availableYears = Object.keys(byYear).sort().reverse();
+    if (availableYears.length === 0) {
+        body.innerHTML = '<div class="text-center text-sm text-gray-500 py-4">Brak danych</div>';
+        return;
+    }
+
+    // Ustaw rok na podstawie bieżącego wyboru lub domyślnie najnowszy
+    const selVal = statsMonthSelect.value;
+    if (selVal && selVal !== 'Brak danych') {
+        currentPickerYear = selVal.split('-')[0];
+    }
+    if (!currentPickerYear || !availableYears.includes(currentPickerYear)) {
+        currentPickerYear = availableYears[0];
+    }
+
+    const renderYearView = (year) => {
+        body.innerHTML = '';
+
+        // Nagłówek z przełącznikiem roku
+        const header = document.createElement('div');
+        header.className = 'flex justify-between items-center mb-4 px-1';
+
+        const prevYearBtn = document.createElement('button');
+        prevYearBtn.className = 'p-1 text-gray-400 hover:text-white transition-colors disabled:opacity-30 disabled:cursor-not-allowed';
+        prevYearBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>';
+
+        const yearIndex = availableYears.indexOf(year);
+        // previous button -> starszy rok, czyli index + 1
+        prevYearBtn.disabled = yearIndex >= availableYears.length - 1;
+        prevYearBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (yearIndex < availableYears.length - 1) {
+                currentPickerYear = availableYears[yearIndex + 1];
+                renderYearView(currentPickerYear);
+            }
+        });
+
+        const nextYearBtn = document.createElement('button');
+        nextYearBtn.className = 'p-1 text-gray-400 hover:text-white transition-colors disabled:opacity-30 disabled:cursor-not-allowed';
+        nextYearBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>';
+        // next button -> nowszy rok, czyli index - 1
+        nextYearBtn.disabled = yearIndex <= 0;
+        nextYearBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (yearIndex > 0) {
+                currentPickerYear = availableYears[yearIndex - 1];
+                renderYearView(currentPickerYear);
+            }
+        });
+
+        const yearLabel = document.createElement('span');
+        yearLabel.className = 'font-bold text-white tracking-wide';
+        yearLabel.textContent = year;
+
+        header.appendChild(prevYearBtn);
+        header.appendChild(yearLabel);
+        header.appendChild(nextYearBtn);
+        body.appendChild(header);
+
+        // Siatka z miesiącami dla wybranego roku
+        const grid = document.createElement('div');
+        grid.className = 'month-picker-grid';
+
+        // 12 miesięcy - wyświetlamy wszystkie, ale niedostępne są zablokowane i nieco wygaszone
+        const monthsInYearStr = byYear[year];
+        for (let m = 1; m <= 12; m++) {
+            const mStr = String(m).padStart(2, '0');
+            const ms = `${year}-${mStr}`;
+            const btn = document.createElement('button');
+            const isAvailable = monthsInYearStr.includes(ms);
+
+            btn.textContent = new Date(year, m - 1).toLocaleString('pl-PL', { month: 'short' });
+
+            if (isAvailable) {
+                btn.className = 'month-picker-item' + (ms === statsMonthSelect.value ? ' active' : '');
+                btn.dataset.month = ms;
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    statsMonthSelect.value = ms;
+                    closeMonthPicker();
+                    syncMonthNavigatorUI();
+                    updateCategoryPieChart();
+                });
+            } else {
+                btn.className = 'month-picker-item opacity-20 cursor-not-allowed';
+                btn.disabled = true;
+                btn.addEventListener('click', (e) => e.stopPropagation());
+            }
+            grid.appendChild(btn);
+        }
+        body.appendChild(grid);
+    };
+
+    renderYearView(currentPickerYear);
+}
+
+function syncMonthNavigatorUI() {
+    const labelEl = document.getElementById('month-label-text');
+    if (!labelEl) return;
+
+    const val = statsMonthSelect.value;
+    if (!val || val === 'Brak danych') {
+        labelEl.textContent = 'Brak danych';
+        return;
+    }
+
+    const [y, m] = val.split('-');
+    let label = new Date(y, m - 1).toLocaleString('pl-PL', { month: 'long', year: 'numeric' });
+    label = label.charAt(0).toUpperCase() + label.slice(1);
+    labelEl.textContent = label;
+
+    // Odbuduj widok na wypadek zmiany z zewnątrz
+    if (availableMonthsList.length > 0) {
+        buildMonthPickerPopup(availableMonthsList);
     }
 }
+
+function closeMonthPicker() {
+    const popup = document.getElementById('month-picker-popup');
+    if (popup) popup.classList.add('hidden');
+}
+
+function initMonthNavigator() {
+    const labelBtn = document.getElementById('month-label-btn');
+    const popup = document.getElementById('month-picker-popup');
+    if (!labelBtn || !popup) return;
+
+    if (labelBtn.dataset.navInit) return;
+    labelBtn.dataset.navInit = 'true';
+
+    labelBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        popup.classList.toggle('hidden');
+    });
+
+    // Zamknij popup po kliknięciu poza nim
+    document.addEventListener('click', (e) => {
+        if (!popup.classList.contains('hidden') && !popup.contains(e.target) && e.target !== labelBtn) {
+            closeMonthPicker();
+        }
+    });
+}
+
 
 async function updateCategoryPieChart() {
     Chart.register(ChartDataLabels);

@@ -5,6 +5,57 @@ let longTermBudgetInitialized = false;
 
 let currentComparisonCategory = null;
 
+// Helper dla customowych pickerów miesięcy (długoterminowa analiza zakresu)
+function initCustomMonthPicker(btnId, popupId, labelId, inputId, defaultVal, availableMonths) {
+    const btn = document.getElementById(btnId);
+    const popup = document.getElementById(popupId);
+    const label = document.getElementById(labelId);
+    const input = document.getElementById(inputId);
+    if (!btn || !popup || !label || !input) return;
+
+    const monthNames = ['sty', 'lut', 'mar', 'kwi', 'maj', 'cze', 'lip', 'sie', 'wrz', 'paź', 'lis', 'gru'];
+    popup.innerHTML = '';
+
+    let monthsToDisplay = availableMonths && availableMonths.length > 0 ? availableMonths : [];
+    if (monthsToDisplay.length === 0) {
+        const today = new Date();
+        monthsToDisplay = [`${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`];
+    }
+
+    monthsToDisplay.forEach(valStr => {
+        const [yy, mm] = valStr.split('-');
+        const labelStr = `${monthNames[parseInt(mm, 10) - 1]} ${yy}`;
+        const option = document.createElement('button');
+        option.className = 'w-full text-left px-3 py-2 rounded-lg text-sm text-white hover:bg-white/10 transition-colors';
+        option.textContent = labelStr;
+        option.onclick = (e) => {
+            e.stopPropagation();
+            input.value = valStr;
+            label.textContent = labelStr;
+            popup.classList.add('hidden');
+        };
+        popup.appendChild(option);
+    });
+
+    const setDisplay = (val) => {
+        if (!val) return;
+        const [yy, mm] = val.split('-');
+        label.textContent = `${monthNames[parseInt(mm, 10) - 1]} ${yy}`;
+        input.value = val;
+    };
+    setDisplay(defaultVal);
+
+    btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        popup.classList.toggle('hidden');
+    });
+    document.addEventListener('click', (e) => {
+        if (!popup.contains(e.target) && e.target !== btn && !btn.contains(e.target)) {
+            popup.classList.add('hidden');
+        }
+    });
+}
+
 // --- Funkcje analizy długoterminowej ---
 async function initializeLongTermBudget() {
     // Rejestrujemy wtyczkę, aby mieć pewność, że jest dostępna
@@ -28,13 +79,56 @@ async function initializeLongTermBudget() {
         return;
     }
 
-    // Ustaw domyślne daty dla zakresu niestandardowego
-    const today = new Date();
-    const currentMonth = today.toISOString().substring(0, 7);
-    const sixMonthsAgo = new Date(today.getFullYear(), today.getMonth() - 5, 1).toISOString().substring(0, 7);
+    // Pobierz dostępne miesiące (korzystamy z globalnej zmiennej jeśli jest, albo pobieramy API)
+    let availableMonths = window.availableMonthsListGlobal || [];
+    if (availableMonths.length === 0) {
+        try {
+            const stats = await apiCall('/api/statistics');
+            if (stats.availableMonths) {
+                availableMonths = [...stats.availableMonths].sort().reverse();
+                window.availableMonthsListGlobal = availableMonths;
+            }
+        } catch (e) {
+            console.error("Błąd pobierania miesięcy", e);
+        }
+    }
 
-    customStartMonth.value = sixMonthsAgo;
-    customEndMonth.value = currentMonth;
+    // Ustaw domyślne daty dla zakresu niestandardowego
+    const currentMonth = availableMonths.length > 0 ? availableMonths[0] : new Date().toISOString().substring(0, 7);
+    const sixMonthsAgo = availableMonths.length > 5 ? availableMonths[5] : (availableMonths[availableMonths.length - 1] || currentMonth);
+
+    initCustomMonthPicker('custom-start-btn', 'custom-start-popup', 'custom-start-label', 'custom-start-month', sixMonthsAgo, availableMonths);
+    initCustomMonthPicker('custom-end-btn', 'custom-end-popup', 'custom-end-label', 'custom-end-month', currentMonth, availableMonths);
+
+    // Custom Dropdown dla periodTypeSelect
+    const periodTypeBtn = document.getElementById('period-type-btn');
+    const periodTypeLabel = document.getElementById('period-type-label');
+    const periodTypePopup = document.getElementById('period-type-popup');
+    const periodOptionBtns = document.querySelectorAll('.period-option-btn');
+
+    if (periodTypeBtn && periodTypePopup && periodTypeLabel) {
+        periodTypeBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            periodTypePopup.classList.toggle('hidden');
+        });
+        document.addEventListener('click', (e) => {
+            if (!periodTypePopup.contains(e.target) && e.target !== periodTypeBtn && !periodTypeBtn.contains(e.target)) {
+                periodTypePopup.classList.add('hidden');
+            }
+        });
+        periodOptionBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                periodTypeSelect.value = btn.dataset.value;
+                periodTypeLabel.textContent = btn.textContent;
+                periodTypePopup.classList.add('hidden');
+                handlePeriodTypeChange();
+                // Opcjonalnie wywołaj zmianę, ale handlePeriodTypeChange robi to co trzeba
+            });
+        });
+        const initOpt = periodTypeSelect.querySelector(`option[value="${periodTypeSelect.value}"]`);
+        if (initOpt) periodTypeLabel.textContent = initOpt.textContent;
+    }
 
     // Event listenery
     periodTypeSelect.addEventListener('change', handlePeriodTypeChange);
@@ -50,47 +144,106 @@ async function initializeLongTermBudget() {
     await renderLongTermBudgetAnalysis();
 
     // Inicjalizacja wykresu porównawczego
-    await initializeComparisonChart();
+    await initializeComparisonChart(availableMonths);
 }
 
-async function initializeComparisonChart() {
+async function initializeComparisonChart(availableMonths = []) {
     const periodSelect = document.getElementById('comparison-period-select');
     const yearSelect = document.getElementById('comparison-year-select');
+    const yearWrapper = document.getElementById('comparison-year-wrapper');
     const modeToggle = document.getElementById('comparison-mode-toggle');
+    const segmentBtns = document.querySelectorAll('.segment-btn');
+
+    const yearBtn = document.getElementById('comparison-year-dropdown-btn');
+    const yearPopup = document.getElementById('comparison-year-popup');
+    const yearLabel = document.getElementById('comparison-year-label');
 
     if (!periodSelect || !yearSelect || !modeToggle) return;
 
-    // Generowanie lat dla selecta na podstawie bieżącego roku i wstecz
-    // Idealnie pobralibyśmy dostępne lata z metadanych użytkownika (np. user.availableMonths), ale fallback to ostatnie 5 lat
-    const currentYear = new Date().getFullYear();
-    yearSelect.innerHTML = '';
-    for (let i = 0; i < 5; i++) {
-        const y = currentYear - i;
-        yearSelect.innerHTML += `<option value="${y}">${y}</option>`;
+    // Generowanie dostępnych lat na podstawie availableMonths
+    let availableYears = [];
+    if (availableMonths && availableMonths.length > 0) {
+        const yearsSet = new Set(availableMonths.map(m => m.split('-')[0]));
+        availableYears = Array.from(yearsSet).map(Number).sort((a, b) => b - a);
+    }
+    if (availableYears.length === 0) {
+        availableYears = [new Date().getFullYear()];
     }
 
+    let currentSelYear = availableYears[0];
+    yearSelect.innerHTML = availableYears.map(y => `<option value="${y}">${y}</option>`).join('');
+    yearSelect.value = currentSelYear;
+
     const renderChart = () => {
-        const mode = periodSelect.value; // '6months' or 'year'
+        const mode = periodSelect.value;
         const isMtd = modeToggle.checked ? 'mtd' : 'full';
-        const year = yearSelect.value;
-        renderComparisonBarChart(isMtd, mode, year);
+        renderComparisonBarChart(isMtd, mode, currentSelYear);
+    };
+
+    if (yearBtn && yearPopup && yearLabel) {
+        yearPopup.innerHTML = availableYears.map(y =>
+            `<button class="year-option-btn w-full text-center px-3 py-2 rounded-lg text-sm text-white hover:bg-white/10 transition-colors" data-value="${y}">${y}</button>`
+        ).join('');
+        yearLabel.textContent = currentSelYear;
+
+        yearBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            yearPopup.classList.toggle('hidden');
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!yearPopup.contains(e.target) && e.target !== yearBtn && !yearBtn.contains(e.target)) {
+                yearPopup.classList.add('hidden');
+            }
+        });
+
+        yearPopup.querySelectorAll('.year-option-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                currentSelYear = parseInt(btn.dataset.value, 10);
+                yearLabel.textContent = currentSelYear;
+                yearSelect.value = currentSelYear;
+                yearPopup.classList.add('hidden');
+                renderChart();
+            });
+        });
+    }
+
+    // Segments Logic
+    segmentBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            segmentBtns.forEach(b => b.classList.remove('active'));
+            e.target.classList.add('active');
+            periodSelect.value = e.target.dataset.value;
+            handlePeriodChange();
+            renderChart();
+        });
+    });
+
+    const handlePeriodChange = () => {
+        if (periodSelect.value === 'year') {
+            if (yearWrapper) yearWrapper.classList.remove('hidden');
+            else yearSelect.classList.remove('hidden');
+        } else {
+            if (yearWrapper) yearWrapper.classList.add('hidden');
+            else yearSelect.classList.add('hidden');
+        }
     };
 
     periodSelect.addEventListener('change', () => {
-        if (periodSelect.value === 'year') {
-            yearSelect.classList.remove('hidden');
-        } else {
-            yearSelect.classList.add('hidden');
-        }
+        handlePeriodChange();
         renderChart();
     });
 
-    yearSelect.addEventListener('change', renderChart);
+    yearSelect.addEventListener('change', (e) => {
+        currentSelYear = parseInt(e.target.value, 10);
+        if (yearLabel) yearLabel.textContent = currentSelYear;
+        renderChart();
+    });
+
     modeToggle.addEventListener('change', renderChart);
 
-    // Initial render
-    // Start with 6months and full (which maps to mode=full? Wait, we changed backend to accept period and mode, but actually we implemented mode='6months', 'year', 'mtd', 'full')
-    // Let's adjust renderChart passing parameters properly:
+    handlePeriodChange();
     renderChart();
 }
 
