@@ -297,13 +297,54 @@ function setupAppEventListeners() {
     // Initialize swipe container
     initSwipeContainer();
 
-    // Browser back button support
+    // Browser back button support (obsługuje też natywny systemowy gest swipe wtecz: iOS / Android)
     window.addEventListener('popstate', (event) => {
-        if (event.state && event.state.tab) {
-            switchTab(event.state.tab, false);
-        } else {
-            // Default to cockpit if no state
+        // 1. Odszukaj wszystkie modale i pop-upy
+        const openModals = document.querySelectorAll(`
+            #category-details-modal:not(.hidden), 
+            #receipt-modal:not(.hidden), 
+            #receipt-modal-analysis:not(.hidden), 
+            #month-picker-popup:not(.hidden), 
+            #comparison-year-popup:not(.hidden), 
+            #period-type-popup:not(.hidden), 
+            #shop-autocomplete-list:not(.hidden),
+            #custom-start-popup:not(.hidden),
+            #custom-end-popup:not(.hidden)
+        `);
+
+        let modalClosed = false;
+        openModals.forEach(modal => {
+            if (window.getComputedStyle(modal).display !== 'none') {
+                modal.classList.add('hidden');
+                modalClosed = true;
+            }
+        });
+
+        // Pobranie bieżącej aktywnej zakładki *przed* zastosowaniem jakichkolwiek widoków podyktowanych cofką
+        const activeTab = document.querySelector('.tab-content.active');
+        const currentTabId = activeTab ? activeTab.id.replace('-tab', '') : 'stats';
+
+        // Jeżeli wciśnięto/wykonano sprzętowy WSTECZ / SWIPE WSTECZ:
+        if (modalClosed) {
+            // a) Jeśli był otwarty modal, tylko go zamknęto, pozostajemy w tej samej zakładce!
+            //    Musimy "odkleić" ruch do tyłu, wpisując z powrotem obecny stan aplikacji do historii
+            history.pushState({ tab: currentTabId }, "", "");
+            return;
+        }
+
+        // b) Jeśli nie ma otwartych modeli, wykonujemy hierarchiczny powrót
+        if (currentTabId.startsWith('settings-') && currentTabId !== 'settings') {
+            // Z głębokich ustawień, jeden poziom w górę do Głównego Panelu 'Ustawień'
+            switchTab('settings', false);
+        } else if (currentTabId !== 'stats') {
+            // Ze wszystkich innych roootowych zakładek prosto do głównego 'Kokpitu'
             switchTab('stats', false);
+        } else {
+            // c) Użytkownik jest na samym Kokpicie ('stats')
+            //    Pozwalamy przeglądarce działać natywnie, doprowadzając do m.in wyjścia z aplikacji
+            if (event.state && event.state.tab) {
+                switchTab(event.state.tab, false);
+            }
         }
     });
 

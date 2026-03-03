@@ -324,30 +324,3 @@ function toggleChartLegend() {
         text.textContent = 'Ukryj legendę';
     }
 }
-
-// --- Obsługa gestu powrotu (swipe w prawo) ---
-let touchstartX = 0;
-let touchendX = 0;
-
-function checkSwipe() {
-    // Jeśli swipujemy od lewej do prawej (min 100px)
-    if (touchendX - touchstartX > 100) {
-        const activeTab = document.querySelector('.tab-content.active');
-        if (activeTab) {
-            if (activeTab.id.startsWith('settings-')) {
-                switchTab('settings');
-            } else if (activeTab.id === 'settings-tab') {
-                switchTab('more');
-            }
-        }
-    }
-}
-
-document.addEventListener('touchstart', e => {
-    touchstartX = e.changedTouches[0].screenX;
-}, { passive: true });
-
-document.addEventListener('touchend', e => {
-    touchendX = e.changedTouches[0].screenX;
-    checkSwipe();
-}, { passive: true });
