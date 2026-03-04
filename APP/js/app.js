@@ -158,6 +158,27 @@ const categoryColors = {};
 const colorPalette = ['#3b82f6', '#10b981', '#ef4444', '#f97316', '#8b5cf6', '#ec4899', '#f59e0b', '#14b8a6', '#64748b', '#06b6d4', '#a855f7', '#eab308', '#0ea5e9', '#be185d', '#16a34a', '#f43f5e', '#84cc16', '#6366f1', '#d946ef', '#fb7185'];
 let colorIndex = 0;
 
+const categoryIcons = {
+    'jedzenie': 'fa-utensils',
+    'spożywcze': 'fa-shopping-basket',
+    'dom': 'fa-home',
+    'transport': 'fa-car',
+    'rozrywka': 'fa-film',
+    'zdrowie': 'fa-heartbeat',
+    'zakupy': 'fa-shopping-bag',
+    'rachunki': 'fa-file-invoice-dollar',
+    'edukacja': 'fa-graduation-cap',
+    'sport': 'fa-running',
+    'chemia': 'fa-vial',
+    'kosmetyki': 'fa-spa',
+    'ubrania': 'fa-tshirt',
+    'oszczędności': 'fa-piggy-bank',
+    'słodycze i przekąski': 'fa-cookie-bite',
+    'inne': 'fa-ellipsis-h'
+};
+
+let activeCategoryRow = null; // Track which row is opening the drawer
+
 function getCategoryColor(category) {
     if (!categoryColors[category]) {
         categoryColors[category] = colorPalette[colorIndex % colorPalette.length];
@@ -165,6 +186,110 @@ function getCategoryColor(category) {
     }
     return categoryColors[category];
 }
+
+function updateCustomDropdownValue(selectId, labelId) {
+    const select = document.getElementById(selectId);
+    const label = document.getElementById(labelId);
+    if (!select || !label) return;
+    const selectedOption = select.options[select.selectedIndex];
+    if (selectedOption) {
+        label.textContent = selectedOption.textContent;
+    }
+}
+
+// --- Category Drawer Logic ---
+function openCategoryDrawer(row, currentCategory) {
+    activeCategoryRow = row;
+    const overlay = document.getElementById('category-drawer-overlay');
+    const drawer = document.getElementById('category-drawer');
+    const context = document.getElementById('drawer-item-context');
+
+    const itemName = row.querySelector('.item-name').value || 'nowy produkt';
+    context.textContent = `Wybierz kategorię dla: ${itemName}`;
+
+    renderCategoryDrawerGrid(currentCategory);
+
+    overlay.classList.remove('hidden');
+    drawer.classList.remove('hidden');
+    setTimeout(() => {
+        overlay.classList.add('active');
+        drawer.classList.add('active');
+    }, 10);
+}
+
+function closeCategoryDrawer() {
+    const overlay = document.getElementById('category-drawer-overlay');
+    const drawer = document.getElementById('category-drawer');
+
+    overlay.classList.remove('active');
+    drawer.classList.remove('active');
+    setTimeout(() => {
+        overlay.classList.add('hidden');
+        drawer.classList.add('hidden');
+        activeCategoryRow = null;
+    }, 300);
+}
+
+function renderCategoryDrawerGrid(activeCategory) {
+    const grid = document.getElementById('category-drawer-grid');
+    grid.innerHTML = '';
+
+    allCategories.forEach(cat => {
+        const color = getCategoryColor(cat);
+        const icon = categoryIcons[cat] || 'fa-tag';
+        const isActive = cat === activeCategory;
+
+        const item = document.createElement('div');
+        item.className = `category-drawer-item ${isActive ? 'active' : ''}`;
+        item.innerHTML = `
+            <div class="category-icon-wrapper" style="background-color: ${color}20; color: ${color};">
+                <i class="fas ${icon}"></i>
+            </div>
+            <span class="category-name-label">${cat.charAt(0).toUpperCase() + cat.slice(1)}</span>
+        `;
+        item.onclick = () => {
+            selectCategoryFromDrawer(cat);
+        };
+        grid.appendChild(item);
+    });
+}
+
+function selectCategoryFromDrawer(category) {
+    if (activeCategoryRow) {
+        const select = activeCategoryRow.querySelector('.item-category-select');
+        const label = activeCategoryRow.querySelector('.item-category-label') || activeCategoryRow.querySelector('.category-trigger-label');
+        const iconEl = activeCategoryRow.querySelector('.item-category-icon') || activeCategoryRow.querySelector('.category-trigger-icon');
+
+        select.value = category;
+        label.textContent = category.charAt(0).toUpperCase() + category.slice(1);
+
+        // Update icon on the button if it exists
+        if (iconEl) {
+            const icon = categoryIcons[category] || 'fa-tag';
+            const color = getCategoryColor(category);
+            iconEl.innerHTML = `<i class="fas ${icon}" style="color: ${color}"></i>`;
+        }
+
+        select.dispatchEvent(new Event('change'));
+    }
+    closeCategoryDrawer();
+}
+
+// Global listeners for drawer
+document.addEventListener('click', (e) => {
+    if (e.target.id === 'close-category-drawer' || e.target.id === 'category-drawer-overlay') {
+        closeCategoryDrawer();
+    }
+
+    if (e.target.closest('#drawer-add-category-btn')) {
+        if (activeCategoryRow) {
+            const select = activeCategoryRow.querySelector('.item-category-select');
+            select.value = '__add_new__';
+            select.dispatchEvent(new Event('change'));
+        }
+        closeCategoryDrawer();
+    }
+});
 
 // --- Funkcja kompresji/optymalizacji obrazu ---
 async function resizeImage(file, maxSize = 1920, quality = 0.92) {
@@ -754,6 +879,29 @@ function populateBudgetTypeSelect() {
         option.textContent = budget.name;
         budgetTypeSelect.appendChild(option);
     });
+
+    // Populate custom popup
+    const popup = document.getElementById('budget-type-popup');
+    const label = document.getElementById('budget-type-label');
+    if (popup && label) {
+        popup.innerHTML = '';
+        Array.from(budgetTypeSelect.options).forEach(opt => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'w-full text-left px-3 py-2 rounded-lg text-sm text-white hover:bg-white/10 transition-colors';
+            btn.textContent = opt.textContent;
+            btn.onclick = (e) => {
+                e.stopPropagation();
+                budgetTypeSelect.value = opt.value;
+                label.textContent = opt.textContent;
+                popup.classList.add('hidden');
+                // Trigger change event if needed
+                budgetTypeSelect.dispatchEvent(new Event('change'));
+            };
+            popup.appendChild(btn);
+        });
+        updateCustomDropdownValue('budget-type-select', 'budget-type-label');
+    }
 }
 
 function renderSpecialBudgetsList() {

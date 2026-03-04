@@ -125,10 +125,24 @@ input,
 textarea,
 select {
     padding-left: 0.75rem !important;
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+    padding-right: 0.75rem !important;
+    min-height: 42px;
+    background-color: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 12px !important;
+    color: white !important;
+    font-size: 0.875rem !important;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+    margin-right: 8px;
+    cursor: pointer;
 }
 
 select {
-    background-color: rgba(255, 255, 255, 0.1);
     color: white;
 }
 
@@ -426,21 +440,25 @@ select option {
 }
 
 .category-tag-mini {
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.75rem;
+    color: #94a3b8;
+}
+
+.category-icon-mini {
+    width: 20px;
+    height: 20px;
+    border-radius: 6px;
     display: flex;
     align-items: center;
-    font-size: 10px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: rgba(255, 255, 255, 0.5);
+    justify-content: center;
+    font-size: 0.65rem;
 }
 
 .category-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    margin-right: 6px;
-    flex-shrink: 0;
+    display: none;
+    /* Retired in favor of icons */
 }
 
 /* ===== Analysis Tab Swipe Container ===== */
@@ -703,4 +721,124 @@ select option {
     color: white;
     font-weight: 600;
     box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+}
+
+/* ===== Category Drawer (Bottom Sheet) ===== */
+#category-drawer-overlay.active {
+    display: block !important;
+    opacity: 1;
+    pointer-events: auto;
+}
+
+#category-drawer.active {
+    display: flex !important;
+    transform: translateY(0);
+}
+
+.pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 1.5rem);
+}
+
+.category-drawer-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem 0.5rem;
+    border-radius: 1.25rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+}
+
+.category-drawer-item:hover {
+    background: rgba(255, 255, 255, 0.08);
+    transform: translateY(-2px);
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+.category-drawer-item:active {
+    transform: scale(0.95);
+}
+
+.category-drawer-item.active {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+.category-icon-wrapper {
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.75rem;
+    font-size: 1.5rem;
+    transition: transform 0.2s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.category-drawer-item:hover .category-icon-wrapper {
+    transform: scale(1.1) rotate(5deg);
+}
+
+.category-name-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.8);
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ===== Category Trigger Card ===== */
+.category-trigger-card {
+    background: rgba(255, 255, 255, 0.05) !important;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 12px;
+    padding: 6px 12px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    min-height: 42px;
+    margin-top: 4px;
+    /* Force internal alignment if parent grid has gaps */
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+.category-trigger-card:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-1px);
+}
+
+.category-trigger-card:active {
+    transform: translateY(0) scale(0.98);
+}
+
+.category-trigger-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+}
+
+.category-trigger-label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: white;
 }

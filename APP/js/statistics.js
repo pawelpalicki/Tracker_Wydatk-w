@@ -389,7 +389,9 @@ function renderInteractiveLegend(chart, total) {
         return `
                 <li data-index="${originalIndex}" data-label="${item.label.toLowerCase()}" class="flex items-center justify-between py-1.5 px-2 rounded-md cursor-pointer transition-colors select-none">
                     <div class="flex items-center truncate">
-                        <span class="w-3 h-3 rounded-full mr-3 flex-shrink-0" style="background-color: ${item.color}"></span>
+                        <div class="category-icon-mini mr-3 flex-shrink-0" style="background-color: ${item.color}20; color: ${item.color}">
+                            <i class="fas ${categoryIcons[item.label.toLowerCase()] || 'fa-tag'}"></i>
+                        </div>
                         <span class="font-medium text-gray-800 dark:text-gray-200 truncate" title="${item.label}">${item.label}</span>
                     </div>
                     <div class="text-right flex-shrink-0 ml-2">

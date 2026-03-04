@@ -20,18 +20,29 @@ function addItemRow(item = {}) {
 
     itemRow.innerHTML = `
         <div class="md:col-span-5 col-span-12 break-words">
-            <textarea class="item-name mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-3 resize-none overflow-hidden" placeholder="Nazwa produktu" rows="1" required>${item.name || ''}</textarea>
+            <textarea class="item-name mt-1 block w-full rounded-xl border-white/10 bg-white/5 text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2 resize-none overflow-hidden" placeholder="Nazwa produktu" rows="1" required>${item.name || ''}</textarea>
         </div>
         <div class="md:col-span-2 col-span-4">
-            <input type="number" step="0.01" class="item-price mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-3" placeholder="Cena" value="${priceValue}" required>
+            <input type="number" step="0.01" class="item-price mt-1 block w-full rounded-xl border-white/10 bg-white/5 text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2" placeholder="Cena" value="${priceValue}" required>
         </div>
-        <div class="md:col-span-4 col-span-6">
-            <select class="item-category-select mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-3">
+        <div class="md:col-span-4 col-span-6 item-category-wrapper">
+            <div class="category-trigger-card item-category-btn" style="margin-top: 4px;">
+                <div class="flex items-center gap-2 overflow-hidden w-full">
+                    <div class="category-trigger-icon item-category-icon bg-white/10 text-gray-400 flex-shrink-0">
+                        <i class="fas fa-tag"></i>
+                    </div>
+                    <span class="item-category-label category-trigger-label text-sm text-gray-400 truncate">Kategoria</span>
+                </div>
+                <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+            </div>
+            <select class="item-category-select hidden" aria-hidden="true">
                 <option value="">Wybierz kategorię</option>
                 ${categoryOptions}
                 <option value="__add_new__">-- Dodaj nową --</option>
             </select>
-            <input type="text" class="new-category-input hidden mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-3" placeholder="Nazwa nowej kategorii">
+            <input type="text" class="new-category-input hidden mt-1 block w-full rounded-xl border-white/10 bg-white/5 text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2" placeholder="Nazwa nowej kategorii">
         </div>
         <div class="md:col-span-1 col-span-2 text-right flex items-start justify-end">
             <button type="button" class="remove-item-btn p-3 text-red-500 hover:text-red-700 rounded-full mt-1"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM7 9a1 1 0 000 2h6a1 1 0 100-2H7z" clip-rule="evenodd" /></svg></button>
@@ -52,11 +63,46 @@ function addItemRow(item = {}) {
     // Ustawienie początkowej wysokości (ważne przy edycji)
     setTimeout(() => autoResizeTextarea.call(itemNameInput), 0);
 
+    // Initialize custom drawer trigger
+    const categoryBtn = itemRow.querySelector('.item-category-btn');
+    const categoryLabel = itemRow.querySelector('.item-category-label');
+    const categoryIconEl = itemRow.querySelector('.item-category-icon');
+
+    categoryBtn.onclick = (e) => {
+        e.preventDefault();
+        if (typeof openCategoryDrawer === 'function') {
+            openCategoryDrawer(itemRow, categorySelect.value);
+        }
+    };
+
+    // Update initial UI state
+    if (item.category) {
+        categorySelect.value = item.category;
+        categoryLabel.textContent = item.category.charAt(0).toUpperCase() + item.category.slice(1);
+        categoryLabel.classList.remove('text-gray-400');
+        const iconName = (typeof categoryIcons !== 'undefined' ? categoryIcons[item.category] : null) || 'fa-tag';
+        const color = typeof getCategoryColor === 'function' ? getCategoryColor(item.category) : '#6b7280';
+        categoryIconEl.innerHTML = `<i class="fas ${iconName}"></i>`;
+        categoryIconEl.style.backgroundColor = `${color}20`;
+        categoryIconEl.style.color = color;
+        categoryIconEl.classList.remove('bg-white/10', 'text-gray-400');
+    }
+
     categorySelect.addEventListener('change', () => {
         if (categorySelect.value === '__add_new__') {
-            categorySelect.classList.add('hidden');
+            itemRow.querySelector('.item-category-btn').classList.add('hidden');
             newCategoryInput.classList.remove('hidden');
             newCategoryInput.focus();
+        } else {
+            const val = categorySelect.value;
+            categoryLabel.textContent = val.charAt(0).toUpperCase() + val.slice(1);
+            categoryLabel.classList.remove('text-gray-400');
+            const iconName = (typeof categoryIcons !== 'undefined' ? categoryIcons[val] : null) || 'fa-tag';
+            const color = typeof getCategoryColor === 'function' ? getCategoryColor(val) : '#6b7280';
+            categoryIconEl.innerHTML = `<i class="fas ${iconName}"></i>`;
+            categoryIconEl.style.backgroundColor = `${color}20`;
+            categoryIconEl.style.color = color;
+            categoryIconEl.classList.remove('bg-white/10', 'text-gray-400');
         }
     });
 
@@ -80,7 +126,7 @@ function handleNewCategory(newCategoryInput, categorySelect) {
     const newCategory = newCategoryInput.value.trim().toLowerCase();
     newCategoryInput.value = '';
     newCategoryInput.classList.add('hidden');
-    categorySelect.classList.remove('hidden');
+    categorySelect.closest('.item-category-wrapper').querySelector('.item-category-btn').classList.remove('hidden');
 
     if (newCategory && !allCategories.includes(newCategory)) {
         allCategories.push(newCategory);
@@ -100,7 +146,8 @@ function updateAllCategorySelects(newlySelected = null, targetSelect = null) {
     const categoryOptions = allCategories.map(cat => `<option value="${cat}">${cat.charAt(0).toUpperCase() + cat.slice(1)}</option>`).join('');
     const fullHtml = `<option value="">Wybierz kategorię</option>${categoryOptions}<option value="__add_new__">-- Dodaj nową --</option>`;
 
-    document.querySelectorAll('.item-category-select').forEach(select => {
+    document.querySelectorAll('.item-row').forEach(row => {
+        const select = row.querySelector('.item-category-select');
         const currentValue = select.value;
         select.innerHTML = fullHtml;
 
@@ -110,8 +157,32 @@ function updateAllCategorySelects(newlySelected = null, targetSelect = null) {
         } else {
             select.value = currentValue;
         }
+
+        // Update row UI
+        const label = row.querySelector('.item-category-label');
+        const iconEl = row.querySelector('.item-category-icon');
+        const val = select.value;
+        if (val) {
+            label.textContent = val.charAt(0).toUpperCase() + val.slice(1);
+            label.classList.remove('text-gray-400');
+            const iconName = (typeof categoryIcons !== 'undefined' ? categoryIcons[val] : null) || 'fa-tag';
+            const color = typeof getCategoryColor === 'function' ? getCategoryColor(val) : '#6b7280';
+            iconEl.innerHTML = `<i class="fas ${iconName}"></i>`;
+            iconEl.style.backgroundColor = `${color}20`;
+            iconEl.style.color = color;
+            iconEl.classList.remove('bg-white/10', 'text-gray-400');
+        } else {
+            label.textContent = 'Wybierz kategorię';
+            label.classList.add('text-gray-400');
+            iconEl.innerHTML = '<i class="fas fa-tag"></i>';
+            iconEl.style.backgroundColor = '';
+            iconEl.style.color = '';
+            iconEl.classList.add('bg-white/10', 'text-gray-400');
+        }
     });
 }
+
+// Funkcja updateSingleCategoryPopup została usunięta, ponieważ używamy teraz szuflady (drawer)
 
 async function handlePurchaseFormSubmit(e) {
     e.preventDefault();
@@ -191,9 +262,11 @@ function renderPurchasesList(purchasesToRender, append = false) {
                 ${(p.items || []).map(item => `
                     <div class="flex justify-between items-end">
                         <div class="flex flex-col">
-                            <div class="category-tag-mini">
-                                <span class="category-dot" style="background-color: ${getCategoryColor(item.category)}"></span>
-                                ${item.category}
+                            <div class="category-tag-mini flex items-center gap-2 mb-1">
+                                <div class="category-icon-mini" style="background-color: ${getCategoryColor(item.category)}20; color: ${getCategoryColor(item.category)}">
+                                    <i class="fas ${categoryIcons[item.category] || 'fa-tag'}"></i>
+                                </div>
+                                <span class="text-xs text-gray-400 capitalize">${item.category}</span>
                             </div>
                             <div class="text-sm font-medium text-white">${item.name}</div>
                         </div>

@@ -56,7 +56,56 @@ function switchTab(tabName, pushToHistory = true) {
         renderBudgetInputs();
         renderRecurringExpenses();
     }
+
+    // Initialize custom dropdowns IF we are on the 'add' tab
+    if (tabName === 'add') {
+        initCustomDropdown('budget-type-btn', 'budget-type-popup', 'budget-type-label', 'budget-type-select');
+    }
 }
+
+
+// --- Custom Dropdown Helper ---
+function initCustomDropdown(btnId, popupId, labelId, selectId, onChange = null) {
+    const btn = typeof btnId === 'string' ? document.getElementById(btnId) : btnId;
+    const popup = typeof popupId === 'string' ? document.getElementById(popupId) : popupId;
+    const label = typeof labelId === 'string' ? document.getElementById(labelId) : labelId;
+    const select = typeof selectId === 'string' ? document.getElementById(selectId) : selectId;
+
+    if (!btn || !popup || !label || !select) return;
+
+    // Open/Close popup
+    btn.onclick = (e) => {
+        e.stopPropagation();
+        const isHidden = popup.classList.contains('hidden');
+        // Close all other popups first
+        document.querySelectorAll('[id$="-popup"]').forEach(p => p.classList.add('hidden'));
+        if (isHidden) popup.classList.remove('hidden');
+    };
+
+    // Global listener to close this specific popup is handled by a single document listener below
+}
+
+// Global click listener for custom dropdowns
+document.addEventListener('click', (e) => {
+    const popups = document.querySelectorAll('[id$="-popup"]');
+    popups.forEach(popup => {
+        // If the click is outside the popup and its corresponding button
+        const btnId = popup.id.replace('-popup', '-btn');
+        const btn = document.getElementById(btnId);
+        // Special case for dynamic item category dropdowns
+        const isDynamic = popup.classList.contains('item-category-popup');
+
+        if (!popup.contains(e.target) && (!btn || !btn.contains(e.target))) {
+            if (isDynamic) {
+                // For dynamic popups, we check if the click was on the specific button that belongs to this popup
+                const parentRow = popup.closest('.item-row');
+                const rowBtn = parentRow ? parentRow.querySelector('.item-category-btn') : null;
+                if (rowBtn && rowBtn.contains(e.target)) return;
+            }
+            popup.classList.add('hidden');
+        }
+    });
+});
 
 
 
@@ -120,6 +169,7 @@ function enterEditMode(purchaseId) {
     } else {
         budgetTypeSelect.value = 'monthly';
     }
+    updateCustomDropdownValue('budget-type-select', 'budget-type-label');
 
     purchaseFormTitle.textContent = 'Edytuj istniejący zakup';
     purchaseFormSubmitBtn.textContent = 'Zaktualizuj zakup';
@@ -139,6 +189,9 @@ function exitEditMode() {
     itemsContainer.innerHTML = '';
     fp.setDate(new Date()); // Reset date using flatpickr's setDate
     budgetTypeSelect.value = 'monthly'; // Reset budget dropdown
+    if (typeof updateCustomDropdownValue === 'function') {
+        updateCustomDropdownValue('budget-type-select', 'budget-type-label');
+    }
     addItemRow();
 
     purchaseFormTitle.textContent = 'Dodaj nowy zakup ręcznie';
