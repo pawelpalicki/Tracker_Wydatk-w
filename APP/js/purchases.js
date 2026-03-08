@@ -10,6 +10,29 @@ function updatePurchaseSummary() {
     purchaseSummary.textContent = `Suma: ${total.toFixed(2)} zł`;
 }
 
+function updateItemCategoryUI(itemRow, val) {
+    const categoryLabel = itemRow.querySelector('.item-category-label');
+    const categoryIconEl = itemRow.querySelector('.item-category-icon');
+
+    if (val && val !== '__add_new__') {
+        categoryLabel.textContent = val.charAt(0).toUpperCase() + val.slice(1);
+        categoryLabel.classList.remove('text-gray-400');
+        const iconName = (typeof categoryIcons !== 'undefined' ? categoryIcons[val] : null) || 'fa-tag';
+        const color = typeof getCategoryColor === 'function' ? getCategoryColor(val) : '#6b7280';
+        categoryIconEl.innerHTML = `<i class="fas ${iconName}"></i>`;
+        categoryIconEl.style.backgroundColor = `${color}20`;
+        categoryIconEl.style.color = color;
+        categoryIconEl.classList.remove('bg-white/10', 'text-gray-400');
+    } else {
+        categoryLabel.textContent = 'Wybierz kategorię';
+        categoryLabel.classList.add('text-gray-400');
+        categoryIconEl.innerHTML = '<i class="fas fa-tag"></i>';
+        categoryIconEl.style.backgroundColor = '';
+        categoryIconEl.style.color = '';
+        categoryIconEl.classList.add('bg-white/10', 'text-gray-400');
+    }
+}
+
 function addItemRow(item = {}) {
     const itemRow = document.createElement('div');
     itemRow.className = 'item-row grid grid-cols-12 gap-2 items-start'; // Zmienione na 12 kolumn dla lepszego układu
@@ -80,15 +103,8 @@ function addItemRow(item = {}) {
     // Update initial UI state
     if (item.category) {
         categorySelect.value = item.category;
-        categoryLabel.textContent = item.category.charAt(0).toUpperCase() + item.category.slice(1);
-        categoryLabel.classList.remove('text-gray-400');
-        const iconName = (typeof categoryIcons !== 'undefined' ? categoryIcons[item.category] : null) || 'fa-tag';
-        const color = typeof getCategoryColor === 'function' ? getCategoryColor(item.category) : '#6b7280';
-        categoryIconEl.innerHTML = `<i class="fas ${iconName}"></i>`;
-        categoryIconEl.style.backgroundColor = `${color}20`;
-        categoryIconEl.style.color = color;
-        categoryIconEl.classList.remove('bg-white/10', 'text-gray-400');
     }
+    updateItemCategoryUI(itemRow, categorySelect.value);
 
     categorySelect.addEventListener('change', () => {
         if (categorySelect.value === '__add_new__') {
@@ -96,15 +112,7 @@ function addItemRow(item = {}) {
             newCategoryInput.classList.remove('hidden');
             newCategoryInput.focus();
         } else {
-            const val = categorySelect.value;
-            categoryLabel.textContent = val.charAt(0).toUpperCase() + val.slice(1);
-            categoryLabel.classList.remove('text-gray-400');
-            const iconName = (typeof categoryIcons !== 'undefined' ? categoryIcons[val] : null) || 'fa-tag';
-            const color = typeof getCategoryColor === 'function' ? getCategoryColor(val) : '#6b7280';
-            categoryIconEl.innerHTML = `<i class="fas ${iconName}"></i>`;
-            categoryIconEl.style.backgroundColor = `${color}20`;
-            categoryIconEl.style.color = color;
-            categoryIconEl.classList.remove('bg-white/10', 'text-gray-400');
+            updateItemCategoryUI(itemRow, categorySelect.value);
         }
     });
 
@@ -161,26 +169,7 @@ function updateAllCategorySelects(newlySelected = null, targetSelect = null) {
         }
 
         // Update row UI
-        const label = row.querySelector('.item-category-label');
-        const iconEl = row.querySelector('.item-category-icon');
-        const val = select.value;
-        if (val) {
-            label.textContent = val.charAt(0).toUpperCase() + val.slice(1);
-            label.classList.remove('text-gray-400');
-            const iconName = (typeof categoryIcons !== 'undefined' ? categoryIcons[val] : null) || 'fa-tag';
-            const color = typeof getCategoryColor === 'function' ? getCategoryColor(val) : '#6b7280';
-            iconEl.innerHTML = `<i class="fas ${iconName}"></i>`;
-            iconEl.style.backgroundColor = `${color}20`;
-            iconEl.style.color = color;
-            iconEl.classList.remove('bg-white/10', 'text-gray-400');
-        } else {
-            label.textContent = 'Wybierz kategorię';
-            label.classList.add('text-gray-400');
-            iconEl.innerHTML = '<i class="fas fa-tag"></i>';
-            iconEl.style.backgroundColor = '';
-            iconEl.style.color = '';
-            iconEl.classList.add('bg-white/10', 'text-gray-400');
-        }
+        updateItemCategoryUI(row, select.value);
     });
 }
 

@@ -218,7 +218,7 @@ function openCategoryDrawer(row, currentCategory, onSelect = null) {
         } else {
             selectCategoryFromDrawer(val);
         }
-    }, currentCategory, 'grid');
+    }, currentCategory, 'grid', row !== null);
 }
 
 function closeSelectionDrawer() {
@@ -713,7 +713,64 @@ function setupAppEventListeners() {
             const icon = categoryIcons[val] || 'fa-tag';
             const color = getCategoryColor(val);
             document.getElementById('recurring-category-icon').innerHTML = `<i class="fas ${icon}" style="color: ${color}"></i>`;
-        }, document.getElementById('recurring-category').value, 'grid');
+        }, document.getElementById('recurring-category').value, 'grid', false);
+    });
+
+    const addCategoryDrawerBtn = document.getElementById('add-category-drawer-btn');
+    const newCategoryDrawerForm = document.getElementById('new-category-drawer-form');
+    const newCategoryDrawerInput = document.getElementById('new-category-drawer-input');
+    const cancelAddCategoryDrawerBtn = document.getElementById('cancel-add-category-drawer-btn');
+    const saveCategoryDrawerBtn = document.getElementById('save-category-drawer-btn');
+
+    addCategoryDrawerBtn?.addEventListener('click', () => {
+        addCategoryDrawerBtn.classList.add('hidden');
+        newCategoryDrawerForm.classList.remove('hidden');
+        newCategoryDrawerInput.value = '';
+        newCategoryDrawerInput.focus();
+    });
+
+    cancelAddCategoryDrawerBtn?.addEventListener('click', () => {
+        newCategoryDrawerForm.classList.add('hidden');
+        addCategoryDrawerBtn.classList.remove('hidden');
+    });
+
+    saveCategoryDrawerBtn?.addEventListener('click', async () => {
+        const newName = newCategoryDrawerInput.value.trim().toLowerCase();
+        if (newName) {
+            if (allCategories.includes(newName)) {
+                alert('Taka kategoria już istnieje.');
+                return;
+            }
+            try {
+                await apiCall('/api/categories', 'POST', { name: newName });
+                await fetchInitialData(false);
+                if (typeof renderCategoriesList === 'function') renderCategoriesList();
+
+                // Auto-select the newly added category
+                if (window.currentOnSelect) {
+                    window.currentOnSelect(newName, newName.charAt(0).toUpperCase() + newName.slice(1));
+                }
+
+                closeSelectionDrawer();
+            } catch (error) {
+                alert('Nie udało się dodać kategorii: ' + error.message);
+            }
+        }
+    });
+
+    // Refresh Shops Logic
+    document.getElementById('refresh-shops-btn')?.addEventListener('click', async () => {
+        if (confirm('Czy na pewno chcesz odświeżyć listę sklepów? Spowoduje to usunięcie z filtrów i autouzupełniania sklepów, które nie mają przypisanych żadnych zakupów.')) {
+            try {
+                // Set flag on backend
+                await apiCall('/api/user/metadata', 'PATCH', { shopsStale: true });
+                // Force data refresh
+                await fetchInitialData(true);
+                alert('Lista sklepów została zaktualizowana.');
+            } catch (error) {
+                alert('Błąd podczas odświeżania listy sklepów: ' + error.message);
+            }
+        }
     });
 
     document.getElementById('recurring-schedule-btn')?.addEventListener('click', () => {
@@ -873,6 +930,11 @@ function populateAllSelects() {
     const categoryOptions = allCategories.map(cat => `<option value="${cat}">${cat.charAt(0).toUpperCase() + cat.slice(1)}</option>`).join('');
     filterCategory.innerHTML = '<option value="">Wszystkie kategorie</option>' + categoryOptions;
     recurringCategory.innerHTML = categoryOptions;
+
+    // Update dynamic item category selects if the function exists
+    if (typeof updateAllCategorySelects === 'function') {
+        updateAllCategorySelects();
+    }
 
     // Sklepy
     const shopOptions = allShops.map(shop => `<option value="${shop}">${shop}</option>`).join('');

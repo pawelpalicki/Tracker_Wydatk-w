@@ -93,7 +93,7 @@ async function getUserMetadata(userId) {
     const userDoc = await userRef.get();
     const userData = userDoc.exists ? userDoc.data() : {};
 
-    if (userData.metadataInitialized) {
+    if (userData.metadataInitialized && !userData.shopsStale) {
         const currentMonth = new Date().toISOString().substring(0, 7);
         const availableMonths = userData.availableMonths || [];
         if (!availableMonths.includes(currentMonth)) {
@@ -107,8 +107,8 @@ async function getUserMetadata(userId) {
         };
     }
 
-    // Leniwa inicjalizacja: wykonaj zapytanie kosztowne TYLKO RAZ
-    console.log(`Inicjalizacja metadanych dla użytkownika ${userId}`);
+    // Leniwa inicjalizacja lub wymuszone odświeżenie sklepów
+    console.log(`Inicjalizacja/Odświeżanie metadanych dla użytkownika ${userId}`);
     const snapshot = await purchasesCollection.where('userId', '==', userId).get();
     const allPurchases = snapshot.docs.map(doc => doc.data());
 
@@ -123,12 +123,13 @@ async function getUserMetadata(userId) {
     const currentMonth = new Date().toISOString().substring(0, 7);
     const availableMonths = [...new Set([...allPurchases.map(p => p.date ? p.date.substring(0, 7) : null), currentMonth].filter(Boolean))].sort().reverse();
 
-    // Zapisz do profilu użytkownika by nie czytać wszystkich zakupów ponownie
+    // Zapisz do profilu użytkownika
     await userRef.set({
         customCategories: combinedCategories,
         shops: shops,
         availableMonths: availableMonths,
-        metadataInitialized: true
+        metadataInitialized: true,
+        shopsStale: false
     }, { merge: true });
 
     return {
@@ -684,6 +685,8 @@ app.delete('/api/purchases/:id', authMiddleware, async (req, res) => {
         if (doc.data().userId !== req.userId) return res.status(403).json({ error: 'Brak uprawnień' });
 
         await purchaseRef.delete();
+        // Oznacz listę sklepów jako nieaktualną, aby została odświeżona przy następnym pobieraniu metadanych
+        await usersCollection.doc(req.userId).update({ shopsStale: true });
         res.status(204).send();
     } catch (error) {
         console.error("Błąd usuwania zakupu:", error);

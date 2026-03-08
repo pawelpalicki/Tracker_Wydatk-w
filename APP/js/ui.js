@@ -114,17 +114,47 @@ function initFilterDrawers() {
     });
 }
 
-function openSelectionDrawer(title, options, onSelect, selectedValue = null, layoutType = 'list') {
+function openSelectionDrawer(title, options, onSelect, selectedValue = null, layoutType = 'list', showAddBtn = false) {
     const overlay = document.getElementById('category-drawer-overlay');
     const drawer = document.getElementById('category-drawer');
     const titleEl = document.getElementById('category-drawer-title');
-    const grid = document.getElementById('category-drawer-grid');
+    const searchInput = document.getElementById('drawer-search-input');
+    const searchContainer = document.getElementById('drawer-search-container');
     const addBtn = document.getElementById('add-category-drawer-btn');
+    const addForm = document.getElementById('new-category-drawer-form');
+
+    // Store the callback globally for auto-selection
+    window.currentOnSelect = onSelect;
+
+    // Reset drawer state
+    if (addBtn) addBtn.classList.remove('hidden');
+    if (addForm) addForm.classList.add('hidden');
+    if (searchInput) searchInput.value = '';
+
+    // Show search container only if there are more than 5 options
+    if (searchContainer) {
+        if (options.length > 5) {
+            searchContainer.classList.remove('hidden');
+        } else {
+            searchContainer.classList.add('hidden');
+        }
+    }
+
+    // Hide/Show Add Category button based on showAddBtn parameter
+    // ONLY if it's explicitly allowed
+    if (addBtn) {
+        if (showAddBtn) {
+            addBtn.classList.remove('hidden');
+        } else {
+            addBtn.classList.add('hidden');
+        }
+    }
+
+    const grid = document.getElementById('category-drawer-grid');
 
     if (!overlay || !drawer || !titleEl || !grid) return;
 
     titleEl.textContent = title;
-    grid.innerHTML = '';
 
     // Apply layout classes
     grid.classList.remove('drawer-grid-layout', 'drawer-list-layout', 'space-y-1');
@@ -134,42 +164,64 @@ function openSelectionDrawer(title, options, onSelect, selectedValue = null, lay
         grid.classList.add('drawer-list-layout');
     }
 
-    // Hide/Show Add Category button
-    if (addBtn) {
-        if (layoutType === 'grid') {
-            addBtn.classList.remove('hidden');
-        } else {
-            addBtn.classList.add('hidden');
-        }
+    if (searchInput) {
+        searchInput.value = '';
     }
 
-    options.forEach(opt => {
-        const item = document.createElement('div');
-        item.className = 'category-drawer-item';
-        if (selectedValue === opt.value) {
-            item.classList.add('active');
+    const renderOptions = (filterText = '') => {
+        grid.innerHTML = '';
+        const filtered = options.filter(opt =>
+            opt.label.toLowerCase().includes(filterText.toLowerCase())
+        );
+
+        // Hide "Add" button and form when searching
+        if (addBtn) {
+            if (filterText.length > 0) {
+                addBtn.classList.add('hidden');
+                if (addForm) addForm.classList.add('hidden');
+            } else if (showAddBtn) {
+                addBtn.classList.remove('hidden');
+            }
         }
 
-        if (layoutType === 'grid') {
-            const iconWrapper = document.createElement('div');
-            iconWrapper.className = 'category-icon-wrapper';
-            iconWrapper.style.backgroundColor = opt.color || 'rgba(255, 255, 255, 0.1)';
-            iconWrapper.innerHTML = opt.icon || '<span>?</span>';
-            item.appendChild(iconWrapper);
+        filtered.forEach(opt => {
+            const item = document.createElement('div');
+            item.className = 'category-drawer-item';
+            if (selectedValue === opt.value) {
+                item.classList.add('active');
+            }
+
+            if (layoutType === 'grid') {
+                const iconWrapper = document.createElement('div');
+                iconWrapper.className = 'category-icon-wrapper';
+                iconWrapper.style.backgroundColor = opt.color || 'rgba(255, 255, 255, 0.1)';
+                iconWrapper.innerHTML = opt.icon || '<span>?</span>';
+                item.appendChild(iconWrapper);
+            }
+
+            const nameLabel = document.createElement('div');
+            nameLabel.className = 'category-name-label';
+            nameLabel.textContent = opt.label;
+            item.appendChild(nameLabel);
+
+            item.onclick = () => {
+                onSelect(opt.value, opt.label);
+                closeSelectionDrawer();
+            };
+
+            grid.appendChild(item);
+        });
+
+        if (filtered.length === 0) {
+            grid.innerHTML = '<div class="text-center py-8 text-gray-500 text-sm">Nie znaleziono...</div>';
         }
+    };
 
-        const nameLabel = document.createElement('div');
-        nameLabel.className = 'category-name-label';
-        nameLabel.textContent = opt.label;
-        item.appendChild(nameLabel);
+    if (searchInput) {
+        searchInput.oninput = (e) => renderOptions(e.target.value);
+    }
 
-        item.onclick = () => {
-            onSelect(opt.value, opt.label);
-            closeSelectionDrawer();
-        };
-
-        grid.appendChild(item);
-    });
+    renderOptions();
 
     overlay.classList.add('active');
     overlay.classList.remove('hidden');
@@ -306,6 +358,9 @@ function exitEditMode() {
     const dateEl = document.getElementById('date');
     if (dateEl) dateEl.value = new Date().toISOString().split('T')[0];
     budgetTypeSelect.value = 'monthly'; // Reset budget dropdown
+    document.getElementById('budget-type-label').textContent = 'Miesięczny';
+    document.getElementById('budget-type-icon').innerHTML = '<span>💰</span>';
+
     if (typeof updateCustomDropdownValue === 'function') {
         updateCustomDropdownValue('budget-type-select', 'budget-type-label');
     }
