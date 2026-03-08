@@ -211,6 +211,7 @@ function initMonthNavigator() {
 }
 
 
+
 async function updateCategoryPieChart() {
     Chart.register(ChartDataLabels);
     const selectedMonth = statsMonthSelect.value;

@@ -61,6 +61,121 @@ function switchTab(tabName, pushToHistory = true) {
     if (tabName === 'add') {
         initCustomDropdown('budget-type-btn', 'budget-type-popup', 'budget-type-label', 'budget-type-select');
     }
+
+    if (tabName === 'list') {
+        initFilterDrawers();
+    }
+}
+
+function initFilterDrawers() {
+    const categoryBtn = document.getElementById('filter-category-btn');
+    const filterCategoryEl = document.getElementById('filter-category');
+    if (categoryBtn && filterCategoryEl) {
+        categoryBtn.onclick = () => {
+            openCategoryDrawer(null, filterCategoryEl.value, (cat) => {
+                filterCategoryEl.value = cat;
+                document.getElementById('filter-category-label').textContent = cat ? cat.charAt(0).toUpperCase() + cat.slice(1) : 'Wszystkie kategorie';
+                if (typeof handleFilterChange === 'function') handleFilterChange();
+            });
+        };
+    }
+
+    const budgetBtn = document.getElementById('filter-budget-btn');
+    const filterBudgetEl = document.getElementById('filter-budget');
+    if (budgetBtn && filterBudgetEl) {
+        budgetBtn.onclick = () => {
+            const options = Array.from(filterBudgetEl.options).map(opt => ({ value: opt.value, label: opt.textContent }));
+            openSelectionDrawer('Wybierz budżet', options, (val, label) => {
+                filterBudgetEl.value = val;
+                document.getElementById('filter-budget-label').textContent = label;
+                if (typeof handleFilterChange === 'function') handleFilterChange();
+            }, filterBudgetEl.value);
+        };
+    }
+
+    const shopBtn = document.getElementById('filter-shop-btn');
+    const filterShopEl = document.getElementById('filter-shop');
+    if (shopBtn && filterShopEl) {
+        shopBtn.onclick = () => {
+            const options = Array.from(filterShopEl.options).map(opt => ({ value: opt.value, label: opt.textContent }));
+            openSelectionDrawer('Wybierz sklep', options, (val, label) => {
+                filterShopEl.value = val;
+                document.getElementById('filter-shop-label').textContent = label;
+                if (typeof handleFilterChange === 'function') handleFilterChange();
+            }, filterShopEl.value);
+        };
+    }
+
+    // Native date pickers don't need initialization, but we can add event listeners
+    const filterDateStart = document.getElementById('filter-date-start');
+    const filterDateEnd = document.getElementById('filter-date-end');
+    [filterDateStart, filterDateEnd].forEach(el => {
+        if (el) el.onchange = () => { if (typeof handleFilterChange === 'function') handleFilterChange(); };
+    });
+}
+
+function openSelectionDrawer(title, options, onSelect, selectedValue = null, layoutType = 'list') {
+    const overlay = document.getElementById('category-drawer-overlay');
+    const drawer = document.getElementById('category-drawer');
+    const titleEl = document.getElementById('category-drawer-title');
+    const grid = document.getElementById('category-drawer-grid');
+    const addBtn = document.getElementById('add-category-drawer-btn');
+
+    if (!overlay || !drawer || !titleEl || !grid) return;
+
+    titleEl.textContent = title;
+    grid.innerHTML = '';
+
+    // Apply layout classes
+    grid.classList.remove('drawer-grid-layout', 'drawer-list-layout', 'space-y-1');
+    if (layoutType === 'grid') {
+        grid.classList.add('drawer-grid-layout');
+    } else {
+        grid.classList.add('drawer-list-layout');
+    }
+
+    // Hide/Show Add Category button
+    if (addBtn) {
+        if (layoutType === 'grid') {
+            addBtn.classList.remove('hidden');
+        } else {
+            addBtn.classList.add('hidden');
+        }
+    }
+
+    options.forEach(opt => {
+        const item = document.createElement('div');
+        item.className = 'category-drawer-item';
+        if (selectedValue === opt.value) {
+            item.classList.add('active');
+        }
+
+        if (layoutType === 'grid') {
+            const iconWrapper = document.createElement('div');
+            iconWrapper.className = 'category-icon-wrapper';
+            iconWrapper.style.backgroundColor = opt.color || 'rgba(255, 255, 255, 0.1)';
+            iconWrapper.innerHTML = opt.icon || '<span>?</span>';
+            item.appendChild(iconWrapper);
+        }
+
+        const nameLabel = document.createElement('div');
+        nameLabel.className = 'category-name-label';
+        nameLabel.textContent = opt.label;
+        item.appendChild(nameLabel);
+
+        item.onclick = () => {
+            onSelect(opt.value, opt.label);
+            closeSelectionDrawer();
+        };
+
+        grid.appendChild(item);
+    });
+
+    overlay.classList.add('active');
+    overlay.classList.remove('hidden');
+    drawer.classList.add('active');
+    drawer.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
 }
 
 
@@ -159,7 +274,8 @@ function enterEditMode(purchaseId) {
     editMode.purchaseId = purchaseId;
 
     shopInput.value = purchase.shop;
-    fp.setDate(purchase.date); // Use flatpickr's setDate method
+    const dateEl = document.getElementById('date');
+    if (dateEl) dateEl.value = purchase.date;
     itemsContainer.innerHTML = '';
     purchase.items.forEach(item => addItemRow(item));
 
@@ -187,7 +303,8 @@ function exitEditMode() {
 
     purchaseForm.reset();
     itemsContainer.innerHTML = '';
-    fp.setDate(new Date()); // Reset date using flatpickr's setDate
+    const dateEl = document.getElementById('date');
+    if (dateEl) dateEl.value = new Date().toISOString().split('T')[0];
     budgetTypeSelect.value = 'monthly'; // Reset budget dropdown
     if (typeof updateCustomDropdownValue === 'function') {
         updateCustomDropdownValue('budget-type-select', 'budget-type-label');

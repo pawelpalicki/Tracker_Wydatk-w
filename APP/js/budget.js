@@ -22,11 +22,14 @@ function populateBudgetMonthSelector() {
         const option = document.createElement('option');
         option.value = monthStr;
         const [y, m] = monthStr.split('-');
-        option.textContent = new Date(y, m - 1).toLocaleString('pl-PL', { month: 'long', year: 'numeric' });
+        const label = new Date(y, m - 1).toLocaleString('pl-PL', { month: 'long', year: 'numeric' });
+        option.textContent = label;
 
         // Ustaw bieżący miesiąc jako domyślnie wybrany
         if (monthStr === currentMonthStr) {
             option.selected = true;
+            const labelEl = document.getElementById('budget-month-label');
+            if (labelEl) labelEl.textContent = label;
         }
 
         budgetMonthSelect.appendChild(option);

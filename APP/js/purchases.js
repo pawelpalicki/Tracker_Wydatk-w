@@ -40,7 +40,6 @@ function addItemRow(item = {}) {
             <select class="item-category-select hidden" aria-hidden="true">
                 <option value="">Wybierz kategorię</option>
                 ${categoryOptions}
-                <option value="__add_new__">-- Dodaj nową --</option>
             </select>
             <input type="text" class="new-category-input hidden mt-1 block w-full rounded-xl border-white/10 bg-white/5 text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2" placeholder="Nazwa nowej kategorii">
         </div>
@@ -71,7 +70,10 @@ function addItemRow(item = {}) {
     categoryBtn.onclick = (e) => {
         e.preventDefault();
         if (typeof openCategoryDrawer === 'function') {
-            openCategoryDrawer(itemRow, categorySelect.value);
+            openCategoryDrawer(itemRow, categorySelect.value, (cat) => {
+                categorySelect.value = cat;
+                categorySelect.dispatchEvent(new Event('change'));
+            });
         }
     };
 

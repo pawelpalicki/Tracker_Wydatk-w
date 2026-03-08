@@ -36,7 +36,6 @@ let cameraStream = null;
 let categoryChart = null;
 let comparisonChart = null;
 let shopChart = null;
-let fp; // Declare fp globally
 let fp_range; // For date range filter
 let lastScrollY = 0; // For FAB scroll detection
 
@@ -112,6 +111,8 @@ const fabScanReceiptBtn = document.getElementById('fab-scan-receipt-btn'); // Ne
 
 // Elementy filtrów
 const filterKeyword = document.getElementById('filter-keyword');
+const filterDateStart = document.getElementById('filter-date-start');
+const filterDateEnd = document.getElementById('filter-date-end');
 const filterDateRange = document.getElementById('filter-date-range');
 const filterCategory = document.getElementById('filter-category');
 const filterShop = document.getElementById('filter-shop');
@@ -198,61 +199,46 @@ function updateCustomDropdownValue(selectId, labelId) {
 }
 
 // --- Category Drawer Logic ---
-function openCategoryDrawer(row, currentCategory) {
+function openCategoryDrawer(row, currentCategory, onSelect = null) {
     activeCategoryRow = row;
-    const overlay = document.getElementById('category-drawer-overlay');
-    const drawer = document.getElementById('category-drawer');
-    const context = document.getElementById('drawer-item-context');
 
-    const itemName = row.querySelector('.item-name').value || 'nowy produkt';
-    context.textContent = `Wybierz kategorię dla: ${itemName}`;
+    const options = allCategories.map(cat => ({
+        value: cat,
+        label: cat.charAt(0).toUpperCase() + cat.slice(1),
+        icon: `<i class="fas ${categoryIcons[cat] || 'fa-tag'}"></i>`,
+        color: getCategoryColor(cat) + '20'
+    }));
 
-    renderCategoryDrawerGrid(currentCategory);
+    const itemName = row ? (row.querySelector('.item-name')?.value || 'produkcie') : 'filtrach';
+    const title = `Kategoria dla: ${itemName}`;
 
-    overlay.classList.remove('hidden');
-    drawer.classList.remove('hidden');
-    setTimeout(() => {
-        overlay.classList.add('active');
-        drawer.classList.add('active');
-    }, 10);
+    openSelectionDrawer(title, options, (val) => {
+        if (onSelect) {
+            onSelect(val);
+        } else {
+            selectCategoryFromDrawer(val);
+        }
+    }, currentCategory, 'grid');
 }
 
-function closeCategoryDrawer() {
+function closeSelectionDrawer() {
     const overlay = document.getElementById('category-drawer-overlay');
     const drawer = document.getElementById('category-drawer');
+
+    if (!overlay || !drawer) return;
 
     overlay.classList.remove('active');
     drawer.classList.remove('active');
     setTimeout(() => {
         overlay.classList.add('hidden');
         drawer.classList.add('hidden');
+        document.body.style.overflow = '';
         activeCategoryRow = null;
     }, 300);
 }
 
-function renderCategoryDrawerGrid(activeCategory) {
-    const grid = document.getElementById('category-drawer-grid');
-    grid.innerHTML = '';
-
-    allCategories.forEach(cat => {
-        const color = getCategoryColor(cat);
-        const icon = categoryIcons[cat] || 'fa-tag';
-        const isActive = cat === activeCategory;
-
-        const item = document.createElement('div');
-        item.className = `category-drawer-item ${isActive ? 'active' : ''}`;
-        item.innerHTML = `
-            <div class="category-icon-wrapper" style="background-color: ${color}20; color: ${color};">
-                <i class="fas ${icon}"></i>
-            </div>
-            <span class="category-name-label">${cat.charAt(0).toUpperCase() + cat.slice(1)}</span>
-        `;
-        item.onclick = () => {
-            selectCategoryFromDrawer(cat);
-        };
-        grid.appendChild(item);
-    });
-}
+// Obsolete, replaced by openSelectionDrawer
+function renderCategoryDrawerGrid(activeCategory, onSelectOverride = null) { }
 
 function selectCategoryFromDrawer(category) {
     if (activeCategoryRow) {
@@ -271,14 +257,14 @@ function selectCategoryFromDrawer(category) {
         }
 
         select.dispatchEvent(new Event('change'));
+        closeSelectionDrawer();
     }
-    closeCategoryDrawer();
 }
 
 // Global listeners for drawer
 document.addEventListener('click', (e) => {
     if (e.target.id === 'close-category-drawer' || e.target.id === 'category-drawer-overlay') {
-        closeCategoryDrawer();
+        closeSelectionDrawer();
     }
 
     if (e.target.closest('#drawer-add-category-btn')) {
@@ -287,7 +273,7 @@ document.addEventListener('click', (e) => {
             select.value = '__add_new__';
             select.dispatchEvent(new Event('change'));
         }
-        closeCategoryDrawer();
+        closeSelectionDrawer();
     }
 });
 
@@ -530,7 +516,6 @@ function setupAppEventListeners() {
                 // Odśwież wszystko, aby pobrać nową listę kategorii i przerysować interfejs
                 await fetchInitialData(false);
                 renderCategoriesList(); // Odśwież listę w ustawieniach
-                renderBudgetInputs(); // DODANE: Odśwież listę budżetów
             } catch (error) {
                 alert('Nie udało się dodać kategorii: ' + error.message);
             }
@@ -633,20 +618,30 @@ function setupAppEventListeners() {
         filterArrow.classList.toggle('rotate-180');
     });
 
-    const filterElements = [filterKeyword, filterCategory, filterShop, filterBudget, filterMinAmount, filterMaxAmount, filterDateRange];
+    const filterElements = [filterKeyword, filterCategory, filterShop, filterBudget, filterMinAmount, filterMaxAmount, filterDateRange, filterDateStart, filterDateEnd];
     filterElements.forEach(el => {
         el.addEventListener('change', handleFilterChange); // Użyj 'change', aby reagować po zakończeniu edycji
     });
 
     clearFiltersBtn.addEventListener('click', () => {
         filterKeyword.value = '';
-        if (fp_range) fp_range.clear();
+        filterDateStart.value = '';
+        filterDateEnd.value = '';
         filterCategory.value = '';
+        const catLabel = document.getElementById('filter-category-label');
+        if (catLabel) catLabel.textContent = 'Wszystkie kategorie';
+
         filterShop.value = '';
+        const shopLabel = document.getElementById('filter-shop-label');
+        if (shopLabel) shopLabel.textContent = 'Wszystkie sklepy';
+
         filterBudget.value = '';
+        const budgetLabel = document.getElementById('filter-budget-label');
+        if (budgetLabel) budgetLabel.textContent = 'Wszystkie budżety';
+
         filterMinAmount.value = '';
         filterMaxAmount.value = '';
-        handleFilterChange(); // Wywołaj zmianę, aby przeładować do paginacji
+        handleFilterChange();
     });
 
     // Logika wydatków cyklicznych
@@ -661,6 +656,97 @@ function setupAppEventListeners() {
     closeEditSpecialBudgetModalBtn.addEventListener('click', () => editSpecialBudgetModal.classList.add('hidden'));
     cancelEditSpecialBudgetBtn.addEventListener('click', () => editSpecialBudgetModal.classList.add('hidden'));
 
+    // Custom Triggers for Selects (Drawer version)
+    document.getElementById('budget-type-btn')?.addEventListener('click', () => {
+        const options = [
+            { value: 'monthly', label: 'Miesięczny', icon: '📅' }
+        ];
+
+        // Dodaj wszystkie budżety specjalne użytkownika
+        if (typeof allSpecialBudgets !== 'undefined' && allSpecialBudgets.length > 0) {
+            allSpecialBudgets.forEach(sb => {
+                options.push({ value: sb.id, label: sb.name, icon: '⭐' });
+            });
+        }
+
+        openSelectionDrawer('Wybierz budżet', options, (val, label) => {
+            const select = document.getElementById('budget-type-select');
+            // Ensure the value exists in the select, if not add it temporarily
+            let exists = Array.from(select.options).some(opt => opt.value === val);
+            if (!exists) {
+                const newOpt = document.createElement('option');
+                newOpt.value = val;
+                newOpt.textContent = label;
+                select.appendChild(newOpt);
+            }
+            select.value = val;
+            document.getElementById('budget-type-label').textContent = label;
+            document.getElementById('budget-type-icon').innerHTML = `<span>${val === 'monthly' ? '📅' : '⭐'}</span>`;
+            select.dispatchEvent(new Event('change'));
+        }, document.getElementById('budget-type-select').value);
+    });
+
+    document.getElementById('budget-month-btn')?.addEventListener('click', () => {
+        const select = document.getElementById('budget-month-select');
+        const options = Array.from(select.options).map(opt => ({
+            value: opt.value,
+            label: opt.textContent
+        }));
+        openSelectionDrawer('Wybierz miesiąc', options, (val, label) => {
+            select.value = val;
+            document.getElementById('budget-month-label').textContent = label;
+            select.dispatchEvent(new Event('change'));
+        }, select.value);
+    });
+
+    document.getElementById('recurring-category-btn')?.addEventListener('click', () => {
+        const options = allCategories.map(cat => ({
+            value: cat,
+            label: cat.charAt(0).toUpperCase() + cat.slice(1),
+            icon: `<i class="fas ${categoryIcons[cat] || 'fa-tag'}"></i>`,
+            color: getCategoryColor(cat) + '20'
+        }));
+        openSelectionDrawer('Kategoria subskrypcji', options, (val, label) => {
+            const select = document.getElementById('recurring-category');
+            select.value = val;
+            document.getElementById('recurring-category-label').textContent = label;
+            const icon = categoryIcons[val] || 'fa-tag';
+            const color = getCategoryColor(val);
+            document.getElementById('recurring-category-icon').innerHTML = `<i class="fas ${icon}" style="color: ${color}"></i>`;
+        }, document.getElementById('recurring-category').value, 'grid');
+    });
+
+    document.getElementById('recurring-schedule-btn')?.addEventListener('click', () => {
+        const options = [
+            { value: 'monthly', label: 'Co miesiąc', icon: '📅' },
+            { value: 'weekly', label: 'Co tydzień', icon: '🔁' },
+            { value: 'daily_interval', label: 'Interwał dni', icon: '🔢' }
+        ];
+        openSelectionDrawer('Częstotliwość', options, (val, label) => {
+            const select = document.getElementById('recurring-schedule-type');
+            select.value = val;
+            document.getElementById('recurring-schedule-label').textContent = label;
+            select.dispatchEvent(new Event('change'));
+        }, document.getElementById('recurring-schedule-type').value);
+    });
+
+    document.getElementById('recurring-day-of-week-btn')?.addEventListener('click', () => {
+        const options = [
+            { value: '1', label: 'Poniedziałek' },
+            { value: '2', label: 'Wtorek' },
+            { value: '3', label: 'Środa' },
+            { value: '4', label: 'Czwartek' },
+            { value: '5', label: 'Piątek' },
+            { value: '6', label: 'Sobota' },
+            { value: '0', label: 'Niedziela' }
+        ];
+        openSelectionDrawer('Dzień tygodnia', options, (val, label) => {
+            const select = document.getElementById('recurring-day-of-week');
+            select.value = val;
+            document.getElementById('recurring-day-of-week-label').textContent = label;
+        }, document.getElementById('recurring-day-of-week').value);
+    });
+
     // DODAJ TEN EVENT LISTENER TUTAJ:
     document.getElementById('toggle-budget-details').addEventListener('click', toggleBudgetDetails);
     document.getElementById('toggle-legend-details').addEventListener('click', toggleChartLegend);
@@ -673,6 +759,12 @@ function setupAppEventListeners() {
         fabActions.classList.toggle('hidden', !isFabExpanded);
         fabActions.classList.toggle('expanded', isFabExpanded);
         mainFabBtn.classList.toggle('expanded', isFabExpanded);
+
+        const overlay = document.getElementById('fab-overlay');
+        overlay.classList.toggle('hidden', !isFabExpanded);
+        setTimeout(() => {
+            overlay.classList.toggle('active', isFabExpanded);
+        }, 10);
 
         // Animate sub-buttons
         const subItems = fabActions.querySelectorAll('.fab-sub-item');
@@ -742,7 +834,11 @@ async function handleFilterChange() {
     if (filterBudget.value) params.append('budget', filterBudget.value);
     if (filterMinAmount.value) params.append('minAmount', filterMinAmount.value);
     if (filterMaxAmount.value) params.append('maxAmount', filterMaxAmount.value);
-    if (fp_range.selectedDates.length === 2) {
+
+    if (filterDateStart.value && filterDateEnd.value) {
+        params.append('startDate', filterDateStart.value);
+        params.append('endDate', filterDateEnd.value);
+    } else if (fp_range && fp_range.selectedDates.length === 2) {
         params.append('startDate', fp_range.selectedDates[0].toISOString().split('T')[0]);
         params.append('endDate', fp_range.selectedDates[1].toISOString().split('T')[0]);
     }
@@ -1284,17 +1380,8 @@ document.addEventListener('DOMContentLoaded', () => {
             .catch(err => console.log('Błąd rejestracji Service Workera:', err));
     }
 
-    // Initialize Flatpickr and store the instance
-    fp = flatpickr("#date", {
-        dateFormat: "Y-m-d",
-        defaultDate: new Date(),
-        altInput: true,
-        altFormat: "d.m.Y", // Polski format: "02.08.2025"
-        theme: "dark",
-        locale: "pl", // Polska lokalizacja
-        allowInput: true // Pozwala na ręczne wpisywanie daty
-    });
-
+    // Initialize Flatpickr only for the range filter (and others that need it)
+    // #date and recurring-start-date will use native browser date pickers
     fp_range = flatpickr("#filter-date-range", {
         mode: "range",
         dateFormat: "Y-m-d",
@@ -1303,14 +1390,5 @@ document.addEventListener('DOMContentLoaded', () => {
         theme: "dark",
         locale: "pl", // Polska lokalizacja
         allowInput: true // Pozwala na ręczne wpisywanie daty
-    });
-
-    flatpickr(recurringStartDate, {
-        dateFormat: "Y-m-d",
-        defaultDate: new Date(),
-        altInput: true,
-        altFormat: "d.m.Y",
-        theme: "dark",
-        locale: "pl",
     });
 });
