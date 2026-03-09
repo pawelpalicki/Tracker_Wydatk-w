@@ -170,11 +170,12 @@ const categoryIcons = {
     'rachunki': 'fa-file-invoice-dollar',
     'edukacja': 'fa-graduation-cap',
     'sport': 'fa-running',
-    'chemia': 'fa-vial',
-    'kosmetyki': 'fa-spa',
+    'chemia': 'fa-jug-detergent',
+    'kosmetyki': 'fa-pump-soap',
     'ubrania': 'fa-tshirt',
     'oszczędności': 'fa-piggy-bank',
     'słodycze i przekąski': 'fa-cookie-bite',
+    'kaucje': 'fa-recycle',
     'inne': 'fa-ellipsis-h'
 };
 

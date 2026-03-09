@@ -45,7 +45,7 @@ app.use(express.json());
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
 
 // --- Funkcje pomocnicze ---
-const DEFAULT_CATEGORIES = ['spożywcze', 'chemia', 'transport', 'rozrywka', 'zdrowie', 'ubrania', 'dom', 'rachunki', 'inne'];
+const DEFAULT_CATEGORIES = ['spożywcze', 'chemia', 'transport', 'rozrywka', 'zdrowie', 'ubrania', 'dom', 'rachunki', 'kaucje', 'inne'];
 
 // Funkcja do pobierania kursu waluty
 async function getExchangeRate(fromCurrency, toCurrency = 'PLN') {
