@@ -3,6 +3,7 @@
 let legendMouseoutHandler = null;
 let timeChartMode = 'week'; // 'week' lub 'day'
 let currentMonthlyPurchases = [];
+let currentStatsMonth = 'Brak danych'; // Zastępuje ukryty statsMonthSelect
 
 // --- Logika Statystyk ---
 async function renderStatistics() {
@@ -25,9 +26,8 @@ async function renderStatistics() {
 let availableMonthsList = [];
 
 function populateMonthSelector(availableMonths) {
-    statsMonthSelect.innerHTML = '';
     if (!availableMonths || availableMonths.length === 0) {
-        statsMonthSelect.innerHTML = '<option>Brak danych</option>';
+        currentStatsMonth = 'Brak danych';
         availableMonthsList = [];
         syncMonthNavigatorUI();
         return;
@@ -37,16 +37,7 @@ function populateMonthSelector(availableMonths) {
     const sortedMonths = [...availableMonths].sort().reverse();
     availableMonthsList = sortedMonths;
     const currentMonth = new Date().toISOString().substring(0, 7);
-    let selectedMonth = sortedMonths.includes(currentMonth) ? currentMonth : sortedMonths[0];
-
-    sortedMonths.forEach(monthStr => {
-        const option = document.createElement('option');
-        option.value = monthStr;
-        const [y, m] = monthStr.split('-');
-        option.textContent = new Date(y, m - 1).toLocaleString('pl-PL', { month: 'long', year: 'numeric' });
-        if (monthStr === selectedMonth) option.selected = true;
-        statsMonthSelect.appendChild(option);
-    });
+    currentStatsMonth = sortedMonths.includes(currentMonth) ? currentMonth : sortedMonths[0];
 
     // Zbuduj popup i zsynchronizuj UI navigatora
     buildMonthPickerPopup(sortedMonths);
@@ -74,7 +65,7 @@ function buildMonthPickerPopup(sortedMonths) {
     }
 
     // Ustaw rok na podstawie bieżącego wyboru lub domyślnie najnowszy
-    const selVal = statsMonthSelect.value;
+    const selVal = currentStatsMonth;
     if (selVal && selVal !== 'Brak danych') {
         currentPickerYear = selVal.split('-')[0];
     }
@@ -141,11 +132,11 @@ function buildMonthPickerPopup(sortedMonths) {
             btn.textContent = new Date(year, m - 1).toLocaleString('pl-PL', { month: 'short' });
 
             if (isAvailable) {
-                btn.className = 'month-picker-item' + (ms === statsMonthSelect.value ? ' active' : '');
+                btn.className = 'month-picker-item' + (ms === currentStatsMonth ? ' active' : '');
                 btn.dataset.month = ms;
                 btn.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    statsMonthSelect.value = ms;
+                    currentStatsMonth = ms;
                     closeMonthPicker();
                     syncMonthNavigatorUI();
                     updateCategoryPieChart();
@@ -167,7 +158,7 @@ function syncMonthNavigatorUI() {
     const labelEl = document.getElementById('month-label-text');
     if (!labelEl) return;
 
-    const val = statsMonthSelect.value;
+    const val = currentStatsMonth;
     if (!val || val === 'Brak danych') {
         labelEl.textContent = 'Brak danych';
         return;
@@ -214,7 +205,7 @@ function initMonthNavigator() {
 
 async function updateCategoryPieChart() {
     Chart.register(ChartDataLabels);
-    const selectedMonth = statsMonthSelect.value;
+    const selectedMonth = currentStatsMonth;
     if (!selectedMonth || selectedMonth === 'Brak danych') {
         noDataPieChart.classList.remove('hidden');
         categoryChartContainer.classList.add('hidden');
@@ -425,7 +416,7 @@ function renderInteractiveLegend(chart, total) {
     };
 
     const openDetailsModal = async (label) => {
-        const selectedMonth = statsMonthSelect.value;
+        const selectedMonth = currentStatsMonth;
         const [year, month] = selectedMonth.split('-');
         try {
             const { items } = await apiCall(`/api/statistics/category-details?year=${year}&month=${month}&category=${label}`);
@@ -485,7 +476,7 @@ async function handleCategoryChartClick(event) {
     if (points.length) {
         const firstPoint = points[0];
         const label = categoryChart.data.labels[firstPoint.index].toLowerCase();
-        const selectedMonth = statsMonthSelect.value;
+        const selectedMonth = currentStatsMonth;
         const [year, month] = selectedMonth.split('-');
 
         try {
@@ -559,7 +550,7 @@ function renderTimeChart() {
     let labels = [];
     let dataSeries = [];
 
-    const selectedMonth = document.getElementById('stats-month-select').value;
+    const selectedMonth = currentStatsMonth;
     const [y, m] = selectedMonth.split('-');
     const endOfMonth = new Date(y, m, 0).getDate();
 
@@ -659,7 +650,7 @@ function renderTimeChart() {
 }
 
 async function renderShopBarChart() {
-    const selectedMonth = statsMonthSelect.value;
+    const selectedMonth = currentStatsMonth;
     if (!selectedMonth || selectedMonth === 'Brak danych') {
         noDataShopChart.classList.remove('hidden');
         shopChartContainer.classList.add('hidden');

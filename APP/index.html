@@ -135,8 +135,7 @@
                 <!-- Month selector - shared across all stat slides -->
                 <div class="flex justify-between items-center mb-4">
                     <h2 class="text-lg font-semibold text-white">Kokpit</h2>
-                    <!-- Ukryty select – zachowany dla kompatybilności z JS -->
-                    <select id="stats-month-select" class="hidden" aria-hidden="true"></select>
+
                     <!-- Month Navigator -->
                     <div id="month-navigator" class="flex items-center gap-1 relative">
                         <button id="month-label-btn" class="month-label-btn" aria-label="Wybierz miesiąc">
@@ -355,7 +354,7 @@
                                             d="M19 9l-7 7-7-7"></path>
                                     </svg>
                                 </button>
-                                <select id="budget-type-select" class="hidden" aria-hidden="true"></select>
+
                             </div>
                             <div>
                                 <label for="date"
@@ -438,9 +437,7 @@
                                             d="M19 9l-7 7-7-7"></path>
                                     </svg>
                                 </button>
-                                <select id="filter-category" class="hidden" aria-hidden="true">
-                                    <option value="">Wszystkie kategorie</option>
-                                </select>
+
 
                                 <button id="filter-budget-btn" type="button"
                                     class="flex justify-between items-center w-full rounded-xl border border-white/10 bg-white/5 text-white shadow-sm hover:bg-white/10 transition-colors text-xs sm:text-sm py-3 px-4 text-left">
@@ -451,9 +448,7 @@
                                             d="M19 9l-7 7-7-7"></path>
                                     </svg>
                                 </button>
-                                <select id="filter-budget" class="hidden" aria-hidden="true">
-                                    <option value="">Wszystkie budżety</option>
-                                </select>
+
 
                                 <button id="filter-shop-btn" type="button"
                                     class="flex justify-between items-center w-full rounded-xl border border-white/10 bg-white/5 text-white shadow-sm hover:bg-white/10 transition-colors text-xs sm:text-sm py-3 px-4 text-left">
@@ -464,9 +459,7 @@
                                             d="M19 9l-7 7-7-7"></path>
                                     </svg>
                                 </button>
-                                <select id="filter-shop" class="hidden" aria-hidden="true">
-                                    <option value="">Wszystkie sklepy</option>
-                                </select>
+
                             </div>
 
                             <!-- Amounts -->
@@ -588,7 +581,7 @@
                                     d="M19 9l-7 7-7-7"></path>
                             </svg>
                         </button>
-                        <select id="budget-month-select" class="hidden"></select>
+
                     </div>
                     <div id="budgets-list" class="space-y-2 mb-6 max-h-[300px] overflow-y-auto pr-2"></div>
                     <div class="grid grid-cols-1 gap-3">
@@ -666,7 +659,7 @@
                                         d="M19 9l-7 7-7-7"></path>
                                 </svg>
                             </button>
-                            <select id="recurring-category" required class="hidden" aria-hidden="true"></select>
+
 
                             <button id="recurring-schedule-btn" type="button" class="category-trigger-card py-3">
                                 <div class="flex items-center">
@@ -681,11 +674,7 @@
                                         d="M19 9l-7 7-7-7"></path>
                                 </svg>
                             </button>
-                            <select id="recurring-schedule-type" required class="hidden" aria-hidden="true">
-                                <option value="monthly">Co miesiąc</option>
-                                <option value="weekly">Co tydzień</option>
-                                <option value="daily_interval">Interwał dni</option>
-                            </select>
+
                         </div>
                         <div id="recurring-monthly-settings" class="mt-1">
                             <input type="number" id="recurring-day-of-month" placeholder="Dzień (1-31)" min="1" max="31"
@@ -702,15 +691,7 @@
                                         d="M19 9l-7 7-7-7"></path>
                                 </svg>
                             </button>
-                            <select id="recurring-day-of-week" class="hidden" aria-hidden="true">
-                                <option value="1">Poniedziałek</option>
-                                <option value="2">Wtorek</option>
-                                <option value="3">Środa</option>
-                                <option value="4">Czwartek</option>
-                                <option value="5">Piątek</option>
-                                <option value="6">Sobota</option>
-                                <option value="0">Niedziela</option>
-                            </select>
+
                         </div>
                         <div id="recurring-interval-settings" class="hidden grid grid-cols-2 gap-2 mt-1">
                             <input type="number" id="recurring-interval" placeholder="Dni" min="1"

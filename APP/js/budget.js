@@ -3,48 +3,26 @@
 let budgetDonutChart;
 
 // --- Logika Budżetowania ---
+let budgetMonthValue = '';
+
 function populateBudgetMonthSelector() {
-    budgetMonthSelect.innerHTML = '';
-    const months = [];
     const today = new Date();
-    const currentMonthStr = today.toISOString().substring(0, 7);
+    budgetMonthValue = today.toISOString().substring(0, 7);
+    const label = new Date(today.getFullYear(), today.getMonth()).toLocaleString('pl-PL', { month: 'long', year: 'numeric' });
 
-    // Generuj listę miesięcy: 2 poprzednie, bieżący i 12 przyszłych
-    for (let i = -2; i <= 12; i++) {
-        const d = new Date(today.getFullYear(), today.getMonth() + i, 1);
-        months.push(d.toISOString().substring(0, 7));
-    }
-
-    // Sortuj od najnowszego do najstarszego
-    months.sort().reverse();
-
-    months.forEach(monthStr => {
-        const option = document.createElement('option');
-        option.value = monthStr;
-        const [y, m] = monthStr.split('-');
-        const label = new Date(y, m - 1).toLocaleString('pl-PL', { month: 'long', year: 'numeric' });
-        option.textContent = label;
-
-        // Ustaw bieżący miesiąc jako domyślnie wybrany
-        if (monthStr === currentMonthStr) {
-            option.selected = true;
-            const labelEl = document.getElementById('budget-month-label');
-            if (labelEl) labelEl.textContent = label;
-        }
-
-        budgetMonthSelect.appendChild(option);
-    });
+    const labelEl = document.getElementById('budget-month-label');
+    if (labelEl) labelEl.textContent = label;
 }
 
 async function renderBudgetInputs() {
-    if (!budgetMonthSelect.value) {
-        console.warn("budgetMonthSelect.value jest puste, pomijam renderowanie budżetu");
+    if (!budgetMonthValue) {
+        console.warn("budgetMonthValue jest puste, pomijam renderowanie budżetu");
         return;
     }
 
-    const [year, month] = budgetMonthSelect.value.split('-');
+    const [year, month] = budgetMonthValue.split('-');
     if (!year || !month) {
-        console.error("Nieprawidłowy format daty:", budgetMonthSelect.value);
+        console.error("Nieprawidłowy format daty:", budgetMonthValue);
         return;
     }
 
@@ -65,7 +43,7 @@ async function renderBudgetInputs() {
 }
 
 async function handleSaveBudget() {
-    const [year, month] = budgetMonthSelect.value.split('-');
+    const [year, month] = budgetMonthValue.split('-');
     const budgetInputs = budgetsList.querySelectorAll('.budget-input');
     const budgets = {};
 
@@ -90,7 +68,7 @@ async function handleSaveBudget() {
 }
 
 async function handleCopyBudget(monthsCount) {
-    const [currentYear, currentMonth] = budgetMonthSelect.value.split('-');
+    const [currentYear, currentMonth] = budgetMonthValue.split('-');
     const budgetInputs = budgetsList.querySelectorAll('.budget-input');
     const budgets = {};
 
@@ -246,55 +224,3 @@ function renderBudgetSummary(spending, budgets) {
     }
 }
 
-// --- Logika Wydatków Cyklicznych ---
-async function renderRecurringExpenses() {
-    try {
-        const expenses = await apiCall('/api/recurring-expenses');
-        recurringExpensesList.innerHTML = expenses.map(exp => `
-            <div class="flex justify-between items-center p-2 border-b border-gray-200 dark:border-gray-700">
-                <div>
-                    <p class="font-semibold text-gray-900 dark:text-white">${exp.name}</p>
-                    <p class="text-sm text-gray-600 dark:text-gray-400">${exp.amount.toFixed(2)} zł, kategoria: ${exp.category}, dzień: ${exp.dayOfMonth}</p>
-                </div>
-                <button data-id="${exp.id}" class="delete-recurring-btn p-1 text-red-500 hover:text-red-700" title="Usuń">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" /></svg>
-                </button>
-            </div>
-        `).join('');
-    } catch (error) {
-        recurringExpensesList.innerHTML = `<p class="text-red-500">Nie udało się załadować wydatków cyklicznych.</p>`;
-    }
-}
-
-async function handleAddRecurringExpense(e) {
-    e.preventDefault();
-    const data = {
-        name: recurringName.value,
-        amount: recurringAmount.value,
-        category: recurringCategory.value,
-        dayOfMonth: recurringDay.value
-    };
-
-    try {
-        await apiCall('/api/recurring-expenses', 'POST', data);
-        addRecurringExpenseForm.reset();
-        renderRecurringExpenses();
-    } catch (error) {
-        alert('Błąd dodawania wydatku: ' + error.message);
-    }
-}
-
-async function handleDeleteRecurringExpense(e) {
-    const deleteBtn = e.target.closest('.delete-recurring-btn');
-    if (deleteBtn) {
-        const id = deleteBtn.dataset.id;
-        if (confirm('Czy na pewno chcesz usunąć ten wydatek cykliczny?')) {
-            try {
-                await apiCall(`/api/recurring-expenses/${id}`, 'DELETE');
-                renderRecurringExpenses();
-            } catch (error) {
-                alert('Błąd usuwania wydatku: ' + error.message);
-            }
-        }
-    }
-}

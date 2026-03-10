@@ -180,7 +180,7 @@ async function handlePurchaseFormSubmit(e) {
     const purchaseData = {
         shop: shopInput.value,
         date: dateInput.value,
-        specialBudgetId: budgetTypeSelect.value === 'monthly' ? null : budgetTypeSelect.value,
+        specialBudgetId: budgetTypeSelectValue === 'monthly' ? null : budgetTypeSelectValue,
         items: Array.from(document.querySelectorAll('.item-row')).map(row => {
             const name = row.querySelector('.item-name').value;
             const price = parseFloat(row.querySelector('.item-price').value.replace(',', '.'));

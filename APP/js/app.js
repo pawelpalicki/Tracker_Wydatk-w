@@ -81,7 +81,7 @@ const capturePhotoBtn = document.getElementById('capture-photo-btn');
 const cancelCameraBtn = document.getElementById('cancel-camera-btn');
 const purchaseSummary = document.getElementById('purchase-summary');
 const statsTitle = document.getElementById('stats-title');
-const statsMonthSelect = document.getElementById('stats-month-select');
+
 const categoryChartContainer = document.getElementById('category-chart-container');
 const noDataPieChart = document.getElementById('no-data-pie-chart');
 const comparisonChartContainer = document.getElementById('comparison-chart-container');
@@ -92,7 +92,7 @@ const categoryDetailsModal = document.getElementById('category-details-modal');
 const closeCategoryDetailsBtn = document.getElementById('close-category-details-btn');
 const categoryDetailsTitle = document.getElementById('category-details-title');
 const categoryDetailsTableBody = document.getElementById('category-details-table-body');
-const budgetMonthSelect = document.getElementById('budget-month-select');
+
 const budgetsList = document.getElementById('budgets-list');
 const saveBudgetBtn = document.getElementById('save-budget-btn');
 const copyBudgetBtn = document.getElementById('copy-budget-btn');
@@ -114,9 +114,9 @@ const filterKeyword = document.getElementById('filter-keyword');
 const filterDateStart = document.getElementById('filter-date-start');
 const filterDateEnd = document.getElementById('filter-date-end');
 const filterDateRange = document.getElementById('filter-date-range');
-const filterCategory = document.getElementById('filter-category');
-const filterShop = document.getElementById('filter-shop');
-const filterBudget = document.getElementById('filter-budget');
+let filterCategoryValue = '';
+let filterShopValue = '';
+let filterBudgetValue = '';
 const filterMinAmount = document.getElementById('filter-min-amount');
 const filterMaxAmount = document.getElementById('filter-max-amount');
 const clearFiltersBtn = document.getElementById('clear-filters-btn');
@@ -129,20 +129,20 @@ const recurringExpensesList = document.getElementById('recurring-expenses-list')
 const addRecurringExpenseForm = document.getElementById('add-recurring-expense-form');
 const recurringName = document.getElementById('recurring-name');
 const recurringAmount = document.getElementById('recurring-amount');
-const recurringCategory = document.getElementById('recurring-category');
-const scheduleTypeSelect = document.getElementById('recurring-schedule-type');
+let recurringCategoryValue = '';
+let scheduleTypeValue = 'monthly';
 const monthlySettings = document.getElementById('recurring-monthly-settings');
 const weeklySettings = document.getElementById('recurring-weekly-settings');
 const intervalSettings = document.getElementById('recurring-interval-settings');
 const recurringDayOfMonth = document.getElementById('recurring-day-of-month');
-const recurringDayOfWeek = document.getElementById('recurring-day-of-week');
+let recurringDayOfWeekValue = '1';
 const recurringInterval = document.getElementById('recurring-interval');
 const recurringStartDate = document.getElementById('recurring-start-date');
 
 // Elementy budżetów specjalnych
 const specialBudgetsList = document.getElementById('special-budgets-list');
 const addSpecialBudgetForm = document.getElementById('add-special-budget-form');
-const budgetTypeSelect = document.getElementById('budget-type-select');
+let budgetTypeSelectValue = 'monthly';
 
 // Elementy modala edycji budżetu specjalnego
 const editSpecialBudgetModal = document.getElementById('edit-special-budget-modal');
@@ -561,7 +561,7 @@ function setupAppEventListeners() {
     startCameraBtn.addEventListener('click', startCamera);
     cancelCameraBtn.addEventListener('click', stopCamera);
     capturePhotoBtn.addEventListener('click', capturePhoto);
-    statsMonthSelect.addEventListener('change', updateCategoryPieChart);
+
 
     // Obsługa modala szczegółów kategorii
     closeCategoryDetailsBtn.addEventListener('click', () => categoryDetailsModal.classList.add('hidden'));
@@ -591,7 +591,7 @@ function setupAppEventListeners() {
     });
 
     // Zarządzanie budżetem
-    budgetMonthSelect.addEventListener('change', renderBudgetInputs);
+
     saveBudgetBtn.addEventListener('click', handleSaveBudget);
     copyBudgetBtn.addEventListener('click', () => copyBudgetModal.classList.remove('hidden'));
 
@@ -618,24 +618,24 @@ function setupAppEventListeners() {
         filterArrow.classList.toggle('rotate-180');
     });
 
-    const filterElements = [filterKeyword, filterCategory, filterShop, filterBudget, filterMinAmount, filterMaxAmount, filterDateRange, filterDateStart, filterDateEnd];
+    const filterElements = [filterKeyword, filterMinAmount, filterMaxAmount, filterDateRange, filterDateStart, filterDateEnd];
     filterElements.forEach(el => {
-        el.addEventListener('change', handleFilterChange); // Użyj 'change', aby reagować po zakończeniu edycji
+        if (el) el.addEventListener('change', handleFilterChange);
     });
 
     clearFiltersBtn.addEventListener('click', () => {
         filterKeyword.value = '';
         filterDateStart.value = '';
         filterDateEnd.value = '';
-        filterCategory.value = '';
+        filterCategoryValue = '';
         const catLabel = document.getElementById('filter-category-label');
         if (catLabel) catLabel.textContent = 'Wszystkie kategorie';
 
-        filterShop.value = '';
+        filterShopValue = '';
         const shopLabel = document.getElementById('filter-shop-label');
         if (shopLabel) shopLabel.textContent = 'Wszystkie sklepy';
 
-        filterBudget.value = '';
+        filterBudgetValue = '';
         const budgetLabel = document.getElementById('filter-budget-label');
         if (budgetLabel) budgetLabel.textContent = 'Wszystkie budżety';
 
@@ -647,7 +647,7 @@ function setupAppEventListeners() {
     // Logika wydatków cyklicznych
     addRecurringExpenseForm.addEventListener('submit', handleAddOrUpdateRecurringExpense);
     recurringExpensesList.addEventListener('click', handleRecurringExpenseActions);
-    scheduleTypeSelect.addEventListener('change', handleScheduleTypeChange);
+    // scheduleTypeSelect event is now called directly from drawer callback
 
     // Logika budżetów specjalnych
     addSpecialBudgetForm.addEventListener('submit', handleAddSpecialBudget);
@@ -670,33 +670,28 @@ function setupAppEventListeners() {
         }
 
         openSelectionDrawer('Wybierz budżet', options, (val, label) => {
-            const select = document.getElementById('budget-type-select');
-            // Ensure the value exists in the select, if not add it temporarily
-            let exists = Array.from(select.options).some(opt => opt.value === val);
-            if (!exists) {
-                const newOpt = document.createElement('option');
-                newOpt.value = val;
-                newOpt.textContent = label;
-                select.appendChild(newOpt);
-            }
-            select.value = val;
+            budgetTypeSelectValue = val;
             document.getElementById('budget-type-label').textContent = label;
             document.getElementById('budget-type-icon').innerHTML = `<span>${val === 'monthly' ? '📅' : '⭐'}</span>`;
-            select.dispatchEvent(new Event('change'));
-        }, document.getElementById('budget-type-select').value);
+        }, budgetTypeSelectValue);
     });
 
     document.getElementById('budget-month-btn')?.addEventListener('click', () => {
-        const select = document.getElementById('budget-month-select');
-        const options = Array.from(select.options).map(opt => ({
-            value: opt.value,
-            label: opt.textContent
-        }));
+        const options = [];
+        const today = new Date();
+        for (let i = -2; i <= 12; i++) {
+            const d = new Date(today.getFullYear(), today.getMonth() + i, 1);
+            const mStr = d.toISOString().substring(0, 7);
+            const label = d.toLocaleString('pl-PL', { month: 'long', year: 'numeric' });
+            options.push({ value: mStr, label: label });
+        }
+        options.sort((a, b) => b.value.localeCompare(a.value));
+
         openSelectionDrawer('Wybierz miesiąc', options, (val, label) => {
-            select.value = val;
+            budgetMonthValue = val;
             document.getElementById('budget-month-label').textContent = label;
-            select.dispatchEvent(new Event('change'));
-        }, select.value);
+            if (typeof renderBudgetInputs === 'function') renderBudgetInputs();
+        }, budgetMonthValue);
     });
 
     document.getElementById('recurring-category-btn')?.addEventListener('click', () => {
@@ -707,13 +702,12 @@ function setupAppEventListeners() {
             color: getCategoryColor(cat) + '20'
         }));
         openSelectionDrawer('Kategoria subskrypcji', options, (val, label) => {
-            const select = document.getElementById('recurring-category');
-            select.value = val;
+            recurringCategoryValue = val;
             document.getElementById('recurring-category-label').textContent = label;
             const icon = categoryIcons[val] || 'fa-tag';
             const color = getCategoryColor(val);
             document.getElementById('recurring-category-icon').innerHTML = `<i class="fas ${icon}" style="color: ${color}"></i>`;
-        }, document.getElementById('recurring-category').value, 'grid', false);
+        }, recurringCategoryValue, 'grid', false);
     });
 
     const addCategoryDrawerBtn = document.getElementById('add-category-drawer-btn');
@@ -780,11 +774,10 @@ function setupAppEventListeners() {
             { value: 'daily_interval', label: 'Interwał dni', icon: '🔢' }
         ];
         openSelectionDrawer('Częstotliwość', options, (val, label) => {
-            const select = document.getElementById('recurring-schedule-type');
-            select.value = val;
+            scheduleTypeValue = val;
             document.getElementById('recurring-schedule-label').textContent = label;
-            select.dispatchEvent(new Event('change'));
-        }, document.getElementById('recurring-schedule-type').value);
+            handleScheduleTypeChange();
+        }, scheduleTypeValue);
     });
 
     document.getElementById('recurring-day-of-week-btn')?.addEventListener('click', () => {
@@ -798,10 +791,9 @@ function setupAppEventListeners() {
             { value: '0', label: 'Niedziela' }
         ];
         openSelectionDrawer('Dzień tygodnia', options, (val, label) => {
-            const select = document.getElementById('recurring-day-of-week');
-            select.value = val;
+            recurringDayOfWeekValue = val;
             document.getElementById('recurring-day-of-week-label').textContent = label;
-        }, document.getElementById('recurring-day-of-week').value);
+        }, recurringDayOfWeekValue);
     });
 
     // DODAJ TEN EVENT LISTENER TUTAJ:
@@ -886,9 +878,9 @@ const handleInfiniteScroll = () => {
 async function handleFilterChange() {
     const params = new URLSearchParams();
     if (filterKeyword.value) params.append('keyword', filterKeyword.value);
-    if (filterCategory.value) params.append('category', filterCategory.value);
-    if (filterShop.value) params.append('shop', filterShop.value);
-    if (filterBudget.value) params.append('budget', filterBudget.value);
+    if (filterCategoryValue) params.append('category', filterCategoryValue);
+    if (filterShopValue) params.append('shop', filterShopValue);
+    if (filterBudgetValue) params.append('budget', filterBudgetValue);
     if (filterMinAmount.value) params.append('minAmount', filterMinAmount.value);
     if (filterMaxAmount.value) params.append('maxAmount', filterMaxAmount.value);
 
@@ -927,28 +919,21 @@ async function handleFilterChange() {
 
 function populateAllSelects() {
     // Kategorie
-    const categoryOptions = allCategories.map(cat => `<option value="${cat}">${cat.charAt(0).toUpperCase() + cat.slice(1)}</option>`).join('');
-    filterCategory.innerHTML = '<option value="">Wszystkie kategorie</option>' + categoryOptions;
-    recurringCategory.innerHTML = categoryOptions;
+    // Zmienne powiązane (recurringCategory) są zarządzane dynamicznie, a populate już tylko dla filterCategory... 
+    // czekaj, filterCategory zrobiliśmy bez DOM.Więc nie mapujemy opcji.
 
     // Update dynamic item category selects if the function exists
     if (typeof updateAllCategorySelects === 'function') {
         updateAllCategorySelects();
     }
 
-    // Sklepy
-    const shopOptions = allShops.map(shop => `<option value="${shop}">${shop}</option>`).join('');
-    filterShop.innerHTML = '<option value="">Wszystkie sklepy</option>' + shopOptions;
-
+    // Sklepy (tylko zmienne globalne - brak ukrytych selectów dla filtrów)
     populateBudgetFilterSelect();
 }
 
 function populateBudgetFilterSelect() {
-    let budgetOptionsHTML = '<option value="">Wszystkie budżety</option><option value="monthly">Budżet miesięczny</option>';
-    allSpecialBudgets.forEach(budget => {
-        budgetOptionsHTML += `<option value="${budget.id}">${budget.name}</option>`;
-    });
-    filterBudget.innerHTML = budgetOptionsHTML;
+    // Ta funkcja wcześniej wpisywała opcje do ukrytego selecta filterBudgetValue. 
+    // Teraz nie robi nic z DOM, ponieważ opcje budowane są w locie w ui.js.
 }
 
 async function fetchInitialData(shouldSwitchToDefault = true) {
@@ -1030,35 +1015,10 @@ async function renderAll() {
 }
 
 function populateBudgetTypeSelect() {
-    budgetTypeSelect.innerHTML = '<option value="monthly">Budżet miesięczny</option>';
-    allSpecialBudgets.forEach(budget => {
-        const option = document.createElement('option');
-        option.value = budget.id;
-        option.textContent = budget.name;
-        budgetTypeSelect.appendChild(option);
-    });
-
-    // Populate custom popup
-    const popup = document.getElementById('budget-type-popup');
+    budgetTypeSelectValue = 'monthly';
     const label = document.getElementById('budget-type-label');
-    if (popup && label) {
-        popup.innerHTML = '';
-        Array.from(budgetTypeSelect.options).forEach(opt => {
-            const btn = document.createElement('button');
-            btn.type = 'button';
-            btn.className = 'w-full text-left px-3 py-2 rounded-lg text-sm text-white hover:bg-white/10 transition-colors';
-            btn.textContent = opt.textContent;
-            btn.onclick = (e) => {
-                e.stopPropagation();
-                budgetTypeSelect.value = opt.value;
-                label.textContent = opt.textContent;
-                popup.classList.add('hidden');
-                // Trigger change event if needed
-                budgetTypeSelect.dispatchEvent(new Event('change'));
-            };
-            popup.appendChild(btn);
-        });
-        updateCustomDropdownValue('budget-type-select', 'budget-type-label');
+    if (label) {
+        label.textContent = 'Budżet miesięczny';
     }
 }
 
@@ -1214,8 +1174,8 @@ async function handleAddOrUpdateRecurringExpense(e) {
 
     const name = recurringName.value.trim();
     const amount = parseFloat(recurringAmount.value);
-    const category = recurringCategory.value;
-    const scheduleType = scheduleTypeSelect.value;
+    const category = recurringCategoryValue;
+    const scheduleType = scheduleTypeValue;
 
     let schedule = { type: scheduleType };
     let isValid = false;
@@ -1229,7 +1189,7 @@ async function handleAddOrUpdateRecurringExpense(e) {
             }
             break;
         case 'weekly':
-            const dayOfWeek = parseInt(recurringDayOfWeek.value);
+            const dayOfWeek = parseInt(recurringDayOfWeekValue);
             if (dayOfWeek >= 0 && dayOfWeek <= 6) {
                 schedule.dayOfWeek = dayOfWeek;
                 isValid = true;
@@ -1307,17 +1267,17 @@ function enterRecurringExpenseEditMode(expenseId) {
 
     recurringName.value = expense.name;
     recurringAmount.value = expense.amount;
-    recurringCategory.value = expense.category;
+    recurringCategoryValue = expense.category;
 
     if (expense.schedule) {
-        scheduleTypeSelect.value = expense.schedule.type;
+        scheduleTypeValue = expense.schedule.type;
         handleScheduleTypeChange(); // Update visibility and required attributes
         switch (expense.schedule.type) {
             case 'monthly':
                 recurringDayOfMonth.value = expense.schedule.dayOfMonth;
                 break;
             case 'weekly':
-                recurringDayOfWeek.value = expense.schedule.dayOfWeek;
+                recurringDayOfWeekValue = String(expense.schedule.dayOfWeek);
                 break;
             case 'daily_interval':
                 recurringInterval.value = expense.schedule.interval;
@@ -1326,7 +1286,7 @@ function enterRecurringExpenseEditMode(expenseId) {
         }
     } else {
         // Handle legacy data with no schedule
-        scheduleTypeSelect.value = 'monthly';
+        scheduleTypeValue = 'monthly';
         handleScheduleTypeChange();
     }
 
@@ -1342,7 +1302,7 @@ function exitRecurringExpenseEditMode() {
 }
 
 function handleScheduleTypeChange() {
-    const type = scheduleTypeSelect.value;
+    const type = scheduleTypeValue;
 
     // Toggle visibility
     monthlySettings.classList.toggle('hidden', type !== 'monthly');
@@ -1351,7 +1311,6 @@ function handleScheduleTypeChange() {
 
     // Toggle required attribute
     recurringDayOfMonth.required = (type === 'monthly');
-    recurringDayOfWeek.required = (type === 'weekly');
     recurringInterval.required = (type === 'daily_interval');
     recurringStartDate.required = (type === 'daily_interval');
 }

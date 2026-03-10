@@ -69,11 +69,11 @@ function switchTab(tabName, pushToHistory = true) {
 
 function initFilterDrawers() {
     const categoryBtn = document.getElementById('filter-category-btn');
-    const filterCategoryEl = document.getElementById('filter-category');
-    if (categoryBtn && filterCategoryEl) {
+    if (categoryBtn) {
         categoryBtn.onclick = () => {
-            openCategoryDrawer(null, filterCategoryEl.value, (cat) => {
-                filterCategoryEl.value = cat;
+            // openCategoryDrawer obsługuje pobieranie wszystkich opcji za nas
+            openCategoryDrawer(null, typeof filterCategoryValue !== 'undefined' ? filterCategoryValue : '', (cat) => {
+                if (typeof filterCategoryValue !== 'undefined') filterCategoryValue = cat;
                 document.getElementById('filter-category-label').textContent = cat ? cat.charAt(0).toUpperCase() + cat.slice(1) : 'Wszystkie kategorie';
                 if (typeof handleFilterChange === 'function') handleFilterChange();
             });
@@ -81,28 +81,37 @@ function initFilterDrawers() {
     }
 
     const budgetBtn = document.getElementById('filter-budget-btn');
-    const filterBudgetEl = document.getElementById('filter-budget');
-    if (budgetBtn && filterBudgetEl) {
+    if (budgetBtn) {
         budgetBtn.onclick = () => {
-            const options = Array.from(filterBudgetEl.options).map(opt => ({ value: opt.value, label: opt.textContent }));
+            const options = [
+                { value: '', label: 'Wszystkie budżety' },
+                { value: 'monthly', label: 'Budżet miesięczny' }
+            ];
+            if (typeof allSpecialBudgets !== 'undefined') {
+                allSpecialBudgets.forEach(b => options.push({ value: b.id, label: b.name }));
+            }
+            const currentVal = typeof filterBudgetValue !== 'undefined' ? filterBudgetValue : '';
             openSelectionDrawer('Wybierz budżet', options, (val, label) => {
-                filterBudgetEl.value = val;
+                if (typeof filterBudgetValue !== 'undefined') filterBudgetValue = val;
                 document.getElementById('filter-budget-label').textContent = label;
                 if (typeof handleFilterChange === 'function') handleFilterChange();
-            }, filterBudgetEl.value);
+            }, currentVal);
         };
     }
 
     const shopBtn = document.getElementById('filter-shop-btn');
-    const filterShopEl = document.getElementById('filter-shop');
-    if (shopBtn && filterShopEl) {
+    if (shopBtn) {
         shopBtn.onclick = () => {
-            const options = Array.from(filterShopEl.options).map(opt => ({ value: opt.value, label: opt.textContent }));
+            const options = [{ value: '', label: 'Wszystkie sklepy' }];
+            if (typeof allShops !== 'undefined') {
+                allShops.forEach(shop => options.push({ value: shop, label: shop }));
+            }
+            const currentVal = typeof filterShopValue !== 'undefined' ? filterShopValue : '';
             openSelectionDrawer('Wybierz sklep', options, (val, label) => {
-                filterShopEl.value = val;
+                if (typeof filterShopValue !== 'undefined') filterShopValue = val;
                 document.getElementById('filter-shop-label').textContent = label;
                 if (typeof handleFilterChange === 'function') handleFilterChange();
-            }, filterShopEl.value);
+            }, currentVal);
         };
     }
 
@@ -333,11 +342,15 @@ function enterEditMode(purchaseId) {
 
     // Set the budget type dropdown
     if (purchase.specialBudgetId) {
-        budgetTypeSelect.value = purchase.specialBudgetId;
+        budgetTypeSelectValue = purchase.specialBudgetId;
     } else {
-        budgetTypeSelect.value = 'monthly';
+        budgetTypeSelectValue = 'monthly';
     }
-    updateCustomDropdownValue('budget-type-select', 'budget-type-label');
+    // Update label text based on budget type
+    const budgetLabel = document.getElementById('budget-type-label');
+    if (budgetLabel) {
+        budgetLabel.textContent = budgetTypeSelectValue === 'monthly' ? 'Miesięczny' : 'Specjalny'; // Or find full name from allSpecialBudgets
+    }
 
     purchaseFormTitle.textContent = 'Edytuj istniejący zakup';
     purchaseFormSubmitBtn.textContent = 'Zaktualizuj zakup';
@@ -357,13 +370,9 @@ function exitEditMode() {
     itemsContainer.innerHTML = '';
     const dateEl = document.getElementById('date');
     if (dateEl) dateEl.value = new Date().toISOString().split('T')[0];
-    budgetTypeSelect.value = 'monthly'; // Reset budget dropdown
+    budgetTypeSelectValue = 'monthly'; // Reset budget dropdown
     document.getElementById('budget-type-label').textContent = 'Miesięczny';
-    document.getElementById('budget-type-icon').innerHTML = '<span>💰</span>';
-
-    if (typeof updateCustomDropdownValue === 'function') {
-        updateCustomDropdownValue('budget-type-select', 'budget-type-label');
-    }
+    document.getElementById('budget-type-icon').innerHTML = '<span>📅</span>';
     addItemRow();
 
     purchaseFormTitle.textContent = 'Dodaj nowy zakup ręcznie';
