@@ -238,8 +238,7 @@ function closeSelectionDrawer() {
     }, 300);
 }
 
-// Obsolete, replaced by openSelectionDrawer
-function renderCategoryDrawerGrid(activeCategory, onSelectOverride = null) { }
+
 
 function selectCategoryFromDrawer(category) {
     if (activeCategoryRow) {
@@ -364,7 +363,7 @@ function handleFABScroll(e) {
     // If near bottom, show
     if (containerHeight + currentScrollY >= contentHeight - 50) {
         if (fabContainer.classList.contains('hide')) {
-            console.log('FAB: Default Show (Bottom Reached)');
+
             fabContainer.classList.remove('hide');
         }
         return;
@@ -374,7 +373,7 @@ function handleFABScroll(e) {
     if (currentScrollY > lastScrollY && currentScrollY > 50) {
         // Scrolling DOWN
         if (!fabContainer.classList.contains('hide')) {
-            console.log('FAB: Hiding (Down)', currentScrollY);
+
             fabContainer.classList.add('hide');
             fabActions.classList.add('hidden');
             mainFabBtn.classList.remove('expanded');
@@ -382,7 +381,7 @@ function handleFABScroll(e) {
     } else if (currentScrollY < lastScrollY) {
         // Scrolling UP
         if (fabContainer.classList.contains('hide')) {
-            console.log('FAB: Showing (Up)', currentScrollY);
+
             fabContainer.classList.remove('hide');
         }
     }
@@ -488,7 +487,7 @@ function setupAppEventListeners() {
     window.addEventListener('resize', () => {
         clearTimeout(resizeTimer);
         resizeTimer = setTimeout(() => {
-            console.log('Resize detected, re-rendering charts...');
+
             if (document.getElementById('stats-tab').classList.contains('active')) {
                 renderStatistics();
             }

@@ -450,29 +450,29 @@ function capturePhoto() {
 
 // --- Obsługa plików ---
 function handleFileSelect(event) {
-    console.log("File selection initiated.");
+
     currentFile = event.target.files[0]; // sets currentFile from app.js
     if (currentFile) {
-        console.log(`File selected: ${currentFile.name} (Type: ${currentFile.type})`);
+
         if (currentFile.type.startsWith('image/')) {
             imagePreview.src = URL.createObjectURL(currentFile);
             imagePreviewContainer.classList.remove('hidden');
-            console.log("Image preview updated.");
+
         } else {
             imagePreviewContainer.classList.add('hidden');
-            console.log("Non-image file selected, hiding preview.");
+
         }
 
         // --- FIX: Automatically trigger analysis and switch to 'add' tab ---
-        console.log("Attempting to call handleAnalyzeReceipt...");
+
         try {
             // Ensure handleAnalyzeReceipt is accessible globally or imported
             if (typeof handleAnalyzeReceipt === 'function') {
                 handleAnalyzeReceipt();
-                console.log("handleAnalyzeReceipt() called successfully.");
+
 
                 // --- NEW: Switch to 'add' tab after analysis starts ---
-                console.log("Switching to 'add' tab.");
+
                 switchTab('add');
                 // --- END NEW ---
 
@@ -485,7 +485,7 @@ function handleFileSelect(event) {
         // --- END FIX ---
 
     } else {
-        console.log("No file was selected.");
+
         imagePreviewContainer.classList.add('hidden');
         currentFile = null; // Ensure currentFile is null if no file is selected
     }

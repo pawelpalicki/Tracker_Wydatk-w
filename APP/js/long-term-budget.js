@@ -756,9 +756,9 @@ function toggleMonthlyDetailsTable() {
 }
 
 function renderCategoryProgressBars(data) {
-    console.log('renderCategoryProgressBars called with data:', data);
+
     const container = document.getElementById('category-progress-bars');
-    console.log('Container found:', container);
+
     container.innerHTML = '';
 
     // Agreguj dane po kategoriach

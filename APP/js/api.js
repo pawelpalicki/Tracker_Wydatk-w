@@ -11,11 +11,11 @@ async function apiCall(endpoint, method = 'GET', body = null) {
 
     try {
         const token = await user.getIdToken();
-        console.log('apiCall: Token otrzymany, długość:', token.length);
+
 
         // Wybierz odpowiedni nagłówek w zależności od środowiska
         const authHeaderName = IS_DEVELOPMENT ? 'X-Firebase-Token' : 'Authorization';
-        console.log('apiCall: Używam nagłówka:', authHeaderName);
+
 
         const headers = {
             'Content-Type': 'application/json',
@@ -25,10 +25,10 @@ async function apiCall(endpoint, method = 'GET', body = null) {
         const options = { method, headers };
         if (body) options.body = JSON.stringify(body);
 
-        console.log('apiCall: Wywołuję', method, `${API_BASE_URL}${endpoint}`);
+
         const response = await fetch(`${API_BASE_URL}${endpoint}`, options);
 
-        console.log('apiCall: Odpowiedź status:', response.status);
+
 
         if (response.status === 401) {
             console.error('apiCall: Błąd 401 - token nieprawidłowy');
