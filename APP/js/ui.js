@@ -1,9 +1,40 @@
 // Tracker Wydatków - UI Functions
 
+// --- Hierarchia widoków dla nawigacji ---
+const VIEW_DEPTH = {
+    'stats': 0,
+    'list': 1,
+    'add': 1,
+    'analysis': 1,
+    'settings': 1,
+    'special-budgets': 1,
+    'settings-categories': 2,
+    'settings-budget': 2,
+    'settings-recurring': 2
+};
+
 // --- Nawigacja i zakładki ---
 function switchTab(tabName, pushToHistory = true) {
+    const activeTab = document.querySelector('.tab-content.active');
+    const currentTabId = activeTab ? activeTab.id.replace('-tab', '') : '';
+
+    if (tabName === currentTabId) return;
+
     if (pushToHistory) {
-        history.pushState({ tab: tabName }, "", "");
+        const currentDepth = VIEW_DEPTH[currentTabId] || 0;
+        const newDepth = VIEW_DEPTH[tabName] || 0;
+
+        if (newDepth > currentDepth) {
+            // Wchodzimy głębiej (np. 0->1 lub 1->2) - PUSH
+            history.pushState({ type: 'tab', id: tabName }, "", "");
+        } else if (newDepth === currentDepth && newDepth !== 0) {
+            // Przełączanie między zakładkami na tym samym poziomie (np. List -> Add) - REPLACE
+            history.replaceState({ type: 'tab', id: tabName }, "", "");
+        } else {
+            // Powrót do kokpitu (newDepth < currentDepth) - PUSH (aby stworzyć punkt powrotu)
+            // Wyjątek: jeśli idziemy do stats, zawsze upewniamy się, że to nowy punkt
+            history.pushState({ type: 'tab', id: tabName }, "", "");
+        }
     }
     // Reset scroll to top
     window.scrollTo({ top: 0, behavior: 'instant' });
@@ -134,6 +165,9 @@ function openSelectionDrawer(title, options, onSelect, selectedValue = null, lay
 
     // Store the callback globally for auto-selection
     window.currentOnSelect = onSelect;
+
+    // Push state to history for back button support
+    history.pushState({ type: 'drawer', id: 'category-drawer' }, "", "");
 
     // Reset drawer state
     if (addBtn) addBtn.classList.remove('hidden');
@@ -387,6 +421,37 @@ function exitEditMode() {
     updatePurchaseSummary();
 }
 
+// --- Zarządzanie Nakładkami (Modale, Popup-y) ---
+function openOverlay(elementId) {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+
+    // Push state to history so "back" closes only this overlay
+    history.pushState({ type: 'overlay', id: elementId }, "", "");
+    
+    el.classList.remove('hidden');
+    if (elementId.includes('modal')) {
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+function closeOverlay(elementId, isFromPopState = false) {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+
+    if (!isFromPopState) {
+        history.back();
+        return;
+    }
+
+    el.classList.add('hidden');
+    // Check if any other modal is still open before restoring scroll
+    const otherOpenModals = document.querySelectorAll('.modal:not(.hidden)');
+    if (otherOpenModals.length === 0) {
+        document.body.style.overflow = '';
+    }
+}
+
 // --- Modale ---
 function renderCategoryDetailsModal(category, items) {
     categoryDetailsTitle.textContent = `Szczegóły dla: ${category.charAt(0).toUpperCase() + category.slice(1)}`;
@@ -407,7 +472,7 @@ function renderCategoryDetailsModal(category, items) {
             categoryDetailsTableBody.appendChild(row);
         });
     }
-    categoryDetailsModal.classList.remove('hidden');
+    openOverlay('category-details-modal');
 }
 
 // --- Obsługa aparatu ---

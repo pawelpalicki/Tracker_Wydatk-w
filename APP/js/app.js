@@ -222,11 +222,17 @@ function openCategoryDrawer(row, currentCategory, onSelect = null) {
     }, currentCategory, 'grid', row !== null);
 }
 
-function closeSelectionDrawer() {
+function closeSelectionDrawer(isFromPopState = false) {
     const overlay = document.getElementById('category-drawer-overlay');
     const drawer = document.getElementById('category-drawer');
 
     if (!overlay || !drawer) return;
+
+    // If closed manually (not via back button), trigger back to sync history
+    if (!isFromPopState) {
+        history.back();
+        return;
+    }
 
     overlay.classList.remove('active');
     drawer.classList.remove('active');
@@ -387,6 +393,41 @@ function handleFABScroll(e) {
     }
 }
 
+// Floating Action Button (FAB) logic
+let isFabExpanded = false;
+
+function toggleFab(isFromPopState = false) {
+    if (!isFromPopState && !isFabExpanded) {
+        // Opening FAB - push state
+        history.pushState({ type: 'fab' }, "", "");
+    } else if (!isFromPopState && isFabExpanded) {
+        // Closing manually - sync history
+        history.back();
+        return;
+    }
+
+    isFabExpanded = !isFabExpanded;
+    fabActions.classList.toggle('hidden', !isFabExpanded);
+    fabActions.classList.toggle('expanded', isFabExpanded);
+    mainFabBtn.classList.toggle('expanded', isFabExpanded);
+
+    const overlay = document.getElementById('fab-overlay');
+    overlay.classList.toggle('hidden', !isFabExpanded);
+    setTimeout(() => {
+        overlay.classList.toggle('active', isFabExpanded);
+    }, 10);
+
+    // Animate sub-buttons
+    const subItems = fabActions.querySelectorAll('.fab-sub-item');
+    subItems.forEach((item, index) => {
+        if (isFabExpanded) {
+            item.style.transitionDelay = `${index * 50}ms`;
+        } else {
+            item.style.transitionDelay = `${(subItems.length - 1 - index) * 50}ms`;
+        }
+    });
+}
+
 // --- Główna Logika Aplikacji ---
 function setupAppEventListeners() {
     // Bottom nav tabs
@@ -410,8 +451,40 @@ function setupAppEventListeners() {
 
     // Browser back button support (obsługuje też natywny systemowy gest swipe wtecz: iOS / Android)
     window.addEventListener('popstate', (event) => {
-        // 1. Odszukaj wszystkie modale i pop-upy
-        const openModals = document.querySelectorAll(`
+        const state = event.state;
+
+        // --- 1. OBSŁUGA WARSTW (OVERLAYS) ---
+        
+        // A. Zamknij FAB
+        if (isFabExpanded) {
+            isFabExpanded = false;
+            fabActions.classList.add('hidden');
+            fabActions.classList.remove('expanded');
+            mainFabBtn.classList.remove('expanded');
+            const overlay = document.getElementById('fab-overlay');
+            if (overlay) {
+                overlay.classList.add('hidden');
+                overlay.classList.remove('active');
+            }
+            return; // Przechwycono wstecz
+        }
+
+        // B. Zamknij Overlay (Modal/Popup) jeśli stan to 'overlay'
+        if (state && state.type === 'overlay') {
+            // Myślimy odwrotnie: jeśli w historii JEST stan overlay, to go pokazujemy
+            // Ale tu jesteśmy w popstate, co oznacza że WŁAŚNIE WRÓCILIŚMY ze stanu overlay.
+            // Więc szukamy co jest aktualnie otwarte w DOM i to zamykamy.
+        }
+
+        // B. Zamknij Szuflady (Selection Drawer)
+        const drawerOverlay = document.getElementById('category-drawer-overlay');
+        if (drawerOverlay && drawerOverlay.classList.contains('active')) {
+            closeSelectionDrawer(true);
+            return; // Przechwycono wstecz
+        }
+
+        // C. Zamknij Modale i Pop-upy
+        const activeModals = document.querySelectorAll(`
             #category-details-modal:not(.hidden), 
             #receipt-modal:not(.hidden), 
             #receipt-modal-analysis:not(.hidden), 
@@ -420,42 +493,29 @@ function setupAppEventListeners() {
             #period-type-popup:not(.hidden), 
             #shop-autocomplete-list:not(.hidden),
             #custom-start-popup:not(.hidden),
-            #custom-end-popup:not(.hidden)
+            #custom-end-popup:not(.hidden),
+            #copy-budget-modal:not(.hidden),
+            #edit-special-budget-modal:not(.hidden)
         `);
 
-        let modalClosed = false;
-        openModals.forEach(modal => {
-            if (window.getComputedStyle(modal).display !== 'none') {
-                modal.classList.add('hidden');
-                modalClosed = true;
-            }
-        });
-
-        // Pobranie bieżącej aktywnej zakładki *przed* zastosowaniem jakichkolwiek widoków podyktowanych cofką
-        const activeTab = document.querySelector('.tab-content.active');
-        const currentTabId = activeTab ? activeTab.id.replace('-tab', '') : 'stats';
-
-        // Jeżeli wciśnięto/wykonano sprzętowy WSTECZ / SWIPE WSTECZ:
-        if (modalClosed) {
-            // a) Jeśli był otwarty modal, tylko go zamknęto, pozostajemy w tej samej zakładce!
-            //    Musimy "odkleić" ruch do tyłu, wpisując z powrotem obecny stan aplikacji do historii
-            history.pushState({ tab: currentTabId }, "", "");
-            return;
+        if (activeModals.length > 0) {
+            activeModals.forEach(m => {
+                if (typeof closeOverlay === 'function') {
+                    closeOverlay(m.id, true);
+                } else {
+                    m.classList.add('hidden');
+                }
+            });
+            return; // Przechwycono wstecz
         }
 
-        // b) Jeśli nie ma otwartych modeli, wykonujemy hierarchiczny powrót
-        if (currentTabId.startsWith('settings-') && currentTabId !== 'settings') {
-            // Z głębokich ustawień, jeden poziom w górę do Głównego Panelu 'Ustawień'
-            switchTab('settings', false);
-        } else if (currentTabId !== 'stats') {
-            // Ze wszystkich innych roootowych zakładek prosto do głównego 'Kokpitu'
+        // --- 2. NAWIGACJA MIĘDZY WIDOKAMI (TABS) ---
+        
+        if (state && state.type === 'tab') {
+            switchTab(state.id, false);
+        } else if (!state) {
+            // Jeśli brak stanu (np. powrót do startu sesji), wymuś Kokpit
             switchTab('stats', false);
-        } else {
-            // c) Użytkownik jest na samym Kokpicie ('stats')
-            //    Pozwalamy przeglądarce działać natywnie, doprowadzając do m.in wyjścia z aplikacji
-            if (event.state && event.state.tab) {
-                switchTab(event.state.tab, false);
-            }
         }
     });
 
@@ -564,10 +624,10 @@ function setupAppEventListeners() {
 
 
     // Obsługa modala szczegółów kategorii
-    closeCategoryDetailsBtn.addEventListener('click', () => categoryDetailsModal.classList.add('hidden'));
+    closeCategoryDetailsBtn.addEventListener('click', () => closeOverlay('category-details-modal'));
     categoryDetailsModal.addEventListener('click', (e) => {
         if (e.target === categoryDetailsModal) {
-            categoryDetailsModal.classList.add('hidden');
+            closeOverlay('category-details-modal');
         }
     });
     document.getElementById('category-chart').addEventListener('click', handleCategoryChartClick);
@@ -593,14 +653,14 @@ function setupAppEventListeners() {
     // Zarządzanie budżetem
 
     saveBudgetBtn.addEventListener('click', handleSaveBudget);
-    copyBudgetBtn.addEventListener('click', () => copyBudgetModal.classList.remove('hidden'));
+    copyBudgetBtn.addEventListener('click', () => openOverlay('copy-budget-modal'));
 
     // Modal kopiowania budżetu
-    closeCopyBudgetModal.addEventListener('click', () => copyBudgetModal.classList.add('hidden'));
-    cancelCopyBudget.addEventListener('click', () => copyBudgetModal.classList.add('hidden'));
+    closeCopyBudgetModal.addEventListener('click', () => closeOverlay('copy-budget-modal'));
+    cancelCopyBudget.addEventListener('click', () => closeOverlay('copy-budget-modal'));
     copyBudgetModal.addEventListener('click', (e) => {
         if (e.target === copyBudgetModal) {
-            copyBudgetModal.classList.add('hidden');
+            closeOverlay('copy-budget-modal');
         }
     });
 
@@ -609,6 +669,7 @@ function setupAppEventListeners() {
         btn.addEventListener('click', () => {
             const monthsCount = parseInt(btn.dataset.months);
             handleCopyBudget(monthsCount);
+            closeOverlay('copy-budget-modal');
         });
     });
 
@@ -653,8 +714,8 @@ function setupAppEventListeners() {
     addSpecialBudgetForm.addEventListener('submit', handleAddSpecialBudget);
     specialBudgetsList.addEventListener('click', handleSpecialBudgetActions);
     editSpecialBudgetForm.addEventListener('submit', handleEditSpecialBudgetSubmit);
-    closeEditSpecialBudgetModalBtn.addEventListener('click', () => editSpecialBudgetModal.classList.add('hidden'));
-    cancelEditSpecialBudgetBtn.addEventListener('click', () => editSpecialBudgetModal.classList.add('hidden'));
+    closeEditSpecialBudgetModalBtn.addEventListener('click', () => closeOverlay('edit-special-budget-modal'));
+    cancelEditSpecialBudgetBtn.addEventListener('click', () => closeOverlay('edit-special-budget-modal'));
 
     // Custom Triggers for Selects (Drawer version)
     document.getElementById('budget-type-btn')?.addEventListener('click', () => {
@@ -1093,7 +1154,7 @@ async function handleSpecialBudgetActions(e) {
             editingSpecialBudgetId = budgetId;
             editSpecialBudgetNameInput.value = budget.name;
             editSpecialBudgetAmountInput.value = budget.amount;
-            editSpecialBudgetModal.classList.remove('hidden');
+            openOverlay('edit-special-budget-modal');
         }
     }
 }
@@ -1363,7 +1424,7 @@ async function initializeApp() {
 
     // Set initial history state
     const currentTab = document.querySelector('.bottom-nav-btn.active')?.dataset.tab || 'stats';
-    history.replaceState({ tab: currentTab }, "", "");
+    history.replaceState({ type: 'tab', id: currentTab }, "", "");
 
     // Dodaj małe opóźnienie, żeby token Firebase Auth był gotowy
     await new Promise(resolve => setTimeout(resolve, 100));
