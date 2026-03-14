@@ -858,34 +858,8 @@ function setupAppEventListeners() {
     });
 
     // DODAJ TEN EVENT LISTENER TUTAJ:
-    document.getElementById('toggle-budget-details').addEventListener('click', toggleBudgetDetails);
-    document.getElementById('toggle-legend-details').addEventListener('click', toggleChartLegend);
-
-    // Floating Action Button (FAB) logic
-    let isFabExpanded = false;
-
-    function toggleFab() {
-        isFabExpanded = !isFabExpanded;
-        fabActions.classList.toggle('hidden', !isFabExpanded);
-        fabActions.classList.toggle('expanded', isFabExpanded);
-        mainFabBtn.classList.toggle('expanded', isFabExpanded);
-
-        const overlay = document.getElementById('fab-overlay');
-        overlay.classList.toggle('hidden', !isFabExpanded);
-        setTimeout(() => {
-            overlay.classList.toggle('active', isFabExpanded);
-        }, 10);
-
-        // Animate sub-buttons
-        const subItems = fabActions.querySelectorAll('.fab-sub-item');
-        subItems.forEach((item, index) => {
-            if (isFabExpanded) {
-                item.style.transitionDelay = `${index * 50}ms`;
-            } else {
-                item.style.transitionDelay = `${(subItems.length - 1 - index) * 50}ms`;
-            }
-        });
-    }
+    document.getElementById('toggle-budget-details')?.addEventListener('click', toggleBudgetDetails);
+    document.getElementById('toggle-legend-details')?.addEventListener('click', toggleChartLegend);
 
     mainFabBtn.addEventListener('click', () => {
         toggleFab();
@@ -906,21 +880,6 @@ function setupAppEventListeners() {
         switchTab('add');
         setTimeout(() => startCamera(), 100);
         toggleFab();
-    });
-
-    // Scroll detection for FAB visibility
-    window.addEventListener('scroll', () => {
-        const currentScrollY = window.scrollY;
-
-        if (currentScrollY > lastScrollY && currentScrollY > 100) { // Scrolling down and not at the very top
-            fabContainer.classList.add('hide');
-            if (isFabExpanded) {
-                toggleFab(); // Collapse FAB if scrolling down while expanded
-            }
-        } else {
-            fabContainer.classList.remove('hide');
-        }
-        lastScrollY = currentScrollY;
     });
 
     // Infinite scroll

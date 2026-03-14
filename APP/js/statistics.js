@@ -175,9 +175,13 @@ function syncMonthNavigatorUI() {
     }
 }
 
-function closeMonthPicker() {
-    const popup = document.getElementById('month-picker-popup');
-    if (popup) popup.classList.add('hidden');
+function closeMonthPicker(isFromPopState = false) {
+    if (typeof closeOverlay === 'function') {
+        closeOverlay('month-picker-popup', isFromPopState);
+    } else {
+        const popup = document.getElementById('month-picker-popup');
+        if (popup) popup.classList.add('hidden');
+    }
 }
 
 function initMonthNavigator() {
@@ -190,7 +194,11 @@ function initMonthNavigator() {
 
     labelBtn.addEventListener('click', (e) => {
         e.stopPropagation();
-        popup.classList.toggle('hidden');
+        if (typeof openOverlay === 'function') {
+            openOverlay('month-picker-popup');
+        } else {
+            popup.classList.toggle('hidden');
+        }
     });
 
     // Zamknij popup po kliknięciu poza nim

@@ -6,11 +6,14 @@ const VIEW_DEPTH = {
     'list': 1,
     'add': 1,
     'analysis': 1,
-    'settings': 1,
     'special-budgets': 1,
-    'settings-categories': 2,
-    'settings-budget': 2,
-    'settings-recurring': 2
+    'more': 1,
+    'settings': 2,
+    'edit-purchase': 2, // Wirtualna zakładka dla edycji (głębiej niż lista)
+    'settings-categories': 3,
+    'settings-budget': 3,
+    'settings-special': 3,
+    'settings-recurring': 3
 };
 
 // --- Nawigacja i zakładki ---
@@ -18,21 +21,29 @@ function switchTab(tabName, pushToHistory = true) {
     const activeTab = document.querySelector('.tab-content.active');
     const currentTabId = activeTab ? activeTab.id.replace('-tab', '') : '';
 
-    if (tabName === currentTabId) return;
+    // Jeśli jesteśmy w trybie edycji, traktujemy obecny widok jako 'edit-purchase' dla potrzeb historii
+    const effectiveCurrentId = (currentTabId === 'add' && editMode.active) ? 'edit-purchase' : currentTabId;
+    // Jeśli idziemy do 'add' w trybie edycji, traktujemy cel jako 'edit-purchase'
+    const effectiveTargetName = (tabName === 'add' && editMode.active) ? 'edit-purchase' : tabName;
+
+    if (tabName === currentTabId && effectiveCurrentId === effectiveTargetName) return;
 
     if (pushToHistory) {
-        const currentDepth = VIEW_DEPTH[currentTabId] || 0;
-        const newDepth = VIEW_DEPTH[tabName] || 0;
+        const currentDepth = VIEW_DEPTH[effectiveCurrentId] || 0;
+        const newDepth = VIEW_DEPTH[effectiveTargetName] || 0;
 
-        if (newDepth > currentDepth) {
-            // Wchodzimy głębiej (np. 0->1 lub 1->2) - PUSH
+        if (newDepth === 0) {
             history.pushState({ type: 'tab', id: tabName }, "", "");
-        } else if (newDepth === currentDepth && newDepth !== 0) {
-            // Przełączanie między zakładkami na tym samym poziomie (np. List -> Add) - REPLACE
+        } else if (newDepth > currentDepth) {
+            // Wchodzimy głębiej (np. list -> edit-purchase) - PUSH
+            history.pushState({ type: 'tab', id: tabName }, "", "");
+        } else if (newDepth === currentDepth) {
+            // Ten sam poziom - REPLACE
             history.replaceState({ type: 'tab', id: tabName }, "", "");
+        } else if (newDepth < currentDepth && newDepth >= 1) {
+            // Powrót wyżej - PUSH (aby stworzyć punkt powrotu w historii)
+            history.pushState({ type: 'tab', id: tabName }, "", "");
         } else {
-            // Powrót do kokpitu (newDepth < currentDepth) - PUSH (aby stworzyć punkt powrotu)
-            // Wyjątek: jeśli idziemy do stats, zawsze upewniamy się, że to nowy punkt
             history.pushState({ type: 'tab', id: tabName }, "", "");
         }
     }
@@ -393,7 +404,8 @@ function enterEditMode(purchaseId) {
     document.getElementById('cancel-edit-btn').classList.remove('hidden');
 
     updatePurchaseSummary();
-    switchTab('add');
+    // Wymuszamy pushState, aby powrót z edycji prowadził do Listy
+    switchTab('add', true);
 }
 
 function exitEditMode() {
