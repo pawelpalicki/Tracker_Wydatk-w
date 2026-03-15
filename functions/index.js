@@ -1128,8 +1128,9 @@ app.get('/api/statistics/by-shop', authMiddleware, async (req, res) => {
             return res.json({ spendingByShop: {} });
         }
 
-        // Wyklucz wydatki ze specjalnych budżetów
-        const monthlyPurchases = snapshot.docs.map(doc => doc.data()).filter(p => !p.specialBudgetId);
+        // Wyklucz wydatki ze specjalnych budżetów oraz wydatki cykliczne
+        const monthlyPurchases = snapshot.docs.map(doc => doc.data())
+            .filter(p => !p.specialBudgetId && p.shop !== 'Wydatek cykliczny');
 
         const spendingByShop = monthlyPurchases.reduce((acc, p) => {
             const shop = p.shop || 'Nieznany sklep';
