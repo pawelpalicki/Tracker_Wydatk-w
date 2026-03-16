@@ -515,7 +515,7 @@ function setupAppEventListeners() {
             switchTab(state.id, false);
         } else if (!state) {
             // Jeśli brak stanu (np. powrót do startu sesji), wymuś Kokpit
-            switchTab('stats', false);
+            switchTab('home', false);
         }
     });
 
@@ -548,8 +548,8 @@ function setupAppEventListeners() {
         clearTimeout(resizeTimer);
         resizeTimer = setTimeout(() => {
 
-            if (document.getElementById('stats-tab').classList.contains('active')) {
-                renderStatistics();
+            if (document.getElementById('home-tab').classList.contains('active')) {
+                if (typeof renderDashboard === 'function') renderDashboard();
             }
         }, 300); // Wait 300ms for rotation animation to finish
     });
@@ -561,7 +561,7 @@ function setupAppEventListeners() {
             updatePurchaseSummary();
         }
     });
-    document.getElementById('cancel-edit-btn').addEventListener('click', () => {
+    document.getElementById('cancel-edit-btn')?.addEventListener('click', () => {
         exitEditMode();
         switchTab('list');
     });
@@ -630,7 +630,7 @@ function setupAppEventListeners() {
             closeOverlay('category-details-modal');
         }
     });
-    document.getElementById('category-chart').addEventListener('click', handleCategoryChartClick);
+    document.getElementById('category-chart')?.addEventListener('click', handleCategoryChartClick);
 
     // Autouzupełnianie sklepu
     shopInput.addEventListener('input', () => renderShopAutocomplete(shopInput.value));
@@ -674,7 +674,7 @@ function setupAppEventListeners() {
     });
 
     // Logika filtrów
-    filterToggle.addEventListener('click', () => {
+    filterToggle?.addEventListener('click', () => {
         filtersContainer.classList.toggle('hidden');
         filterArrow.classList.toggle('rotate-180');
     });
@@ -884,6 +884,19 @@ function setupAppEventListeners() {
 
     // Infinite scroll
     window.addEventListener('scroll', handleInfiniteScroll);
+
+    // Dynamic Navbar buttons
+    document.getElementById('nav-back-btn')?.addEventListener('click', () => {
+        window.history.back();
+    });
+
+    document.getElementById('nav-user-btn')?.addEventListener('click', () => {
+        switchTab('settings');
+    });
+
+    document.getElementById('nav-notifications-btn')?.addEventListener('click', () => {
+        alert('Powiadomienia będą dostępne wkrótce! (Etap 4)');
+    });
 }
 
 const handleInfiniteScroll = () => {
@@ -975,7 +988,7 @@ async function fetchInitialData(shouldSwitchToDefault = true) {
         populateBudgetMonthSelector();
         renderRecurringExpenses(); // Render recurring expenses list
         if (shouldSwitchToDefault) {
-            switchTab('stats');
+            switchTab('home');
         }
     } catch (error) {
         alert(error.message);
@@ -1029,7 +1042,7 @@ async function fetchMorePurchases() {
 
 async function renderAll() {
     await updateMonthlyBalance();
-    await renderStatistics(); // Od razu renderuj statystyki
+    await renderDashboard(); // Renduruj kokpit zamiast starych statystyk
     renderSpecialBudgetsList();
     populateBudgetTypeSelect();
 }
@@ -1055,7 +1068,7 @@ function renderSpecialBudgetsList() {
         budgetEl.innerHTML = `
             <div>
                 <span class="font-medium text-gray-800 dark:text-gray-200">${budget.name}</span>
-                <span class="text-sm text-gray-500 dark:text-gray-400 ml-2">${budget.amount.toFixed(2)} zł</span>
+                <span class="text-sm text-gray-500 dark:text-gray-400 ml-2">${formatAmount(budget.amount)}</span>
             </div>
             <div class="flex items-center space-x-2">
                 <button class="edit-special-budget-btn p-1 text-blue-500 hover:text-blue-700" data-id="${budget.id}" title="Edytuj">
@@ -1155,7 +1168,7 @@ function renderRecurringExpenses() {
         expenseEl.innerHTML = `
             <div>
                 <p class="font-semibold text-gray-900 dark:text-white">${expense.name}</p>
-                <p class="text-sm text-gray-600 dark:text-gray-400">${expense.amount.toFixed(2)} zł - ${expense.category} (${scheduleText})</p>
+                <p class="text-sm text-gray-600 dark:text-gray-400">${formatAmount(expense.amount)} - ${expense.category} (${scheduleText})</p>
             </div>
             <div class="flex items-center space-x-1">
                  <button class="edit-recurring-expense-btn p-2 text-blue-500 hover:text-blue-700" title="Edytuj">
@@ -1366,14 +1379,16 @@ async function updateMonthlyBalance() {
         }
 
         const total = allMonthlyPurchases.reduce((sum, p) => sum + (p.totalAmount || 0), 0);
-        monthlyBalanceValue.textContent = `${total.toFixed(2)} zł`;
+        if (monthlyBalanceValue) monthlyBalanceValue.textContent = formatAmount(total);
 
         const monthName = now.toLocaleString('pl-PL', { month: 'long' });
-        monthlyBalanceLabel.textContent = `Wydatki w ${monthName.charAt(0).toUpperCase() + monthName.slice(1)}`;
+        if (monthlyBalanceLabel) {
+            monthlyBalanceLabel.textContent = `Wydatki w ${monthName.charAt(0).toUpperCase() + monthName.slice(1)}`;
+        }
 
     } catch (error) {
         console.error('Failed to fetch all monthly purchases for header balance:', error);
-        monthlyBalanceValue.textContent = `Błąd`;
+        if (monthlyBalanceValue) monthlyBalanceValue.textContent = `Błąd`;
     }
 }
 
@@ -1382,7 +1397,7 @@ async function initializeApp() {
     setupAppEventListeners();
 
     // Set initial history state
-    const currentTab = document.querySelector('.bottom-nav-btn.active')?.dataset.tab || 'stats';
+    const currentTab = document.querySelector('.bottom-nav-btn.active')?.dataset.tab || 'home';
     history.replaceState({ type: 'tab', id: currentTab }, "", "");
 
     // Dodaj małe opóźnienie, żeby token Firebase Auth był gotowy
@@ -1390,6 +1405,7 @@ async function initializeApp() {
     await fetchInitialData();
     exitEditMode();
     handleScheduleTypeChange();
+    if (typeof initHomeDashboardControls === 'function') initHomeDashboardControls();
 }
 
 // Główny mechanizm obsługi stanu uwierzytelnienia

@@ -7,7 +7,7 @@ function updatePurchaseSummary() {
         const price = parseFloat(input.value.replace(',', '.')) || 0;
         return sum + price;
     }, 0);
-    purchaseSummary.textContent = `Suma: ${total.toFixed(2)} zł`;
+    purchaseSummary.textContent = `Suma: ${formatAmount(total)}`;
 }
 
 function updateItemCategoryUI(itemRow, val) {
@@ -239,31 +239,39 @@ function renderPurchasesList(purchasesToRender, append = false) {
                 </div>
                 <div class="flex items-center space-x-4">
                     <div class="text-right">
-                        <p class="font-bold text-xl text-gray-900 dark:text-white whitespace-nowrap">${(p.totalAmount || 0).toFixed(2)} zł${budgetIcon}</p>
+                        <p class="font-bold text-xl text-gray-900 dark:text-white whitespace-nowrap">${formatAmount(p.totalAmount || 0)}${budgetIcon}</p>
                         <p class="text-xs text-gray-500 dark:text-gray-400">${(p.items || []).length} poz.</p>
                     </div>
-                    <div class="flex items-center">
-                        <button class="edit-purchase-btn p-2 text-blue-500 hover:text-blue-700" title="Edytuj"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" /><path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd" /></svg></button>
-                        <button class="delete-purchase-btn p-2 text-red-500 hover:text-red-700" title="Usuń"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" /></svg></button>
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 toggle-arrow text-gray-500 dark:text-gray-400 transition-transform transform" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
-                    </div>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 toggle-arrow text-gray-500 dark:text-gray-400 transition-transform transform" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
                 </div>
             </div>
-            <div class="purchase-items hidden border-t border-gray-200 dark:border-gray-700 p-4 space-y-4">
+            <div class="purchase-items hidden p-4 space-y-4 bg-white/5 rounded-b-2xl border-t border-white/5">
                 ${(p.items || []).map(item => `
-                    <div class="flex justify-between items-end">
+                    <div class="flex justify-between items-end py-1 border-b border-white/5 last:border-0">
                         <div class="flex flex-col">
                             <div class="category-tag-mini flex items-center gap-2 mb-1">
                                 <div class="category-icon-mini" style="background-color: ${getCategoryColor(item.category)}20; color: ${getCategoryColor(item.category)}">
                                     <i class="fas ${categoryIcons[item.category] || 'fa-tag'}"></i>
                                 </div>
-                                <span class="text-xs text-gray-400 capitalize">${item.category}</span>
+                                <span class="text-[10px] text-gray-400 uppercase tracking-tight">${item.category}</span>
                             </div>
-                            <div class="text-sm font-medium text-white">${item.name}</div>
+                            <div class="text-sm font-semibold text-white">${item.name}</div>
                         </div>
-                        <div class="font-medium text-gray-900 dark:text-white whitespace-nowrap text-base">${(item.price || 0).toFixed(2)}&nbsp;zł</div>
+                        <div class="font-bold text-white whitespace-nowrap text-base">${formatAmount(item.price || 0)}</div>
                     </div>
                 `).join('')}
+                
+                <!-- Expanded view actions -->
+                <div class="flex gap-3 pt-2 mt-2 border-t border-white/5">
+                    <button class="edit-purchase-btn flex-1 py-2.5 px-5 bg-white/5 hover:bg-white/10 text-blue-400 rounded-2xl transition-all flex items-center justify-center gap-2 text-sm font-medium">
+                        <i class="fas fa-edit"></i>
+                        <span>Edytuj</span>
+                    </button>
+                    <button class="delete-purchase-btn flex-1 py-2.5 px-5 bg-white/5 hover:bg-white/10 text-red-500 rounded-2xl transition-all flex items-center justify-center gap-2 text-sm font-medium">
+                        <i class="fas fa-trash-alt"></i>
+                        <span>Usuń</span>
+                    </button>
+                </div>
             </div>
         </div>
     `}).join('');
@@ -427,8 +435,8 @@ async function fillFormWithAnalysis(analysis) {
                 `• Waluta oryginalna: ${analysis.originalCurrency}\n` +
                 `• Kurs wymiany: 1 ${analysis.originalCurrency} = ${rate} PLN\n` +
                 `• Liczba produktów: ${itemCount}\n` +
-                `• Suma oryginalna: ${originalTotal.toFixed(2)} ${analysis.originalCurrency}\n` +
-                `• Suma po przeliczeniu: ${convertedTotal.toFixed(2)} PLN\n\n` +
+                `• Suma oryginalna: ${(originalTotal || 0).toFixed(2)} ${analysis.originalCurrency}\n` +
+                `• Suma po przeliczeniu: ${formatAmount(convertedTotal)}\n\n` +
                 `✅ Wszystkie ceny zostały automatycznie przeliczone na PLN.`;
 
             alert(message);

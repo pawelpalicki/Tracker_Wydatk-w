@@ -1,0 +1,91 @@
+INSTRUKCJA:
+1. Otwórz swoją aplikację w przeglądarce i zaloguj się.
+2. Naciśnij F12 (lub Prawy Przycisk Myszy -> Zbadaj) i przejdź do zakładki "Console".
+3. Skopiuj jeden z poniższych skryptów (JSON lub CSV) i wklej go do konsoli, a następnie naciśnij Enter.
+
+--- OPCJA 1: EKSPORT DO JSON (Pełna struktura danych) ---
+
+(async function exportToJson() {
+    try {
+        const user = firebase.auth().currentUser;
+        if (!user) throw new Error("Musisz być zalogowany w aplikacji!");
+
+        console.log("%c[Eksport]%c Pobieram dane z Firestore...", "color: #3b82f6; font-weight: bold", "");
+        
+        const snapshot = await firebase.firestore()
+            .collection('expenses')
+            .where('userId', '==', user.uid)
+            .get();
+
+        const data = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data(),
+            createdAt: doc.data().createdAt?.toDate ? doc.data().createdAt.toDate().toISOString() : doc.data().createdAt
+        }));
+
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `wydatki_kopia_${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        console.log(`%c[Sukces]%c Pobrano ${data.length} paragonów.`, "color: #10b981; font-weight: bold", "");
+    } catch (err) {
+        console.error("Błąd eksportu:", err.message);
+    }
+})();
+
+
+--- OPCJA 2: EKSPORT DO CSV (Do Excela / Arkuszy Google) ---
+
+(async function exportToCsv() {
+    try {
+        const user = firebase.auth().currentUser;
+        if (!user) throw new Error("Musisz być zalogowany in aplikacji!");
+
+        console.log("%c[Eksport]%c Przygotowuję plik CSV...", "color: #10b981; font-weight: bold", "");
+
+        const snapshot = await firebase.firestore()
+            .collection('expenses')
+            .where('userId', '==', user.uid)
+            .get();
+
+        let csv = "ID_Paragonu;Data;Sklep;Suma_Paragonu;Produkt;Cena_Produktu;Kategoria\n";
+
+        snapshot.docs.forEach(doc => {
+            const d = doc.data();
+            const items = d.items || [];
+            
+            items.forEach(item => {
+                const row = [
+                    doc.id,
+                    d.date,
+                    d.shop,
+                    d.totalAmount,
+                    item.name,
+                    item.price,
+                    item.category
+                ].map(val => `"${String(val || '').replace(/"/g, '""')}"`).join(";");
+                csv += row + "\n";
+            });
+        });
+
+        const blob = new Blob(["\ufeff" + csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `wydatki_excel_${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        console.log("%c[Sukces]%c Plik CSV został pobrany.", "color: #10b981; font-weight: bold", "");
+    } catch (err) {
+        console.error("Błąd eksportu:", err.message);
+    }
+})();

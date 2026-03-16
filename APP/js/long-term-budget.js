@@ -553,8 +553,8 @@ function showNoLongTermData() {
     document.getElementById('monthly-details-container').classList.add('hidden');
 
     // Wyczyść podsumowanie
-    document.getElementById('avg-monthly-spending').textContent = '0.00 zł';
-    document.getElementById('avg-monthly-budget').textContent = '0.00 zł';
+    document.getElementById('avg-monthly-spending').textContent = formatAmount(0);
+    document.getElementById('avg-monthly-budget').textContent = formatAmount(0);
     document.getElementById('budget-effectiveness').textContent = '0%';
 
     // Zniszcz wykres jeśli istnieje
@@ -573,8 +573,8 @@ function renderLongTermSummary(data) {
     const avgMonthlyBudget = totalBudget / monthsCount;
     const effectiveness = totalBudget > 0 ? ((totalBudget - totalSpending) / totalBudget) * 100 : 0;
 
-    document.getElementById('avg-monthly-spending').textContent = `${avgMonthlySpending.toFixed(2)} zł`;
-    document.getElementById('avg-monthly-budget').textContent = `${avgMonthlyBudget.toFixed(2)} zł`;
+    document.getElementById('avg-monthly-spending').textContent = formatAmount(avgMonthlySpending);
+    document.getElementById('avg-monthly-budget').textContent = formatAmount(avgMonthlyBudget);
     document.getElementById('budget-effectiveness').textContent = `${Math.max(0, effectiveness).toFixed(0)}%`;
 }
 
@@ -723,13 +723,13 @@ function renderMonthlyDetailsTable(data) {
                     ${monthName}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                    ${item.budget.toFixed(2)} zł
+                    ${formatAmount(item.budget)}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                    ${item.spending.toFixed(2)} zł
+                    ${formatAmount(item.spending)}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm ${differenceClass}">
-                    ${difference >= 0 ? '+' : ''}${difference.toFixed(2)} zł
+                    ${difference >= 0 ? '+' : ''}${formatAmount(difference)}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm ${effectivenessClass}">
                     ${Math.max(0, effectiveness).toFixed(0)}%
@@ -807,11 +807,11 @@ function renderCategoryProgressBars(data) {
                 <div class="${progressColor} h-2 rounded-full transition-all duration-300" style="width: ${visualPercentage}%"></div>
             </div>
             <div class="flex justify-between text-xs text-gray-600 dark:text-gray-400">
-                <span>Wydano: ${new Intl.NumberFormat('pl-PL', { style: 'currency', currency: 'PLN' }).format(totals.spending)}</span>
-                <span>Budżet: ${new Intl.NumberFormat('pl-PL', { style: 'currency', currency: 'PLN' }).format(totals.budget)}</span>
+                <span>Wydano: ${formatAmount(totals.spending)}</span>
+                <span>Budżet: ${formatAmount(totals.budget)}</span>
             </div>
             <div class="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                ${remaining >= 0 ? 'Pozostało' : 'Przekroczono o'}: ${new Intl.NumberFormat('pl-PL', { style: 'currency', currency: 'PLN' }).format(Math.abs(remaining))}
+                ${remaining >= 0 ? 'Pozostało' : 'Przekroczono o'}: ${formatAmount(Math.abs(remaining))}
             </div>
         `;
 

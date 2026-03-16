@@ -1,8 +1,18 @@
 // Tracker Wydatków - UI Functions
 
+// Standardowy format waluty: "1 234,56 zł"
+function formatAmount(amount) {
+    if (amount === undefined || amount === null) amount = 0;
+    // Formatujemy liczbę ręcznie
+    const parts = amount.toFixed(2).split('.');
+    // Wstawiamy zwykłą spację co 3 cyfry dla 100% widoczności
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+    return parts.join(',') + ' zł';
+}
+
 // --- Hierarchia widoków dla nawigacji ---
 const VIEW_DEPTH = {
-    'stats': 0,
+    'home': 0,
     'list': 1,
     'add': 1,
     'analysis': 1,
@@ -72,10 +82,8 @@ function switchTab(tabName, pushToHistory = true) {
         }, 50);
     }
 
-    if (tabName === 'stats') {
-        const container = document.getElementById('stats-swipe-container');
-        if (container) container.scrollTo({ left: 0, behavior: 'instant' });
-        renderStatistics();
+    if (tabName === 'home') {
+        if (typeof renderDashboard === 'function') renderDashboard();
     }
 
     if (tabName === 'analysis') {
@@ -107,6 +115,43 @@ function switchTab(tabName, pushToHistory = true) {
     if (tabName === 'list') {
         initFilterDrawers();
     }
+
+    // Dodaj aktualizację Navbaru przy każdej zmianie zakładki
+    updateNavbar(tabName);
+}
+
+// Ustaw początkowy tytuł po załadowaniu DOM
+document.addEventListener('DOMContentLoaded', () => {
+    const currentTab = document.querySelector('.bottom-nav-btn.active')?.dataset.tab || 'home';
+    updateNavbar(currentTab);
+});
+
+// --- Dynamic Navbar ---
+const NAV_TITLES = {
+    'home': 'Kokpit',
+    'list': 'Lista zakupów',
+    'add': 'Dodaj zakup',
+    'analysis': 'Analiza',
+    'special-budgets': 'Budżety specjalne',
+    'more': 'Więcej',
+    'settings': 'Ustawienia',
+    'settings-categories': 'Kategorie',
+    'settings-budget': 'Budżet',
+    'settings-special': 'Budżety specjalne',
+    'settings-recurring': 'Subskrypcje',
+};
+
+const TABS_WITH_BACK = ['settings', 'settings-categories', 'settings-budget', 'settings-special', 'settings-recurring'];
+
+function updateNavbar(tabName) {
+    const title = document.getElementById('nav-title');
+    const backBtn = document.getElementById('nav-back-btn');
+    if (!title) return;
+
+    title.textContent = NAV_TITLES[tabName] || tabName;
+
+    const showBack = TABS_WITH_BACK.includes(tabName);
+    if (backBtn) backBtn.classList.toggle('hidden', !showBack);
 }
 
 function initFilterDrawers() {
@@ -477,9 +522,9 @@ function renderCategoryDetailsModal(category, items) {
             const row = document.createElement('tr');
             row.innerHTML = `
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">${item.name}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">${item.shop || 'Brak'}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">${item.purchaseDate}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 text-right">${(item.price || 0).toFixed(2)} zł</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-300">${item.shop || 'Brak'}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-300">${item.purchaseDate}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-300 text-right">${formatAmount(item.price || 0)}&nbsp;zł</td>
             `;
             categoryDetailsTableBody.appendChild(row);
         });

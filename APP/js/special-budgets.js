@@ -61,15 +61,15 @@ function renderSpecialBudgetsTab() {
                     <div class="mt-4 grid grid-cols-3 gap-4 text-center">
                         <div>
                             <p class="text-sm text-gray-600 dark:text-gray-400">Budżet</p>
-                            <p class="text-lg font-bold text-gray-900 dark:text-white">${budget.amount.toFixed(2)} zł</p>
+                            <p class="text-lg font-bold text-gray-900 dark:text-white">${formatAmount(budget.amount)}</p>
                         </div>
                         <div>
                             <p class="text-sm text-gray-600 dark:text-gray-400">Wydano</p>
-                            <p class="text-lg font-bold text-blue-600 dark:text-blue-400">${budget.spent.toFixed(2)} zł</p>
+                            <p class="text-lg font-bold text-blue-600 dark:text-blue-400">${formatAmount(budget.spent)}</p>
                         </div>
                         <div>
                             <p class="text-sm text-gray-600 dark:text-gray-400">Pozostało</p>
-                            <p class="text-lg font-bold text-green-600 dark:text-green-400">${budget.remaining.toFixed(2)} zł</p>
+                            <p class="text-lg font-bold text-green-600 dark:text-green-400">${formatAmount(budget.remaining)}</p>
                         </div>
                     </div>
                 </div>

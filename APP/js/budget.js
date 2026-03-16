@@ -59,8 +59,8 @@ async function handleSaveBudget() {
         await apiCall(`/api/budgets/${year}/${month}`, 'POST', { budgets });
         alert('Budżet został pomyślnie zapisany!');
         // Odśwież statystyki, jeśli widok kokpitu jest aktywny
-        if (document.getElementById('stats-tab').classList.contains('active')) {
-            renderStatistics();
+        if (document.getElementById('home-tab').classList.contains('active')) {
+            if (typeof renderDashboard === 'function') renderDashboard();
         }
     } catch (error) {
         alert('Nie udało się zapisać budżetu: ' + error.message);
@@ -152,7 +152,7 @@ function renderBudgetProgress(spending, budgets) {
         progressElement.innerHTML = `
             <div class="flex justify-between items-center text-sm mb-1">
                 <span class="font-medium text-gray-800 dark:text-gray-200 flex items-center">${cat.charAt(0).toUpperCase() + cat.slice(1)} ${warningIcon}</span>
-                <span class="${amountClass}">${spentAmount.toFixed(2)} zł / ${budgetAmount.toFixed(2)} zł</span>
+                <span class="${amountClass}">${formatAmount(spentAmount)} / ${formatAmount(budgetAmount)}</span>
             </div>
             <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
                 <div class="h-2.5 rounded-full" style="width: ${percentage}%; background-color: ${categoryColor};"></div>
@@ -188,9 +188,17 @@ function renderBudgetSummary(spending, budgets) {
     const unbudgetedAmount = unbudgetedCategories.reduce((sum, cat) => sum + spending[cat], 0);
 
     // Aktualizuj wartości
-    summarySpent.textContent = `${totalSpentInBudget.toFixed(2)} zł`;
-    summaryBudget.textContent = `${totalBudget.toFixed(2)} zł`;
-    summaryRemaining.textContent = `${totalRemaining.toFixed(2)} zł`;
+    summarySpent.textContent = formatAmount(totalSpentInBudget);
+    summaryBudget.textContent = formatAmount(totalBudget);
+    
+    if (totalRemaining < 0) {
+        document.getElementById('summary-remaining-label').textContent = 'Przekroczono o:';
+        summaryRemaining.textContent = formatAmount(Math.abs(totalRemaining));
+    } else {
+        document.getElementById('summary-remaining-label').textContent = 'Pozostało:';
+        summaryRemaining.textContent = formatAmount(totalRemaining);
+    }
+
     budgetPercentage.textContent = `${percentage.toFixed(0)}%`;
     budgetProgressBar.style.width = `${progressBarPercentage}%`;
 
@@ -209,7 +217,7 @@ function renderBudgetSummary(spending, budgets) {
 
     // Pokaż/ukryj wydatki bez budżetu
     if (unbudgetedAmount > 0) {
-        unbudgetedAmountEl.textContent = `${unbudgetedAmount.toFixed(2)} zł`;
+        unbudgetedAmountEl.textContent = formatAmount(unbudgetedAmount);
         unbudgetedCategoriesEl.textContent = `Kategorie: ${unbudgetedCategories.map(cat => cat.charAt(0).toUpperCase() + cat.slice(1)).join(', ')}`;
         unbudgetedExpensesEl.classList.remove('hidden');
     } else {
