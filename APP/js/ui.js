@@ -509,28 +509,100 @@ function closeOverlay(elementId, isFromPopState = false) {
     }
 }
 
-// --- Modale ---
+// --- Modale / Drawers ---
 function renderCategoryDetailsModal(category, items) {
-    categoryDetailsTitle.textContent = `Szczegóły dla: ${category.charAt(0).toUpperCase() + category.slice(1)}`;
-    categoryDetailsTableBody.innerHTML = '';
+    const listContainer = document.getElementById('category-details-list');
+    const titleEl = document.getElementById('category-details-title');
+    
+    if (!listContainer || !titleEl) return;
+
+    titleEl.textContent = category.charAt(0).toUpperCase() + category.slice(1);
+    listContainer.innerHTML = '';
 
     if (items.length === 0) {
-        categoryDetailsTableBody.innerHTML = '<tr><td colspan="4" class="text-center py-4">Brak produktów w tej kategorii.</td></tr>';
+        listContainer.innerHTML = '<div class="text-center py-6 text-gray-500 text-sm">Brak wydatków w tym miesiącu.</div>';
     } else {
         items.sort((a, b) => new Date(b.purchaseDate) - new Date(a.purchaseDate));
+        
         items.forEach(item => {
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">${item.name}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-300">${item.shop || 'Brak'}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-300">${item.purchaseDate}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-300 text-right">${formatAmount(item.price || 0)}&nbsp;zł</td>
+            const itemEl = document.createElement('div');
+            itemEl.className = 'flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/10 mb-2';
+            
+            // Format daty (np. "15 mar") ze stringa "YYYY-MM-DD"
+            let dateStr = item.purchaseDate;
+            try {
+                const parts = item.purchaseDate.split('-');
+                if(parts.length === 3) {
+                    const d = new Date(parts[0], parseInt(parts[1])-1, parts[2]);
+                    dateStr = d.toLocaleDateString('pl-PL', { day: 'numeric', month: 'short' });
+                }
+            } catch(e) {}
+
+            itemEl.innerHTML = `
+                <div class="flex flex-col overflow-hidden mr-3">
+                    <span class="text-sm font-medium text-white truncate w-full">${item.name}</span>
+                    <div class="flex items-center text-xs text-gray-400 mt-1 space-x-2">
+                        <span class="truncate max-w-[100px]">${item.shop || 'Inny'}</span>
+                        <span>•</span>
+                        <span>${dateStr}</span>
+                    </div>
+                </div>
+                <div class="text-right flex-shrink-0">
+                    <span class="text-sm font-bold text-white">${formatAmount(item.price || 0)}</span>
+                </div>
             `;
-            categoryDetailsTableBody.appendChild(row);
+            listContainer.appendChild(itemEl);
         });
     }
-    openOverlay('category-details-modal');
+
+    // Otwórz drawer
+    const drawer = document.getElementById('category-details-drawer');
+    const overlay = document.getElementById('category-details-drawer-overlay');
+    
+    if (drawer && overlay) {
+        drawer.classList.remove('hidden');
+        overlay.classList.remove('hidden');
+        
+        // Push state dla przycisku wstecz (opcjonalne, ale dobre dla UX)
+        history.pushState({ type: 'drawer', id: 'category-details-drawer' }, "", "");
+        
+        // Zablokuj przewijanie tła
+        document.body.style.overflow = 'hidden';
+
+        // Krótkie opóźnienie dla animacji wjazdu
+        setTimeout(() => {
+            drawer.classList.remove('translate-y-full');
+            overlay.classList.remove('opacity-0');
+        }, 10);
+    }
 }
+
+function closeCategoryDetailsDrawer() {
+    const drawer = document.getElementById('category-details-drawer');
+    const overlay = document.getElementById('category-details-drawer-overlay');
+    if (drawer && overlay) {
+        drawer.classList.add('translate-y-full');
+        overlay.classList.add('opacity-0');
+        
+        // Odblokuj przewijanie tła po zakończeniu animacji
+        setTimeout(() => {
+            drawer.classList.add('hidden');
+            overlay.classList.add('hidden');
+            document.body.style.overflow = '';
+        }, 300); // Czas trwania animacji z Tailwind (duration-300)
+    }
+}
+
+window.addEventListener('popstate', (e) => {
+    closeCategoryDetailsDrawer();
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    const closeBtn = document.getElementById('close-category-details-drawer');
+    const overlayBtn = document.getElementById('category-details-drawer-overlay');
+    if (closeBtn) closeBtn.addEventListener('click', closeCategoryDetailsDrawer);
+    if (overlayBtn) overlayBtn.addEventListener('click', closeCategoryDetailsDrawer);
+});
 
 // --- Obsługa aparatu ---
 async function startCamera() {

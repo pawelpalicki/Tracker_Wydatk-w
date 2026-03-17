@@ -249,7 +249,7 @@ function renderHomeCategoryTiles(purchases, budgets = {}) {
         const pct = budget > 0 ? Math.round((amount / budget) * 100) : null;
         
         const tile = document.createElement('div');
-        tile.className = 'flex-shrink-0 snap-start flex flex-col items-center justify-center gap-1.5 p-3 rounded-2xl bg-white/5 hover:bg-white/10 transition-colors cursor-default min-w-[130px] text-center';
+        tile.className = 'flex-shrink-0 snap-start flex flex-col items-center justify-center gap-1.5 p-3 rounded-2xl bg-white/5 hover:bg-white/10 transition-colors cursor-pointer min-w-[130px] text-center active:scale-95';
         tile.innerHTML = `
             <div class="w-9 h-9 rounded-full flex items-center justify-center mb-0.5" style="background-color:${color}22;color:${color}">
                 <i class="fas ${icon} text-sm"></i>
@@ -268,6 +268,26 @@ function renderHomeCategoryTiles(purchases, budgets = {}) {
                 ` : ''}
             </div>
         `;
+        
+        // Add click listener to open the new drawer
+        tile.addEventListener('click', async () => {
+            const selectedMonth = homeDashboardMonth;
+            if (!selectedMonth) return;
+            const [year, month] = selectedMonth.split('-');
+            try {
+                // Fetch details for the specifically clicked category in the selected month
+                const { items } = await apiCall(`/api/statistics/category-details?year=${year}&month=${month}&category=${cat.toLowerCase()}`);
+                
+                // Use the updated function in ui.js which now opens the bottom drawer
+                if(typeof renderCategoryDetailsModal === 'function') {
+                    renderCategoryDetailsModal(cat, items);
+                }
+            } catch (error) {
+                console.error('Błąd pobierania szczegółów kategorii:', error);
+                alert('Błąd pobierania: ' + error.message);
+            }
+        });
+
         container.appendChild(tile);
     });
 }
