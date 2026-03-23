@@ -10,15 +10,26 @@ function updatePurchaseSummary() {
     purchaseSummary.textContent = `Suma: ${formatAmount(total)}`;
 }
 
-function updateItemCategoryUI(itemRow, val) {
+function updateItemCategoryUI(itemRow, compositeVal) {
     const categoryLabel = itemRow.querySelector('.item-category-label');
     const categoryIconEl = itemRow.querySelector('.item-category-icon');
 
-    if (val && val !== '__add_new__') {
-        categoryLabel.textContent = val.charAt(0).toUpperCase() + val.slice(1);
+    if (compositeVal) {
+        let [catName, subName] = compositeVal.split('|');
+        if (!subName) subName = '';
+
+        // Znajdź kategorię nadrzędną dla koloru i ikony
+        const parentCat = (typeof structuredCategories !== 'undefined') 
+            ? structuredCategories.find(c => c.name === catName && !c.parentId)
+            : null;
+
+        const labelText = subName ? `${catName} / ${subName}` : catName;
+        categoryLabel.textContent = labelText;
         categoryLabel.classList.remove('text-gray-400');
-        const iconName = (typeof categoryIcons !== 'undefined' ? categoryIcons[val] : null) || 'fa-tag';
-        const color = typeof getCategoryColor === 'function' ? getCategoryColor(val) : '#6b7280';
+
+        const iconName = (parentCat && parentCat.icon) || (typeof categoryIcons !== 'undefined' ? categoryIcons[catName] : 'fa-tag') || 'fa-tag';
+        const color = (parentCat && parentCat.color) || (typeof getCategoryColor === 'function' ? getCategoryColor(catName) : '#6b7280');
+
         categoryIconEl.innerHTML = `<i class="fas ${iconName}"></i>`;
         categoryIconEl.style.backgroundColor = `${color}20`;
         categoryIconEl.style.color = color;
@@ -41,22 +52,29 @@ function addItemRow(item = {}) {
 
     const priceValue = typeof item.price === 'number' ? item.price.toFixed(2) : '';
 
+    // Default tags from receipt level if available (fallback)
+    const defaultNature = typeof purchaseTagNature !== 'undefined' ? purchaseTagNature : 'zmienny';
+    const defaultPurpose = typeof purchaseTagPurpose !== 'undefined' ? purchaseTagPurpose : 'konieczny';
+
+    const itemNature = (item.tags && item.tags.nature) || defaultNature;
+    const itemPurpose = (item.tags && item.tags.purpose) || defaultPurpose;
+
     itemRow.innerHTML = `
-        <div class="md:col-span-5 col-span-12 break-words">
+        <div class="md:col-span-12 col-span-12 break-words">
             <textarea class="item-name mt-1 block w-full rounded-xl border-white/10 bg-white/5 text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2 resize-none overflow-hidden" placeholder="Nazwa produktu" rows="1" required>${item.name || ''}</textarea>
         </div>
-        <div class="md:col-span-2 col-span-4">
+        <div class="col-span-4">
             <input type="number" step="0.01" class="item-price mt-1 block w-full rounded-xl border-white/10 bg-white/5 text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2" placeholder="Cena" value="${priceValue}" required>
         </div>
-        <div class="md:col-span-4 col-span-6 item-category-wrapper">
+        <div class="col-span-6 item-category-wrapper">
             <div class="category-trigger-card item-category-btn" style="margin-top: 4px;">
                 <div class="flex items-center gap-2 overflow-hidden w-full">
                     <div class="category-trigger-icon item-category-icon bg-white/10 text-gray-400 flex-shrink-0">
                         <i class="fas fa-tag"></i>
                     </div>
-                    <span class="item-category-label category-trigger-label text-sm text-gray-400 truncate">Kategoria</span>
+                    <span class="item-category-label category-trigger-label text-xs text-gray-400 truncate">Kategoria</span>
                 </div>
-                <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <svg class="w-4 h-4 text-gray-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                 </svg>
             </div>
@@ -66,8 +84,19 @@ function addItemRow(item = {}) {
             </select>
             <input type="text" class="new-category-input hidden mt-1 block w-full rounded-xl border-white/10 bg-white/5 text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2" placeholder="Nazwa nowej kategorii">
         </div>
-        <div class="md:col-span-1 col-span-2 text-right flex items-start justify-end">
+        <div class="col-span-2 text-right">
             <button type="button" class="remove-item-btn p-3 text-red-500 hover:text-red-700 rounded-full mt-1"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM7 9a1 1 0 000 2h6a1 1 0 100-2H7z" clip-rule="evenodd" /></svg></button>
+        </div>
+        <!-- Item Tags Selection -->
+        <div class="col-span-12 flex gap-2 mt-1 pb-1">
+             <button type="button" class="item-nature-btn flex-1 flex items-center justify-between px-2 py-1.5 rounded-lg bg-white/5 border border-white/5 text-[10px] text-gray-400 hover:bg-white/10 transition-all" data-value="${itemNature}">
+                <span class="truncate">N: <span class="text-white font-medium item-nature-label">${itemNature}</span></span>
+                <i class="fas fa-chevron-down opacity-50 scale-75"></i>
+             </button>
+             <button type="button" class="item-purpose-btn flex-1 flex items-center justify-between px-2 py-1.5 rounded-lg bg-white/5 border border-white/5 text-[10px] text-gray-400 hover:bg-white/10 transition-all" data-value="${itemPurpose}">
+                <span class="truncate">C: <span class="text-white font-medium item-purpose-label">${itemPurpose}</span></span>
+                <i class="fas fa-chevron-down opacity-50 scale-75"></i>
+             </button>
         </div>
     `;
     itemsContainer.appendChild(itemRow);
@@ -85,14 +114,73 @@ function addItemRow(item = {}) {
     // Ustawienie początkowej wysokości (ważne przy edycji)
     setTimeout(() => autoResizeTextarea.call(itemNameInput), 0);
 
+    const itemNatureBtn = itemRow.querySelector('.item-nature-btn');
+    const itemPurposeBtn = itemRow.querySelector('.item-purpose-btn');
+
+    itemNatureBtn.addEventListener('click', () => {
+        const options = [
+            { value: 'zmienny', label: 'Zmienny (np. jedzenie, chemia)' },
+            { value: 'stały', label: 'Stały (np. czynsz, subskrypcje)' },
+            { value: 'jednorazowy', label: 'Jednorazowy (np. AGD, meble)' }
+        ];
+        openSelectionDrawer('Natura produktu', options, (val) => {
+            itemNatureBtn.dataset.value = val;
+            itemRow.querySelector('.item-nature-label').textContent = val;
+        }, itemNatureBtn.dataset.value);
+    });
+
+    itemPurposeBtn.addEventListener('click', () => {
+        const options = [
+            { value: 'konieczny', label: 'Konieczny (potrzeby)' },
+            { value: 'przyjemność', label: 'Przyjemność (zachcianki)' },
+            { value: 'inwestycja', label: 'Inwestycja (na przyszłość)' }
+        ];
+        openSelectionDrawer('Celowość produktu', options, (val) => {
+            itemPurposeBtn.dataset.value = val;
+            itemRow.querySelector('.item-purpose-label').textContent = val;
+        }, itemPurposeBtn.dataset.value);
+    });
+
     // Initialize custom drawer trigger
     const categoryBtn = itemRow.querySelector('.item-category-btn');
     const categoryLabel = itemRow.querySelector('.item-category-label');
     const categoryIconEl = itemRow.querySelector('.item-category-icon');
 
+    // Inicjalizacja wartości dla trybu edycji
+    if (item.category) {
+        const initialCombined = item.subCategory ? `${item.category}|${item.subCategory}` : item.category;
+        
+        // Dodaj opcję jeśli jej nie ma
+        if (!Array.from(categorySelect.options).some(opt => opt.value === initialCombined)) {
+            const opt = document.createElement('option');
+            opt.value = initialCombined;
+            opt.text = item.subCategory ? `${item.category} / ${item.subCategory}` : item.category;
+            categorySelect.appendChild(opt);
+        }
+        categorySelect.value = initialCombined;
+        updateItemCategoryUI(itemRow, initialCombined);
+    }
+
     categoryBtn.onclick = (e) => {
         e.preventDefault();
-        if (typeof openCategoryDrawer === 'function') {
+        if (typeof openHierarchicalCategoryDrawer === 'function') {
+            const currentVal = categorySelect.value || '';
+            let [vCat, vSub] = currentVal.split('|');
+            openHierarchicalCategoryDrawer(itemRow, vCat || '', vSub || '', (pName, sName) => {
+                const combined = sName ? `${pName}|${sName}` : pName;
+                
+                // Zapewnij, że opcja istnieje w select (aby wartość nie została zgubiona)
+                if (!Array.from(categorySelect.options).some(opt => opt.value === combined)) {
+                    const newOpt = document.createElement('option');
+                    newOpt.value = combined;
+                    newOpt.text = sName ? `${pName} / ${sName}` : pName;
+                    categorySelect.appendChild(newOpt);
+                }
+                
+                categorySelect.value = combined;
+                updateItemCategoryUI(itemRow, combined);
+            });
+        } else if (typeof openCategoryDrawer === 'function') {
             openCategoryDrawer(itemRow, categorySelect.value, (cat) => {
                 categorySelect.value = cat;
                 categorySelect.dispatchEvent(new Event('change'));
@@ -102,7 +190,8 @@ function addItemRow(item = {}) {
 
     // Update initial UI state
     if (item.category) {
-        categorySelect.value = item.category;
+        const combined = item.subCategory ? `${item.category}|${item.subCategory}` : item.category;
+        categorySelect.value = combined;
     }
     updateItemCategoryUI(itemRow, categorySelect.value);
 
@@ -154,17 +243,37 @@ function handleNewCategory(newCategoryInput, categorySelect) {
 
 function updateAllCategorySelects(newlySelected = null, targetSelect = null) {
     const categoryOptions = allCategories.map(cat => `<option value="${cat}">${cat.charAt(0).toUpperCase() + cat.slice(1)}</option>`).join('');
-    const fullHtml = `<option value="">Wybierz kategorię</option>${categoryOptions}<option value="__add_new__">-- Dodaj nową --</option>`;
+    const baseHtml = `<option value="">Wybierz kategorię</option>${categoryOptions}<option value="__add_new__">-- Dodaj nową --</option>`;
 
     document.querySelectorAll('.item-row').forEach(row => {
         const select = row.querySelector('.item-category-select');
         const currentValue = select.value;
-        select.innerHTML = fullHtml;
+        
+        // Jeśli aktualna wartość jest złożona (hierarchiczna), zachowaj ją jako dodatkową opcję
+        let customOptHtml = '';
+        if (currentValue && currentValue.includes('|')) {
+            const [p, s] = currentValue.split('|');
+            customOptHtml = `<option value="${currentValue}" selected>${p} / ${s}</option>`;
+        } else if (currentValue && !allCategories.includes(currentValue) && currentValue !== '__add_new__') {
+            // Dla płaskich kategorii, których nie ma w liście (np. zmigrowane, które jeszcze nie są w allCategories)
+            customOptHtml = `<option value="${currentValue}" selected>${currentValue.charAt(0).toUpperCase() + currentValue.slice(1)}</option>`;
+        }
+
+        select.innerHTML = baseHtml + customOptHtml;
 
         // Ustaw nową kategorię tylko w tym konkretnym select, który ją dodał
         if (targetSelect && select === targetSelect && newlySelected) {
+            // Jeśli nowo wybrana jest hierarchiczna, a nie ma jej w HTML, dodaj ją
+            if (newlySelected.includes('|') && select.value !== newlySelected) {
+                 const [p, s] = newlySelected.split('|');
+                 const opt = document.createElement('option');
+                 opt.value = newlySelected;
+                 opt.text = `${p} / ${s}`;
+                 opt.selected = true;
+                 select.appendChild(opt);
+            }
             select.value = newlySelected;
-        } else {
+        } else if (currentValue) {
             select.value = currentValue;
         }
 
@@ -181,12 +290,39 @@ async function handlePurchaseFormSubmit(e) {
         shop: shopInput.value,
         date: dateInput.value,
         specialBudgetId: budgetTypeSelectValue === 'monthly' ? null : budgetTypeSelectValue,
+        tags: {
+            nature: typeof purchaseTagNature !== 'undefined' ? purchaseTagNature : 'zmienny',
+            purpose: typeof purchaseTagPurpose !== 'undefined' ? purchaseTagPurpose : 'konieczny'
+        },
         items: Array.from(document.querySelectorAll('.item-row')).map(row => {
             const name = row.querySelector('.item-name').value;
-            const price = parseFloat(row.querySelector('.item-price').value.replace(',', '.'));
-            let category = row.querySelector('.item-category-select').value;
-            if (!category || category === '__add_new__') category = 'inne';
-            return { name, price, category };
+            const priceStr = row.querySelector('.item-price').value.replace(',', '.');
+            const price = parseFloat(priceStr) || 0;
+            const composite = row.querySelector('.item-category-select').value;
+            
+            let category = 'inne';
+            let subCategory = '';
+            
+            if (composite && composite !== '__add_new__') {
+                if (composite.includes('|')) {
+                    const [p, s] = composite.split('|');
+                    category = p || 'inne';
+                    subCategory = s || '';
+                } else {
+                    category = composite;
+                }
+            }
+
+            const nature = row.querySelector('.item-nature-btn').dataset.value;
+            const purpose = row.querySelector('.item-purpose-btn').dataset.value;
+
+            return { 
+                name, 
+                price, 
+                category, 
+                subCategory,
+                tags: { nature, purpose }
+            };
         }).filter(item => item.name && !isNaN(item.price))
     };
 
@@ -246,20 +382,43 @@ function renderPurchasesList(purchasesToRender, append = false) {
                 </div>
             </div>
             <div class="purchase-items hidden p-4 space-y-4 bg-white/5 rounded-b-2xl border-t border-white/5">
-                ${(p.items || []).map(item => `
+                <!-- Tagi paragonu -->
+                ${p.tags ? `
+                <div class="flex gap-2 mb-2 p-2 bg-white/5 rounded-xl border border-white/5">
+                    <div class="flex flex-col flex-1">
+                        <span class="text-[9px] text-gray-500 uppercase tracking-widest">Natura</span>
+                        <span class="text-xs text-white font-medium">${p.tags.nature || 'zmienny'}</span>
+                    </div>
+                    <div class="flex flex-col flex-1">
+                        <span class="text-[9px] text-gray-500 uppercase tracking-widest">Celowość</span>
+                        <span class="text-xs text-white font-medium">${p.tags.purpose || 'konieczny'}</span>
+                    </div>
+                </div>` : ''}
+
+                ${(p.items || []).map(item => {
+                    const catName = item.category || 'inne';
+                    const subName = item.subCategory || '';
+                    const parentCat = (typeof structuredCategories !== 'undefined') 
+                        ? structuredCategories.find(c => c.name === catName && !c.parentId)
+                        : null;
+                    const icon = (parentCat && parentCat.icon) || (typeof categoryIcons !== 'undefined' ? categoryIcons[catName] : 'fa-tag') || 'fa-tag';
+                    const color = (parentCat && parentCat.color) || (typeof getCategoryColor === 'function' ? getCategoryColor(catName) : '#6b7280');
+                    const labelText = subName ? `${catName} / ${subName}` : catName;
+
+                    return `
                     <div class="flex justify-between items-end py-1 border-b border-white/5 last:border-0">
                         <div class="flex flex-col">
                             <div class="category-tag-mini flex items-center gap-2 mb-1">
-                                <div class="category-icon-mini" style="background-color: ${getCategoryColor(item.category)}20; color: ${getCategoryColor(item.category)}">
-                                    <i class="fas ${categoryIcons[item.category] || 'fa-tag'}"></i>
+                                <div class="category-icon-mini" style="background-color: ${color}20; color: ${color}">
+                                    <i class="fas ${icon}"></i>
                                 </div>
-                                <span class="text-[10px] text-gray-400 uppercase tracking-tight">${item.category}</span>
+                                <span class="text-[10px] text-gray-400 uppercase tracking-tight">${labelText}</span>
                             </div>
                             <div class="text-sm font-semibold text-white">${item.name}</div>
                         </div>
                         <div class="font-bold text-white whitespace-nowrap text-base">${formatAmount(item.price || 0)}</div>
                     </div>
-                `).join('')}
+                `;}).join('')}
                 
                 <!-- Expanded view actions -->
                 <div class="flex gap-3 pt-2 mt-2 border-t border-white/5">

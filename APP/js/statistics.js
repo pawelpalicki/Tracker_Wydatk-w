@@ -225,17 +225,17 @@ function renderHomeCategoryTiles(purchases, budgets = {}) {
     if (!container) return;
     container.innerHTML = '';
 
-    // Group by category
-    const byCategory = {};
+    // Group by parent category
+    const byParentCategory = {};
     purchases.forEach(p => {
         (p.items || []).forEach(item => {
             const cat = item.category || 'inne';
-            if (!byCategory[cat]) byCategory[cat] = 0;
-            byCategory[cat] += item.price || 0;
+            if (!byParentCategory[cat]) byParentCategory[cat] = 0;
+            byParentCategory[cat] += item.price || 0;
         });
     });
 
-    const sorted = Object.entries(byCategory).sort((a, b) => b[1] - a[1]);
+    const sorted = Object.entries(byParentCategory).sort((a, b) => b[1] - a[1]);
 
     if (sorted.length === 0) {
         container.innerHTML = '<p class="text-xs text-gray-500 italic pl-1">Brak danych</p>';
@@ -243,8 +243,14 @@ function renderHomeCategoryTiles(purchases, budgets = {}) {
     }
 
     sorted.forEach(([cat, amount]) => {
-        const color = getCategoryColor(cat);
-        const icon = categoryIcons[cat.toLowerCase()] || 'fa-tag';
+        // Find parent category in structuredCategories for icon/color
+        const parentCat = (typeof structuredCategories !== 'undefined')
+            ? structuredCategories.find(c => c.name === cat && !c.parentId)
+            : null;
+
+        const color = (parentCat && parentCat.color) || (typeof getCategoryColor === 'function' ? getCategoryColor(cat) : '#6b7280');
+        const icon = (parentCat && parentCat.icon) || (typeof categoryIcons !== 'undefined' ? categoryIcons[cat.toLowerCase()] : 'fa-tag') || 'fa-tag';
+        
         const budget = budgets[cat] || 0;
         const pct = budget > 0 ? Math.round((amount / budget) * 100) : null;
         
@@ -269,16 +275,12 @@ function renderHomeCategoryTiles(purchases, budgets = {}) {
             </div>
         `;
         
-        // Add click listener to open the new drawer
         tile.addEventListener('click', async () => {
             const selectedMonth = homeDashboardMonth;
             if (!selectedMonth) return;
             const [year, month] = selectedMonth.split('-');
             try {
-                // Fetch details for the specifically clicked category in the selected month
                 const { items } = await apiCall(`/api/statistics/category-details?year=${year}&month=${month}&category=${cat.toLowerCase()}`);
-                
-                // Use the updated function in ui.js which now opens the bottom drawer
                 if(typeof renderCategoryDetailsModal === 'function') {
                     renderCategoryDetailsModal(cat, items);
                 }
@@ -343,9 +345,12 @@ async function renderHomeRecentTransactions() {
                 </div>
                 <div class="transaction-details hidden mt-3 space-y-2 p-3 bg-white/5 rounded-xl border border-white/5 w-full">
                     ${(purchase.items || []).map(item => {
-                        const itemCat = (item.category || 'inne').toLowerCase();
-                        const itemColor = getCategoryColor(itemCat);
-                        const itemIcon = categoryIcons[itemCat] || 'fa-tag';
+                        const itemCat = item.category || 'inne';
+                        const parentCat = (typeof structuredCategories !== 'undefined')
+                            ? structuredCategories.find(c => c.name === itemCat && !c.parentId)
+                            : null;
+                        const itemColor = (parentCat && parentCat.color) || (typeof getCategoryColor === 'function' ? getCategoryColor(itemCat) : '#6b7280');
+                        const itemIcon = (parentCat && parentCat.icon) || (typeof categoryIcons !== 'undefined' ? categoryIcons[itemCat.toLowerCase()] : 'fa-tag') || 'fa-tag';
                         return `
                             <div class="flex justify-between items-center text-[11px] py-0.5">
                                 <div class="flex items-center gap-2 min-w-0 pr-4">
@@ -772,7 +777,12 @@ async function updateCategoryPieChart() {
     const labels = Object.keys(spendingByCategory);
     const data = Object.values(spendingByCategory);
     const total = data.reduce((a, b) => a + b, 0);
-    const backgroundColors = labels.map(label => getCategoryColor(label));
+    const backgroundColors = labels.map(label => {
+        const parentCat = (typeof structuredCategories !== 'undefined')
+            ? structuredCategories.find(c => c.name === label && !c.parentId)
+            : null;
+        return (parentCat && parentCat.color) || (typeof getCategoryColor === 'function' ? getCategoryColor(label) : '#6b7280');
+    });
 
     if (categoryChart) categoryChart.destroy();
 
@@ -906,12 +916,18 @@ function renderInteractiveLegend(chart, total) {
     legendContainer.innerHTML = `
         <ul class="space-y-1 pr-2">
             ${sortedData.map(item => {
-        const originalIndex = labels.indexOf(item.label);
-        return `
-                <li data-index="${originalIndex}" data-label="${item.label.toLowerCase()}" class="flex items-center justify-between py-1.5 px-2 rounded-md cursor-pointer transition-colors select-none">
+                const originalIndex = labels.indexOf(item.label);
+                const currentLabel = item.label.toLowerCase();
+                const parentCat = (typeof structuredCategories !== 'undefined')
+                    ? structuredCategories.find(c => c.name.toLowerCase() === currentLabel && !c.parentId)
+                    : null;
+                const icon = (parentCat && parentCat.icon) || (typeof categoryIcons !== 'undefined' ? categoryIcons[currentLabel] : 'fa-tag') || 'fa-tag';
+
+                return `
+                <li data-index="${originalIndex}" data-label="${currentLabel}" class="flex items-center justify-between py-1.5 px-2 rounded-md cursor-pointer transition-colors select-none">
                     <div class="flex items-center truncate">
                         <div class="category-icon-mini mr-3 flex-shrink-0" style="background-color: ${item.color}20; color: ${item.color}">
-                            <i class="fas ${categoryIcons[item.label.toLowerCase()] || 'fa-tag'}"></i>
+                            <i class="fas ${icon}"></i>
                         </div>
                         <span class="font-medium text-gray-800 dark:text-gray-200 truncate" title="${item.label}">${item.label}</span>
                     </div>
@@ -920,7 +936,7 @@ function renderInteractiveLegend(chart, total) {
                         <p class="text-xs text-gray-500 dark:text-gray-400">${item.percentage}%</p>
                     </div>
                 </li>
-            `}).join('')}
+            `;}).join('')}
         </ul>
     `;
 

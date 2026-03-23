@@ -23,6 +23,7 @@ const API_BASE_URL = ''; // Puste, bo Firebase Hosting automatycznie przekierowu
 // --- Stan Aplikacji ---
 let allPurchases = [];
 let allCategories = [];
+let structuredCategories = []; // Tablica obiektów {id, name, parentId, color, icon}
 let allShops = [];
 let allSpecialBudgets = [];
 let allRecurringExpenses = [];
@@ -203,12 +204,20 @@ function updateCustomDropdownValue(selectId, labelId) {
 function openCategoryDrawer(row, currentCategory, onSelect = null) {
     activeCategoryRow = row;
 
-    const options = allCategories.map(cat => ({
-        value: cat,
-        label: cat.charAt(0).toUpperCase() + cat.slice(1),
-        icon: `<i class="fas ${categoryIcons[cat] || 'fa-tag'}"></i>`,
-        color: getCategoryColor(cat) + '20'
-    }));
+    const options = allCategories.map(cat => {
+        const parentCat = (typeof structuredCategories !== 'undefined')
+            ? structuredCategories.find(c => c.name === cat && !c.parentId)
+            : null;
+        const color = (parentCat && parentCat.color) || (typeof getCategoryColor === 'function' ? getCategoryColor(cat) : '#6b7280');
+        const icon = (parentCat && parentCat.icon) || (typeof categoryIcons !== 'undefined' ? categoryIcons[cat.toLowerCase()] : 'fa-tag') || 'fa-tag';
+        
+        return {
+            value: cat,
+            label: cat.charAt(0).toUpperCase() + cat.slice(1),
+            icon: `<i class="fas ${icon}"></i>`,
+            color: color + '20'
+        };
+    });
 
     const itemName = row ? (row.querySelector('.item-name')?.value || 'produkcie') : 'filtrach';
     const title = `Kategoria dla: ${itemName}`;
@@ -561,6 +570,17 @@ function setupAppEventListeners() {
             updatePurchaseSummary();
         }
     });
+    function exitEditMode() {
+    editMode.active = false;
+    editMode.purchaseId = null;
+    purchaseForm.reset();
+    purchaseFormTitle.textContent = 'Dodaj nowy zakup ręcznie';
+    cancelEditBtn.classList.add('hidden');
+    itemsContainer.innerHTML = '';
+    addItemRow();
+    updatePurchaseSummary();
+    if (typeof resetPurchaseTags === 'function') resetPurchaseTags();
+}
     document.getElementById('cancel-edit-btn')?.addEventListener('click', () => {
         exitEditMode();
         switchTab('list');
@@ -972,8 +992,9 @@ function populateBudgetFilterSelect() {
 async function fetchInitialData(shouldSwitchToDefault = true) {
     try {
         // Pobierz dane, które nie wymagają paginacji
-        [allCategories, allShops, allSpecialBudgets, allRecurringExpenses] = await Promise.all([
+        [allCategories, structuredCategories, allShops, allSpecialBudgets, allRecurringExpenses] = await Promise.all([
             apiCall('/api/categories'),
+            apiCall('/api/categories/v2'),
             apiCall('/api/shops'),
             apiCall('/api/special-budgets'),
             apiCall('/api/recurring-expenses') // Fetch recurring expenses
@@ -981,6 +1002,12 @@ async function fetchInitialData(shouldSwitchToDefault = true) {
 
         // Załaduj pierwszą stronę zakupów
         await loadInitialPurchases();
+
+        // Auto-migracja, jeśli brak kategorii hierarchicznych
+        if (structuredCategories.length === 0 && allCategories.length > 0) {
+            console.log("Wykryto brak kategorii hierarchicznych. Uruchamiam auto-migrację...");
+            await migrateToStructuredCategories();
+        }
 
         // Renderuj wszystko po załadowaniu wszystkich danych
         renderAll();
@@ -992,6 +1019,43 @@ async function fetchInitialData(shouldSwitchToDefault = true) {
         }
     } catch (error) {
         alert(error.message);
+    }
+}
+
+async function migrateToStructuredCategories() {
+    // Mapa ikon dla domyślnych kategorii
+    const defaultIcons = {
+        'spożywcze': 'fa-shopping-basket',
+        'chemia': 'fa-pump-soap',
+        'transport': 'fa-car',
+        'rozrywka': 'fa-film',
+        'zdrowie': 'fa-heartbeat',
+        'ubrania': 'fa-tshirt',
+        'dom': 'fa-home',
+        'rachunki': 'fa-file-invoice-dollar',
+        'kaucje': 'fa-piggy-bank',
+        'inne': 'fa-tag'
+    };
+
+    // Generuj nową strukturę
+    structuredCategories = allCategories.map((catName, index) => {
+        const color = CAT_COLOR_OPTIONS[index % CAT_COLOR_OPTIONS.length];
+        const icon = defaultIcons[catName.toLowerCase()] || 'fa-tag';
+        return {
+            id: `migrated-${index}`,
+            name: catName,
+            parentId: null,
+            color: color,
+            icon: icon
+        };
+    });
+
+    try {
+        // Zapisz zmigrowane kategorie do backendu (v2)
+        await apiCall('/api/categories/v2', 'POST', { structuredCategories });
+        console.log("Pomyślnie zmigrowano kategorie.");
+    } catch (err) {
+        console.error("Błąd podczas migracji kategorii:", err);
     }
 }
 
@@ -1406,6 +1470,7 @@ async function initializeApp() {
     exitEditMode();
     handleScheduleTypeChange();
     if (typeof initHomeDashboardControls === 'function') initHomeDashboardControls();
+    if (typeof initPurchaseTags === 'function') initPurchaseTags();
 }
 
 // Główny mechanizm obsługi stanu uwierzytelnienia

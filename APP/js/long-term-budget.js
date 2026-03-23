@@ -4,6 +4,9 @@ let longTermBudgetChart;
 let longTermBudgetInitialized = false;
 
 let currentComparisonCategory = null;
+let currentComparisonSubCategory = null;
+let currentComparisonNature = null;
+let currentComparisonPurpose = null;
 
 // Helper dla customowych pickerów miesięcy (długoterminowa analiza zakresu)
 function initCustomMonthPicker(btnId, popupId, labelId, inputId, defaultVal, availableMonths) {
@@ -180,6 +183,68 @@ async function initializeComparisonChart(availableMonths = []) {
         renderComparisonBarChart(isMtd, mode, currentSelYear);
     };
 
+    // --- Nowe Filtry Analizy ---
+    const natureBtn = document.getElementById('analysis-filter-nature-btn');
+    const natureLabel = document.getElementById('analysis-filter-nature-label');
+    const purposeBtn = document.getElementById('analysis-filter-purpose-btn');
+    const purposeLabel = document.getElementById('analysis-filter-purpose-label');
+    const subBtn = document.getElementById('analysis-filter-subcategory-btn');
+    const subLabel = document.getElementById('analysis-filter-subcategory-label');
+
+    if (natureBtn) {
+        natureBtn.addEventListener('click', () => {
+            const options = [
+                { value: 'all', label: 'Wszystkie natury' },
+                { value: 'zmienny', label: 'Zmienny' },
+                { value: 'stały', label: 'Stały' },
+                { value: 'jednorazowy', label: 'Jednorazowy' }
+            ];
+            openSelectionDrawer('Filtruj naturę', options, (val) => {
+                currentComparisonNature = val === 'all' ? null : val;
+                natureLabel.textContent = val === 'all' ? 'Wszys. Natury' : val.charAt(0).toUpperCase() + val.slice(1);
+                renderChart();
+            }, currentComparisonNature || 'all');
+        });
+    }
+
+    if (purposeBtn) {
+        purposeBtn.addEventListener('click', () => {
+            const options = [
+                { value: 'all', label: 'Wszystkie cele' },
+                { value: 'konieczny', label: 'Konieczny' },
+                { value: 'przyjemność', label: 'Przyjemność' },
+                { value: 'inwestycja', label: 'Inwestycja' }
+            ];
+            openSelectionDrawer('Filtruj celowość', options, (val) => {
+                currentComparisonPurpose = val === 'all' ? null : val;
+                purposeLabel.textContent = val === 'all' ? 'Wszys. Cele' : val.charAt(0).toUpperCase() + val.slice(1);
+                renderChart();
+            }, currentComparisonPurpose || 'all');
+        });
+    }
+
+    if (subBtn) {
+        subBtn.addEventListener('click', () => {
+             if (!currentComparisonCategory) return;
+             
+             // Znajdź podkategorie dla aktualnej kategorii
+             const parent = structuredCategories.find(c => c.name === currentComparisonCategory && !c.parentId);
+             if (!parent) return;
+             
+             const subs = structuredCategories.filter(c => c.parentId === parent.id);
+             const options = [
+                 { value: 'all', label: 'Wszystkie podkategorie' },
+                 ...subs.map(s => ({ value: s.name, label: s.name }))
+             ];
+             
+             openSelectionDrawer(`Podkategorie: ${currentComparisonCategory}`, options, (val) => {
+                 currentComparisonSubCategory = val === 'all' ? null : val;
+                 subLabel.textContent = val === 'all' ? 'Wszystkie podkategorie' : val;
+                 renderChart();
+             }, currentComparisonSubCategory || 'all');
+        });
+    }
+
     if (yearBtn && yearPopup && yearLabel) {
         yearPopup.innerHTML = availableYears.map(y =>
             `<button class="year-option-btn w-full text-center px-3 py-2 rounded-lg text-sm text-white hover:bg-white/10 transition-colors" data-value="${y}">${y}</button>`
@@ -273,6 +338,15 @@ async function renderComparisonBarChart(mtdMode, periodMode, selectedYear) {
 
     if (currentComparisonCategory) {
         url += `&category=${encodeURIComponent(currentComparisonCategory)}`;
+    }
+    if (currentComparisonSubCategory) {
+        url += `&subCategory=${encodeURIComponent(currentComparisonSubCategory)}`;
+    }
+    if (currentComparisonNature) {
+        url += `&nature=${encodeURIComponent(currentComparisonNature)}`;
+    }
+    if (currentComparisonPurpose) {
+        url += `&purpose=${encodeURIComponent(currentComparisonPurpose)}`;
     }
 
     try {
@@ -393,7 +467,31 @@ async function renderComparisonCategoryFilters(mtdMode, periodMode, selectedYear
     filterContainer.querySelectorAll('.filter-chip').forEach(chip => {
         chip.addEventListener('click', (e) => {
             const cat = e.target.dataset.category;
+            const subBtn = document.getElementById('analysis-filter-subcategory-btn');
+            const subLabel = document.getElementById('analysis-filter-subcategory-label');
+
             currentComparisonCategory = cat === 'all' ? null : cat;
+            currentComparisonSubCategory = null; // Reset subcategory when category changes
+            
+            if (subBtn && subLabel) {
+                if (currentComparisonCategory) {
+                    // Sprawdź czy są podkategorie
+                    const parent = (typeof structuredCategories !== 'undefined') 
+                        ? structuredCategories.find(c => c.name === currentComparisonCategory && !c.parentId)
+                        : null;
+                    const hasSubs = parent && structuredCategories.some(c => c.parentId === parent.id);
+                    
+                    if (hasSubs) {
+                        subBtn.classList.remove('hidden');
+                        subLabel.textContent = 'Wszystkie podkategorie';
+                    } else {
+                        subBtn.classList.add('hidden');
+                    }
+                } else {
+                    subBtn.classList.add('hidden');
+                }
+            }
+
             renderComparisonBarChart(mtdMode, periodMode, selectedYear);
         });
     });

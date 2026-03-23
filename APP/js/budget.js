@@ -139,7 +139,14 @@ function renderBudgetProgress(spending, budgets) {
         const spentAmount = spending[cat] || 0;
         const percentage = Math.min((spentAmount / budgetAmount) * 100, 100);
 
-        const categoryColor = getCategoryColor(cat);
+        // Find parent category in structuredCategories for icon/color
+        const parentCat = (typeof structuredCategories !== 'undefined')
+            ? structuredCategories.find(c => c.name === cat && !c.parentId)
+            : null;
+
+        const categoryColor = (parentCat && parentCat.color) || (typeof getCategoryColor === 'function' ? getCategoryColor(cat) : '#6b7280');
+        const icon = (parentCat && parentCat.icon) || (typeof categoryIcons !== 'undefined' ? categoryIcons[cat.toLowerCase()] : 'fa-tag') || 'fa-tag';
+        
         let warningIcon = '';
         let amountClass = 'text-gray-600 dark:text-gray-400';
 
@@ -151,11 +158,14 @@ function renderBudgetProgress(spending, budgets) {
         const progressElement = document.createElement('div');
         progressElement.innerHTML = `
             <div class="flex justify-between items-center text-sm mb-1">
-                <span class="font-medium text-gray-800 dark:text-gray-200 flex items-center">${cat.charAt(0).toUpperCase() + cat.slice(1)} ${warningIcon}</span>
+                <span class="font-medium text-gray-800 dark:text-gray-200 flex items-center">
+                    <i class="fas ${icon} mr-2 text-[10px]" style="color:${categoryColor}"></i>
+                    ${cat.charAt(0).toUpperCase() + cat.slice(1)} ${warningIcon}
+                </span>
                 <span class="${amountClass}">${formatAmount(spentAmount)} / ${formatAmount(budgetAmount)}</span>
             </div>
-            <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
-                <div class="h-2.5 rounded-full" style="width: ${percentage}%; background-color: ${categoryColor};"></div>
+            <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                <div class="h-2 rounded-full transition-all duration-500" style="width: ${percentage}%; background-color: ${categoryColor};"></div>
             </div>
         `;
         container.appendChild(progressElement);

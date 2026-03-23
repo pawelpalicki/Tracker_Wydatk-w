@@ -210,27 +210,95 @@ async function extractAndCategorizePurchase(file, categories) {
     }
 }
 
-async function updateCategoryInPurchases(userId, oldName, newName, deleteMode = false) {
-    const snapshot = await purchasesCollection.where('userId', '==', userId).get();
-    const batch = db.batch();
-
-    snapshot.docs.forEach(doc => {
-        const purchase = doc.data();
-        let needsUpdate = false;
-        const updatedItems = purchase.items.map(item => {
-            if (item.category === oldName) {
-                needsUpdate = true;
-                return { ...item, category: deleteMode ? 'inne' : newName };
-            }
-            return item;
-        });
-
-        if (needsUpdate) {
-            batch.update(doc.ref, { items: updatedItems });
+/**
+ * Uniwersalna funkcja do kaskadowej aktualizacji kategorii w zakupach (Rename/Delete)
+ * Obsługuje kategorie główne oraz podkategorie.
+ */
+async function updateCategoryInPurchasesV2(userId, categoryId, oldName, newName, parentId = null, isDelete = false) {
+    console.log(`Rozpoczęto masową aktualizację kategorii: ${oldName} -> ${newName} (parentId: ${parentId}, delete: ${isDelete})`);
+    
+    try {
+        const snapshot = await purchasesCollection.where('userId', '==', userId).get();
+        if (snapshot.empty) {
+            console.log('Brak zakupów do aktualizacji.');
+            return;
         }
-    });
 
-    await batch.commit();
+        // Pobierz dane użytkownika RAZ przed pętlą
+        let parentName = null;
+        if (parentId !== null) {
+            const userDoc = await usersCollection.doc(userId).get();
+            const userData = userDoc.data();
+            const parentCat = (userData.structuredCategories || []).find(c => c.id === parentId);
+            parentName = parentCat ? parentCat.name : null;
+            console.log(`Aktualizacja podkategorii dla rodzica: ${parentName}`);
+        }
+
+        let batch = db.batch();
+        let count = 0;
+        let totalUpdated = 0;
+
+        for (const doc of snapshot.docs) {
+            const purchase = doc.data();
+            let needsUpdate = false;
+            const updateData = {};
+
+            // 1. Obsługa kategorii głównej
+            if (parentId === null) {
+                if (purchase.category === oldName) {
+                    updateData.category = isDelete ? 'inne' : newName;
+                    needsUpdate = true;
+                }
+                
+                if (purchase.items && Array.isArray(purchase.items)) {
+                    const newItems = purchase.items.map(item => {
+                        if (item.category === oldName) {
+                            needsUpdate = true;
+                            return { 
+                                ...item, 
+                                category: isDelete ? 'inne' : newName,
+                                subCategory: isDelete ? '' : (item.subCategory || '') 
+                            };
+                        }
+                        return item;
+                    });
+                    if (needsUpdate) updateData.items = newItems;
+                }
+            } 
+            // 2. Obsługa podkategorii
+            else {
+                if (purchase.items && Array.isArray(purchase.items)) {
+                    const newItems = purchase.items.map(item => {
+                        if (item.subCategory === oldName && item.category === parentName) {
+                            needsUpdate = true;
+                            return { ...item, subCategory: isDelete ? '' : newName };
+                        }
+                        return item;
+                    });
+                    if (needsUpdate) updateData.items = newItems;
+                }
+            }
+
+            if (needsUpdate) {
+                batch.update(doc.ref, updateData);
+                count++;
+                totalUpdated++;
+                
+                if (count >= 400) {
+                    await batch.commit();
+                    batch = db.batch();
+                    count = 0;
+                }
+            }
+        }
+
+        if (count > 0) {
+            await batch.commit();
+        }
+        console.log(`Zakończono masową aktualizację. Zaktualizowano dokumentów: ${totalUpdated}`);
+    } catch (err) {
+        console.error(`BŁĄD masowej aktualizacji dla użytkownika ${userId}:`, err);
+    }
 }
 
 
@@ -707,6 +775,133 @@ app.get('/api/categories', authMiddleware, async (req, res) => {
     }
 });
 
+// GET: Pobierz strukturę 2-poziomowych kategorii dla użytkownika (v2)
+app.get('/api/categories/v2', authMiddleware, async (req, res) => {
+    try {
+        const userRef = usersCollection.doc(req.userId);
+        const userDoc = await userRef.get();
+        const userData = userDoc.exists ? userDoc.data() : {};
+        
+        // Domyślna struktura bazy:
+        // structuredCategories: [
+        //   { id: '1', name: 'Spożywcze', parentId: null, color: '#ff0000', icon: 'fa-apple-alt' },
+        //   { id: '2', name: 'Jedzenie/Napoje', parentId: '1' }
+        // ]
+        const structuredCategories = userData.structuredCategories || [];
+        res.json(structuredCategories);
+    } catch (error) {
+        console.error("Błąd pobierania kategorii hierarchicznych:", error);
+        res.status(500).json({ error: 'Błąd serwera podczas pobierania kategorii w wersji 2' });
+    }
+});
+
+// POST: Zapisz całą strukturę hierarchicznych kategorii na nowo (v2)
+app.post('/api/categories/v2', authMiddleware, async (req, res) => {
+    try {
+        const { structuredCategories } = req.body;
+        if (!Array.isArray(structuredCategories)) {
+            return res.status(400).json({ error: 'Brak tablicy structuredCategories.' });
+        }
+
+        const userRef = usersCollection.doc(req.userId);
+        await userRef.update({
+            structuredCategories: structuredCategories
+        });
+        
+        res.status(200).json({ success: true });
+    } catch (error) {
+        console.error("Błąd zapisu kategorii hierarchicznych (v2):", error);
+        res.status(500).json({ error: 'Błąd serwera podczas zapisywania kategorii v2.' });
+    }
+});
+
+// PUT: Aktualizuj pojedynczą kategorię w strukturze (v2) — zmień nazwę, ikonę lub kolor
+app.put('/api/categories/v2/:id', authMiddleware, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name, icon, color } = req.body;
+
+        if (!name) {
+            return res.status(400).json({ error: 'Nazwa kategorii jest wymagana.' });
+        }
+
+        const userRef = usersCollection.doc(req.userId);
+        const userDoc = await userRef.get();
+        const userData = userDoc.exists ? userDoc.data() : {};
+        let cats = userData.structuredCategories || [];
+
+        const idx = cats.findIndex(c => c.id === id);
+        if (idx === -1) {
+            return res.status(404).json({ error: 'Kategoria nie znaleziona.' });
+        }
+
+        const oldCat = cats[idx];
+        const oldName = oldCat.name;
+        const parentId = oldCat.parentId || null;
+
+        cats[idx] = { ...cats[idx], name };
+        if (icon !== undefined) cats[idx].icon = icon;
+        if (color !== undefined) cats[idx].color = color;
+
+        await userRef.update({ structuredCategories: cats });
+
+        // Jeśli nazwa się zmieniła, zaktualizuj wszystkie zakupy
+        if (oldName !== name) {
+            // Nie czekamy (await) na zakończenie masowej aktualizacji, aby nie blokować odpowiedzi UI,
+            // ale tutaj dla pewności lepsza spójność, więc czekamy.
+            await updateCategoryInPurchasesV2(req.userId, id, oldName, name, parentId, false);
+        }
+
+        res.json({ success: true, category: cats[idx] });
+    } catch (error) {
+        console.error("Błąd aktualizacji kategorii v2:", error);
+        res.status(500).json({ error: 'Błąd serwera podczas aktualizacji kategorii v2.' });
+    }
+});
+
+// DELETE: Usuń kategorię (v2) — jeśli główna, usuwa też jej podkategorie
+app.delete('/api/categories/v2/:id', authMiddleware, async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const userRef = usersCollection.doc(req.userId);
+        const userDoc = await userRef.get();
+        const userData = userDoc.exists ? userDoc.data() : {};
+        let cats = userData.structuredCategories || [];
+
+        const target = cats.find(c => c.id === id);
+        if (!target) {
+            return res.status(404).json({ error: 'Kategoria nie znaleziona.' });
+        }
+
+        const oldName = target.name;
+        const parentId = target.parentId || null;
+
+        // 1. Kaskadowa aktualizacja zakupów
+        if (parentId === null) {
+            // Jeśli rodzic -> wszystkie podelementy tego rodzica w zakupach idą do 'inne'
+            // ORAZ wszystkie podkategorie tego rodzica w definicjach też usuwamy (widoczne niżej)
+            await updateCategoryInPurchasesV2(req.userId, id, oldName, 'inne', null, true);
+        } else {
+            // Jeśli podkategoria -> tylko ona znika z zakupów (pole subCategory = "")
+            await updateCategoryInPurchasesV2(req.userId, id, oldName, '', parentId, true);
+        }
+
+        // 2. Usunięcie z definicji kategorii
+        if (target.parentId === null || target.parentId === undefined) {
+            cats = cats.filter(c => c.id !== id && c.parentId !== id);
+        } else {
+            cats = cats.filter(c => c.id !== id);
+        }
+
+        await userRef.update({ structuredCategories: cats });
+        res.json({ success: true });
+    } catch (error) {
+        console.error("Błąd usuwania kategorii v2:", error);
+        res.status(500).json({ error: 'Błąd serwera podczas usuwania kategorii v2.' });
+    }
+});
+
 // POST: Dodaj nową kategorię do listy niestandardowej użytkownika
 app.post('/api/categories', authMiddleware, async (req, res) => {
     const { name } = req.body;
@@ -758,7 +953,7 @@ app.put('/api/categories/:name', authMiddleware, async (req, res) => {
         });
 
         // Krok 2: Zaktualizuj nazwę w istniejących zakupach
-        await updateCategoryInPurchases(req.userId, oldName, newNameLower);
+        await updateCategoryInPurchasesV2(req.userId, null, oldName, newNameLower, null, false);
 
         // Krok 3: Zaktualizuj nazwę w istniejących budżetach
         const budgetsSnapshot = await db.collection('budgets').where('userId', '==', req.userId).get();
@@ -790,7 +985,7 @@ app.delete('/api/categories/:name', authMiddleware, async (req, res) => {
 
     try {
         // Krok 1: Zaktualizuj kategorię w istniejących zakupach na "inne"
-        await updateCategoryInPurchases(req.userId, name, null, true);
+        await updateCategoryInPurchasesV2(req.userId, null, name, 'inne', null, true);
 
         // Krok 2: Usuń kategorię z listy niestandardowej w profilu użytkownika
         const userRef = usersCollection.doc(req.userId);
@@ -1019,7 +1214,7 @@ app.get('/api/statistics', authMiddleware, async (req, res) => {
 
 app.get('/api/statistics/comparison', authMiddleware, async (req, res) => {
     try {
-        const { mode, category, mtd } = req.query; // 'full' (12 months domyślnie), '6months', 'year'
+        const { mode, category, subCategory, nature, purpose, mtd } = req.query; 
         const isMtdMode = mtd === 'true' || mode === 'mtd';
         const today = new Date();
         const targetDay = today.getDate();
@@ -1073,9 +1268,22 @@ app.get('/api/statistics/comparison', authMiddleware, async (req, res) => {
         const monthlyTotalsMap = purchases.reduce((acc, p) => {
             const month = p.date.substring(0, 7); // YYYY-MM
             let amount = 0;
-            if (category) {
+            if (category || subCategory || nature || purpose) {
                 amount = (p.items || [])
-                    .filter(item => (item.category || 'inne') === category)
+                    .filter(item => {
+                        let match = true;
+                        if (category && (item.category || 'inne') !== category) match = false;
+                        if (subCategory && (item.subCategory || '') !== subCategory) match = false;
+                        
+                        // Tagi mogą być na poziomie produktu (item.tags) lub zakupu (p.tags - legacy)
+                        const itemNature = (item.tags && item.tags.nature) || (p.tags && p.tags.nature);
+                        const itemPurpose = (item.tags && item.tags.purpose) || (p.tags && p.tags.purpose);
+                        
+                        if (nature && itemNature !== nature) match = false;
+                        if (purpose && itemPurpose !== purpose) match = false;
+                        
+                        return match;
+                    })
                     .reduce((sum, item) => sum + (item.price || 0), 0);
             } else {
                 amount = p.totalAmount || 0;
@@ -1402,3 +1610,6 @@ exports.addRecurringExpensesScheduled = onSchedule('every 24 hours', async (even
 exports.api = functions.https.onRequest({
     secrets: ['JWT_SECRET', 'GEMINI_API_KEY', 'MIGRATION_SECRET_KEY']
 }, app);
+
+// WERSJA TESTOWA (Side-by-side) dla linku preview
+exports.api_v2 = exports.api;

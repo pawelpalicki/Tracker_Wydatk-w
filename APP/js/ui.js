@@ -102,6 +102,9 @@ function switchTab(tabName, pushToHistory = true) {
     // Settings sub-tabs logic
     if (tabName === 'settings' || tabName.startsWith('settings-')) {
         renderCategoriesList();
+        if (tabName === 'settings-categories' && typeof renderCategoriesListV2 === 'function') {
+            renderCategoriesListV2();
+        }
         populateBudgetMonthSelector();
         renderBudgetInputs();
         renderRecurringExpenses();
@@ -210,7 +213,7 @@ function initFilterDrawers() {
     });
 }
 
-function openSelectionDrawer(title, options, onSelect, selectedValue = null, layoutType = 'list', showAddBtn = false) {
+function openSelectionDrawer(title, options, onSelect, selectedValue = null, layoutType = 'list', showAddBtn = false, autoClose = true) {
     const overlay = document.getElementById('category-drawer-overlay');
     const drawer = document.getElementById('category-drawer');
     const titleEl = document.getElementById('category-drawer-title');
@@ -220,10 +223,15 @@ function openSelectionDrawer(title, options, onSelect, selectedValue = null, lay
     const addForm = document.getElementById('new-category-drawer-form');
 
     // Store the callback globally for auto-selection
-    window.currentOnSelect = onSelect;
+    window.currentOnSelect = (...args) => {
+        onSelect(...args);
+        if (autoClose) closeSelectionDrawer();
+    };
 
-    // Push state to history for back button support
-    history.pushState({ type: 'drawer', id: 'category-drawer' }, "", "");
+    // Push state to history for back button support only if we want to auto-close or if it's a new drawer
+    if (!overlay.classList.contains('active')) {
+        history.pushState({ type: 'drawer', id: 'category-drawer' }, "", "");
+    }
 
     // Reset drawer state
     if (addBtn) addBtn.classList.remove('hidden');
@@ -305,7 +313,7 @@ function openSelectionDrawer(title, options, onSelect, selectedValue = null, lay
 
             item.onclick = () => {
                 onSelect(opt.value, opt.label);
-                closeSelectionDrawer();
+                if (autoClose) closeSelectionDrawer();
             };
 
             grid.appendChild(item);
@@ -427,6 +435,14 @@ function enterEditMode(purchaseId) {
     shopInput.value = purchase.shop;
     const dateEl = document.getElementById('date');
     if (dateEl) dateEl.value = purchase.date;
+    
+    // Load tags
+    if (purchase.tags && typeof setPurchaseTags === 'function') {
+        setPurchaseTags(purchase.tags.nature, purchase.tags.purpose);
+    } else if (typeof resetPurchaseTags === 'function') {
+        resetPurchaseTags();
+    }
+
     itemsContainer.innerHTML = '';
     purchase.items.forEach(item => addItemRow(item));
 
@@ -522,13 +538,39 @@ function renderCategoryDetailsModal(category, items) {
     if (items.length === 0) {
         listContainer.innerHTML = '<div class="text-center py-6 text-gray-500 text-sm">Brak wydatków w tym miesiącu.</div>';
     } else {
+        // --- BREAKDOWN BY SUBCATEGORY ---
+        const bySub = {};
+        items.forEach(it => {
+            const sub = it.subCategory || 'inne';
+            if (!bySub[sub]) bySub[sub] = 0;
+            bySub[sub] += it.price || 0;
+        });
+        
+        const sortedSub = Object.entries(bySub).sort((a, b) => b[1] - a[1]);
+        
+        let breakdownHtml = `
+            <div class="mb-4 space-y-2">
+                <p class="text-[10px] text-gray-500 uppercase tracking-widest font-bold ml-1 mb-2">Podział na podkategorie</p>
+                <div class="grid grid-cols-2 gap-2">`;
+        
+        sortedSub.forEach(([sub, amt]) => {
+            breakdownHtml += `
+            <div class="bg-white/5 border border-white/10 rounded-xl p-2 px-3">
+                <p class="text-[10px] text-gray-400 truncate">${sub}</p>
+                <p class="text-sm font-bold text-white">${formatAmount(amt).replace(' zł', '')}</p>
+            </div>`;
+        });
+        breakdownHtml += `</div></div><hr class="border-white/5 mb-4">`;
+        
+        listContainer.innerHTML = breakdownHtml;
+
+        // --- ITEMS LIST ---
         items.sort((a, b) => new Date(b.purchaseDate) - new Date(a.purchaseDate));
         
         items.forEach(item => {
             const itemEl = document.createElement('div');
             itemEl.className = 'flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/10 mb-2';
             
-            // Format daty (np. "15 mar") ze stringa "YYYY-MM-DD"
             let dateStr = item.purchaseDate;
             try {
                 const parts = item.purchaseDate.split('-');
@@ -538,11 +580,14 @@ function renderCategoryDetailsModal(category, items) {
                 }
             } catch(e) {}
 
+            const subLabel = item.subCategory ? `<span class="text-[10px] bg-white/10 px-1.5 py-0.5 rounded text-gray-400 mr-2">${item.subCategory}</span>` : '';
+
             itemEl.innerHTML = `
                 <div class="flex flex-col overflow-hidden mr-3">
                     <span class="text-sm font-medium text-white truncate w-full">${item.name}</span>
                     <div class="flex items-center text-xs text-gray-400 mt-1 space-x-2">
-                        <span class="truncate max-w-[100px]">${item.shop || 'Inny'}</span>
+                        ${subLabel}
+                        <span class="truncate max-w-[80px]">${item.shop || 'Inny'}</span>
                         <span>•</span>
                         <span>${dateStr}</span>
                     </div>
