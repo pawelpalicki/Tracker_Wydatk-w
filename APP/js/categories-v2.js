@@ -78,7 +78,12 @@ function renderCategoriesListV2() {
                     ? `<p class="text-xs text-gray-600 italic px-12 py-2">Brak podkategorii</p>`
                     : subs.map(sub => `
                     <div class="flex items-center px-4 py-2.5 border-b border-white/5 last:border-0" data-sub-id="${sub.id}">
-                        <div class="w-1.5 h-1.5 rounded-full mr-3 flex-shrink-0" style="background-color:${color}"></div>
+                        ${sub.icon 
+                            ? `<div class="w-6 h-6 rounded-lg flex items-center justify-center mr-2.5 flex-shrink-0" style="background-color:${color}20; color:${color}">
+                                 <i class="fas ${sub.icon} text-[10px]"></i>
+                               </div>`
+                            : `<div class="w-1.5 h-1.5 rounded-full mr-3 flex-shrink-0" style="background-color:${color}"></div>`
+                        }
                         <span class="flex-1 text-sm text-gray-300">${sub.name}</span>
                         <div class="flex items-center gap-1">
                             <button class="cat-v2-edit-sub-btn p-1.5 rounded-lg text-gray-500 hover:text-blue-400 hover:bg-white/5 transition-colors"
@@ -131,8 +136,8 @@ function renderCategoriesListV2() {
 // =====================================================================
 // PICKER ikon i kolorów
 // =====================================================================
-function renderIconPicker(selectedIcon = 'fa-tag') {
-    const container = document.getElementById('cat-v2-icon-picker');
+function renderIconPicker(selectedIcon = 'fa-tag', containerId = 'cat-v2-icon-picker', inputId = 'cat-v2-icon-value') {
+    const container = document.getElementById(containerId);
     if (!container) return;
     container.innerHTML = CAT_ICON_OPTIONS.map(icon => `
         <button type="button" data-icon="${icon}" title="${icon}"
@@ -143,7 +148,7 @@ function renderIconPicker(selectedIcon = 'fa-tag') {
 
     container.querySelectorAll('.icon-pick-btn').forEach(btn => {
         btn.addEventListener('click', () => {
-            document.getElementById('cat-v2-icon-value').value = btn.dataset.icon;
+            document.getElementById(inputId).value = btn.dataset.icon;
             container.querySelectorAll('.icon-pick-btn').forEach(b => {
                 b.className = b.className.replace('bg-brand-600 text-white ring-2 ring-brand-400', 'bg-white/5 text-gray-400 hover:bg-white/10');
             });
@@ -225,9 +230,14 @@ function showSubCategoryForm(parentId, editId = null) {
         const sub = structuredCategories.find(c => c.id === editId);
         titleEl.textContent = `Edytuj podkategorię`;
         nameInput.value = sub ? sub.name : '';
+        const currentIcon = (sub && sub.icon) ? sub.icon : '';
+        renderIconPicker(currentIcon, 'cat-v2-sub-icon-picker', 'cat-v2-sub-icon-value');
+        document.getElementById('cat-v2-sub-icon-value').value = currentIcon;
     } else {
         titleEl.textContent = `Nowa podkategoria → ${parentName}`;
         nameInput.value = '';
+        renderIconPicker('', 'cat-v2-sub-icon-picker', 'cat-v2-sub-icon-value');
+        document.getElementById('cat-v2-sub-icon-value').value = '';
     }
 
     form.classList.remove('hidden');
@@ -334,21 +344,22 @@ async function saveSubCategory() {
     if (!name) { alert('Podaj nazwę podkategorii.'); return; }
 
     try {
+        const icon = document.getElementById('cat-v2-sub-icon-value').value;
         if (editId) {
             const idx = structuredCategories.findIndex(c => c.id === editId);
             let oldName = null;
             if (idx !== -1) {
                 oldName = structuredCategories[idx].name;
-                structuredCategories[idx] = { ...structuredCategories[idx], name };
+                structuredCategories[idx] = { ...structuredCategories[idx], name, icon };
             }
 
-            await apiCall(`/api/categories/v2/${editId}`, 'PUT', { name });
+            await apiCall(`/api/categories/v2/${editId}`, 'PUT', { name, icon });
 
             if (oldName && oldName !== name) {
                 updateLocalPurchasesAfterCategoryChange(oldName, name, parentId, false);
             }
         } else {
-            const newSub = { id: generateId(), name, parentId };
+            const newSub = { id: generateId(), name, parentId, icon };
             structuredCategories.push(newSub);
             await apiCall('/api/categories/v2', 'POST', { structuredCategories });
         }
@@ -484,6 +495,7 @@ function openHierarchicalCategoryDrawer(row, currentCategory, currentSubCategory
         const subOptions = subs.map(s => ({
             value: s.id,
             label: s.name,
+            icon: s.icon ? `<i class="fas ${s.icon}"></i>` : null
         }));
 
         // Drugi krok - tu już autoClose: true (domyślne)

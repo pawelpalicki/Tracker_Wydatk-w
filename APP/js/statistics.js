@@ -346,18 +346,30 @@ async function renderHomeRecentTransactions() {
                 <div class="transaction-details hidden mt-3 space-y-2 p-3 bg-white/5 rounded-xl border border-white/5 w-full">
                     ${(purchase.items || []).map(item => {
                         const itemCat = item.category || 'inne';
+                        const itemSub = item.subCategory || '';
                         const parentCat = (typeof structuredCategories !== 'undefined')
                             ? structuredCategories.find(c => c.name === itemCat && !c.parentId)
                             : null;
+                        
+                        const subCat = (typeof structuredCategories !== 'undefined' && parentCat)
+                            ? structuredCategories.find(c => c.name === itemSub && c.parentId === parentCat.id)
+                            : null;
+
                         const itemColor = (parentCat && parentCat.color) || (typeof getCategoryColor === 'function' ? getCategoryColor(itemCat) : '#6b7280');
-                        const itemIcon = (parentCat && parentCat.icon) || (typeof categoryIcons !== 'undefined' ? categoryIcons[itemCat.toLowerCase()] : 'fa-tag') || 'fa-tag';
+                        const itemIcon = (subCat && subCat.icon) || (parentCat && parentCat.icon) || (typeof categoryIcons !== 'undefined' ? categoryIcons[itemCat.toLowerCase()] : 'fa-tag') || 'fa-tag';
                         return `
-                            <div class="flex justify-between items-center text-[11px] py-0.5">
-                                <div class="flex items-center gap-2 min-w-0 pr-4">
-                                    <i class="fas ${itemIcon} text-[8px]" style="color:${itemColor}"></i>
-                                    <span class="text-gray-200 truncate">${item.name}</span>
+                            <div class="flex flex-col py-1">
+                                <div class="flex justify-between items-center text-[12px]">
+                                    <div class="flex items-center gap-2 min-w-0 pr-4">
+                                        <i class="fas ${itemIcon} text-[9px]" style="color:${itemColor}"></i>
+                                        <span class="text-gray-200 truncate font-medium">${item.name}</span>
+                                    </div>
+                                    <span class="text-white font-bold whitespace-nowrap">${formatAmount(item.price)}</span>
                                 </div>
-                                <span class="text-white font-semibold whitespace-nowrap">${formatAmount(item.price)}</span>
+                                <div class="flex gap-2 ml-5 mt-0.5">
+                                    <span class="text-[10px] text-gray-500">N: <span class="text-gray-400">${item.tags?.nature || 'zmienny'}</span></span>
+                                    <span class="text-[10px] text-gray-500">C: <span class="text-gray-400">${item.tags?.purpose || 'konieczny'}</span></span>
+                                </div>
                             </div>
                         `;
                     }).join('')}

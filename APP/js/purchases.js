@@ -1,291 +1,355 @@
 // Tracker Wydatków - Purchases Functions
 
 // --- Logika Formularza Zakupu ---
+let currentPurchaseItems = [];
+
 function updatePurchaseSummary() {
-    const itemPrices = Array.from(document.querySelectorAll('.item-price'));
-    const total = itemPrices.reduce((sum, input) => {
-        const price = parseFloat(input.value.replace(',', '.')) || 0;
-        return sum + price;
-    }, 0);
-    purchaseSummary.textContent = `Suma: ${formatAmount(total)}`;
+    const total = currentPurchaseItems.reduce((sum, item) => sum + (parseFloat(item.price) || 0), 0);
+    if (typeof purchaseSummary !== 'undefined' && purchaseSummary) {
+        purchaseSummary.textContent = `Suma: ${formatAmount(total)}`;
+    }
 }
 
-function updateItemCategoryUI(itemRow, compositeVal) {
-    const categoryLabel = itemRow.querySelector('.item-category-label');
-    const categoryIconEl = itemRow.querySelector('.item-category-icon');
-
-    if (compositeVal) {
-        let [catName, subName] = compositeVal.split('|');
-        if (!subName) subName = '';
-
-        // Znajdź kategorię nadrzędną dla koloru i ikony
-        const parentCat = (typeof structuredCategories !== 'undefined') 
-            ? structuredCategories.find(c => c.name === catName && !c.parentId)
-            : null;
-
-        const labelText = subName ? `${catName} / ${subName}` : catName;
-        categoryLabel.textContent = labelText;
-        categoryLabel.classList.remove('text-gray-400');
-
-        const iconName = (parentCat && parentCat.icon) || (typeof categoryIcons !== 'undefined' ? categoryIcons[catName] : 'fa-tag') || 'fa-tag';
-        const color = (parentCat && parentCat.color) || (typeof getCategoryColor === 'function' ? getCategoryColor(catName) : '#6b7280');
-
-        categoryIconEl.innerHTML = `<i class="fas ${iconName}"></i>`;
-        categoryIconEl.style.backgroundColor = `${color}20`;
-        categoryIconEl.style.color = color;
-        categoryIconEl.classList.remove('bg-white/10', 'text-gray-400');
-    } else {
-        categoryLabel.textContent = 'Wybierz kategorię';
-        categoryLabel.classList.add('text-gray-400');
-        categoryIconEl.innerHTML = '<i class="fas fa-tag"></i>';
-        categoryIconEl.style.backgroundColor = '';
-        categoryIconEl.style.color = '';
-        categoryIconEl.classList.add('bg-white/10', 'text-gray-400');
-    }
+function clearPurchaseItems() {
+    currentPurchaseItems = [];
+    renderPurchaseItems();
 }
 
 function addItemRow(item = {}) {
-    const itemRow = document.createElement('div');
-    itemRow.className = 'item-row grid grid-cols-12 gap-2 items-start'; // Zmienione na 12 kolumn dla lepszego układu
-
-    const categoryOptions = allCategories.map(cat => `<option value="${cat}" ${item.category === cat ? 'selected' : ''}>${cat.charAt(0).toUpperCase() + cat.slice(1)}</option>`).join('');
-
-    const priceValue = typeof item.price === 'number' ? item.price.toFixed(2) : '';
-
-    // Default tags from receipt level if available (fallback)
     const defaultNature = typeof purchaseTagNature !== 'undefined' ? purchaseTagNature : 'zmienny';
     const defaultPurpose = typeof purchaseTagPurpose !== 'undefined' ? purchaseTagPurpose : 'konieczny';
 
-    const itemNature = (item.tags && item.tags.nature) || defaultNature;
-    const itemPurpose = (item.tags && item.tags.purpose) || defaultPurpose;
-
-    itemRow.innerHTML = `
-        <div class="md:col-span-12 col-span-12 break-words">
-            <textarea class="item-name mt-1 block w-full rounded-xl border-white/10 bg-white/5 text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2 resize-none overflow-hidden" placeholder="Nazwa produktu" rows="1" required>${item.name || ''}</textarea>
-        </div>
-        <div class="col-span-4">
-            <input type="number" step="0.01" class="item-price mt-1 block w-full rounded-xl border-white/10 bg-white/5 text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2" placeholder="Cena" value="${priceValue}" required>
-        </div>
-        <div class="col-span-6 item-category-wrapper">
-            <div class="category-trigger-card item-category-btn" style="margin-top: 4px;">
-                <div class="flex items-center gap-2 overflow-hidden w-full">
-                    <div class="category-trigger-icon item-category-icon bg-white/10 text-gray-400 flex-shrink-0">
-                        <i class="fas fa-tag"></i>
-                    </div>
-                    <span class="item-category-label category-trigger-label text-xs text-gray-400 truncate">Kategoria</span>
-                </div>
-                <svg class="w-4 h-4 text-gray-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                </svg>
-            </div>
-            <select class="item-category-select hidden" aria-hidden="true">
-                <option value="">Wybierz kategorię</option>
-                ${categoryOptions}
-            </select>
-            <input type="text" class="new-category-input hidden mt-1 block w-full rounded-xl border-white/10 bg-white/5 text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2" placeholder="Nazwa nowej kategorii">
-        </div>
-        <div class="col-span-2 text-right">
-            <button type="button" class="remove-item-btn p-3 text-red-500 hover:text-red-700 rounded-full mt-1"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM7 9a1 1 0 000 2h6a1 1 0 100-2H7z" clip-rule="evenodd" /></svg></button>
-        </div>
-        <!-- Item Tags Selection -->
-        <div class="col-span-12 flex gap-2 mt-1 pb-1">
-             <button type="button" class="item-nature-btn flex-1 flex items-center justify-between px-2 py-1.5 rounded-lg bg-white/5 border border-white/5 text-[10px] text-gray-400 hover:bg-white/10 transition-all" data-value="${itemNature}">
-                <span class="truncate">N: <span class="text-white font-medium item-nature-label">${itemNature}</span></span>
-                <i class="fas fa-chevron-down opacity-50 scale-75"></i>
-             </button>
-             <button type="button" class="item-purpose-btn flex-1 flex items-center justify-between px-2 py-1.5 rounded-lg bg-white/5 border border-white/5 text-[10px] text-gray-400 hover:bg-white/10 transition-all" data-value="${itemPurpose}">
-                <span class="truncate">C: <span class="text-white font-medium item-purpose-label">${itemPurpose}</span></span>
-                <i class="fas fa-chevron-down opacity-50 scale-75"></i>
-             </button>
-        </div>
-    `;
-    itemsContainer.appendChild(itemRow);
-
-    const itemNameInput = itemRow.querySelector('.item-name');
-    const categorySelect = itemRow.querySelector('.item-category-select');
-    const newCategoryInput = itemRow.querySelector('.new-category-input');
-
-    // Automatyczne dopasowanie wysokości pola textarea
-    function autoResizeTextarea() {
-        this.style.height = 'auto';
-        this.style.height = (this.scrollHeight) + 'px';
-    }
-    itemNameInput.addEventListener('input', autoResizeTextarea, false);
-    // Ustawienie początkowej wysokości (ważne przy edycji)
-    setTimeout(() => autoResizeTextarea.call(itemNameInput), 0);
-
-    const itemNatureBtn = itemRow.querySelector('.item-nature-btn');
-    const itemPurposeBtn = itemRow.querySelector('.item-purpose-btn');
-
-    itemNatureBtn.addEventListener('click', () => {
-        const options = [
-            { value: 'zmienny', label: 'Zmienny (np. jedzenie, chemia)' },
-            { value: 'stały', label: 'Stały (np. czynsz, subskrypcje)' },
-            { value: 'jednorazowy', label: 'Jednorazowy (np. AGD, meble)' }
-        ];
-        openSelectionDrawer('Natura produktu', options, (val) => {
-            itemNatureBtn.dataset.value = val;
-            itemRow.querySelector('.item-nature-label').textContent = val;
-        }, itemNatureBtn.dataset.value);
-    });
-
-    itemPurposeBtn.addEventListener('click', () => {
-        const options = [
-            { value: 'konieczny', label: 'Konieczny (potrzeby)' },
-            { value: 'przyjemność', label: 'Przyjemność (zachcianki)' },
-            { value: 'inwestycja', label: 'Inwestycja (na przyszłość)' }
-        ];
-        openSelectionDrawer('Celowość produktu', options, (val) => {
-            itemPurposeBtn.dataset.value = val;
-            itemRow.querySelector('.item-purpose-label').textContent = val;
-        }, itemPurposeBtn.dataset.value);
-    });
-
-    // Initialize custom drawer trigger
-    const categoryBtn = itemRow.querySelector('.item-category-btn');
-    const categoryLabel = itemRow.querySelector('.item-category-label');
-    const categoryIconEl = itemRow.querySelector('.item-category-icon');
-
-    // Inicjalizacja wartości dla trybu edycji
-    if (item.category) {
-        const initialCombined = item.subCategory ? `${item.category}|${item.subCategory}` : item.category;
-        
-        // Dodaj opcję jeśli jej nie ma
-        if (!Array.from(categorySelect.options).some(opt => opt.value === initialCombined)) {
-            const opt = document.createElement('option');
-            opt.value = initialCombined;
-            opt.text = item.subCategory ? `${item.category} / ${item.subCategory}` : item.category;
-            categorySelect.appendChild(opt);
-        }
-        categorySelect.value = initialCombined;
-        updateItemCategoryUI(itemRow, initialCombined);
-    }
-
-    categoryBtn.onclick = (e) => {
-        e.preventDefault();
-        if (typeof openHierarchicalCategoryDrawer === 'function') {
-            const currentVal = categorySelect.value || '';
-            let [vCat, vSub] = currentVal.split('|');
-            openHierarchicalCategoryDrawer(itemRow, vCat || '', vSub || '', (pName, sName) => {
-                const combined = sName ? `${pName}|${sName}` : pName;
-                
-                // Zapewnij, że opcja istnieje w select (aby wartość nie została zgubiona)
-                if (!Array.from(categorySelect.options).some(opt => opt.value === combined)) {
-                    const newOpt = document.createElement('option');
-                    newOpt.value = combined;
-                    newOpt.text = sName ? `${pName} / ${sName}` : pName;
-                    categorySelect.appendChild(newOpt);
-                }
-                
-                categorySelect.value = combined;
-                updateItemCategoryUI(itemRow, combined);
-            });
-        } else if (typeof openCategoryDrawer === 'function') {
-            openCategoryDrawer(itemRow, categorySelect.value, (cat) => {
-                categorySelect.value = cat;
-                categorySelect.dispatchEvent(new Event('change'));
-            });
+    const newItem = {
+        name: item.name || '',
+        price: typeof item.price === 'number' ? item.price : (parseFloat(item.price) || 0),
+        category: item.category || 'inne',
+        subCategory: item.subCategory || '',
+        tags: {
+            nature: (item.tags && item.tags.nature) || defaultNature,
+            purpose: (item.tags && item.tags.purpose) || defaultPurpose
         }
     };
+    currentPurchaseItems.push(newItem);
+    renderPurchaseItems();
+}
 
-    // Update initial UI state
-    if (item.category) {
-        const combined = item.subCategory ? `${item.category}|${item.subCategory}` : item.category;
-        categorySelect.value = combined;
-    }
-    updateItemCategoryUI(itemRow, categorySelect.value);
-
-    categorySelect.addEventListener('change', () => {
-        if (categorySelect.value === '__add_new__') {
-            itemRow.querySelector('.item-category-btn').classList.add('hidden');
-            newCategoryInput.classList.remove('hidden');
-            newCategoryInput.focus();
-        } else {
-            updateItemCategoryUI(itemRow, categorySelect.value);
+function renderPurchaseItems() {
+    if (!itemsContainer) return;
+    itemsContainer.innerHTML = '';
+        currentPurchaseItems.forEach((item, index) => {
+        const itemRow = document.createElement('div');
+        itemRow.className = 'glass-card rounded-xl p-3 mb-2 flex flex-col gap-2 relative border border-white/5 bg-white/5';
+        
+        let labelText = item.category || 'inne';
+        if (item.subCategory) {
+            labelText += ` / ${item.subCategory}`;
         }
+        
+        const parentCat = (typeof structuredCategories !== 'undefined') 
+            ? structuredCategories.find(c => c.name === item.category && !c.parentId)
+            : null;
+        
+        const subCat = (typeof structuredCategories !== 'undefined' && parentCat)
+            ? structuredCategories.find(c => c.name === item.subCategory && c.parentId === parentCat.id)
+            : null;
+
+        const iconName = (subCat && subCat.icon) || (parentCat && parentCat.icon) || (typeof categoryIcons !== 'undefined' ? categoryIcons[item.category] : 'fa-tag') || 'fa-tag';
+        const color = (parentCat && parentCat.color) || (typeof getCategoryColor === 'function' ? getCategoryColor(item.category) : '#6b7280');
+
+        itemRow.innerHTML = `
+            <div class="flex items-start gap-3">
+                <!-- Ikona kategorii -->
+                <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-lg" style="background-color: ${color}20; color: ${color}">
+                    <i class="fas ${iconName} text-lg"></i>
+                </div>
+                
+                <!-- Treść główna -->
+                <div class="flex-1 min-w-0">
+                    <div class="flex justify-between items-start gap-2">
+                        <div class="min-w-0">
+                            <p class="text-[10px] text-gray-500 uppercase tracking-widest font-semibold truncate mb-0.5">${labelText}</p>
+                            <h4 class="text-sm font-bold text-white leading-tight break-words pr-1">${item.name}</h4>
+                        </div>
+                        <div class="text-right shrink-0">
+                            <p class="text-sm font-black text-white">${formatAmount(item.price || 0)}</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Tagi i akcje -->
+                    <div class="flex justify-between items-center mt-2 pt-2 border-t border-white/5">
+                        <div class="flex flex-wrap gap-1.5">
+                            <span class="px-2 py-1 rounded-lg bg-white/5 border border-white/10 text-[11px] text-gray-400">
+                                N: <span class="text-gray-200 font-medium">${item.tags?.nature || 'zmienny'}</span>
+                            </span>
+                            <span class="px-2 py-1 rounded-lg bg-white/5 border border-white/10 text-[11px] text-gray-400">
+                                C: <span class="text-gray-200 font-medium">${item.tags?.purpose || 'konieczny'}</span>
+                            </span>
+                        </div>
+                        <div class="flex gap-1 ml-2">
+                            <button type="button" class="edit-item-btn text-blue-400 hover:text-white hover:bg-blue-500/20 w-8 h-8 flex items-center justify-center rounded-lg transition-all" data-index="${index}">
+                                <i class="fas fa-edit text-xs"></i>
+                            </button>
+                            <button type="button" class="remove-item-btn text-red-500 hover:text-white hover:bg-red-500/20 w-8 h-8 flex items-center justify-center rounded-lg transition-all" data-index="${index}">
+                                <i class="fas fa-trash-alt text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        itemsContainer.appendChild(itemRow);
+    });;
+
+    itemsContainer.querySelectorAll('.edit-item-btn').forEach(btn => {
+        btn.onclick = (e) => {
+            const index = parseInt(e.currentTarget.dataset.index);
+            openProductDrawer(index);
+        };
     });
 
-    newCategoryInput.addEventListener('blur', () => handleNewCategory(newCategoryInput, categorySelect));
-    newCategoryInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            handleNewCategory(newCategoryInput, categorySelect);
-        }
-    });
-
-    itemRow.querySelector('.remove-item-btn').addEventListener('click', () => {
-        itemRow.remove();
-        updatePurchaseSummary();
+    itemsContainer.querySelectorAll('.remove-item-btn').forEach(btn => {
+        btn.onclick = (e) => {
+            const index = parseInt(e.currentTarget.dataset.index);
+            currentPurchaseItems.splice(index, 1);
+            renderPurchaseItems();
+        };
     });
 
     updatePurchaseSummary();
 }
 
-function handleNewCategory(newCategoryInput, categorySelect) {
-    const newCategory = newCategoryInput.value.trim().toLowerCase();
-    newCategoryInput.value = '';
-    newCategoryInput.classList.add('hidden');
-    categorySelect.closest('.item-category-wrapper').querySelector('.item-category-btn').classList.remove('hidden');
+// --- Product Drawer Logic ---
+function initProductDrawer() {
+    const drawerOverlay = document.getElementById('product-drawer-overlay');
+    const drawer = document.getElementById('product-drawer');
+    const closeBtn = document.getElementById('close-product-drawer');
+    const form = document.getElementById('product-drawer-form');
+    
+    // Category Selector in Drawer
+    const categoryBtn = document.getElementById('product-drawer-category-btn');
+    
+    // Tags Selectors in Drawer
+    const natureBtn = document.getElementById('product-drawer-nature-btn');
+    const purposeBtn = document.getElementById('product-drawer-purpose-btn');
 
-    if (newCategory && !allCategories.includes(newCategory)) {
-        allCategories.push(newCategory);
-        allCategories.sort();
-        updateAllCategorySelects(newCategory, categorySelect);
-        // Kategoria zostanie ustawiona w updateAllCategorySelects
-    } else if (newCategory && allCategories.includes(newCategory)) {
-        // Jeśli kategoria już istnieje, ustaw ją
-        categorySelect.value = newCategory;
-    } else {
-        // Jeśli nie ma kategorii, wyczyść select
-        categorySelect.value = '';
-    }
-}
+    if (!drawer) return; // Wait until DOM is loaded
 
-function updateAllCategorySelects(newlySelected = null, targetSelect = null) {
-    const categoryOptions = allCategories.map(cat => `<option value="${cat}">${cat.charAt(0).toUpperCase() + cat.slice(1)}</option>`).join('');
-    const baseHtml = `<option value="">Wybierz kategorię</option>${categoryOptions}<option value="__add_new__">-- Dodaj nową --</option>`;
+    closeBtn.addEventListener('click', closeProductDrawer);
+    drawerOverlay.addEventListener('click', closeProductDrawer);
 
-    document.querySelectorAll('.item-row').forEach(row => {
-        const select = row.querySelector('.item-category-select');
-        const currentValue = select.value;
+    natureBtn.addEventListener('click', () => {
+        const options = [
+            { value: 'zmienny', label: 'Zmienny (np. jedzenie, chemia)' },
+            { value: 'stały', label: 'Stały (np. czynsz, raty)' },
+            { value: 'jednorazowy', label: 'Jednorazowy (np. AGD, meble)' }
+        ];
+        openSelectionDrawer('Natura produktu', options, (val) => {
+            natureBtn.dataset.value = val;
+            document.getElementById('product-drawer-nature-label').textContent = val;
+        }, natureBtn.dataset.value);
+    });
+
+    purposeBtn.addEventListener('click', () => {
+        const options = [
+            { value: 'konieczny', label: 'Konieczny (potrzeby)' },
+            { value: 'przyjemność', label: 'Przyjemność (zachcianki)' },
+            { value: 'inwestycja', label: 'Inwestycja (na rozwój)' }
+        ];
+        openSelectionDrawer('Celowość produktu', options, (val) => {
+            purposeBtn.dataset.value = val;
+            document.getElementById('product-drawer-purpose-label').textContent = val;
+        }, purposeBtn.dataset.value);
+    });
+
+    categoryBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const currentVal = document.getElementById('product-drawer-category-value').value || '';
+        let [vCat, vSub] = currentVal.split('|');
+        if (typeof openHierarchicalCategoryDrawer === 'function') {
+            openHierarchicalCategoryDrawer(drawer, vCat || '', vSub || '', (pName, sName) => {
+                const combined = sName ? `${pName}|${sName}` : pName;
+                document.getElementById('product-drawer-category-value').value = combined;
+                
+                const labelText = sName ? `${pName} / ${sName}` : pName;
+                document.getElementById('product-drawer-category-label').textContent = labelText;
+                
+                const parentCat = (typeof structuredCategories !== 'undefined') 
+                    ? structuredCategories.find(c => c.name === pName && !c.parentId)
+                    : null;
+                
+                const subCat = (typeof structuredCategories !== 'undefined' && parentCat)
+                    ? structuredCategories.find(c => c.name === sName && c.parentId === parentCat.id)
+                    : null;
+
+                const iconName = (subCat && subCat.icon) || (parentCat && parentCat.icon) || (typeof categoryIcons !== 'undefined' ? categoryIcons[pName] : 'fa-tag') || 'fa-tag';
+                const color = (parentCat && parentCat.color) || (typeof getCategoryColor === 'function' ? getCategoryColor(pName) : '#6b7280');
+                
+                const iconEl = document.getElementById('product-drawer-category-icon');
+                iconEl.innerHTML = `<i class="fas ${iconName}"></i>`;
+                iconEl.style.color = color;
+                iconEl.style.backgroundColor = `${color}20`;
+            });
+        }
+    });
+
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
         
-        // Jeśli aktualna wartość jest złożona (hierarchiczna), zachowaj ją jako dodatkową opcję
-        let customOptHtml = '';
-        if (currentValue && currentValue.includes('|')) {
-            const [p, s] = currentValue.split('|');
-            customOptHtml = `<option value="${currentValue}" selected>${p} / ${s}</option>`;
-        } else if (currentValue && !allCategories.includes(currentValue) && currentValue !== '__add_new__') {
-            // Dla płaskich kategorii, których nie ma w liście (np. zmigrowane, które jeszcze nie są w allCategories)
-            customOptHtml = `<option value="${currentValue}" selected>${currentValue.charAt(0).toUpperCase() + currentValue.slice(1)}</option>`;
+        const indexStr = document.getElementById('product-drawer-index').value;
+        const name = document.getElementById('product-drawer-name').value.trim();
+        const price = parseFloat(document.getElementById('product-drawer-price').value);
+        const compositeCat = document.getElementById('product-drawer-category-value').value || 'inne';
+        
+        let category = 'inne';
+        let subCategory = '';
+        if (compositeCat.includes('|')) {
+            const [p, s] = compositeCat.split('|');
+            category = p;
+            subCategory = s;
+        } else {
+            category = compositeCat;
         }
 
-        select.innerHTML = baseHtml + customOptHtml;
+        const tags = {
+            nature: natureBtn.dataset.value || 'zmienny',
+            purpose: purposeBtn.dataset.value || 'konieczny'
+        };
 
-        // Ustaw nową kategorię tylko w tym konkretnym select, który ją dodał
-        if (targetSelect && select === targetSelect && newlySelected) {
-            // Jeśli nowo wybrana jest hierarchiczna, a nie ma jej w HTML, dodaj ją
-            if (newlySelected.includes('|') && select.value !== newlySelected) {
-                 const [p, s] = newlySelected.split('|');
-                 const opt = document.createElement('option');
-                 opt.value = newlySelected;
-                 opt.text = `${p} / ${s}`;
-                 opt.selected = true;
-                 select.appendChild(opt);
-            }
-            select.value = newlySelected;
-        } else if (currentValue) {
-            select.value = currentValue;
+        const newItem = { name, price, category, subCategory, tags };
+
+        // Aktualizacja autouzupełniania kategorii przy locie
+        if (category && !allCategories.includes(category)) {
+            allCategories.push(category);
+            allCategories.sort();
         }
 
-        // Update row UI
-        updateItemCategoryUI(row, select.value);
+        if (indexStr !== "") {
+            const idx = parseInt(indexStr);
+            currentPurchaseItems[idx] = newItem;
+        } else {
+            currentPurchaseItems.push(newItem);
+        }
+
+        renderPurchaseItems();
+        closeProductDrawer();
     });
 }
 
-// Funkcja updateSingleCategoryPopup została usunięta, ponieważ używamy teraz szuflady (drawer)
+// Wywołaj inicjalizację zdarzeń po załadowaniu DOM
+document.addEventListener('DOMContentLoaded', initProductDrawer);
+
+function openProductDrawer(index = null) {
+    const drawerOverlay = document.getElementById('product-drawer-overlay');
+    const drawer = document.getElementById('product-drawer');
+    const title = document.getElementById('product-drawer-title');
+    const form = document.getElementById('product-drawer-form');
+    
+    // Form fields
+    const idxInput = document.getElementById('product-drawer-index');
+    const nameInput = document.getElementById('product-drawer-name');
+    const priceInput = document.getElementById('product-drawer-price');
+    const catValue = document.getElementById('product-drawer-category-value');
+    const catLabel = document.getElementById('product-drawer-category-label');
+    const catIcon = document.getElementById('product-drawer-category-icon');
+    
+    const natureBtn = document.getElementById('product-drawer-nature-btn');
+    const natureLabel = document.getElementById('product-drawer-nature-label');
+    const purposeBtn = document.getElementById('product-drawer-purpose-btn');
+    const purposeLabel = document.getElementById('product-drawer-purpose-label');
+    
+    // Ustawienie początkowych lub predefiniowanych wartości
+    if (index !== null && index >= 0 && index < currentPurchaseItems.length) {
+        title.textContent = 'Edytuj produkt';
+        const item = currentPurchaseItems[index];
+        
+        idxInput.value = index;
+        nameInput.value = item.name;
+        priceInput.value = item.price.toFixed(2);
+        
+        const combinedCat = item.subCategory ? `${item.category}|${item.subCategory}` : item.category;
+        catValue.value = combinedCat;
+        catLabel.textContent = item.subCategory ? `${item.category} / ${item.subCategory}` : item.category;
+        
+        // Konfiguracja kolorów ikon i labeli dla kategorii
+        const parentCat = (typeof structuredCategories !== 'undefined') 
+            ? structuredCategories.find(c => c.name === item.category && !c.parentId)
+            : null;
+            
+        const subCat = (typeof structuredCategories !== 'undefined' && parentCat)
+            ? structuredCategories.find(c => c.name === item.subCategory && c.parentId === parentCat.id)
+            : null;
+
+        const iconName = (subCat && subCat.icon) || (parentCat && parentCat.icon) || (typeof categoryIcons !== 'undefined' ? categoryIcons[item.category] : 'fa-tag') || 'fa-tag';
+        const color = (parentCat && parentCat.color) || (typeof getCategoryColor === 'function' ? getCategoryColor(item.category) : '#6b7280');
+        
+        catIcon.innerHTML = `<i class="fas ${iconName}"></i>`;
+        catIcon.style.color = color;
+        catIcon.style.backgroundColor = `${color}20`;
+        
+        const nVal = item.tags?.nature || 'zmienny';
+        natureBtn.dataset.value = nVal;
+        natureLabel.textContent = nVal;
+        
+        const pVal = item.tags?.purpose || 'konieczny';
+        purposeBtn.dataset.value = pVal;
+        purposeLabel.textContent = pVal;
+        
+    } else {
+        title.textContent = 'Dodaj produkt';
+        form.reset();
+        idxInput.value = "";
+        
+        // Wartości domyślne dla nowego produktu
+        catValue.value = 'inne';
+        catLabel.textContent = 'Inne';
+        catIcon.innerHTML = '<i class="fas fa-tag"></i>';
+        catIcon.style.color = '#6b7280';
+        catIcon.style.backgroundColor = '#6b728020';
+        
+        const defaultNature = typeof purchaseTagNature !== 'undefined' ? purchaseTagNature : 'zmienny';
+        const defaultPurpose = typeof purchaseTagPurpose !== 'undefined' ? purchaseTagPurpose : 'konieczny';
+        
+        natureBtn.dataset.value = defaultNature;
+        natureLabel.textContent = defaultNature;
+        purposeBtn.dataset.value = defaultPurpose;
+        purposeLabel.textContent = defaultPurpose;
+    }
+
+    drawerOverlay.classList.remove('hidden');
+    drawer.classList.remove('hidden');
+    
+    // Uruchomienie animacji CSS
+    setTimeout(() => {
+        drawerOverlay.classList.remove('opacity-0');
+        drawer.classList.remove('translate-y-full');
+    }, 10);
+    
+    setTimeout(() => {
+        nameInput.focus(); // Ułatwienie natychmiastowego pisania nazwy
+    }, 300);
+}
+
+function closeProductDrawer() {
+    const drawerOverlay = document.getElementById('product-drawer-overlay');
+    const drawer = document.getElementById('product-drawer');
+    
+    drawerOverlay.classList.add('opacity-0');
+    drawer.classList.add('translate-y-full');
+    
+    setTimeout(() => {
+        drawerOverlay.classList.add('hidden');
+        drawer.classList.add('hidden');
+    }, 300);
+}
 
 async function handlePurchaseFormSubmit(e) {
     e.preventDefault();
+    
+    if (currentPurchaseItems.length === 0) {
+        alert('Dodaj przynajmniej jedną pozycję do zakupu.');
+        return;
+    }
+
     const purchaseData = {
         shop: shopInput.value,
         date: dateInput.value,
@@ -294,42 +358,14 @@ async function handlePurchaseFormSubmit(e) {
             nature: typeof purchaseTagNature !== 'undefined' ? purchaseTagNature : 'zmienny',
             purpose: typeof purchaseTagPurpose !== 'undefined' ? purchaseTagPurpose : 'konieczny'
         },
-        items: Array.from(document.querySelectorAll('.item-row')).map(row => {
-            const name = row.querySelector('.item-name').value;
-            const priceStr = row.querySelector('.item-price').value.replace(',', '.');
-            const price = parseFloat(priceStr) || 0;
-            const composite = row.querySelector('.item-category-select').value;
-            
-            let category = 'inne';
-            let subCategory = '';
-            
-            if (composite && composite !== '__add_new__') {
-                if (composite.includes('|')) {
-                    const [p, s] = composite.split('|');
-                    category = p || 'inne';
-                    subCategory = s || '';
-                } else {
-                    category = composite;
-                }
-            }
-
-            const nature = row.querySelector('.item-nature-btn').dataset.value;
-            const purpose = row.querySelector('.item-purpose-btn').dataset.value;
-
-            return { 
-                name, 
-                price, 
-                category, 
-                subCategory,
-                tags: { nature, purpose }
-            };
-        }).filter(item => item.name && !isNaN(item.price))
+        items: currentPurchaseItems.map(item => ({
+            name: item.name,
+            price: item.price,
+            category: item.category,
+            subCategory: item.subCategory || '',
+            tags: item.tags || { nature: 'zmienny', purpose: 'konieczny' }
+        }))
     };
-
-    if (purchaseData.items.length === 0) {
-        alert('Dodaj przynajmniej jedną pozycję do zakupu.');
-        return;
-    }
 
     try {
         if (editMode.active) {
@@ -386,12 +422,12 @@ function renderPurchasesList(purchasesToRender, append = false) {
                 ${p.tags ? `
                 <div class="flex gap-2 mb-2 p-2 bg-white/5 rounded-xl border border-white/5">
                     <div class="flex flex-col flex-1">
-                        <span class="text-[9px] text-gray-500 uppercase tracking-widest">Natura</span>
-                        <span class="text-xs text-white font-medium">${p.tags.nature || 'zmienny'}</span>
+                        <span class="text-[10px] text-gray-500 uppercase tracking-widest">N</span>
+                        <span class="text-sm text-white font-medium">${p.tags.nature || 'zmienny'}</span>
                     </div>
                     <div class="flex flex-col flex-1">
-                        <span class="text-[9px] text-gray-500 uppercase tracking-widest">Celowość</span>
-                        <span class="text-xs text-white font-medium">${p.tags.purpose || 'konieczny'}</span>
+                        <span class="text-[10px] text-gray-500 uppercase tracking-widest">C</span>
+                        <span class="text-sm text-white font-medium">${p.tags.purpose || 'konieczny'}</span>
                     </div>
                 </div>` : ''}
 
@@ -401,7 +437,12 @@ function renderPurchasesList(purchasesToRender, append = false) {
                     const parentCat = (typeof structuredCategories !== 'undefined') 
                         ? structuredCategories.find(c => c.name === catName && !c.parentId)
                         : null;
-                    const icon = (parentCat && parentCat.icon) || (typeof categoryIcons !== 'undefined' ? categoryIcons[catName] : 'fa-tag') || 'fa-tag';
+                    
+                    const subCat = (typeof structuredCategories !== 'undefined' && parentCat)
+                        ? structuredCategories.find(c => c.name === subName && c.parentId === parentCat.id)
+                        : null;
+
+                    const icon = (subCat && subCat.icon) || (parentCat && parentCat.icon) || (typeof categoryIcons !== 'undefined' ? categoryIcons[catName] : 'fa-tag') || 'fa-tag';
                     const color = (parentCat && parentCat.color) || (typeof getCategoryColor === 'function' ? getCategoryColor(catName) : '#6b7280');
                     const labelText = subName ? `${catName} / ${subName}` : catName;
 
@@ -415,6 +456,11 @@ function renderPurchasesList(purchasesToRender, append = false) {
                                 <span class="text-[10px] text-gray-400 uppercase tracking-tight">${labelText}</span>
                             </div>
                             <div class="text-sm font-semibold text-white">${item.name}</div>
+                            <!-- Tagi pozycji w historii -->
+                            <div class="flex gap-1.5 mt-1">
+                                <span class="text-[10px] text-gray-500">N: <span class="text-gray-300">${item.tags?.nature || 'zmienny'}</span></span>
+                                <span class="text-[10px] text-gray-500">C: <span class="text-gray-300">${item.tags?.purpose || 'konieczny'}</span></span>
+                            </div>
                         </div>
                         <div class="font-bold text-white whitespace-nowrap text-base">${formatAmount(item.price || 0)}</div>
                     </div>
@@ -611,18 +657,28 @@ async function fillFormWithAnalysis(analysis) {
         };
     });
 
-    processedItems.forEach(item => {
+    currentPurchaseItems = processedItems.map(item => {
+        const defaultNature = typeof purchaseTagNature !== 'undefined' ? purchaseTagNature : 'zmienny';
+        const defaultPurpose = typeof purchaseTagPurpose !== 'undefined' ? purchaseTagPurpose : 'konieczny';
+        
         if (item.category && !allCategories.includes(item.category)) {
             allCategories.push(item.category);
-            allCategories.sort();
         }
-        addItemRow(item);
+        
+        return {
+            name: item.name || '',
+            price: typeof item.price === 'number' ? item.price : (parseFloat(item.price) || 0),
+            category: item.category || 'inne',
+            subCategory: item.subCategory || '',
+            tags: {
+                nature: (item.tags && item.tags.nature) || defaultNature,
+                purpose: (item.tags && item.tags.purpose) || defaultPurpose
+            }
+        };
     });
-
-    if (processedItems.length === 0) {
-        addItemRow();
-    }
-    updateAllCategorySelects();
+    
+    allCategories.sort();
+    renderPurchaseItems();
     updatePurchaseSummary();
     alert('Formularz został wypełniony danymi z paragonu. Sprawdź dane przed zapisem.');
 }

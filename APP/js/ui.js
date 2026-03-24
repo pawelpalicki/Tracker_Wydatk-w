@@ -443,8 +443,22 @@ function enterEditMode(purchaseId) {
         resetPurchaseTags();
     }
 
-    itemsContainer.innerHTML = '';
-    purchase.items.forEach(item => addItemRow(item));
+    if (typeof clearPurchaseItems === 'function') {
+        currentPurchaseItems = purchase.items.map(item => ({
+            name: item.name || '',
+            price: typeof item.price === 'number' ? item.price : (parseFloat(item.price) || 0),
+            category: item.category || 'inne',
+            subCategory: item.subCategory || '',
+            tags: {
+                nature: (item.tags && item.tags.nature) || (purchase.tags && purchase.tags.nature) || 'zmienny',
+                purpose: (item.tags && item.tags.purpose) || (purchase.tags && purchase.tags.purpose) || 'konieczny'
+            }
+        }));
+        renderPurchaseItems();
+    } else {
+        itemsContainer.innerHTML = '';
+        purchase.items.forEach(item => addItemRow(item));
+    }
 
     // Set the budget type dropdown
     if (purchase.specialBudgetId) {

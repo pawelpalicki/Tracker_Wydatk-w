@@ -390,7 +390,8 @@ app.get('/api/recurring-expenses', authMiddleware, async (req, res) => {
 // POST: Dodaj nową definicję wydatku cyklicznego
 app.post('/api/recurring-expenses', authMiddleware, async (req, res) => {
     try {
-        const { name, amount, category, schedule } = req.body;
+        const { name, amount, category, schedule, tags } = req.body;
+
 
         // Walidacja podstawowych pól
         if (!name || !amount || !category || !schedule) {
@@ -436,6 +437,7 @@ app.post('/api/recurring-expenses', authMiddleware, async (req, res) => {
             name,
             amount: parseFloat(amount),
             category,
+            tags: tags || {},
             schedule, // Zapisujemy cały obiekt harmonogramu
             createdAt: createdAt,
             lastAdded: lastAdded
@@ -453,7 +455,7 @@ app.post('/api/recurring-expenses', authMiddleware, async (req, res) => {
 app.put('/api/recurring-expenses/:id', authMiddleware, async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, amount, category, schedule } = req.body;
+        const { name, amount, category, schedule, tags } = req.body;
 
         // Walidacja podstawowych pól
         if (!name || !amount || !category || !schedule) {
@@ -499,6 +501,7 @@ app.put('/api/recurring-expenses/:id', authMiddleware, async (req, res) => {
             name,
             amount: parseFloat(amount),
             category,
+            tags: tags || {},
             schedule, // Zapisujemy cały obiekt harmonogramu
             updatedAt: new Date()
         };
@@ -1564,8 +1567,14 @@ exports.addRecurringExpensesScheduled = onSchedule('every 24 hours', async (even
                     userId: userId,
                     shop: "Wydatek cykliczny",
                     date: newPurchaseDate,
-                    items: [{ name: expense.name, price: expense.amount, category: expense.category }],
+                    items: [{ 
+                        name: expense.name, 
+                        price: expense.amount, 
+                        category: expense.category,
+                        tags: expense.tags || {} 
+                    }],
                     totalAmount: expense.amount,
+                    tags: expense.tags || {}, // Legacy support
                     createdAt: new Date(),
                     isRecurring: true
                 };

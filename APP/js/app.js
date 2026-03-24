@@ -131,6 +131,8 @@ const addRecurringExpenseForm = document.getElementById('add-recurring-expense-f
 const recurringName = document.getElementById('recurring-name');
 const recurringAmount = document.getElementById('recurring-amount');
 let recurringCategoryValue = '';
+let recurringNatureValue = 'stały';
+let recurringPurposeValue = 'konieczny';
 let scheduleTypeValue = 'monthly';
 const monthlySettings = document.getElementById('recurring-monthly-settings');
 const weeklySettings = document.getElementById('recurring-weekly-settings');
@@ -564,23 +566,27 @@ function setupAppEventListeners() {
     });
 
     purchaseForm.addEventListener('submit', handlePurchaseFormSubmit);
-    addItemBtn.addEventListener('click', () => addItemRow());
+    addItemBtn.addEventListener('click', () => {
+        if (typeof openProductDrawer === 'function') openProductDrawer();
+    });
     itemsContainer.addEventListener('input', (e) => {
         if (e.target.classList.contains('item-price') || e.target.classList.contains('item-name')) {
             updatePurchaseSummary();
         }
     });
     function exitEditMode() {
-    editMode.active = false;
-    editMode.purchaseId = null;
-    purchaseForm.reset();
-    purchaseFormTitle.textContent = 'Dodaj nowy zakup ręcznie';
-    cancelEditBtn.classList.add('hidden');
-    itemsContainer.innerHTML = '';
-    addItemRow();
-    updatePurchaseSummary();
-    if (typeof resetPurchaseTags === 'function') resetPurchaseTags();
-}
+        editMode.active = false;
+        editMode.purchaseId = null;
+        purchaseForm.reset();
+        purchaseFormTitle.textContent = 'Dodaj nowy zakup ręcznie';
+        cancelEditBtn.classList.add('hidden');
+        if (typeof clearPurchaseItems === 'function') {
+            clearPurchaseItems();
+        } else {
+            itemsContainer.innerHTML = '';
+        }
+        if (typeof resetPurchaseTags === 'function') resetPurchaseTags();
+    }
     document.getElementById('cancel-edit-btn')?.addEventListener('click', () => {
         exitEditMode();
         switchTab('list');
@@ -875,6 +881,31 @@ function setupAppEventListeners() {
             recurringDayOfWeekValue = val;
             document.getElementById('recurring-day-of-week-label').textContent = label;
         }, recurringDayOfWeekValue);
+    });
+
+    document.getElementById('recurring-nature-btn')?.addEventListener('click', () => {
+        const options = [
+            { value: 'stały', label: 'Stały (Powtarzalny)', icon: '<i class="fas fa-redo text-gray-400"></i>' },
+            { value: 'zmienny', label: 'Zmienny (Jednorazowy)', icon: '<i class="fas fa-random text-gray-400"></i>' }
+        ];
+        openSelectionDrawer('Natura subskrypcji', options, (val, label) => {
+            recurringNatureValue = val;
+            const labelEl = document.getElementById('recurring-nature-label');
+            if (labelEl) labelEl.textContent = val;
+        }, recurringNatureValue);
+    });
+
+    document.getElementById('recurring-purpose-btn')?.addEventListener('click', () => {
+        const options = [
+            { value: 'zachcianka', label: 'Zachcianka', icon: '<i class="fas fa-ice-cream text-gray-400"></i>' },
+            { value: 'potrzeba', label: 'Potrzeba', icon: '<i class="fas fa-shopping-basket text-gray-400"></i>' },
+            { value: 'konieczny', label: 'Konieczny', icon: '<i class="fas fa-bolt text-gray-400"></i>' }
+        ];
+        openSelectionDrawer('Cel subskrypcji', options, (val, label) => {
+            recurringPurposeValue = val;
+            const labelEl = document.getElementById('recurring-purpose-label');
+            if (labelEl) labelEl.textContent = val;
+        }, recurringPurposeValue);
     });
 
     // DODAJ TEN EVENT LISTENER TUTAJ:
@@ -1273,6 +1304,10 @@ async function handleAddOrUpdateRecurringExpense(e) {
     const amount = parseFloat(recurringAmount.value);
     const category = recurringCategoryValue;
     const scheduleType = scheduleTypeValue;
+    const tags = {
+        nature: recurringNatureValue,
+        purpose: recurringPurposeValue
+    };
 
     let schedule = { type: scheduleType };
     let isValid = false;
@@ -1308,7 +1343,7 @@ async function handleAddOrUpdateRecurringExpense(e) {
         return;
     }
 
-    const expenseData = { name, amount, category, schedule };
+    const expenseData = { name, amount, category, schedule, tags };
 
     try {
         if (editingRecurringExpenseId) {
@@ -1366,6 +1401,13 @@ function enterRecurringExpenseEditMode(expenseId) {
     recurringAmount.value = expense.amount;
     recurringCategoryValue = expense.category;
 
+    recurringNatureValue = (expense.tags && expense.tags.nature) ? expense.tags.nature : 'stały';
+    recurringPurposeValue = (expense.tags && expense.tags.purpose) ? expense.tags.purpose : 'konieczny';
+    const natureLabelEl = document.getElementById('recurring-nature-label');
+    const purposeLabelEl = document.getElementById('recurring-purpose-label');
+    if (natureLabelEl) natureLabelEl.textContent = recurringNatureValue;
+    if (purposeLabelEl) purposeLabelEl.textContent = recurringPurposeValue;
+
     if (expense.schedule) {
         scheduleTypeValue = expense.schedule.type;
         handleScheduleTypeChange(); // Update visibility and required attributes
@@ -1394,6 +1436,14 @@ function enterRecurringExpenseEditMode(expenseId) {
 function exitRecurringExpenseEditMode() {
     editingRecurringExpenseId = null;
     addRecurringExpenseForm.reset();
+
+    recurringNatureValue = 'stały';
+    recurringPurposeValue = 'konieczny';
+    const natureLabelEl = document.getElementById('recurring-nature-label');
+    const purposeLabelEl = document.getElementById('recurring-purpose-label');
+    if (natureLabelEl) natureLabelEl.textContent = 'stały';
+    if (purposeLabelEl) purposeLabelEl.textContent = 'konieczny';
+
     handleScheduleTypeChange();
     addRecurringExpenseForm.querySelector('button[type="submit"]').textContent = 'Dodaj subskrypcję';
 }
