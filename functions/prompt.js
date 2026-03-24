@@ -1,67 +1,76 @@
-const getPrompt = (categories) => {
-  // Dodaj 'kaucje' do listy kategorii, jeśli jej nie ma
-  const extendedCategories = [...new Set([...categories, 'kaucje'])];
-  
+const getPrompt = (categoriesData) => {
+  const { flat, structured } = categoriesData;
+
+  // Budowa czytelnego drzewa kategorii dla Gemini
+  const hierarchyMap = {};
+  const parents = structured.filter(c => !c.parentId);
+
+  parents.forEach(p => {
+    hierarchyMap[p.name] = structured
+      .filter(c => c.parentId === p.id)
+      .map(c => c.name);
+  });
+
+  // Gwarantujemy istnienie 'kaucje' w kategorii nadrzędnej
+  if (!hierarchyMap['kaucje']) {
+    hierarchyMap['kaucje'] = [];
+  }
+
+  const hierarchyString = Object.entries(hierarchyMap)
+    .map(([parent, subs]) => `- ${parent}${subs.length > 0 ? ': [' + subs.join(', ') + ']' : ''}`)
+    .join('\n');
+
   return `
         Twoim zadaniem jest BARDZO DOKŁADNA analiza paragonu lub faktury i zwrócenie danych WYŁĄCZNIE w formacie JSON.
 
         ---
-        **ZASADA KLUCZOWA: CENA BRUTTO (NAJWAŻNIEJSZE!)**
-        Twoim absolutnym priorytetem jest znalezienie **końcowej wartości BRUTTO** dla każdego produktu na liście.
-        - **WARTOŚĆ > CENA JEDNOSTKOWA**: Na fakturach często występuje "cena jednostkowa" i "wartość" (cena * ilość). Twoim celem jest zawsze **końcowa "wartość" brutto** dla danej pozycji.
-        - **BRUTTO > NETTO**: Jeśli widzisz wartość netto i brutto, ZAWSZE wybieraj **BRUTTO**.
-        - **IGNORUJ SUMY**: Nie szukaj sumy całkowitej paragonu. Skup się wyłącznie na wartościach poszczególnych produktów.
+        **ZASADA KLUCZOWA: CENA BRUTTO**
+        Znajdź końcową wartość BRUTTO dla każdego produktu (wartość po rabacie, uwzględniająca ilość).
         ---
 
         **ZASADA: KAUCJE (BUTELKI, OPAKOWANIA)**
-        - **ZAWSZE UWZGLĘDNIAJ KAUCJE**: Nigdy nie pomijaj pozycji takich jak "KAUCJA", "BUTELKA ZWR", "OPAKOWANIE" itp.
-        - **KATEGORIA 'kaucje'**: Wszystkie pozycje dotyczące kaucji (zakup lub zwrot) MUSZĄ otrzymać kategorię 'kaucje'.
-        - **ZWROTY = WARTOŚĆ UJEMNA**: Jeśli na paragonie widnieje zwrot kaucji (często oznaczony minusem, skrótem "ZWR" lub w sekcji umniejszającej sumę), wartość w JSON musi być **LICZBĄ UJEMNĄ** (np. -0.50).
+        - **ZAWSZE UWZGLĘDNIAJ KAUCJE**: "KAUCJA", "BUTELKA ZWR", "OPAKOWANIE".
+        - **KATEGORIA 'kaucje'**: Wszystkie kaucje MUSZĄ mieć kategorię 'kaucje'.
+        - **ZWROTY = WARTOŚĆ UJEMNA**: Zwrot kaucji musi być liczbą ujemną w JSON (np. -0.50).
         ---
 
-        Struktura JSON, której masz użyć:
+        Struktura JSON:
         {
           "shop": "string",
-          "date": "string (format YYYY-MM-DD)",
-          "currency": "string (kod waluty: PLN, EUR, USD, GBP, etc.)",
+          "date": "string (YYYY-MM-DD)",
+          "currency": "string (np. PLN)",
           "items": [
-            { "name": "string", "price": "number (końcowa WARTOŚĆ brutto pozycji po rabacie, użyj minusa dla zwrotów)", "category": "string" }
+            { 
+              "name": "string", 
+              "price": "number (końcowa wartość brutto)", 
+              "category": "string (kategoria nadrzędna)",
+              "subCategory": "string (podkategoria z listy, jeśli pasuje)",
+              "tags": {
+                "nature": "string (stały | zmienny | jednorazowy)",
+                "purpose": "string (konieczny | przyjemność | inwestycja)"
+              }
+            }
           ]
         }
 
-        Postępuj DOKŁADNIE według tych kroków:
-        1.  **Dane Główne**: Wyodrębnij nazwę sklepu ('shop'), datę transakcji ('date') w formacie YYYY-MM-DD i walutę ('currency').
-        2.  **Analiza Rabatów i Kaucji**: 
-            - Znajdź wszystkie rabaty i dopasuj je do produktów.
-            - Znajdź wszystkie kaucje i zwroty. Pamiętaj: zwrot kaucji = cena ujemna.
-        3.  **Kategoryzacja**: Dla każdego produktu przypisz kategorię ('category') z tej listy: ${JSON.stringify(extendedCategories)}. Jeśli żadna nie pasuje, użyj "inne". Pozycje kaucji MUSZĄ być w kategorii "kaucje".
-        4.  **Nazwy Produktów (WAŻNE)**: Domyślnie zachowaj nazwy produktów DOKŁADNIE tak, jak widnieją na paragonie. Możesz rozwinąć skrót lub poprawić nazwę na bardziej czytelną WYŁĄCZNIE, jeśli jesteś w 100% pewien znaczenia (np. 'CHLEB ŻYT RAZ' -> 'Chleb Żytni Razowy'). Jeśli masz jakiekolwiek wątpliwości, pozostaw nazwę oryginalną. Nie zmieniaj produktów na inne.
-        5.  **Format Wyjściowy**: Złóż ostateczną listę ('items') i zwróć ją w wymaganym formacie JSON. Nie dodawaj żadnych wyjaśnień.
-
-        **PRZYKŁADY RABATÓW I KAUCJI:**
-        - Produkt z rabatem bezpośrednio przy nim = odejmij rabat od ceny produktu.
-        - "KAUCJA BUTELKA" 0.50 -> {"name": "Kaucja butelka", "price": 0.50, "category": "kaucje"}
-        - "ZWROT KAUCJI" 1.00 -> {"name": "Zwrot kaucji", "price": -1.00, "category": "kaucje"}
-
-        **Obsługa Błędów**: Jeśli plik jest nieczytelny lub nie jest paragonem/fakturą, zwróć DOKŁADNIE ten JSON:
-        { "error": "Nie udało się odczytać danych z dokumentu. Obraz może być nieczytelny lub nie jest paragonem." }
-        
-        **Przykłady idealnych odpowiedzi**:
-        
-        {
-          "shop": "Biedronka",
-          "date": "2025-07-25",
-          "currency": "PLN",
-          "items": [
-            {"name": "Sok pomarańczowy", "price": 4.50, "category": "spożywcze"},
-            {"name": "Mleko 2%", "price": 2.00, "category": "spożywcze"},
-            {"name": "Butelka zwrotna", "price": 1.00, "category": "kaucje"},
-            {"name": "Zwrot butelek", "price": -2.00, "category": "kaucje"}
-          ]
-        }
+        **Postępuj wg kroków:**
+        1. **Dane Główne**: shop, date, currency.
+        2. **Kategoryzacja**: Wybierz Kategorię i (jeśli to możliwe) Podkategorię z listy poniżej:
+        ${hierarchyString}
+        - Jeśli brak pasującej podkategorii, pozostaw "subCategory" jako pusty ciąg.
+        - Jeśli brak pasującej kategorii nadrzędnej, użyj "inne".
+        3. **Inteligentne Tagi**: Przypisz tagi na podstawie nazwy i typu produktu:
+           - **nature**: 
+             - "stały" (rachunki, czynsz, abonamenty, stałe opłaty)
+             - "zmienny" (jedzenie, chemia, drobne zakupy codzienne)
+             - "jednorazowy" (rzadkie zakupy, sprzęt, meble, ubrania kupowane okazjonalnie)
+           - **purpose**:
+             - "konieczny" (podstawowe potrzeby, leki, media, transport)
+             - "przyjemność" (zachcianki, rozrywka, przekąski, hobby)
+             - "inwestycja" (produkty i usługi budujące wartość, edukacja, rozwój)
+        4. **Nazwy**: Zachowaj oryginalne, popraw tylko skróty jeśli jesteś PEWIEN (np. "CHLEB RAZ" -> "Chleb Razowy").
+        5. **Format Wyjściowy**: Tylko czysty JSON.
     `;
 }
-
-module.exports = { getPrompt };
 
 module.exports = { getPrompt };

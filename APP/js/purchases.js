@@ -658,18 +658,44 @@ async function fillFormWithAnalysis(analysis) {
     });
 
     currentPurchaseItems = processedItems.map(item => {
+        // Podstawowe wartości domyślne (jeśli AI zawiedzie)
         const defaultNature = typeof purchaseTagNature !== 'undefined' ? purchaseTagNature : 'zmienny';
         const defaultPurpose = typeof purchaseTagPurpose !== 'undefined' ? purchaseTagPurpose : 'konieczny';
         
-        if (item.category && !allCategories.includes(item.category)) {
-            allCategories.push(item.category);
+        // Znajdź kategorię nadrzędną
+        let categoryName = item.category || 'inne';
+        let subCategoryName = item.subCategory || '';
+
+        // Walidacja kategorii nadrzędnej
+        const parentCat = (typeof structuredCategories !== 'undefined') 
+            ? structuredCategories.find(c => c.name.toLowerCase() === categoryName.toLowerCase() && !c.parentId)
+            : null;
+
+        if (parentCat) {
+            categoryName = parentCat.name; // Ujednolicenie wielkości liter
+            
+            // Walidacja podkategorii
+            if (subCategoryName) {
+                const subCat = structuredCategories.find(c => 
+                    c.name.toLowerCase() === subCategoryName.toLowerCase() && 
+                    c.parentId === parentCat.id
+                );
+                if (subCat) {
+                    subCategoryName = subCat.name;
+                } else {
+                    subCategoryName = ''; // Jeśli podkategoria nie pasuje do rodzica, wyczyść
+                }
+            }
+        } else {
+            categoryName = 'inne';
+            subCategoryName = '';
         }
-        
+
         return {
             name: item.name || '',
             price: typeof item.price === 'number' ? item.price : (parseFloat(item.price) || 0),
-            category: item.category || 'inne',
-            subCategory: item.subCategory || '',
+            category: categoryName,
+            subCategory: subCategoryName,
             tags: {
                 nature: (item.tags && item.tags.nature) || defaultNature,
                 purpose: (item.tags && item.tags.purpose) || defaultPurpose
@@ -677,8 +703,7 @@ async function fillFormWithAnalysis(analysis) {
         };
     });
     
-    allCategories.sort();
     renderPurchaseItems();
     updatePurchaseSummary();
-    alert('Formularz został wypełniony danymi z paragonu. Sprawdź dane przed zapisem.');
+    alert('Formularz został wypełniony danymi z paragonu. AI zasugerowało kategorie i tagi pozycji.');
 }

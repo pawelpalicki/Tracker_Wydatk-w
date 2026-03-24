@@ -102,6 +102,7 @@ async function getUserMetadata(userId) {
         }
         return {
             categories: userData.customCategories || [],
+            structuredCategories: userData.structuredCategories || [],
             shops: userData.shops || [],
             availableMonths: availableMonths
         };
@@ -141,7 +142,10 @@ async function getUserMetadata(userId) {
 
 async function getUserCategories(userId) {
     const metadata = await getUserMetadata(userId);
-    return metadata.categories;
+    return {
+        flat: metadata.categories,
+        structured: metadata.structuredCategories
+    };
 }
 
 function validateDate(dateStr) {
