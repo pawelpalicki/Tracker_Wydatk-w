@@ -36,7 +36,8 @@ function addItemRow(item = {}) {
 function renderPurchaseItems() {
     if (!itemsContainer) return;
     itemsContainer.innerHTML = '';
-        currentPurchaseItems.forEach((item, index) => {
+    
+    currentPurchaseItems.forEach((item, index) => {
         const itemRow = document.createElement('div');
         itemRow.className = 'glass-card rounded-xl p-3 mb-2 flex flex-col gap-2 relative border border-white/5 bg-white/5';
         

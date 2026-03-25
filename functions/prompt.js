@@ -24,8 +24,27 @@ const getPrompt = (categoriesData) => {
         Twoim zadaniem jest BARDZO DOKŁADNA analiza paragonu lub faktury i zwrócenie danych WYŁĄCZNIE w formacie JSON.
 
         ---
-        **ZASADA KLUCZOWA: CENA BRUTTO**
-        Znajdź końcową wartość BRUTTO dla każdego produktu (wartość po rabacie, uwzględniająca ilość).
+        **ZASADA KLUCZOWA: CENA BRUTTO PO RABATACH**
+        Znajdź końcową wartość BRUTTO dla każdego produktu (wartość po wszelkich rabatach, uwzględniająca ilość).
+        ---
+
+        **ZASADA: OBSŁUGA RABATÓW**
+        Paragony mogą zawierać dwa typy rabatów — musisz je obsłużyć RÓŻNIE:
+
+        **TYP 1 — Rabat pod konkretnym produktem (rabat pozycyjny):**
+        - Rozpoznasz go po tym, że pojawia się bezpośrednio pod nazwą produktu, często z napisem "RABAT", "OPUST", "ZNIZKA", "OSZ." lub symbolem "*".
+        - **Działanie**: Odejmij wartość rabatu od ceny tego konkretnego produktu.
+        - Przykład: "MLEKO 3,50 / RABAT -0,50" → price: 3.00
+
+        **TYP 2 — Rabat globalny na dole paragonu (rabat od całości):**
+        - Rozpoznasz go po tym, że pojawia się NA DOLE paragonu, po wszystkich pozycjach, często z napisem "RABAT ŁĄCZNY", "RABAT OD ZAKUPÓW", "KUPON", "VOUCHER" lub podobnym.
+        - **Działanie**: Rozłóż rabat PROPORCJONALNIE na każdy produkt wg wzoru:
+          rabat_produktu = cena_produktu / suma_wszystkich_produktów × wartość_rabatu_globalnego
+        - Przykład: suma 100 zł, rabat globalny -10 zł, produkt A = 40 zł → price: 40 - (40/100 × 10) = 36.00
+        - Zaokrąglaj wynik do 2 miejsc po przecinku.
+        - **NIE DODAWAJ** rabatu globalnego jako osobnej pozycji w items[].
+
+        **ZASADA OGÓLNA**: Nigdy nie dodawaj rabatów jako osobnych pozycji w items[]. Rabat zawsze wchodzi w cenę produktu.
         ---
 
         **ZASADA: KAUCJE (BUTELKI, OPAKOWANIA)**
@@ -42,7 +61,7 @@ const getPrompt = (categoriesData) => {
           "items": [
             { 
               "name": "string", 
-              "price": "number (końcowa wartość brutto)", 
+              "price": "number (końcowa wartość brutto po rabatach)", 
               "category": "string (kategoria nadrzędna)",
               "subCategory": "string (podkategoria z listy, jeśli pasuje)",
               "tags": {
@@ -55,11 +74,17 @@ const getPrompt = (categoriesData) => {
 
         **Postępuj wg kroków:**
         1. **Dane Główne**: shop, date, currency.
-        2. **Kategoryzacja**: Wybierz Kategorię i (jeśli to możliwe) Podkategorię z listy poniżej:
+        2. **Identyfikacja rabatów PRZED kategoryzacją**:
+           a. Przeskanuj cały paragon i zidentyfikuj WSZYSTKIE rabaty.
+           b. Określ typ każdego rabatu (pozycyjny lub globalny).
+           c. Dla rabatów pozycyjnych: zastosuj je od razu do cen konkretnych produktów.
+           d. Dla rabatów globalnych: oblicz proporcjonalny udział dla każdego produktu (wg wzoru z TYP 2).
+           e. Dopiero na cenach po rabatach buduj listę items[].
+        3. **Kategoryzacja**: Wybierz Kategorię i (jeśli to możliwe) Podkategorię z listy poniżej:
         ${hierarchyString}
         - Jeśli brak pasującej podkategorii, pozostaw "subCategory" jako pusty ciąg.
         - Jeśli brak pasującej kategorii nadrzędnej, użyj "inne".
-        3. **Inteligentne Tagi**: Przypisz tagi na podstawie nazwy i typu produktu:
+        4. **Inteligentne Tagi**: Przypisz tagi na podstawie nazwy i typu produktu:
            - **nature**: 
              - "stały" (rachunki, czynsz, abonamenty, stałe opłaty)
              - "zmienny" (jedzenie, chemia, drobne zakupy codzienne)
@@ -68,8 +93,9 @@ const getPrompt = (categoriesData) => {
              - "konieczny" (podstawowe potrzeby, leki, media, transport)
              - "przyjemność" (zachcianki, rozrywka, przekąski, hobby)
              - "inwestycja" (produkty i usługi budujące wartość, edukacja, rozwój)
-        4. **Nazwy**: Zachowaj oryginalne, popraw tylko skróty jeśli jesteś PEWIEN (np. "CHLEB RAZ" -> "Chleb Razowy").
-        5. **Format Wyjściowy**: Tylko czysty JSON.
+        5. **Nazwy**: Zachowaj oryginalne, popraw tylko skróty jeśli jesteś PEWIEN (np. "CHLEB RAZ" -> "Chleb Razowy").
+        6. **Weryfikacja końcowa**: Suma price wszystkich items[] MUSI być równa kwocie DO ZAPŁATY z paragonu. Jeśli się nie zgadza — sprawdź obliczenia rabatów.
+        7. **Format Wyjściowy**: Tylko czysty JSON.
     `;
 }
 

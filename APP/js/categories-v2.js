@@ -4,13 +4,91 @@
 // STAŁE: paleta ikon i kolorów
 // =====================================================================
 const CAT_ICON_OPTIONS = [
+    // --- OBECNE ---
     'fa-tag', 'fa-shopping-basket', 'fa-home', 'fa-car', 'fa-film',
     'fa-heartbeat', 'fa-shopping-bag', 'fa-file-invoice-dollar',
     'fa-graduation-cap', 'fa-running', 'fa-jug-detergent', 'fa-pump-soap',
     'fa-tshirt', 'fa-piggy-bank', 'fa-cookie-bite', 'fa-recycle',
     'fa-utensils', 'fa-plane', 'fa-gift', 'fa-dumbbell', 'fa-baby',
     'fa-paw', 'fa-laptop', 'fa-music', 'fa-book', 'fa-hammer',
-    'fa-ellipsis-h'
+    'fa-ellipsis-h',
+
+    // --- SPOŻYWCZE ---
+    'fa-apple-alt',        // Jedzenie/Napoje
+    'fa-candy-cane',       // Słodycze/Przekąski
+    'fa-ice-cream',        // Słodycze
+    'fa-moped',            // Dania z dostawy
+    'fa-coffee',           // Napoje
+    'fa-wine-glass',       // Napoje
+
+    // --- MIESZKANIE ---
+    'fa-building',         // Czynsz
+    'fa-bolt',             // Prąd
+    'fa-tint',             // Woda
+    'fa-fire',             // Gaz
+    'fa-couch',            // Wyposażenie
+    'fa-paint-roller',     // Remonty
+    'fa-tools',            // Naprawy
+    'fa-lightbulb',        // Media ogólnie
+
+    // --- ZDROWIE & URODA ---
+    'fa-stethoscope',      // Lekarz
+    'fa-pills',            // Apteka
+    'fa-capsules',         // Suplementy
+    'fa-cut',              // Usługi kosmetyczne/fryzjer
+    'fa-spa',              // Kosmetyki/uroda
+    'fa-toilet-paper',     // Higieniczne
+    'fa-tooth',            // Dentysta
+
+    // --- TRANSPORT ---
+    'fa-gas-pump',         // Samochód/paliwo
+    'fa-taxi',             // Taxi
+    'fa-bus',              // Komunikacja miejska
+    'fa-subway',           // Metro
+    'fa-train',            // Pociąg
+    'fa-suitcase-rolling', // Podróże
+    'fa-bicycle',          // Rower
+
+    // --- ROZRYWKA ---
+    'fa-hamburger',        // Gastronomia
+    'fa-theater-masks',    // Kultura
+    'fa-ticket-alt',       // Bilety
+    'fa-play-circle',      // VOD/Subskrypcje
+    'fa-gamepad',          // Hobby/Gry
+    'fa-palette',          // Hobby artystyczne
+    'fa-football-ball',    // Sport
+
+    // --- FINANSE ---
+    'fa-hand-holding-usd', // Spłata kredytów
+    'fa-chart-line',       // Inwestycje
+    'fa-wallet',           // Oszczędności
+    'fa-coins',            // Finanse ogólnie
+    'fa-credit-card',      // Karty/płatności
+
+    // --- ODZIEŻ ---
+    'fa-shoe-prints',      // Buty
+    'fa-gem',              // Dodatki/biżuteria
+    'fa-hat-cowboy',       // Nakrycia głowy
+
+    // --- EDUKACJA ---
+    'fa-chalkboard-teacher', // Kursy/Szkolenia
+    'fa-book-open',          // Książki
+    'fa-language',           // Języki
+
+    // --- INNE ---
+    'fa-smoking',          // Alkohol/Papierosy
+    'fa-beer',             // Alkohol
+    'fa-archive',          // Kaucje
+    'fa-wifi',             // Internet
+    'fa-tv',               // TV
+    'fa-mobile-alt',       // Telefon
+    'fa-microchip',        // Elektronika
+    'fa-headphones',       // Elektronika/audio
+    'fa-dog',              // Zwierzęta
+    'fa-camera',           // Hobby/Elektronika
+    'fa-baby-carriage',    // Dzieci
+    'fa-briefcase',        // Praca
+    'fa-church',           // Inne wydatki
 ];
 
 const CAT_COLOR_OPTIONS = [
@@ -141,7 +219,7 @@ function renderIconPicker(selectedIcon = 'fa-tag', containerId = 'cat-v2-icon-pi
     if (!container) return;
     container.innerHTML = CAT_ICON_OPTIONS.map(icon => `
         <button type="button" data-icon="${icon}" title="${icon}"
-            class="icon-pick-btn w-9 h-9 rounded-xl flex items-center justify-center text-sm transition-all
+            class="icon-pick-btn w-12 h-12 rounded-xl flex items-center justify-center text-base transition-all
                    ${icon === selectedIcon ? 'bg-brand-600 text-white ring-2 ring-brand-400' : 'bg-white/5 text-gray-400 hover:bg-white/10'}">
             <i class="fas ${icon}"></i>
         </button>`).join('');
