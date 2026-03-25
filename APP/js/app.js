@@ -574,23 +574,7 @@ function setupAppEventListeners() {
             updatePurchaseSummary();
         }
     });
-    function exitEditMode() {
-        editMode.active = false;
-        editMode.purchaseId = null;
-        purchaseForm.reset();
-        purchaseFormTitle.textContent = 'Dodaj nowy zakup ręcznie';
-        cancelEditBtn.classList.add('hidden');
-        if (typeof clearPurchaseItems === 'function') {
-            clearPurchaseItems();
-        } else {
-            itemsContainer.innerHTML = '';
-        }
-        if (typeof resetPurchaseTags === 'function') resetPurchaseTags();
-    }
-    document.getElementById('cancel-edit-btn')?.addEventListener('click', () => {
-        exitEditMode();
-        switchTab('list');
-    });
+
 
     addCategoryForm.addEventListener('submit', async (e) => {
         e.preventDefault();

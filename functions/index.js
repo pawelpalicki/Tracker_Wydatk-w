@@ -775,7 +775,7 @@ app.delete('/api/purchases/:id', authMiddleware, async (req, res) => {
 app.get('/api/categories', authMiddleware, async (req, res) => {
     try {
         const categories = await getUserCategories(req.userId);
-        res.json(categories);
+        res.json(categories.flat); // <-- zmiana
     } catch (error) {
         console.error("Błąd pobierania kategorii:", error);
         res.status(500).json({ error: 'Błąd serwera podczas pobierania kategorii' });
