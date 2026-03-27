@@ -277,17 +277,17 @@ function renderHomeCategoryTiles(purchases, budgets = {}) {
         `;
         
         tile.addEventListener('click', async () => {
-            const selectedMonth = homeDashboardMonth;
-            if (!selectedMonth) return;
-            const [year, month] = selectedMonth.split('-');
-            try {
-                const { items } = await apiCall(`/api/statistics/category-details?year=${year}&month=${month}&category=${cat.toLowerCase()}`);
-                if(typeof renderCategoryDetailsModal === 'function') {
-                    renderCategoryDetailsModal(cat, items);
-                }
-            } catch (error) {
-                console.error('Błąd pobierania szczegółów kategorii:', error);
-                alert('Błąd pobierania: ' + error.message);
+            const allItems = purchases.flatMap(p => 
+                (p.items || [])
+                    .filter(item => (item.category || 'inne').toLowerCase() === cat.toLowerCase())
+                    .map(item => ({
+                        ...item,
+                        purchaseDate: p.date,
+                        shop: p.shop
+                    }))
+            );
+            if(typeof renderCategoryDetailsModal === 'function') {
+                renderCategoryDetailsModal(cat, allItems, false); // It's a main category
             }
         });
 
@@ -1333,6 +1333,22 @@ function renderHomeSubCategoryTiles(purchases) {
             <p class="text-xs font-bold text-white whitespace-nowrap">${formatAmount(data.amount)}</p>
         `;
         
+        tile.addEventListener('click', () => {
+            const itemsInSubCategory = purchases.flatMap(p => 
+                (p.items || [])
+                    .filter(item => (item.subCategory || '').toLowerCase() === subCat.toLowerCase())
+                    .map(item => ({
+                        ...item,
+                        purchaseDate: p.date,
+                        shop: p.shop
+                    }))
+            );
+            
+            if (typeof renderCategoryDetailsModal === 'function') {
+                renderCategoryDetailsModal(subCat, itemsInSubCategory, true);
+            }
+        });
+
         container.appendChild(tile);
     });
 }

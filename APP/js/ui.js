@@ -540,7 +540,7 @@ function closeOverlay(elementId, isFromPopState = false) {
 }
 
 // --- Modale / Drawers ---
-function renderCategoryDetailsModal(category, items) {
+function renderCategoryDetailsModal(category, items, isSubCategoryView = false) {
     const listContainer = document.getElementById('category-details-list');
     const titleEl = document.getElementById('category-details-title');
     
@@ -552,31 +552,34 @@ function renderCategoryDetailsModal(category, items) {
     if (items.length === 0) {
         listContainer.innerHTML = '<div class="text-center py-6 text-gray-500 text-sm">Brak wydatków w tym miesiącu.</div>';
     } else {
-        // --- BREAKDOWN BY SUBCATEGORY ---
-        const bySub = {};
-        items.forEach(it => {
-            const sub = it.subCategory || 'inne';
-            if (!bySub[sub]) bySub[sub] = 0;
-            bySub[sub] += it.price || 0;
-        });
-        
-        const sortedSub = Object.entries(bySub).sort((a, b) => b[1] - a[1]);
-        
-        let breakdownHtml = `
-            <div class="mb-4 space-y-2">
-                <p class="text-[10px] text-gray-500 uppercase tracking-widest font-bold ml-1 mb-2">Podział na podkategorie</p>
-                <div class="grid grid-cols-2 gap-2">`;
-        
-        sortedSub.forEach(([sub, amt]) => {
-            breakdownHtml += `
-            <div class="bg-white/5 border border-white/10 rounded-xl p-2 px-3">
-                <p class="text-[10px] text-gray-400 truncate">${sub}</p>
-                <p class="text-sm font-bold text-white">${formatAmount(amt).replace(' zł', '')}</p>
-            </div>`;
-        });
-        breakdownHtml += `</div></div><hr class="border-white/5 mb-4">`;
-        
-        listContainer.innerHTML = breakdownHtml;
+        // --- BREAKDOWN BY SUBCATEGORY (only for main category view) ---
+        if (!isSubCategoryView) {
+            const bySub = {};
+            items.forEach(it => {
+                const sub = it.subCategory || 'inne';
+                if (!bySub[sub]) bySub[sub] = 0;
+                bySub[sub] += it.price || 0;
+            });
+            
+            const sortedSub = Object.entries(bySub).sort((a, b) => b[1] - a[1]);
+            
+            if (sortedSub.length > 1 || (sortedSub.length === 1 && sortedSub[0][0] !== 'inne')) {
+                let breakdownHtml = `
+                    <div class="mb-4 space-y-2">
+                        <p class="text-[10px] text-gray-500 uppercase tracking-widest font-bold ml-1 mb-2">Podział na podkategorie</p>
+                        <div class="grid grid-cols-2 gap-2">`;
+                
+                sortedSub.forEach(([sub, amt]) => {
+                    breakdownHtml += `
+                    <div class="bg-white/5 border border-white/10 rounded-xl p-2 px-3">
+                        <p class="text-[10px] text-gray-400 truncate">${sub}</p>
+                        <p class="text-sm font-bold text-white">${formatAmount(amt).replace(' zł', '')}</p>
+                    </div>`;
+                });
+                breakdownHtml += `</div></div><hr class="border-white/5 mb-4">`;
+                listContainer.innerHTML = breakdownHtml;
+            }
+        }
 
         // --- ITEMS LIST ---
         items.sort((a, b) => new Date(b.purchaseDate) - new Date(a.purchaseDate));
@@ -600,7 +603,7 @@ function renderCategoryDetailsModal(category, items) {
                 <div class="flex flex-col overflow-hidden mr-3">
                     <span class="text-sm font-medium text-white truncate w-full">${item.name}</span>
                     <div class="flex items-center text-xs text-gray-400 mt-1 space-x-2">
-                        ${subLabel}
+                        ${isSubCategoryView ? '' : subLabel}
                         <span class="truncate max-w-[80px]">${item.shop || 'Inny'}</span>
                         <span>•</span>
                         <span>${dateStr}</span>
