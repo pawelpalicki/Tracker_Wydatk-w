@@ -411,97 +411,68 @@
     </div>
 
     <div id="list-tab" class="tab-content">
-        <div class="glass-card rounded-2xl p-5 mb-6">
-            <div id="filter-toggle" class="cursor-pointer flex justify-between items-center">
-                <h4 class="text-lg font-semibold text-white">Filtry</h4>
-                <svg id="filter-arrow" xmlns="http://www.w3.org/2000/svg"
-                    class="h-6 w-6 text-gray-500 dark:text-gray-400 transition-transform" fill="none"
-                    viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                </svg>
+        <!-- New Filter UI -->
+        <div class="mb-4">
+            <!-- Search Bar -->
+            <div class="relative mb-3 px-2">
+                <span class="absolute inset-y-0 left-4 flex items-center pointer-events-none text-gray-400">
+                    <i class="fas fa-search text-sm"></i>
+                </span>
+                <input type="text" id="filter-keyword" placeholder="Szukaj produktu..."
+                    class="block w-full rounded-2xl border-white/5 bg-white/5 text-white pl-14 pr-4 py-3 text-sm focus:bg-white/10 focus:ring-1 focus:ring-brand-500 transition-all outline-none border">
             </div>
-            <div id="filters-container" class="hidden mt-4">
-                <div class="grid grid-cols-1 gap-4">
-                    <!-- Keyword -->
-                    <input type="text" id="filter-keyword" placeholder="Szukaj produktu..."
-                        class="block w-full rounded-xl border-white/10 bg-white/5 text-white shadow-sm focus:border-blue-500 py-3 px-4 sm:text-sm">
 
-                    <!-- Dates -->
-                    <div class="grid grid-cols-2 gap-2">
-                        <div class="flex flex-col">
-                            <label for="filter-date-start" class="text-xs text-gray-400 mb-1 ml-1">Data
-                                od</label>
-                            <input type="date" id="filter-date-start"
-                                class="block w-full rounded-xl border-white/10 bg-white/5 text-white shadow-sm focus:border-blue-500 py-3 px-4 text-xs sm:text-sm">
-                        </div>
-                        <div class="flex flex-col">
-                            <label for="filter-date-end" class="text-xs text-gray-400 mb-1 ml-1">Data do</label>
-                            <input type="date" id="filter-date-end"
-                                class="block w-full rounded-xl border-white/10 bg-white/5 text-white shadow-sm focus:border-blue-500 py-3 px-4 text-xs sm:text-sm">
-                        </div>
-                        <input type="text" id="filter-date-range" class="hidden">
-                    </div>
+            <!-- Filter Buttons Horizontal Scroll -->
+            <div class="flex gap-2 overflow-x-auto pb-2 px-2 scrollbar-hide snap-x select-none">
+                <button id="filter-category-btn" type="button"
+                    class="flex items-center gap-2 whitespace-nowrap rounded-xl border border-white/5 bg-white/5 px-4 py-2 text-sm font-medium text-gray-300 hover:bg-white/10 transition-all active:scale-95">
+                    <i class="fas fa-tag text-sm text-gray-500"></i>
+                    <span id="filter-category-label">Kategoria</span>
+                    <span class="filter-clear hidden ml-2 text-lg font-semibold text-red-300">×</span>
+                </button>
 
-                    <!-- Standard Dropdowns being replaced by list-style Drawers -->
-                    <div class="space-y-2">
-                        <button id="filter-category-btn" type="button"
-                            class="flex justify-between items-center w-full rounded-xl border border-white/10 bg-white/5 text-white shadow-sm hover:bg-white/10 transition-colors text-xs sm:text-sm py-3 px-4 text-left">
-                            <span id="filter-category-label">Wszystkie kategorie</span>
-                            <svg class="ml-2 w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor"
-                                viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M19 9l-7 7-7-7"></path>
-                            </svg>
-                        </button>
+                <button id="filter-budget-btn" type="button"
+                    class="flex items-center gap-2 whitespace-nowrap rounded-xl border border-white/5 bg-white/5 px-4 py-2 text-sm font-medium text-gray-300 hover:bg-white/10 transition-all active:scale-95">
+                    <i class="fas fa-wallet text-sm text-gray-500"></i>
+                    <span id="filter-budget-label">Budżet</span>
+                    <span class="filter-clear hidden ml-2 text-lg font-semibold text-red-300">×</span>
+                </button>
 
+                <button id="filter-shop-btn" type="button"
+                    class="flex items-center gap-2 whitespace-nowrap rounded-xl border border-white/5 bg-white/5 px-4 py-2 text-sm font-medium text-gray-300 hover:bg-white/10 transition-all active:scale-95">
+                    <i class="fas fa-store text-sm text-gray-500"></i>
+                    <span id="filter-shop-label">Sklep</span>
+                    <span class="filter-clear hidden ml-2 text-lg font-semibold text-red-300">×</span>
+                </button>
 
-                        <button id="filter-budget-btn" type="button"
-                            class="flex justify-between items-center w-full rounded-xl border border-white/10 bg-white/5 text-white shadow-sm hover:bg-white/10 transition-colors text-xs sm:text-sm py-3 px-4 text-left">
-                            <span id="filter-budget-label">Wszystkie budżety</span>
-                            <svg class="ml-2 w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor"
-                                viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M19 9l-7 7-7-7"></path>
-                            </svg>
-                        </button>
+                <button id="filter-date-btn" type="button"
+                    class="flex items-center gap-2 whitespace-nowrap rounded-xl border border-white/5 bg-white/5 px-4 py-2 text-sm font-medium text-gray-300 hover:bg-white/10 transition-all active:scale-95">
+                    <i class="fas fa-calendar text-sm text-gray-500"></i>
+                    <span id="filter-date-label">Data</span>
+                    <span class="filter-clear hidden ml-2 text-lg font-semibold text-red-300">×</span>
+                </button>
 
+                <button id="filter-amount-btn" type="button"
+                    class="flex items-center gap-2 whitespace-nowrap rounded-xl border border-white/5 bg-white/5 px-4 py-2 text-sm font-medium text-gray-300 hover:bg-white/10 transition-all active:scale-95">
+                    <i class="fas fa-coins text-sm text-gray-500"></i>
+                    <span id="filter-amount-label">Kwota</span>
+                    <span class="filter-clear hidden ml-2 text-lg font-semibold text-red-300">×</span>
+                </button>
 
-                        <button id="filter-shop-btn" type="button"
-                            class="flex justify-between items-center w-full rounded-xl border border-white/10 bg-white/5 text-white shadow-sm hover:bg-white/10 transition-colors text-xs sm:text-sm py-3 px-4 text-left">
-                            <span id="filter-shop-label">Wszystkie sklepy</span>
-                            <svg class="ml-2 w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor"
-                                viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M19 9l-7 7-7-7"></path>
-                            </svg>
-                        </button>
-
-                    </div>
-
-                    <!-- Amounts -->
-                    <div class="grid grid-cols-2 gap-2">
-                        <div class="flex flex-col">
-                            <label for="filter-min-amount" class="text-xs text-gray-400 mb-1 ml-1">Kwota
-                                od</label>
-                            <input type="number" id="filter-min-amount" placeholder="0.00"
-                                class="block w-full rounded-xl border-white/10 bg-white/5 text-white shadow-sm focus:border-blue-500 py-3 px-4 text-xs sm:text-sm">
-                        </div>
-                        <div class="flex flex-col">
-                            <label for="filter-max-amount" class="text-xs text-gray-400 mb-1 ml-1">Kwota
-                                do</label>
-                            <input type="number" id="filter-max-amount" placeholder="max"
-                                class="block w-full rounded-xl border-white/10 bg-white/5 text-white shadow-sm focus:border-blue-500 py-3 px-4 text-xs sm:text-sm">
-                        </div>
-                    </div>
-                    <div class="flex justify-end mt-4">
-                        <button id="clear-filters-btn"
-                            class="py-2 px-4 bg-gray-500 text-white rounded-md hover:bg-gray-600">Wyczyść
-                            filtry</button>
-                    </div>
-                </div>
+                <button id="clear-filters-btn" type="button"
+                    class="flex items-center gap-2 whitespace-nowrap rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-2 text-xs font-medium text-red-400 hover:bg-red-500/10 transition-all active:scale-95">
+                    <i class="fas fa-times text-[10px]"></i>
+                    <span>Wyczyść</span>
+                </button>
             </div>
         </div>
-        <div id="purchases-list" class="space-y-4"></div>
+
+        <div id="purchases-list" class="space-y-4 px-2"></div>
+        <!-- Hidden inputs for filters -->
+        <input type="date" id="filter-date-start" class="hidden">
+        <input type="date" id="filter-date-end" class="hidden">
+        <input type="number" id="filter-min-amount" class="hidden">
+        <input type="number" id="filter-max-amount" class="hidden">
     </div>
 
     <!-- Ustawienia: Główne -->
@@ -1443,6 +1414,27 @@
                     Zapisz produkt
                 </button>
             </form>
+        </div>
+    </div>
+
+    <!-- Generic Filter Drawer (for Date and Amount) -->
+    <div id="filter-drawer-overlay"
+        class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[80] transition-opacity duration-300 opacity-0">
+    </div>
+    <div id="filter-drawer"
+        class="hidden fixed bottom-0 left-0 right-0 z-[90] bg-[#1a1a2e] border-t border-white/10 rounded-t-3xl shadow-2xl transform translate-y-full transition-transform duration-300 ease-out flex flex-col max-h-[85vh]">
+        <div class="p-5 border-b border-white/5 flex justify-between items-center bg-[#1a1a2e] rounded-t-3xl">
+            <h3 id="filter-drawer-title" class="text-lg font-bold text-white">Filtruj</h3>
+            <button id="close-filter-drawer"
+                class="w-10 h-10 flex items-center justify-center bg-white/5 rounded-full text-gray-400 hover:text-white transition-colors">&times;</button>
+        </div>
+        <div id="filter-drawer-content" class="p-6 overflow-y-auto bg-[#0f0f23] space-y-6">
+            <!-- Dynamic content for Date or Amount -->
+        </div>
+        <div class="p-4 bg-[#1a1a2e] border-t border-white/5 pb-safe">
+            <button id="filter-drawer-apply-btn" class="w-full py-4 px-4 bg-brand-600 text-white rounded-xl hover:bg-brand-700 transition-all font-semibold shadow-lg shadow-brand-500/20 active:scale-95">
+                Zastosuj
+            </button>
         </div>
     </div>
 

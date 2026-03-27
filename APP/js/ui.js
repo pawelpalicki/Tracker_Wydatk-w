@@ -161,10 +161,11 @@ function initFilterDrawers() {
     const categoryBtn = document.getElementById('filter-category-btn');
     if (categoryBtn) {
         categoryBtn.onclick = () => {
-            // openCategoryDrawer obsługuje pobieranie wszystkich opcji za nas
             openCategoryDrawer(null, typeof filterCategoryValue !== 'undefined' ? filterCategoryValue : '', (cat) => {
                 if (typeof filterCategoryValue !== 'undefined') filterCategoryValue = cat;
-                document.getElementById('filter-category-label').textContent = cat ? cat.charAt(0).toUpperCase() + cat.slice(1) : 'Wszystkie kategorie';
+                const labelText = cat ? cat.charAt(0).toUpperCase() + cat.slice(1) : 'Kategoria';
+                document.getElementById('filter-category-label').textContent = labelText;
+                setFilterButtonState(categoryBtn, categoryClear, !!cat);
                 if (typeof handleFilterChange === 'function') handleFilterChange();
             });
         };
@@ -183,7 +184,8 @@ function initFilterDrawers() {
             const currentVal = typeof filterBudgetValue !== 'undefined' ? filterBudgetValue : '';
             openSelectionDrawer('Wybierz budżet', options, (val, label) => {
                 if (typeof filterBudgetValue !== 'undefined') filterBudgetValue = val;
-                document.getElementById('filter-budget-label').textContent = label;
+                document.getElementById('filter-budget-label').textContent = val ? label : 'Budżet';
+                setFilterButtonState(budgetBtn, budgetClear, !!val);
                 if (typeof handleFilterChange === 'function') handleFilterChange();
             }, currentVal);
         };
@@ -199,18 +201,226 @@ function initFilterDrawers() {
             const currentVal = typeof filterShopValue !== 'undefined' ? filterShopValue : '';
             openSelectionDrawer('Wybierz sklep', options, (val, label) => {
                 if (typeof filterShopValue !== 'undefined') filterShopValue = val;
-                document.getElementById('filter-shop-label').textContent = label;
+                document.getElementById('filter-shop-label').textContent = val ? label : 'Sklep';
+                setFilterButtonState(shopBtn, shopClear, !!val);
                 if (typeof handleFilterChange === 'function') handleFilterChange();
             }, currentVal);
         };
     }
 
-    // Native date pickers don't need initialization, but we can add event listeners
-    const filterDateStart = document.getElementById('filter-date-start');
-    const filterDateEnd = document.getElementById('filter-date-end');
-    [filterDateStart, filterDateEnd].forEach(el => {
-        if (el) el.onchange = () => { if (typeof handleFilterChange === 'function') handleFilterChange(); };
-    });
+    const dateBtn = document.getElementById('filter-date-btn');
+    if (dateBtn) {
+        dateBtn.onclick = () => {
+            openFilterDrawer('Wybierz zakres dat', 'date', () => {
+                const start = document.getElementById('filter-date-start').value;
+                const end = document.getElementById('filter-date-end').value;
+                const active = !!(start || end);
+                document.getElementById('filter-date-label').textContent = active ? 'Data (ustawiona)' : 'Data';
+                setFilterButtonState(dateBtn, dateClear, active);
+                if (typeof handleFilterChange === 'function') handleFilterChange();
+            });
+        };
+    }
+
+    const amountBtn = document.getElementById('filter-amount-btn');
+    const categoryClear = categoryBtn?.querySelector('.filter-clear');
+    const budgetClear = budgetBtn?.querySelector('.filter-clear');
+    const shopClear = shopBtn?.querySelector('.filter-clear');
+    const dateClear = dateBtn?.querySelector('.filter-clear');
+    const amountClear = amountBtn?.querySelector('.filter-clear');
+
+    const setFilterButtonState = (btn, clearEl, active) => {
+        if (!btn) return;
+        btn.classList.toggle('border-brand-500/50', active);
+        btn.classList.toggle('bg-brand-500/10', active);
+        clearEl?.classList.toggle('hidden', !active);
+    };
+
+    const clearFilterValue = (type) => {
+        if (type === 'category') {
+            filterCategoryValue = '';
+            document.getElementById('filter-category-label').textContent = 'Kategoria';
+            setFilterButtonState(categoryBtn, categoryClear, false);
+        } else if (type === 'budget') {
+            filterBudgetValue = '';
+            document.getElementById('filter-budget-label').textContent = 'Budżet';
+            setFilterButtonState(budgetBtn, budgetClear, false);
+        } else if (type === 'shop') {
+            filterShopValue = '';
+            document.getElementById('filter-shop-label').textContent = 'Sklep';
+            setFilterButtonState(shopBtn, shopClear, false);
+        } else if (type === 'date') {
+            filterDateStart.value = '';
+            filterDateEnd.value = '';
+            document.getElementById('filter-date-label').textContent = 'Data';
+            setFilterButtonState(dateBtn, dateClear, false);
+        } else if (type === 'amount') {
+            filterMinAmount.value = '';
+            filterMaxAmount.value = '';
+            document.getElementById('filter-amount-label').textContent = 'Kwota';
+            setFilterButtonState(amountBtn, amountClear, false);
+        }
+        if (typeof handleFilterChange === 'function') handleFilterChange();
+    };
+
+    const addClearHandler = (clearEl, type) => {
+        clearEl?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            clearFilterValue(type);
+        });
+    };
+
+    addClearHandler(categoryClear, 'category');
+    addClearHandler(budgetClear, 'budget');
+    addClearHandler(shopClear, 'shop');
+    addClearHandler(dateClear, 'date');
+    addClearHandler(amountClear, 'amount');
+
+    if (amountBtn) {
+        amountBtn.onclick = () => {
+            openFilterDrawer('Wybierz zakres kwot', 'amount', () => {
+                const min = document.getElementById('filter-min-amount').value;
+                const max = document.getElementById('filter-max-amount').value;
+                const active = !!(min || max);
+                document.getElementById('filter-amount-label').textContent = active ? 'Kwota (ustawiona)' : 'Kwota';
+                setFilterButtonState(amountBtn, amountClear, active);
+                if (typeof handleFilterChange === 'function') handleFilterChange();
+            });
+        };
+    }
+
+    const keywordInput = document.getElementById('filter-keyword');
+    if (keywordInput) {
+        keywordInput.oninput = () => {
+            if (typeof handleFilterChange === 'function') handleFilterChange();
+        };
+    }
+
+    const clearBtn = document.getElementById('clear-filters-btn');
+    if (clearBtn) {
+        clearBtn.onclick = () => {
+            if (keywordInput) keywordInput.value = '';
+            if (typeof filterCategoryValue !== 'undefined') filterCategoryValue = '';
+            if (typeof filterBudgetValue !== 'undefined') filterBudgetValue = '';
+            if (typeof filterShopValue !== 'undefined') filterShopValue = '';
+            
+            const start = document.getElementById('filter-date-start');
+            const end = document.getElementById('filter-date-end');
+            const min = document.getElementById('filter-min-amount');
+            const max = document.getElementById('filter-max-amount');
+            
+            if (start) start.value = '';
+            if (end) end.value = '';
+            if (min) min.value = '';
+            if (max) max.value = '';
+
+            // Reset labels and styles
+            const labels = {
+                'filter-category-label': 'Kategoria',
+                'filter-budget-label': 'Budżet',
+                'filter-shop-label': 'Sklep',
+                'filter-date-label': 'Data',
+                'filter-amount-label': 'Kwota'
+            };
+
+            for (const [id, text] of Object.entries(labels)) {
+                const el = document.getElementById(id);
+                if (el) el.textContent = text;
+                const btn = el.parentElement;
+                if (btn) {
+                    btn.classList.remove('border-brand-500/50', 'bg-brand-500/10');
+                }
+            }
+
+            document.querySelectorAll('.filter-clear').forEach(el => el.classList.add('hidden'));
+
+            if (typeof handleFilterChange === 'function') handleFilterChange();
+        };
+    }
+}
+
+function openFilterDrawer(title, type, onApply) {
+    const overlay = document.getElementById('filter-drawer-overlay');
+    const drawer = document.getElementById('filter-drawer');
+    const titleEl = document.getElementById('filter-drawer-title');
+    const content = document.getElementById('filter-drawer-content');
+    const applyBtn = document.getElementById('filter-drawer-apply-btn');
+    const closeBtn = document.getElementById('close-filter-drawer');
+
+    if (!overlay || !drawer || !content) return;
+
+    titleEl.textContent = title;
+    content.innerHTML = '';
+
+    if (type === 'date') {
+        const startVal = document.getElementById('filter-date-start').value;
+        const endVal = document.getElementById('filter-date-end').value;
+        content.innerHTML = `
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs text-gray-400 mb-2 ml-1">Data od</label>
+                    <input type="date" id="drawer-date-start" value="${startVal}"
+                        class="block w-full rounded-xl border-white/10 bg-white/5 text-white py-4 px-4 focus:bg-white/10 transition-all outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-400 mb-2 ml-1">Data do</label>
+                    <input type="date" id="drawer-date-end" value="${endVal}"
+                        class="block w-full rounded-xl border-white/10 bg-white/5 text-white py-4 px-4 focus:bg-white/10 transition-all outline-none">
+                </div>
+            </div>
+        `;
+    } else if (type === 'amount') {
+        const minVal = document.getElementById('filter-min-amount').value;
+        const maxVal = document.getElementById('filter-max-amount').value;
+        content.innerHTML = `
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs text-gray-400 mb-2 ml-1">Kwota minimalna</label>
+                    <input type="number" id="drawer-min-amount" value="${minVal}" placeholder="0.00" step="0.01"
+                        class="block w-full rounded-xl border-white/10 bg-white/5 text-white py-4 px-4 focus:bg-white/10 transition-all outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-400 mb-2 ml-1">Kwota maksymalna</label>
+                    <input type="number" id="drawer-max-amount" value="${maxVal}" placeholder="Brak limitu" step="0.01"
+                        class="block w-full rounded-xl border-white/10 bg-white/5 text-white py-4 px-4 focus:bg-white/10 transition-all outline-none">
+                </div>
+            </div>
+        `;
+    }
+
+    const closeFilterDrawer = () => {
+        overlay.classList.add('opacity-0');
+        drawer.classList.add('translate-y-full');
+        setTimeout(() => {
+            overlay.classList.add('hidden');
+            drawer.classList.add('hidden');
+            document.body.style.overflow = '';
+        }, 300);
+    };
+
+    applyBtn.onclick = () => {
+        if (type === 'date') {
+            document.getElementById('filter-date-start').value = document.getElementById('drawer-date-start').value;
+            document.getElementById('filter-date-end').value = document.getElementById('drawer-date-end').value;
+        } else if (type === 'amount') {
+            document.getElementById('filter-min-amount').value = document.getElementById('drawer-min-amount').value;
+            document.getElementById('filter-max-amount').value = document.getElementById('drawer-max-amount').value;
+        }
+        onApply();
+        closeFilterDrawer();
+    };
+
+    closeBtn.onclick = closeFilterDrawer;
+    overlay.onclick = closeFilterDrawer;
+
+    overlay.classList.remove('hidden');
+    drawer.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+
+    setTimeout(() => {
+        overlay.classList.remove('opacity-0');
+        drawer.classList.remove('translate-y-full');
+    }, 10);
 }
 
 function openSelectionDrawer(title, options, onSelect, selectedValue = null, layoutType = 'list', showAddBtn = false, autoClose = true) {

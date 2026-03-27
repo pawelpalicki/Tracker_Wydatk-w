@@ -121,9 +121,6 @@ let filterBudgetValue = '';
 const filterMinAmount = document.getElementById('filter-min-amount');
 const filterMaxAmount = document.getElementById('filter-max-amount');
 const clearFiltersBtn = document.getElementById('clear-filters-btn');
-const filterToggle = document.getElementById('filter-toggle');
-const filtersContainer = document.getElementById('filters-container');
-const filterArrow = document.getElementById('filter-arrow');
 
 // Elementy wydatków cyklicznych
 const recurringExpensesList = document.getElementById('recurring-expenses-list');
@@ -206,7 +203,14 @@ function updateCustomDropdownValue(selectId, labelId) {
 function openCategoryDrawer(row, currentCategory, onSelect = null) {
     activeCategoryRow = row;
 
-    const options = allCategories.map(cat => {
+    const options = [
+        {
+            value: '',
+            label: 'Wszystkie kategorie',
+            icon: '<i class="fas fa-tags"></i>',
+            color: 'rgba(255,255,255,0.08)'
+        }
+    ].concat(allCategories.map(cat => {
         const parentCat = (typeof structuredCategories !== 'undefined')
             ? structuredCategories.find(c => c.name === cat && !c.parentId)
             : null;
@@ -219,7 +223,7 @@ function openCategoryDrawer(row, currentCategory, onSelect = null) {
             icon: `<i class="fas ${icon}"></i>`,
             color: color + '20'
         };
-    });
+    }));
 
     const itemName = row ? (row.querySelector('.item-name')?.value || 'produkcie') : 'filtrach';
     const title = `Kategoria dla: ${itemName}`;
@@ -683,38 +687,6 @@ function setupAppEventListeners() {
         });
     });
 
-    // Logika filtrów
-    filterToggle?.addEventListener('click', () => {
-        filtersContainer.classList.toggle('hidden');
-        filterArrow.classList.toggle('rotate-180');
-    });
-
-    const filterElements = [filterKeyword, filterMinAmount, filterMaxAmount, filterDateRange, filterDateStart, filterDateEnd];
-    filterElements.forEach(el => {
-        if (el) el.addEventListener('change', handleFilterChange);
-    });
-
-    clearFiltersBtn.addEventListener('click', () => {
-        filterKeyword.value = '';
-        filterDateStart.value = '';
-        filterDateEnd.value = '';
-        filterCategoryValue = '';
-        const catLabel = document.getElementById('filter-category-label');
-        if (catLabel) catLabel.textContent = 'Wszystkie kategorie';
-
-        filterShopValue = '';
-        const shopLabel = document.getElementById('filter-shop-label');
-        if (shopLabel) shopLabel.textContent = 'Wszystkie sklepy';
-
-        filterBudgetValue = '';
-        const budgetLabel = document.getElementById('filter-budget-label');
-        if (budgetLabel) budgetLabel.textContent = 'Wszystkie budżety';
-
-        filterMinAmount.value = '';
-        filterMaxAmount.value = '';
-        handleFilterChange();
-    });
-
     // Logika wydatków cyklicznych
     addRecurringExpenseForm.addEventListener('submit', handleAddOrUpdateRecurringExpense);
     recurringExpensesList.addEventListener('click', handleRecurringExpenseActions);
@@ -955,7 +927,7 @@ async function handleFilterChange() {
     if (filterDateStart.value && filterDateEnd.value) {
         params.append('startDate', filterDateStart.value);
         params.append('endDate', filterDateEnd.value);
-    } else if (fp_range && fp_range.selectedDates.length === 2) {
+    } else if (fp_range && Array.isArray(fp_range.selectedDates) && fp_range.selectedDates.length === 2) {
         params.append('startDate', fp_range.selectedDates[0].toISOString().split('T')[0]);
         params.append('endDate', fp_range.selectedDates[1].toISOString().split('T')[0]);
     }
@@ -1536,15 +1508,18 @@ document.addEventListener('DOMContentLoaded', () => {
             .catch(err => console.log('Błąd rejestracji Service Workera:', err));
     }
 
-    // Initialize Flatpickr only for the range filter (and others that need it)
-    // #date and recurring-start-date will use native browser date pickers
-    fp_range = flatpickr("#filter-date-range", {
-        mode: "range",
-        dateFormat: "Y-m-d",
-        altInput: true,
-        altFormat: "d.m.Y", // Polski format: "02.08.2025"
-        theme: "dark",
-        locale: "pl", // Polska lokalizacja
-        allowInput: true // Pozwala na ręczne wpisywanie daty
-    });
+    // Initialize Flatpickr only for the range filter if the target exists.
+    // #date and recurring-start-date will use native browser date pickers.
+    const rangeEl = document.querySelector('#filter-date-range');
+    if (rangeEl) {
+        fp_range = flatpickr(rangeEl, {
+            mode: "range",
+            dateFormat: "Y-m-d",
+            altInput: true,
+            altFormat: "d.m.Y", // Polski format: "02.08.2025"
+            theme: "dark",
+            locale: "pl", // Polska lokalizacja
+            allowInput: true // Pozwala na ręczne wpisywanie daty
+        });
+    }
 });

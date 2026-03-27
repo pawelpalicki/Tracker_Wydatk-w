@@ -142,6 +142,10 @@ select {
     font-size: 0.875rem !important;
 }
 
+#filter-keyword {
+    padding-left: 1.75rem !important;
+}
+
 input[type="date"]::-webkit-calendar-picker-indicator {
     margin-right: 8px;
     cursor: pointer;
