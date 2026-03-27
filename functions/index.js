@@ -1500,37 +1500,44 @@ app.post('/api/analyze-receipt', authMiddleware, async (req, res) => {
 function shouldAddExpenseToday(expense, today) {
     const lastAddedDate = expense.lastAdded ? new Date(expense.lastAdded) : new Date(expense.createdAt.toDate());
     const todayUTC = new Date(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate()));
-
-    // Upewnij się, że lastAddedDate jest również w UTC dla spójności
     const lastAddedUTC = new Date(Date.UTC(lastAddedDate.getFullYear(), lastAddedDate.getMonth(), lastAddedDate.getDate()));
 
-    // Jeśli wydatek został już dodany dzisiaj, pomiń
     if (lastAddedUTC.getTime() === todayUTC.getTime()) {
         return false;
     }
 
     switch (expense.schedule.type) {
-        case 'monthly':
-            // Dodaj, jeśli dzisiaj jest dzień miesiąca zgodny z harmonogramem
-            // i ostatnie dodanie było w poprzednim miesiącu lub wcześniej
-            return today.getDate() === expense.schedule.dayOfMonth &&
-                (todayUTC.getMonth() !== lastAddedUTC.getMonth() || todayUTC.getFullYear() !== lastAddedUTC.getFullYear());
+        case 'monthly': {
+            if (todayUTC.getFullYear() === lastAddedUTC.getFullYear() && todayUTC.getMonth() === lastAddedUTC.getMonth()) {
+                return false;
+            }
+            const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+            const scheduledDay = expense.schedule.dayOfMonth;
+            const dueDay = Math.min(scheduledDay, daysInMonth);
+            return today.getDate() >= dueDay;
+        }
 
-        case 'weekly':
-            // Dodaj, jeśli dzisiaj jest dzień tygodnia zgodny z harmonogramem
-            // i minął co najmniej tydzień od ostatniego dodania
+        case 'weekly': {
             const daysSinceLastAdded = Math.floor((todayUTC - lastAddedUTC) / (1000 * 60 * 60 * 24));
-            return today.getDay() === expense.schedule.dayOfWeek && daysSinceLastAdded >= 7;
+            return daysSinceLastAdded >= 7;
+        }
 
-        case 'daily_interval':
-            // Dodaj, jeśli minął odpowiedni interwał od daty początkowej
+        case 'daily_interval': {
             const startDate = new Date(expense.schedule.startDate);
             const startDateTime = Date.UTC(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
             const daysSinceStart = Math.floor((todayUTC - startDateTime) / (1000 * 60 * 60 * 24));
+            
+            if (daysSinceStart < 0) return false;
 
-            // Jeśli dzisiaj jest dzień, w którym interwał się zgadza i nie dodano jeszcze dzisiaj
-            return daysSinceStart >= 0 && (daysSinceStart % expense.schedule.interval === 0) &&
-                (todayUTC.getTime() !== lastAddedUTC.getTime());
+            // Check if it's a valid day for the interval and it hasn't been added since the last interval trigger.
+            if (daysSinceStart % expense.schedule.interval === 0) {
+                 const daysSinceLast = Math.floor((todayUTC - lastAddedUTC) / (1000 * 60 * 60 * 24));
+                 // Heuristic: If it was added recently, it's probably not due again.
+                 // This prevents double-adding if the interval aligns weirdly.
+                 return daysSinceLast >= expense.schedule.interval;
+            }
+            return false;
+        }
 
         default:
             return false;
