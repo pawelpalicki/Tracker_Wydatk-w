@@ -27,7 +27,8 @@ async function renderBudgetInputs() {
     }
 
     try {
-        const { budgets } = await apiCall(`/api/budgets/${year}/${month}`);
+        const response = await apiCall(`/api/budgets/${year}/${month}`);
+        const budgets = response.budgets || {};
         
         // Użyj kategorii nadrzędnych ze structuredCategories jeśli są dostępne, 
         // w przeciwnym razie spadnij na allCategories (płaska lista)

@@ -1131,7 +1131,7 @@ app.post('/api/budgets/:year/:month', authMiddleware, async (req, res) => {
             updatedAt: new Date()
         };
 
-        await budgetRef.set(budgetData, { merge: true }); // Użyj merge, aby nie nadpisywać całego dokumentu
+        await budgetRef.set(budgetData); // Nie używamy merge, aby nadpisać cały dokument (w tym obiekt budgets)
 
         res.status(200).json(budgetData);
     } catch (error) {

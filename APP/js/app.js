@@ -723,7 +723,7 @@ function setupAppEventListeners() {
     document.getElementById('budget-month-btn')?.addEventListener('click', () => {
         const options = [];
         const today = new Date();
-        for (let i = -2; i <= 12; i++) {
+        for (let i = -12; i <= 12; i++) {
             const d = new Date(today.getFullYear(), today.getMonth() + i, 1);
             const mStr = d.toISOString().substring(0, 7);
             const label = d.toLocaleString('pl-PL', { month: 'long', year: 'numeric' });
