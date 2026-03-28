@@ -128,6 +128,7 @@ const addRecurringExpenseForm = document.getElementById('add-recurring-expense-f
 const recurringName = document.getElementById('recurring-name');
 const recurringAmount = document.getElementById('recurring-amount');
 let recurringCategoryValue = '';
+let recurringSubCategoryValue = ''; // NOWA ZMIENNA
 let recurringNatureValue = 'stały';
 let recurringPurposeValue = 'konieczny';
 let scheduleTypeValue = 'monthly';
@@ -738,19 +739,62 @@ function setupAppEventListeners() {
     });
 
     document.getElementById('recurring-category-btn')?.addEventListener('click', () => {
-        const options = allCategories.map(cat => ({
-            value: cat,
-            label: cat.charAt(0).toUpperCase() + cat.slice(1),
-            icon: `<i class="fas ${categoryIcons[cat] || 'fa-tag'}"></i>`,
-            color: getCategoryColor(cat) + '20'
-        }));
-        openSelectionDrawer('Kategoria subskrypcji', options, (val, label) => {
-            recurringCategoryValue = val;
-            document.getElementById('recurring-category-label').textContent = label;
-            const icon = categoryIcons[val] || 'fa-tag';
-            const color = getCategoryColor(val);
-            document.getElementById('recurring-category-icon').innerHTML = `<i class="fas ${icon}" style="color: ${color}"></i>`;
-        }, recurringCategoryValue, 'grid', false);
+        if (typeof openHierarchicalCategoryDrawer === 'function') {
+            const currentCat = recurringCategoryValue || '';
+            const currentSub = recurringSubCategoryValue || '';
+            openHierarchicalCategoryDrawer(null, currentCat, currentSub, (pName, sName) => {
+                recurringCategoryValue = pName;
+                recurringSubCategoryValue = sName;
+                const labelText = sName ? `${pName} / ${sName}` : pName;
+                document.getElementById('recurring-category-label').textContent = labelText;
+                
+                const parentCat = (typeof structuredCategories !== 'undefined') 
+                    ? structuredCategories.find(c => c.name === pName && !c.parentId)
+                    : null;
+                const subCat = (typeof structuredCategories !== 'undefined' && parentCat)
+                    ? structuredCategories.find(c => c.name === sName && c.parentId === parentCat.id)
+                    : null;
+
+                const icon = (subCat && subCat.icon) || (parentCat && parentCat.icon) || 'fa-tag';
+                const color = (parentCat && parentCat.color) || '#6b7280';
+                document.getElementById('recurring-category-icon').innerHTML = `<i class="fas ${icon}" style="color: ${color}"></i>`;
+            });
+        }
+    });
+
+    document.getElementById('filter-category-btn')?.addEventListener('click', () => {
+        if (typeof openHierarchicalCategoryDrawer === 'function') {
+            openHierarchicalCategoryDrawer(null, filterCategoryValue || '', '', (pName, sName) => {
+                filterCategoryValue = pName; // Filtrowanie po kategorii głównej
+                document.getElementById('filter-category-label').textContent = sName ? `${pName} / ${sName}` : pName;
+                handleFilterChange();
+            });
+        }
+    });
+
+    // Tagi dla wydatków cyklicznych
+    document.getElementById('recurring-nature-btn')?.addEventListener('click', () => {
+        const options = [
+            { value: 'stały',      label: 'Stały',      icon: '📌' },
+            { value: 'zmienny',    label: 'Zmienny',    icon: '📊' },
+            { value: 'jednorazowy',label: 'Jednorazowy',icon: '⚡' },
+        ];
+        const current = document.getElementById('recurring-nature-label').textContent.toLowerCase();
+        openSelectionDrawer('Natura wydatku', options, (val, label) => {
+            document.getElementById('recurring-nature-label').textContent = val;
+        }, current);
+    });
+
+    document.getElementById('recurring-purpose-btn')?.addEventListener('click', () => {
+        const options = [
+            { value: 'konieczny',   label: 'Konieczny',   icon: '🏠' },
+            { value: 'przyjemność', label: 'Przyjemność', icon: '🎉' },
+            { value: 'inwestycja',  label: 'Inwestycja',  icon: '📈' },
+        ];
+        const current = document.getElementById('recurring-purpose-label').textContent.toLowerCase();
+        openSelectionDrawer('Cel wydatku', options, (val, label) => {
+            document.getElementById('recurring-purpose-label').textContent = val;
+        }, current);
     });
 
     const addCategoryDrawerBtn = document.getElementById('add-category-drawer-btn');
@@ -839,28 +883,28 @@ function setupAppEventListeners() {
         }, recurringDayOfWeekValue);
     });
 
+    // Tagi dla wydatków cyklicznych
     document.getElementById('recurring-nature-btn')?.addEventListener('click', () => {
         const options = [
-            { value: 'stały', label: 'Stały (Powtarzalny)', icon: '<i class="fas fa-redo text-gray-400"></i>' },
-            { value: 'zmienny', label: 'Zmienny (Jednorazowy)', icon: '<i class="fas fa-random text-gray-400"></i>' }
+            { value: 'stały',      label: 'Stały',      icon: '📌' },
+            { value: 'zmienny',    label: 'Zmienny',    icon: '📊' },
+            { value: 'jednorazowy',label: 'Jednorazowy',icon: '⚡' },
         ];
-        openSelectionDrawer('Natura subskrypcji', options, (val, label) => {
+        openSelectionDrawer('Natura wydatku', options, (val) => {
             recurringNatureValue = val;
-            const labelEl = document.getElementById('recurring-nature-label');
-            if (labelEl) labelEl.textContent = val;
+            document.getElementById('recurring-nature-label').textContent = val;
         }, recurringNatureValue);
     });
 
     document.getElementById('recurring-purpose-btn')?.addEventListener('click', () => {
         const options = [
-            { value: 'zachcianka', label: 'Zachcianka', icon: '<i class="fas fa-ice-cream text-gray-400"></i>' },
-            { value: 'potrzeba', label: 'Potrzeba', icon: '<i class="fas fa-shopping-basket text-gray-400"></i>' },
-            { value: 'konieczny', label: 'Konieczny', icon: '<i class="fas fa-bolt text-gray-400"></i>' }
+            { value: 'konieczny',   label: 'Konieczny',   icon: '🏠' },
+            { value: 'przyjemność', label: 'Przyjemność', icon: '🎉' },
+            { value: 'inwestycja',  label: 'Inwestycja',  icon: '📈' },
         ];
-        openSelectionDrawer('Cel subskrypcji', options, (val, label) => {
+        openSelectionDrawer('Cel wydatku', options, (val) => {
             recurringPurposeValue = val;
-            const labelEl = document.getElementById('recurring-purpose-label');
-            if (labelEl) labelEl.textContent = val;
+            document.getElementById('recurring-purpose-label').textContent = val;
         }, recurringPurposeValue);
     });
 
@@ -1215,11 +1259,12 @@ function renderRecurringExpenses() {
         expenseEl.dataset.id = expense.id;
 
         const scheduleText = getScheduleText(expense.schedule);
+        const fullCategoryText = expense.subCategory ? `${expense.category} / ${expense.subCategory}` : expense.category;
 
         expenseEl.innerHTML = `
             <div>
                 <p class="font-semibold text-gray-900 dark:text-white">${expense.name}</p>
-                <p class="text-sm text-gray-600 dark:text-gray-400">${formatAmount(expense.amount)} - ${expense.category} (${scheduleText})</p>
+                <p class="text-sm text-gray-600 dark:text-gray-400">${formatAmount(expense.amount)} - ${fullCategoryText} (${scheduleText})</p>
             </div>
             <div class="flex items-center space-x-1">
                  <button class="edit-recurring-expense-btn p-2 text-blue-500 hover:text-blue-700" title="Edytuj">
@@ -1259,6 +1304,7 @@ async function handleAddOrUpdateRecurringExpense(e) {
     const name = recurringName.value.trim();
     const amount = parseFloat(recurringAmount.value);
     const category = recurringCategoryValue;
+    const subCategory = recurringSubCategoryValue; // DODANE
     const scheduleType = scheduleTypeValue;
     const tags = {
         nature: recurringNatureValue,
@@ -1299,7 +1345,7 @@ async function handleAddOrUpdateRecurringExpense(e) {
         return;
     }
 
-    const expenseData = { name, amount, category, schedule, tags };
+    const expenseData = { name, amount, category, subCategory, schedule, tags }; // ZAKTUALIZOWANE
 
     try {
         if (editingRecurringExpenseId) {
@@ -1355,8 +1401,27 @@ function enterRecurringExpenseEditMode(expenseId) {
 
     recurringName.value = expense.name;
     recurringAmount.value = expense.amount;
-    recurringCategoryValue = expense.category;
+    
+    // Kategoria i Podkategoria
+    recurringCategoryValue = expense.category || '';
+    recurringSubCategoryValue = expense.subCategory || '';
+    const labelText = recurringSubCategoryValue ? `${recurringCategoryValue} / ${recurringSubCategoryValue}` : (recurringCategoryValue || 'Wybierz kategorię');
+    const categoryLabelEl = document.getElementById('recurring-category-label');
+    if (categoryLabelEl) categoryLabelEl.textContent = labelText;
 
+    const parentCat = (typeof structuredCategories !== 'undefined') 
+        ? structuredCategories.find(c => c.name === recurringCategoryValue && !c.parentId)
+        : null;
+    const subCat = (typeof structuredCategories !== 'undefined' && parentCat)
+        ? structuredCategories.find(c => c.name === recurringSubCategoryValue && c.parentId === parentCat.id)
+        : null;
+
+    const icon = (subCat && subCat.icon) || (parentCat && parentCat.icon) || 'fa-tag';
+    const color = (parentCat && parentCat.color) || '#6b7280';
+    const categoryIconEl = document.getElementById('recurring-category-icon');
+    if (categoryIconEl) categoryIconEl.innerHTML = `<i class="fas ${icon}" style="color: ${color}"></i>`;
+
+    // Tagi
     recurringNatureValue = (expense.tags && expense.tags.nature) ? expense.tags.nature : 'stały';
     recurringPurposeValue = (expense.tags && expense.tags.purpose) ? expense.tags.purpose : 'konieczny';
     const natureLabelEl = document.getElementById('recurring-nature-label');
@@ -1366,7 +1431,7 @@ function enterRecurringExpenseEditMode(expenseId) {
 
     if (expense.schedule) {
         scheduleTypeValue = expense.schedule.type;
-        handleScheduleTypeChange(); // Update visibility and required attributes
+        handleScheduleTypeChange(); 
         switch (expense.schedule.type) {
             case 'monthly':
                 recurringDayOfMonth.value = expense.schedule.dayOfMonth;
@@ -1380,7 +1445,6 @@ function enterRecurringExpenseEditMode(expenseId) {
                 break;
         }
     } else {
-        // Handle legacy data with no schedule
         scheduleTypeValue = 'monthly';
         handleScheduleTypeChange();
     }

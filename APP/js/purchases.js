@@ -355,10 +355,6 @@ async function handlePurchaseFormSubmit(e) {
         shop: shopInput.value,
         date: dateInput.value,
         specialBudgetId: budgetTypeSelectValue === 'monthly' ? null : budgetTypeSelectValue,
-        tags: {
-            nature: typeof purchaseTagNature !== 'undefined' ? purchaseTagNature : 'zmienny',
-            purpose: typeof purchaseTagPurpose !== 'undefined' ? purchaseTagPurpose : 'konieczny'
-        },
         items: currentPurchaseItems.map(item => ({
             name: item.name,
             price: item.price,

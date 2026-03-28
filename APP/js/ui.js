@@ -161,13 +161,23 @@ function initFilterDrawers() {
     const categoryBtn = document.getElementById('filter-category-btn');
     if (categoryBtn) {
         categoryBtn.onclick = () => {
-            openCategoryDrawer(null, typeof filterCategoryValue !== 'undefined' ? filterCategoryValue : '', (cat) => {
-                if (typeof filterCategoryValue !== 'undefined') filterCategoryValue = cat;
-                const labelText = cat ? cat.charAt(0).toUpperCase() + cat.slice(1) : 'Kategoria';
-                document.getElementById('filter-category-label').textContent = labelText;
-                setFilterButtonState(categoryBtn, categoryClear, !!cat);
-                if (typeof handleFilterChange === 'function') handleFilterChange();
-            });
+            if (typeof openHierarchicalCategoryDrawer === 'function') {
+                openHierarchicalCategoryDrawer(null, typeof filterCategoryValue !== 'undefined' ? filterCategoryValue : '', '', (cat) => {
+                    if (typeof filterCategoryValue !== 'undefined') filterCategoryValue = cat;
+                    const labelText = cat ? cat.charAt(0).toUpperCase() + cat.slice(1) : 'Kategoria';
+                    document.getElementById('filter-category-label').textContent = labelText;
+                    setFilterButtonState(categoryBtn, categoryClear, !!cat);
+                    if (typeof handleFilterChange === 'function') handleFilterChange();
+                });
+            } else {
+                openCategoryDrawer(null, typeof filterCategoryValue !== 'undefined' ? filterCategoryValue : '', (cat) => {
+                    if (typeof filterCategoryValue !== 'undefined') filterCategoryValue = cat;
+                    const labelText = cat ? cat.charAt(0).toUpperCase() + cat.slice(1) : 'Kategoria';
+                    document.getElementById('filter-category-label').textContent = labelText;
+                    setFilterButtonState(categoryBtn, categoryClear, !!cat);
+                    if (typeof handleFilterChange === 'function') handleFilterChange();
+                });
+            }
         };
     }
 
@@ -423,7 +433,7 @@ function openFilterDrawer(title, type, onApply) {
     }, 10);
 }
 
-function openSelectionDrawer(title, options, onSelect, selectedValue = null, layoutType = 'list', showAddBtn = false, autoClose = true) {
+function openSelectionDrawer(title, options, onSelect, selectedValue = null, layoutType = 'list', showAddBtn = false, autoClose = true, onBack = null) {
     const overlay = document.getElementById('category-drawer-overlay');
     const drawer = document.getElementById('category-drawer');
     const titleEl = document.getElementById('category-drawer-title');
@@ -431,6 +441,7 @@ function openSelectionDrawer(title, options, onSelect, selectedValue = null, lay
     const searchContainer = document.getElementById('drawer-search-container');
     const addBtn = document.getElementById('add-category-drawer-btn');
     const addForm = document.getElementById('new-category-drawer-form');
+    const backBtn = document.getElementById('category-drawer-back-btn');
 
     // Store the callback globally for auto-selection
     window.currentOnSelect = (...args) => {
@@ -447,6 +458,19 @@ function openSelectionDrawer(title, options, onSelect, selectedValue = null, lay
     if (addBtn) addBtn.classList.remove('hidden');
     if (addForm) addForm.classList.add('hidden');
     if (searchInput) searchInput.value = '';
+
+    // Obsługa przycisku wstecz
+    if (backBtn) {
+        if (onBack) {
+            backBtn.classList.remove('hidden');
+            backBtn.onclick = (e) => {
+                e.stopPropagation();
+                onBack();
+            };
+        } else {
+            backBtn.classList.add('hidden');
+        }
+    }
 
     // Show search container only if there are more than 5 options
     if (searchContainer) {
@@ -704,7 +728,7 @@ function exitEditMode() {
     budgetTypeSelectValue = 'monthly'; // Reset budget dropdown
     document.getElementById('budget-type-label').textContent = 'Miesięczny';
     document.getElementById('budget-type-icon').innerHTML = '<span>📅</span>';
-    addItemRow();
+    // addItemRow(); // USUNIĘTE - nie chcemy pustego wiersza na starcie
 
     purchaseFormTitle.textContent = 'Dodaj nowy zakup ręcznie';
     purchaseFormSubmitBtn.textContent = 'Zapisz cały zakup';

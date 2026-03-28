@@ -441,18 +441,26 @@ function initHomeDashboardControls() {
         let touchEndX = 0;
         let ignoreSwipe = false;
 
-        // Blokujemy propagację z kafelków kategorii, aby ich scrollowanie nie zmieniało miesiąca
+        // Blokujemy propagację z kafelków kategorii i podkategorii, aby ich scrollowanie nie zmieniało miesiąca
+        const stopProp = (e) => e.stopPropagation();
+        
         const tilesContainer = document.getElementById('home-category-tiles');
         if (tilesContainer) {
-            const stopProp = (e) => e.stopPropagation();
             tilesContainer.addEventListener('touchstart', stopProp, { passive: true });
             tilesContainer.addEventListener('touchmove', stopProp, { passive: true });
             tilesContainer.addEventListener('touchend', stopProp, { passive: true });
         }
 
+        const subTilesContainer = document.getElementById('home-subcategory-tiles');
+        if (subTilesContainer) {
+            subTilesContainer.addEventListener('touchstart', stopProp, { passive: true });
+            subTilesContainer.addEventListener('touchmove', stopProp, { passive: true });
+            subTilesContainer.addEventListener('touchend', stopProp, { passive: true });
+        }
+
         summaryCard.addEventListener('touchstart', (e) => {
             // Ignorujemy dotyk na przyciskach i interaktywnych elementach
-            if (e.target.closest('button, #home-category-tiles, a')) {
+            if (e.target.closest('button, #home-category-tiles, #home-subcategory-tiles, a')) {
                 ignoreSwipe = true;
                 return;
             }

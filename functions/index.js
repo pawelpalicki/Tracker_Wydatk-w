@@ -93,7 +93,58 @@ async function getUserMetadata(userId) {
     const userDoc = await userRef.get();
     const userData = userDoc.exists ? userDoc.data() : {};
 
-    if (userData.metadataInitialized && !userData.shopsStale) {
+    let structuredCategories = userData.structuredCategories || [];
+    let customCategories = userData.customCategories || [];
+
+    // --- INTELIGENTNA SYNCHRONIZACJA DWUKIERUNKOWA ---
+    let needsProfileUpdate = false;
+
+    // A. Z płaskiej do strukturalnej (np. stary frontend dodał nową kategorię)
+    const structuredNames = new Set(structuredCategories.map(c => c.name));
+    customCategories.forEach(cat => {
+        if (!structuredNames.has(cat)) {
+            console.log(`[Sync] Dodawanie nowej kategorii '${cat}' do struktury v2 dla ${userId}`);
+            structuredCategories.push({
+                id: `sync-${Date.now()}-${Math.random().toString(36).slice(2, 5)}`,
+                name: cat,
+                parentId: null,
+                icon: 'fa-tag',
+                color: '#3b82f6'
+            });
+            needsProfileUpdate = true;
+        }
+    });
+
+    // B. Ze strukturalnej do płaskiej (np. nowy frontend dodał kategorię główną)
+    const customNamesSet = new Set(customCategories);
+    structuredCategories.filter(c => !c.parentId).forEach(parent => {
+        if (!customNamesSet.has(parent.name)) {
+            console.log(`[Sync] Dodawanie nowej kategorii głównej '${parent.name}' do płaskiej listy dla ${userId}`);
+            customCategories.push(parent.name);
+            needsProfileUpdate = true;
+        }
+    });
+
+    // C. Obsługa braku struktury (pierwsza migracja techniczna)
+    if (structuredCategories.length === 0 && customCategories.length > 0) {
+        structuredCategories = customCategories.map((cat, index) => ({
+            id: `migrated-${index}`,
+            name: cat,
+            parentId: null,
+            icon: 'fa-tag',
+            color: '#3b82f6'
+        }));
+        needsProfileUpdate = true;
+    }
+
+    if (needsProfileUpdate) {
+        await userRef.update({ 
+            structuredCategories,
+            customCategories: customCategories.sort()
+        });
+    }
+
+    if (userData.metadataInitialized && !userData.shopsStale && !needsProfileUpdate) {
         const currentMonth = new Date().toISOString().substring(0, 7);
         const availableMonths = userData.availableMonths || [];
         if (!availableMonths.includes(currentMonth)) {
@@ -101,32 +152,44 @@ async function getUserMetadata(userId) {
             availableMonths.sort().reverse();
         }
         return {
-            categories: userData.customCategories || [],
-            structuredCategories: userData.structuredCategories || [],
+            categories: customCategories,
+            structuredCategories: structuredCategories,
             shops: userData.shops || [],
             availableMonths: availableMonths
         };
     }
 
-    // Leniwa inicjalizacja lub wymuszone odświeżenie sklepów
-    console.log(`Inicjalizacja/Odświeżanie metadanych dla użytkownika ${userId}`);
+    // Leniwa inicjalizacja (gdy metadataInitialized jest false lub wymuszono odświeżenie)
+    console.log(`Pełna inicjalizacja metadanych dla użytkownika ${userId}`);
     const snapshot = await purchasesCollection.where('userId', '==', userId).get();
     const allPurchases = snapshot.docs.map(doc => doc.data());
 
     const allItems = allPurchases.flatMap(p => p.items || []);
-    const userCategories = allItems.map(item => item.category).filter(Boolean);
-    const existingCustomCats = userData.customCategories || [];
-    const combinedCategories = [...new Set([...existingCustomCats, ...userCategories])].sort();
+    const userCategoriesFromPurchases = allItems.map(item => item.category).filter(Boolean);
+    const combinedCategories = [...new Set([...customCategories, ...userCategoriesFromPurchases])].sort();
 
     const shops = [...new Set(allPurchases.map(p => p.shop).filter(Boolean))].sort();
 
-    // Sortuj dostępne miesiące malejąco
+    // Re-sync structuredCategories po głębokim odświeżeniu (szukanie w historii zakupów)
+    const finalStructuredNames = new Set(structuredCategories.map(c => c.name));
+    combinedCategories.forEach(cat => {
+        if (!finalStructuredNames.has(cat)) {
+            structuredCategories.push({
+                id: `sync-ref-${Date.now()}-${Math.random().toString(36).slice(2, 5)}`,
+                name: cat,
+                parentId: null,
+                icon: 'fa-tag',
+                color: '#3b82f6'
+            });
+        }
+    });
+
     const currentMonth = new Date().toISOString().substring(0, 7);
     const availableMonths = [...new Set([...allPurchases.map(p => p.date ? p.date.substring(0, 7) : null), currentMonth].filter(Boolean))].sort().reverse();
 
-    // Zapisz do profilu użytkownika
     await userRef.set({
         customCategories: combinedCategories,
+        structuredCategories: structuredCategories,
         shops: shops,
         availableMonths: availableMonths,
         metadataInitialized: true,
@@ -135,6 +198,7 @@ async function getUserMetadata(userId) {
 
     return {
         categories: combinedCategories,
+        structuredCategories: structuredCategories,
         shops: shops,
         availableMonths: availableMonths
     };
@@ -394,7 +458,7 @@ app.get('/api/recurring-expenses', authMiddleware, async (req, res) => {
 // POST: Dodaj nową definicję wydatku cyklicznego
 app.post('/api/recurring-expenses', authMiddleware, async (req, res) => {
     try {
-        const { name, amount, category, schedule, tags } = req.body;
+        const { name, amount, category, subCategory, schedule, tags } = req.body;
 
 
         // Walidacja podstawowych pól
@@ -441,6 +505,7 @@ app.post('/api/recurring-expenses', authMiddleware, async (req, res) => {
             name,
             amount: parseFloat(amount),
             category,
+            subCategory: subCategory || '',
             tags: tags || {},
             schedule, // Zapisujemy cały obiekt harmonogramu
             createdAt: createdAt,
@@ -459,7 +524,7 @@ app.post('/api/recurring-expenses', authMiddleware, async (req, res) => {
 app.put('/api/recurring-expenses/:id', authMiddleware, async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, amount, category, schedule, tags } = req.body;
+        const { name, amount, category, subCategory, schedule, tags } = req.body;
 
         // Walidacja podstawowych pól
         if (!name || !amount || !category || !schedule) {
@@ -505,6 +570,7 @@ app.put('/api/recurring-expenses/:id', authMiddleware, async (req, res) => {
             name,
             amount: parseFloat(amount),
             category,
+            subCategory: subCategory || '',
             tags: tags || {},
             schedule, // Zapisujemy cały obiekt harmonogramu
             updatedAt: new Date()
@@ -1572,10 +1638,11 @@ exports.addRecurringExpensesScheduled = onSchedule('every 24 hours', async (even
                     userId: userId,
                     shop: "Wydatek cykliczny",
                     date: newPurchaseDate,
-                    items: [{ 
-                        name: expense.name, 
-                        price: expense.amount, 
+                    items: [{
+                        name: expense.name,
+                        price: expense.amount,
                         category: expense.category,
+                        subCategory: expense.subCategory || '',
                         tags: expense.tags || {} 
                     }],
                     totalAmount: expense.amount,

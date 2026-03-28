@@ -28,7 +28,17 @@ async function renderBudgetInputs() {
 
     try {
         const { budgets } = await apiCall(`/api/budgets/${year}/${month}`);
-        budgetsList.innerHTML = allCategories.map(cat => `
+        
+        // Użyj kategorii nadrzędnych ze structuredCategories jeśli są dostępne, 
+        // w przeciwnym razie spadnij na allCategories (płaska lista)
+        let categoriesToRender = [];
+        if (typeof structuredCategories !== 'undefined' && structuredCategories.length > 0) {
+            categoriesToRender = structuredCategories.filter(c => !c.parentId).map(c => c.name);
+        } else {
+            categoriesToRender = allCategories;
+        }
+
+        budgetsList.innerHTML = categoriesToRender.map(cat => `
             <div class="flex justify-between items-center">
                 <label for="budget-${cat}" class="text-gray-800 dark:text-gray-200">${cat.charAt(0).toUpperCase() + cat.slice(1)}</label>
                 <input type="number" id="budget-${cat}" data-category="${cat}"

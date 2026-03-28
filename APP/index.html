@@ -367,25 +367,8 @@
                             0.00 zł</p>
                     </div>
                 </div>
-                <!-- Tagi paragonu: Natura i Cel wydatku -->
-                <div class="flex gap-2 mb-3">
-                    <button id="tag-nature-btn" type="button"
-                        class="flex-1 flex items-center gap-2 px-3 py-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all text-sm text-left">
-                        <span class="text-base">📊</span>
-                        <div class="flex flex-col min-w-0">
-                            <span class="text-[10px] text-gray-500 leading-none">Natura wydatku</span>
-                            <span id="tag-nature-label" class="text-white font-medium text-xs truncate mt-0.5">Zmienny</span>
-                        </div>
-                    </button>
-                    <button id="tag-purpose-btn" type="button"
-                        class="flex-1 flex items-center gap-2 px-3 py-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all text-sm text-left">
-                        <span class="text-base">🎯</span>
-                        <div class="flex flex-col min-w-0">
-                            <span class="text-[10px] text-gray-500 leading-none">Cel wydatku</span>
-                            <span id="tag-purpose-label" class="text-white font-medium text-xs truncate mt-0.5">Konieczny</span>
-                        </div>
-                    </button>
-                </div>
+                <!-- Tagi paragonu: Natura i Cel wydatku USUNIĘTE (zgodnie z decyzją użytkownika) -->
+                
                 <div class="border border-white/10 rounded-lg p-2 px-3">
                     <h4 class="text-sm font-medium text-gray-400 mb-2">Pozycje na paragonie
                     </h4>
@@ -742,14 +725,20 @@
 
                 <!-- Tagi dla cyklicznego -->
                 <div class="flex gap-2 pt-1 pb-1">
-                     <button type="button" id="recurring-nature-btn" class="flex-1 flex items-center justify-between px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-xs text-gray-400 hover:bg-white/10 transition-all font-medium" data-value="stały">
-                        <span class="truncate">N: <span id="recurring-nature-label" class="text-white">stały</span></span>
-                        <i class="fas fa-chevron-down opacity-50 scale-75"></i>
-                     </button>
-                     <button type="button" id="recurring-purpose-btn" class="flex-1 flex items-center justify-between px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-xs text-gray-400 hover:bg-white/10 transition-all font-medium" data-value="konieczny">
-                        <span class="truncate">C: <span id="recurring-purpose-label" class="text-white">konieczny</span></span>
-                        <i class="fas fa-chevron-down opacity-50 scale-75"></i>
-                     </button>
+                    <button type="button" id="recurring-nature-btn" class="flex-1 flex items-center gap-2 px-3 py-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all text-sm text-left">
+                        <span class="text-base">📊</span>
+                        <div class="flex flex-col min-w-0">
+                            <span class="text-[10px] text-gray-500 leading-none">Natura</span>
+                            <span id="recurring-nature-label" class="text-white font-medium text-xs truncate mt-0.5">stały</span>
+                        </div>
+                    </button>
+                    <button type="button" id="recurring-purpose-btn" class="flex-1 flex items-center gap-2 px-3 py-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all text-sm text-left">
+                        <span class="text-base">🎯</span>
+                        <div class="flex flex-col min-w-0">
+                            <span class="text-[10px] text-gray-500 leading-none">Cel</span>
+                            <span id="recurring-purpose-label" class="text-white font-medium text-xs truncate mt-0.5">konieczny</span>
+                        </div>
+                    </button>
                 </div>
 
                 <button type="submit"
@@ -1306,9 +1295,14 @@
         class="hidden fixed bottom-0 left-0 right-0 z-[100] bg-[#1a1a2e] border-t border-white/10 rounded-t-3xl shadow-2xl transform translate-y-full transition-transform duration-300 ease-out h-[85vh] flex flex-col">
         <div class="p-5 border-b border-white/5 flex flex-col space-y-4 bg-[#1a1a2e] rounded-t-3xl sticky top-0 z-10">
             <div class="flex justify-between items-center">
-                <div>
-                    <h3 id="category-drawer-title" class="text-lg font-bold text-white">Wybierz kategorię</h3>
-                    <p class="text-xs text-gray-400 mt-0.5" id="drawer-item-context"></p>
+                <div class="flex items-center">
+                    <button id="category-drawer-back-btn" class="hidden w-10 h-10 -ml-2 flex items-center justify-center rounded-full text-gray-400 hover:text-white hover:bg-white/5 transition-colors mr-1">
+                        <i class="fas fa-arrow-left text-base"></i>
+                    </button>
+                    <div>
+                        <h3 id="category-drawer-title" class="text-lg font-bold text-white">Wybierz kategorię</h3>
+                        <p class="text-xs text-gray-400 mt-0.5" id="drawer-item-context"></p>
+                    </div>
                 </div>
                 <button id="close-category-drawer"
                     class="w-10 h-10 flex items-center justify-center bg-white/5 rounded-full text-gray-400 hover:text-white transition-colors">&times;</button>

@@ -547,49 +547,51 @@ function openHierarchicalCategoryDrawer(row, currentCategory, currentSubCategory
         return;
     }
 
-    // Znajdź ID aktualnego rodzica (jeśli mamy nazwę)
-    const currentParentDoc = parents.find(p => p.name === currentCategory);
-    const currentParentId = currentParentDoc ? currentParentDoc.id : null;
+    const openStep1 = () => {
+        const currentParentDoc = parents.find(p => p.name === currentCategory);
+        const currentParentId = currentParentDoc ? currentParentDoc.id : null;
 
-    const options = parents.map(p => ({
-        value: p.id,
-        label: p.name,
-        icon: `<i class="fas ${p.icon || 'fa-tag'}"></i>`,
-        color: (p.color || '#64748b') + '20'
-    }));
-
-    // Ustawiamy autoClose: false, aby po wyborze rodzica szuflada została i pokazała podkategorie
-    openSelectionDrawer('Wybierz grupę', options, (parentId) => {
-        const parent = structuredCategories.find(c => c.id === parentId);
-        const subs = structuredCategories.filter(c => c.parentId === parentId);
-
-        // Jeśli kategoria nie ma podkategorii, wybierz ją bezpośrednio jako kategorię główną
-        if (subs.length === 0) {
-            if (onSelect) onSelect(parent.name, '');
-            closeSelectionDrawer();
-            return;
-        }
-
-        const subOptions = subs.map(s => ({
-            value: s.id,
-            label: s.name,
-            icon: s.icon ? `<i class="fas ${s.icon}"></i>` : null
+        const options = parents.map(p => ({
+            value: p.id,
+            label: p.name,
+            icon: `<i class="fas ${p.icon || 'fa-tag'}"></i>`,
+            color: (p.color || '#64748b') + '20'
         }));
 
-        // Drugi krok - tu już autoClose: true (domyślne)
-        openSelectionDrawer(
-            `${parent.name} → Podkategoria`,
-            subOptions,
-            (subId) => {
-                const sub = structuredCategories.find(c => c.id === subId);
-                if (onSelect) onSelect(parent.name, sub ? sub.name : '');
-            },
-            currentSubCategory || '',
-            'list',
-            false,
-            true 
-        );
-    }, currentParentId, 'grid', false, false); 
+        openSelectionDrawer('Wybierz grupę', options, (parentId) => {
+            const parent = structuredCategories.find(c => c.id === parentId);
+            const subs = structuredCategories.filter(c => c.parentId === parentId);
+
+            if (subs.length === 0) {
+                if (onSelect) onSelect(parent.name, '');
+                closeSelectionDrawer();
+                return;
+            }
+
+            const subOptions = subs.map(s => ({
+                value: s.id,
+                label: s.name,
+                icon: s.icon ? `<i class="fas ${s.icon}"></i>` : `<i class="fas ${parent.icon || 'fa-tag'}"></i>`,
+                color: (parent.color || '#64748b') + '20'
+            }));
+
+            openSelectionDrawer(
+                `${parent.name} → Podkategoria`,
+                subOptions,
+                (subId) => {
+                    const sub = structuredCategories.find(c => c.id === subId);
+                    if (onSelect) onSelect(parent.name, sub ? sub.name : '');
+                },
+                currentSubCategory || '',
+                'grid', // Zmiana z 'list' na 'grid'
+                false,
+                true,
+                openStep1
+            );
+        }, currentParentId, 'grid', false, false);
+    };
+
+    openStep1();
 }
 
 // =====================================================================
