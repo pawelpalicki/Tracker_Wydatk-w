@@ -1,0 +1,1832 @@
+[
+  {
+    "name": "Pudding Proteinowy Biała Czekolada 200g",
+    "scannedName": "PudProtBiałaCzek200g",
+    "oldCategory": "słodycze i przekąski"
+  },
+  {
+    "name": "Papryka Nasza Spiżarnia 300g",
+    "scannedName": "Papier Nasz Sp 300g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Żel do udrażniania Agent 1kg",
+    "scannedName": "Żel Do Udrażniania Agent 1kg",
+    "oldCategory": "chemia"
+  },
+  {
+    "name": "Patyczki kosmetyczne 42ml",
+    "scannedName": "PatyczkiAWHisMal42ml",
+    "oldCategory": "dom"
+  },
+  {
+    "name": "Płyn Lenor 0,987L",
+    "scannedName": "PłynLenor0.987L",
+    "oldCategory": "chemia"
+  },
+  {
+    "name": "Ciabatta 80g",
+    "scannedName": "Ciabatta 80 g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Chleb Rodzinny 410g",
+    "scannedName": "Chleb rodzinny410g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Makowiec Pistacjowy 450g",
+    "scannedName": "MakowiecPistacj450g",
+    "oldCategory": "słodycze i przekąski"
+  },
+  {
+    "name": "Napój Kinley Pure Tonic 1L",
+    "scannedName": "NapKinleyPurTon1l",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Kiełbasa z Piersi Kurczaka 400g",
+    "scannedName": "Kieł Z PierKur400g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Mini Marchew 200g",
+    "scannedName": "Mini March 200g op",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Ser Gouda Włoski 300g",
+    "scannedName": "SerGoudWłoSuia300g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Zupa chińska ostra 70g",
+    "scannedName": "ZupChińOstKuaVif70 g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Zupa chińska kurczak 70g",
+    "scannedName": "ZupChińKurczaVif70 g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Zupa Vifon 70g",
+    "scannedName": "ZupaVifon70g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Dzen 100% Rap 220g",
+    "scannedName": "Dzen 100% Rap 220g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Sos Sweet Chili 175ml",
+    "scannedName": "SosSweetChili175ml",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Dżem owocowy Mix 750g",
+    "scannedName": "DuocovyMixMK750g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Chipsy Pringles 165g",
+    "scannedName": "Chipsy Pringles GrSt 165g",
+    "oldCategory": "słodycze i przekąski"
+  },
+  {
+    "name": "NatuMix Gryczany 4x100g",
+    "scannedName": "NatuMix Gryczany 4x100g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Drążki Chrupkie 200g",
+    "scannedName": "Drążki Chrupkie St 200g",
+    "oldCategory": "słodycze i przekąski"
+  },
+  {
+    "name": "Jelly Beans 200g",
+    "scannedName": "Jellybeans 200g",
+    "oldCategory": "słodycze i przekąski"
+  },
+  {
+    "name": "Siemię Lniane 400g",
+    "scannedName": "Siemię Lniane 400g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Klopsiki Sokołów 240g",
+    "scannedName": "Klopsiki Sokołów 240g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Mix Sałat Tntiis 80g",
+    "scannedName": "Mix Sałat Tntiis 80g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Praliny Amer Foodie 40g",
+    "scannedName": "Praliny Amer Foodie 40g",
+    "oldCategory": "słodycze i przekąski"
+  },
+  {
+    "name": "Papryka słodka czerwona luz",
+    "scannedName": "Papryka Słodka Czeru Luz",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Grejpfrut Czerwony Luz",
+    "scannedName": "Grapefruit Czer Luz",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Rumianek Herbapol",
+    "scannedName": "RUMIANEK HERBAPOL",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Sos Sojowy Risotto Fla 1000ml",
+    "scannedName": "SOS SOJOWY RISOTTO FLA 1000ML",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Fairy Płyn Lemon 750ml",
+    "scannedName": "FAIRY PŁYN LEMON 750ML",
+    "oldCategory": "chemia"
+  },
+  {
+    "name": "Czekolada Pistacjowa 140g",
+    "scannedName": "CZEKOLADA PISTACJOWA 140G",
+    "oldCategory": "słodycze i przekąski"
+  },
+  {
+    "name": "Pączek Migdał Kokos 83g",
+    "scannedName": "PACZEK MIGDAŁ KOKOS 83G",
+    "oldCategory": "słodycze i przekąski"
+  },
+  {
+    "name": "Pączek Ciasteczkowy 90g",
+    "scannedName": "PACZEK CIASTECZKOWY 90G",
+    "oldCategory": "słodycze i przekąski"
+  },
+  {
+    "name": "KOTLET DROBIOWY 400G",
+    "scannedName": "KOTLET DROBIOWY 400G",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Kiełbasa Drobiowa Tarczyński 220g",
+    "scannedName": "KIEŁBASA DROBIOWA TARCZYN 220G",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Czekolada Matcha Truskawkowa 74g",
+    "scannedName": "CZEKOLADA MATCHA TRUSKAWKOWA 74G",
+    "oldCategory": "słodycze i przekąski"
+  },
+  {
+    "name": "BANAN LUZ",
+    "scannedName": "BANAN LUZ",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Awokado Hass szt",
+    "scannedName": "AWOKADO HASS SZT",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Hummus Orientalny 160g",
+    "scannedName": "HummusOrienGU160gN",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Hummus Pesto 160g",
+    "scannedName": "HummusPestoGU160gN",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Dżem 100% Truskawkowy Rapsodia 210g",
+    "scannedName": "DzenkowiczTruska210g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "MILURIT 100 MG X 50 TABL.",
+    "scannedName": "MILURIT 100 MG X 50 TABL.",
+    "oldCategory": "zdrowie"
+  },
+  {
+    "name": "ANAPRAN 0,55 G 60 TABL.",
+    "scannedName": "ANAPRAN 0,55 G 60 TABL.",
+    "oldCategory": "zdrowie"
+  },
+  {
+    "name": "Warzywa na patelnię 450g włoskie",
+    "scannedName": "Warz.Na Pat. 450gWłos",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Kiełbasa Wege Papryka 100g",
+    "scannedName": "KVeg.WegwedlPapryka100g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Pierogi z serem i żurawiną 350g",
+    "scannedName": "pier.ges.zur.350g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Kawa Marletto Cream 1000g",
+    "scannedName": "MKCafeCremZia1000g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Kawa Mielona 1000g",
+    "scannedName": "MKkawa1000g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "K-Classic Słonecznik 400g",
+    "scannedName": "KLC.Slonecznik400g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Torba foliowa",
+    "scannedName": "Torba foliowa",
+    "oldCategory": "inne"
+  },
+  {
+    "name": "K.Mix Orzechów Makadamia 200g",
+    "scannedName": "K.MixOrzechMakad200g",
+    "oldCategory": "słodycze i przekąski"
+  },
+  {
+    "name": "Naprawa roweru",
+    "scannedName": "Naprawa roweru",
+    "oldCategory": "sport"
+  },
+  {
+    "name": "Chrupki Głodniaki Czekoladowe 100g",
+    "scannedName": "ChrupkiGłodCzeko100g",
+    "oldCategory": "słodycze i przekąski"
+  },
+  {
+    "name": "Piwo Książęce IPA 0%",
+    "scannedName": "PivuKsiążęIPA0,5L",
+    "oldCategory": "słodycze i przekąski"
+  },
+  {
+    "name": "Dżem 100% Malinowy Rapsodia 280g",
+    "scannedName": "DzenMalinRapso280g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Deser Jabłeczny Desella 140g",
+    "scannedName": "DesJabłecznoDesse140g",
+    "oldCategory": "słodycze i przekąski"
+  },
+  {
+    "name": "Pieprz Czarny Ziarnisty 70g",
+    "scannedName": "PrzPieprzCzaZiaC70g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Kefir B/Laktozy Mlekovita 375g",
+    "scannedName": "KefirBłaktMlekov375g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Zupa azjatycka kimchi 86g",
+    "scannedName": "ZupaRzja Kinch86g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Zupa azjatycka kurczak 85g",
+    "scannedName": "ZupaRzjaChicken85g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Pasztet roślinny",
+    "scannedName": "Pasztet roślinny",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Makaroniki świeże",
+    "scannedName": "Makaroniki świeże",
+    "oldCategory": "słodycze i przekąski"
+  },
+  {
+    "name": "Pstrąg tęczowy wędzony",
+    "scannedName": "Pstrąg tęczowy wędzony",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Jogurt malina-jagoda",
+    "scannedName": "Jogurt malina-jagoda",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Mix sałat klasyczny 400g",
+    "scannedName": "Mix sałat klasyczny 400g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Makaron Kurczak i Warzywa 400g",
+    "scannedName": "Makaron Kurcz i Warz 400g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Wafle pryncypałki 200g",
+    "scannedName": "WAFLE PRYNCYP. 200g",
+    "oldCategory": "słodycze i przekąski"
+  },
+  {
+    "name": "Maślanka Truskawkowa 400g",
+    "scannedName": "HASLANKA TRUSKAWKOWA 400g",
+    "oldCategory": "słodycze i przekąski"
+  },
+  {
+    "name": "Szamamm Schab Grill",
+    "scannedName": "SZAMAMN SCHAB GRILL",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Szamamm Pancakes Mini",
+    "scannedName": "SZAMAMN PANCAKES MINI",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Torba papierowa",
+    "scannedName": "TORBA PAPIEROWA",
+    "oldCategory": "inne"
+  },
+  {
+    "name": "Wiadro szare 10l",
+    "scannedName": "WiadroSzare10l",
+    "oldCategory": "dom"
+  },
+  {
+    "name": "Jogurt Naturalny Bio 140g",
+    "scannedName": "JogNaturalBio140g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Kotlet Drob400g",
+    "scannedName": "Kotlet Drob400g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Prażynki Teriyaki 100g",
+    "scannedName": "Prażynki Teriyaki 100g",
+    "oldCategory": "słodycze i przekąski"
+  },
+  {
+    "name": "Prażynki Chili 100g",
+    "scannedName": "Prażynki ChiliLin100g",
+    "oldCategory": "słodycze i przekąski"
+  },
+  {
+    "name": "Jogurt Pitny 0% Truskawka Owoce 400g",
+    "scannedName": "JogPit 0%TrusFruv 400g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Kuchenka mikrofalowa",
+    "scannedName": "Kuchenka mikrofalowa",
+    "oldCategory": "dom"
+  },
+  {
+    "name": "Dr. Oetker budyń 120g",
+    "scannedName": "Dr z budynie 120 g.",
+    "oldCategory": "słodycze i przekąski"
+  },
+  {
+    "name": "Sałatka z Tuńczykiem 160g",
+    "scannedName": "SalatLaTunaHek160G",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Sałatka Pomidorowa Nasza Spiżarnia 840g",
+    "scannedName": "SalatPomNasSpiz840g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Pomidory krojone 400g",
+    "scannedName": "PomidKrojone400g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Kukurydza Dawtona 400g",
+    "scannedName": "KukurydzaDautona400g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "CiastkaNaWagemix",
+    "scannedName": "CiastkaNaWagemix",
+    "oldCategory": "słodycze i przekąski"
+  },
+  {
+    "name": "Ciasto Chrup Toffi 450g",
+    "scannedName": "CiastoChrupToffi450g",
+    "oldCategory": "słodycze i przekąski"
+  },
+  {
+    "name": "Gołąbki Kuchnia Polka 550g",
+    "scannedName": "GOŁĄBKI KUCH POLK550G",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Szare Kluski KP-400g",
+    "scannedName": "SZARE KLUSKI KP-400G",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Czekolada Milka Oreo 100g",
+    "scannedName": "CZEK.MILKA OREO WH.100",
+    "oldCategory": "słodycze i przekąski"
+  },
+  {
+    "name": "Herbata Bifix Melisa",
+    "scannedName": "HERBATA BIFIX MELISA",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Klej Vicol 40ml",
+    "scannedName": "KLEJ VICOL 40ML",
+    "oldCategory": "dom"
+  },
+  {
+    "name": "Gillette Fusion 5 Wkłady",
+    "scannedName": "GILLETTE FUSION 5\\AX",
+    "oldCategory": "kosmetyki"
+  },
+  {
+    "name": "Herbatniki Migdałowe",
+    "scannedName": "HERBATNIKI MIGDAŁOWE",
+    "oldCategory": "słodycze i przekąski"
+  },
+  {
+    "name": "Jabłka Jonagold luz",
+    "scannedName": "Jabł Jonagold luz",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Popski Kurczak 340g",
+    "scannedName": "PopskyKurczak340g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Oliwa z oliwek z chilli 150g",
+    "scannedName": "OliukiMarChilliN150g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Pączek Longston Pistacja 90g",
+    "scannedName": "PączLongSłonPista90g",
+    "oldCategory": "słodycze i przekąski"
+  },
+  {
+    "name": "Sok marchwiowy",
+    "scannedName": "Sok marchwiowy",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Zupa nudle pomidor 65g",
+    "scannedName": "ZupaNudlePomidor65g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Zupa nudle kurczak Knorr 61g",
+    "scannedName": "ZupaNudKurczKnor61g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Kawa Mielona Kronung 250g",
+    "scannedName": "KawaMielKronung250g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Korniszony Nasza Spiżarnia 370g",
+    "scannedName": "Kornisz.NSPiz 370g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Parówki roślinne 200g",
+    "scannedName": "ParówkiRośli200g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Ketchup Pikantny Pudliszki 700g",
+    "scannedName": "KetchupPikanPudl700g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Ciastka pistacjowe",
+    "scannedName": "Ciastka pistacjowe",
+    "oldCategory": "słodycze i przekąski"
+  },
+  {
+    "name": "Ortanol Max 20mg 14 tabl.",
+    "scannedName": "ORTANOL MAX 20 MG X 14 TABL.",
+    "oldCategory": "zdrowie"
+  },
+  {
+    "name": "Kuskus Fasola Pon 220g",
+    "scannedName": "KuskusFasPon220g5",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Miesz satrosVf150g",
+    "scannedName": "Miesz satrosVf150g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Jogurt Zott Primo 180g + 20g",
+    "scannedName": "JoguZottPrin180g+20g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Krem Orzechowy 450g",
+    "scannedName": "Kren Orzechowy450g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Ciastkakruszyn210g",
+    "scannedName": "Ciastkakruszyn210g",
+    "oldCategory": "słodycze i przekąski"
+  },
+  {
+    "name": "Ciastka kruche",
+    "scannedName": "Ciastka kruche",
+    "oldCategory": "słodycze i przekąski"
+  },
+  {
+    "name": "Naleśniki",
+    "scannedName": "Naleśniki",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Chleb Firmowy",
+    "scannedName": "CHLEB MO FIRMOWY KR C",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Balcerzak Kiełbasa Żywiecka 80g",
+    "scannedName": "WED.BALCERZAK 80G ZYWIECKA C",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Czekolada Lewiatan Mleczna z Nadzieniem 100g",
+    "scannedName": "CZEK.LEWIATAN MLECZNA Z NADZ ARCH 100G A",
+    "oldCategory": "słodycze i przekąski"
+  },
+  {
+    "name": "Napój Lewiatan Minio Pomarańcza Słomka 200ml",
+    "scannedName": "N.LEWIATAN MINIO POMARANCZA SLOMKA 200ML C",
+    "oldCategory": "słodycze i przekąski"
+  },
+  {
+    "name": "Torba Papierowa Lewiatan 250szt",
+    "scannedName": "CH. TORBA PAPIEROWA LEWIATAN 250SZT K 1 A",
+    "oldCategory": "inne"
+  },
+  {
+    "name": "Sos boloński 480g",
+    "scannedName": "Sos boloński 480g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Piwo Tyskie 0,5l 0%",
+    "scannedName": "Piwo Tyskie 0,5l",
+    "oldCategory": "słodycze i przekąski"
+  },
+  {
+    "name": "Smoothie owocowe 0,75l",
+    "scannedName": "Smoothie owocowe 0,75l",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Jogurt Danio 180g + 20g",
+    "scannedName": "Jogurt Danio 180g + 20g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Wafelki karpatka",
+    "scannedName": "Wafelku karpatka",
+    "oldCategory": "słodycze i przekąski"
+  },
+  {
+    "name": "Musli pełnoziarniste 750g",
+    "scannedName": "Musli pełnoziar 750g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Plastry gotowane",
+    "scannedName": "Plastry gotowane",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Ser Edamski plastry",
+    "scannedName": "Ser edam plastry",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Dętka 700 x 28-47",
+    "scannedName": "Dętka 700 x 28-47 28 x 1.1-1.75 [28/47-622/635]",
+    "oldCategory": "sport"
+  },
+  {
+    "name": "Pompka plastikowa z akcesoriami",
+    "scannedName": "Pompka plast. mini,z węż.i głowicą, uchwyt z blokadą, zacisk AV/DV/FV, dł.265 mm",
+    "oldCategory": "sport"
+  },
+  {
+    "name": "Redukcja zaworu dętki FV/DV-AV",
+    "scannedName": "Redukcja zaworu FV/DV-AV[z zaworu presta-rowerowy na samochodowy]",
+    "oldCategory": "sport"
+  },
+  {
+    "name": "Lody Marletto Mix 900ml",
+    "scannedName": "LodMarlettMix900ml",
+    "oldCategory": "słodycze i przekąski"
+  },
+  {
+    "name": "Pizza Gusseppe Salami 2x380g",
+    "scannedName": "PizzaGusSal2x380g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Mandarynka Luz",
+    "scannedName": "Mandarynka Luz",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Bułka Grahamka XXL",
+    "scannedName": "Bułka Grahamka xxl",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Gołąbki Jadło 500g",
+    "scannedName": "Gołąbki Jadło 500g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Ciastka Kakao z Orzechami 210g",
+    "scannedName": "Ciastka Kakao z Orzechami 210g",
+    "oldCategory": "słodycze i przekąski"
+  },
+  {
+    "name": "Ciastka Kakaowe 210g",
+    "scannedName": "Ciastka Kakaowe 210g",
+    "oldCategory": "słodycze i przekąski"
+  },
+  {
+    "name": "Chleb 7 Ziaren 390 g",
+    "scannedName": "Chleb 7 Ziaren 390 g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Makaron Singapurski 1kg",
+    "scannedName": "Makaron Singapure 1kg",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Kiełbasa Polska pieczona",
+    "scannedName": "ZYGUŁA POLSKA PIECZONA",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Sokołów Kiełbasa z białym winem",
+    "scannedName": "SOKOŁÓW KIEŁBASA Z B.W",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Chleb Pszeniczny 410g",
+    "scannedName": "CHLEB PSZENICZNY 410G",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Danie HP Makaron ryżowy",
+    "scannedName": "Danie HP Makaron ryż",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Szaszłyk z kurczaka z serem",
+    "scannedName": "Szasz.z kur.z s.ter.",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Pierogi z gęsiną",
+    "scannedName": "Pierogi z gęsiną",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Kabanoski z baraniną",
+    "scannedName": "Kabanoski z baraniną",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Pralka",
+    "scannedName": "Pralka",
+    "oldCategory": "dom"
+  },
+  {
+    "name": "Bułka maślana z żurawiną 70g",
+    "scannedName": "Bułka maślana z żurawiną 70 g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Bułka rustykalna 70g",
+    "scannedName": "Bułka rustykalna 70 g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Drożdżówka z serem 120g",
+    "scannedName": "Drożdżówka z serem 120 g",
+    "oldCategory": "słodycze i przekąski"
+  },
+  {
+    "name": "Kosz bambusowy 60L 40x30x50cm",
+    "scannedName": "KOSZ BAMBUSOWY 60L 40X30X50CM",
+    "oldCategory": "dom"
+  },
+  {
+    "name": "Wkład do szuflady na sztućce regulowany",
+    "scannedName": "WKŁAD DO SZUFLADY NA SZTUĆCE REGULOWANY 37X27,5(44)X4,5CM BIAŁY PP",
+    "oldCategory": "dom"
+  },
+  {
+    "name": "Ręcznik kuchenny Jodełka poliester",
+    "scannedName": "TX.RĘCZNIK KUCHENNY JODEŁKA POLIESTER 38X63CM 51G ZZZ",
+    "oldCategory": "dom"
+  },
+  {
+    "name": "Bielizna męska",
+    "scannedName": "BIELIZNA MESKA",
+    "oldCategory": "ubrania"
+  },
+  {
+    "name": "Mango Mrożone Kraina 500g",
+    "scannedName": "MangoMroznKrain500g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Makaron Cavatappi 500g",
+    "scannedName": "MakarCavatapi500g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Sos Marin Gus Bel 500g",
+    "scannedName": "SosMerinGusBel500g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Kurczak Korea Pi Mar 420g",
+    "scannedName": "KurczKoreaPlMak420g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Tagliatelle Mar Pasta 400g",
+    "scannedName": "Tagl Mar Pasta400g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Papryka Czerw Luz",
+    "scannedName": "Papryka Czerw Luz",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Napój Ryżowy Go Vege 1L",
+    "scannedName": "Napój/Ryż GoVege 1L",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Warkocz z lukrem 90g",
+    "scannedName": "Warkocz z Lukrem 90g",
+    "oldCategory": "słodycze i przekąski"
+  },
+  {
+    "name": "Makaron Fusilli 500g",
+    "scannedName": "Makaron Fusilli 500g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Ketchup Pikantny 560g",
+    "scannedName": "Ketchup Pikantny 560g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Brioszka 75g",
+    "scannedName": "Brioszka 75g",
+    "oldCategory": "słodycze i przekąski"
+  },
+  {
+    "name": "Spaghetti Makłowicz 400g",
+    "scannedName": "SpaghettiMaktoou400g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Mus Proteinowy Pistacjowy 170g",
+    "scannedName": "MusProteinPistac170g",
+    "oldCategory": "słodycze i przekąski"
+  },
+  {
+    "name": "Łosoś Kawałki 150g",
+    "scannedName": "Łosos Kawałki 150g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Tabletki Gripex x12",
+    "scannedName": "Tablet Gripex x12",
+    "oldCategory": "zdrowie"
+  },
+  {
+    "name": "Kiełbasa Wiejska 500g",
+    "scannedName": "KiełbWiejska500g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "MixSałatZLodową180g",
+    "scannedName": "MixSałatZLodową180g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Chleb Bezglutenowy Cienki 230g",
+    "scannedName": "ChlebBezgl.Cien.230g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Frankfurterki 270g",
+    "scannedName": "Frankfurterki 270g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Ciastko Kakao Banan 70g",
+    "scannedName": "CiastkoKakaoBanan70g",
+    "oldCategory": "słodycze i przekąski"
+  },
+  {
+    "name": "Mc Chleb Wieloziarnisty",
+    "scannedName": "MC CHLEB WIELOZ",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Lody Grycan 500ml",
+    "scannedName": "LODY GRYCAN 500ML",
+    "oldCategory": "słodycze i przekąski"
+  },
+  {
+    "name": "Mc Bułka Ziemniaczana",
+    "scannedName": "MC BUŁKA ZIEMNIAC",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Simpl Burgery z łososia",
+    "scannedName": "SIMPL BURGERY Z Ł",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "CIASTKA Z CZEKOLADA",
+    "scannedName": "CIASTKA Z CZEKOLADA",
+    "oldCategory": "słodycze i przekąski"
+  },
+  {
+    "name": "Krem Do Ciała Nivea 300ml",
+    "scannedName": "Krem Do Ciała Nivea 300ml",
+    "oldCategory": "kosmetyki"
+  },
+  {
+    "name": "Szamamm Spaghetti Bolońskie",
+    "scannedName": "SZAMAMN SPAGH. BOL-C",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Gruszka Packham",
+    "scannedName": "GRUSZKA PACKHAM",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Ogórek Szklarniowy",
+    "scannedName": "OGÓREK SZKLARNIOWY",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Sałata cięta",
+    "scannedName": "SAŁATA CIĘTA",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Bułka brioszka 100g",
+    "scannedName": "BUŁKA BRIOSZKA 100 G",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Czekoladki nadziewane 185g",
+    "scannedName": "Czekoladki nadz185g",
+    "oldCategory": "słodycze i przekąski"
+  },
+  {
+    "name": "Wkład filtrujący Brita Maxtra Pro (6 szt.)",
+    "scannedName": "Wkład filtrujący BRITA Maxtra Pro Pure Performance (6 szt.)",
+    "oldCategory": "dom"
+  },
+  {
+    "name": "Pączek Pistacjowy 100g",
+    "scannedName": "Pączek Pistacjo 100g",
+    "oldCategory": "słodycze i przekąski"
+  },
+  {
+    "name": "Jogurt 0% Tłuszczu i owoców 400g",
+    "scannedName": "Jogurt 0% Tłuszczu i owoców 400g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Śliwka domowa luz",
+    "scannedName": "Śliwka Domowa Luz",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Ryż na mleku",
+    "scannedName": "Ryż na mleku",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Ręcznik papierowy 96l",
+    "scannedName": "Ręcznik papier. 96l",
+    "oldCategory": "dom"
+  },
+  {
+    "name": "Freeway Cola Zero 0,33l",
+    "scannedName": "FreewayColaZERO 0,33l",
+    "oldCategory": "słodycze i przekąski"
+  },
+  {
+    "name": "Mydło w płynie",
+    "scannedName": "Mydło w płynie",
+    "oldCategory": "chemia"
+  },
+  {
+    "name": "Napój Lemon Soda",
+    "scannedName": "Napój Lemon Soda",
+    "oldCategory": "słodycze i przekąski"
+  },
+  {
+    "name": "Plusssz Elektrolity",
+    "scannedName": "Plusssz Elektrolity",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Dr. Oetker kaszka, budyń",
+    "scannedName": "Dr. O.kaszka, budyń",
+    "oldCategory": "słodycze i przekąski"
+  },
+  {
+    "name": "Plusssz Calcium",
+    "scannedName": "Plusssz Calcium",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Plusssz Magnez Forte",
+    "scannedName": "Plusssz Magnez Forte",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Nektarynki luz",
+    "scannedName": "Nektarynki luz",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Marchewka 1kg opakowanie",
+    "scannedName": "Marchewka 1kg opak",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Pomarańcze 1,5kg opakowanie",
+    "scannedName": "Pomar 1,5kg opak",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Bioprazol Bio Max 14 kaps.",
+    "scannedName": "IOPRAZOL BIO MAX X 14 KAPS.",
+    "oldCategory": "zdrowie"
+  },
+  {
+    "name": "Dr. R. Snickers",
+    "scannedName": "DR.R.SNICKERS",
+    "oldCategory": "słodycze i przekąski"
+  },
+  {
+    "name": "Dr. R. Brownie Dubai",
+    "scannedName": "DR.R.BROWNIE DUBAI",
+    "oldCategory": "słodycze i przekąski"
+  },
+  {
+    "name": "Pancakes bananowe 180g",
+    "scannedName": "PANCAKES BAN 180g-C",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Jogurt Jovi 350g",
+    "scannedName": "JOGURT JOVI 350g-C",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Deser Riso Winter Mix 175g",
+    "scannedName": "DESER RISO WINT MIX 175g-C",
+    "oldCategory": "słodycze i przekąski"
+  },
+  {
+    "name": "Rurki Waflowe Matcha 150g",
+    "scannedName": "RURKI WAFLOWE MATCHA 150g-C",
+    "oldCategory": "słodycze i przekąski"
+  },
+  {
+    "name": "Torba papierowa mała",
+    "scannedName": "TORBA PAP MALA-A",
+    "oldCategory": "inne"
+  },
+  {
+    "name": "Krople do oczu",
+    "scannedName": "Krople do oczu",
+    "oldCategory": "zdrowie"
+  },
+  {
+    "name": "ALLNUTRITION VITAMINALL SPORT 60 KAP",
+    "scannedName": "ALLNUTRITION VITAMINALL SPORT 60 kap",
+    "oldCategory": "zdrowie"
+  },
+  {
+    "name": "SFD Dziki Orzech 1000g Crunch",
+    "scannedName": "SFD DZIKI ORZECH 1000 g CRUNCH",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "ALLNUTRITION ELECTROLYTES ORANGE 20 TAB",
+    "scannedName": "ALLNUTRITION ELECTROLYTES MUSUJĄCE 20 tab ORANGE",
+    "oldCategory": "zdrowie"
+  },
+  {
+    "name": "Mix sałat z sałatą",
+    "scannedName": "Mix sałat z sałatą",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Marchew z Kaszub 1kg",
+    "scannedName": "Marchew z Kaszub 1kg",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Tarczyński Kabanosy",
+    "scannedName": "Tarczyński Kabanosy",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Kalarepa sztuka",
+    "scannedName": "Kalarepa szt.",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Jabłka Grójeckie luz",
+    "scannedName": "Jabłka Grójeckie luz",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Kaszka Vitanella 50g",
+    "scannedName": "KaszkaVitanella50g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Nasiona Chia Bakador 125g",
+    "scannedName": "NasionChiBakador125g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Danie Proteinowe Indyk 400g",
+    "scannedName": "DanieProtIndyjsk400g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Posiłek Butelka Aktyw 500g",
+    "scannedName": "PosiłekBut.Aktip500g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Golarka Remington RX7 Ultimate Series Head Shaver XR1600",
+    "scannedName": "Golarka Remington RX7 Ultimate Series Head Shaver XR1600",
+    "oldCategory": "inne"
+  },
+  {
+    "name": "SSojaFlavours500ml",
+    "scannedName": "SSojaFlavours500ml",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Ogórki Kanapkowe 360g",
+    "scannedName": "OgórKanaNaSpi670/360",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Sałatka Pieprzowa 100g",
+    "scannedName": "SalanPepperKW100 g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Filet z indyka wędzony 100g",
+    "scannedName": "FiletIndyWędzonKW100g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Szynka Mix 100g",
+    "scannedName": "Szynka Mix 100g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Maxi Ciacho 500g",
+    "scannedName": "Maxi Ciacho 500 g",
+    "oldCategory": "słodycze i przekąski"
+  },
+  {
+    "name": "Spody do pizzy 230g",
+    "scannedName": "SpódDoPizzy230g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Zupa instant yellow curry 85g",
+    "scannedName": "ZupInstYellowCurry85g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Ser Mozzarella Wiórki 500g",
+    "scannedName": "SerMozWiórki 500g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Przecier Pomidorowy Culineo 500g",
+    "scannedName": "PrzecPonCulineo500g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Oliwa z oliwek 70g",
+    "scannedName": "OliwiEkIToR160 70g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Kiwi 1kg opakowanie",
+    "scannedName": "Kiwi 1kg opa",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Ciasto Krówka kg",
+    "scannedName": "Ciastokróuka KG",
+    "oldCategory": "słodycze i przekąski"
+  },
+  {
+    "name": "Jog Natural Jana 200g",
+    "scannedName": "Jog Natural Jana 200g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Żel Nivea Sensitive 500ml",
+    "scannedName": "Żel Nivea Sensiti 500ml",
+    "oldCategory": "kosmetyki"
+  },
+  {
+    "name": "Energia elektryczna czynna",
+    "scannedName": "Energia elektryczna czynna",
+    "oldCategory": "rachunki"
+  },
+  {
+    "name": "Opłata przejściowa 500 - 1200 kWh",
+    "scannedName": "Opłata przejściowa 500 - 1200 kWh",
+    "oldCategory": "rachunki"
+  },
+  {
+    "name": "Makaron Orient Azja 600g",
+    "scannedName": "Makar Orient Azja FL 600g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Maliny Mrożone Krajanka 500g",
+    "scannedName": "Maliny Mrożone Krajanka 500g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Mieszanka Sałat 150g",
+    "scannedName": "Mieszanka Sałat UF 150g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Baton Mars 3x45g",
+    "scannedName": "Baton Mars 3x45g",
+    "oldCategory": "słodycze i przekąski"
+  },
+  {
+    "name": "Baton Snickers 3x50g",
+    "scannedName": "Baton Snickers 3x50g",
+    "oldCategory": "słodycze i przekąski"
+  },
+  {
+    "name": "Baton Twix 3x50g",
+    "scannedName": "Baton Twix 3x50g",
+    "oldCategory": "słodycze i przekąski"
+  },
+  {
+    "name": "Materiały przeprowadzkowe",
+    "scannedName": "Materialy przeprowadzkowe",
+    "oldCategory": "dom"
+  },
+  {
+    "name": "Paluch Cebula 100g",
+    "scannedName": "PALUCH.CEBULA 100G",
+    "oldCategory": "słodycze i przekąski"
+  },
+  {
+    "name": "Paluchy firmowe 100g",
+    "scannedName": "PALUCHY FIRMOWE 100G",
+    "oldCategory": "słodycze i przekąski"
+  },
+  {
+    "name": "Przyprawa D-PO P32",
+    "scannedName": "PRZYPR D-PO_P32",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Przyprawa D-PO P16",
+    "scannedName": "PRZYPR D-PO_P16",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Koncentrat Pomidorowy Łowicz 190g",
+    "scannedName": "KONCENT.POM.ŁOWICZ 190",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Deser Poezja Lux Toffi",
+    "scannedName": "DESER POEZJA LUXTOFFI",
+    "oldCategory": "słodycze i przekąski"
+  },
+  {
+    "name": "Deser Poezja Lux Czekoladowy",
+    "scannedName": "DESER POEZJA LUX CZEKO",
+    "oldCategory": "słodycze i przekąski"
+  },
+  {
+    "name": "Napój Just Plants Owsiany 1L",
+    "scannedName": "NAP JUST PLANTS OW. 1L",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Sałata Mix Fit",
+    "scannedName": "SAŁATA MIX FIT&ESY AC.",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Rzodkiewka pęczek",
+    "scannedName": "RZODKIEWKA PĘCZEK",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Siemię Lniane 400g",
+    "scannedName": "Siemieniane 400g",
+    "oldCategory": "zdrowie"
+  },
+  {
+    "name": "HerbaPol ZielnikPol.",
+    "scannedName": "HerbaPol ZielnikPol.",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Szpinak baby",
+    "scannedName": "Szpinak baby",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Krüger Yummy! Kisiel",
+    "scannedName": "KrügerYummy! Kisiel",
+    "oldCategory": "słodycze i przekąski"
+  },
+  {
+    "name": "HP Napój sojowy",
+    "scannedName": "HP Napój sojowy",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Plusssz Magnez Forte",
+    "scannedName": "Plusssz Magnez Forte",
+    "oldCategory": "zdrowie"
+  },
+  {
+    "name": "Plusssz Witamina C 1000mg",
+    "scannedName": "Plusssz Wit.C 1000mg",
+    "oldCategory": "zdrowie"
+  },
+  {
+    "name": "Owsianka Czekoladowa z witaminami 400g",
+    "scannedName": "OusiankaCzekVit400g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Sajgonki Warzywne 278g",
+    "scannedName": "SajgonkiWarZAF278gS",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Cynamonka Dekoracyjna 130g",
+    "scannedName": "CynamonkaDekor130g",
+    "oldCategory": "słodycze i przekąski"
+  },
+  {
+    "name": "Czekolada Milka Daim 145g",
+    "scannedName": "CzekoMilkaDain145g",
+    "oldCategory": "słodycze i przekąski"
+  },
+  {
+    "name": "Koło Świata Emulsja 2,5L Skaliste",
+    "scannedName": "KOL ŚWIATA EMUL 2,5L SKALISTE",
+    "oldCategory": "dom"
+  },
+  {
+    "name": "Dexter Taśma Maskująca 25mm x 25m Biała",
+    "scannedName": "DEXTER TASMA MASK 25MMX25M BIA",
+    "oldCategory": "dom"
+  },
+  {
+    "name": "Płatki Czekolada Orzech 125g",
+    "scannedName": "Płatki CzekOrzech 125g",
+    "oldCategory": "słodycze i przekąski"
+  },
+  {
+    "name": "Roślinny Sznycel 200g",
+    "scannedName": "RoslSznycel200g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Roślinna Alternatywa Kurczaka 160g",
+    "scannedName": "RosliKAuALaKurcz160g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Burger Wołowy 158g",
+    "scannedName": "Burger Wołowy 158g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Szynka z wędzarni kg",
+    "scannedName": "Szynka Z Wędz kg",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Skyr Szarlotka 150g",
+    "scannedName": "Skyr SzarLotka 150g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Chleb Multiziarno 335g",
+    "scannedName": "Chleb mul ziar335g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Chleb Królewski 500g",
+    "scannedName": "Chleb Królewski 500g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Pizza z szynką 180g",
+    "scannedName": "Pizza z Szynką 180g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Mus Proteinowy Banan-Toffi 170g",
+    "scannedName": "Mus Protein Bananowo-Toffi 170g",
+    "oldCategory": "słodycze i przekąski"
+  },
+  {
+    "name": "Mąka Pełnoziarnista Pszenna 1kg",
+    "scannedName": "MakaPełnozPszentkg",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Nudle Kimchi Nandong 120g",
+    "scannedName": "NudlekincNandong120g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Nudle Wołowe Nandong 120g",
+    "scannedName": "NudleWoło Nandong 120g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Krem Crunchy 340g",
+    "scannedName": "KrenCrunchy 340g",
+    "oldCategory": "słodycze i przekąski"
+  },
+  {
+    "name": "Ziemniaki Mr Potato 750g",
+    "scannedName": "Zien Mr Potato750g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Cukier wanilinowy 5x16g",
+    "scannedName": "Cukier Wanil 5X16g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Proszek do pieczenia 4x30g",
+    "scannedName": "Pro Do Piecz 4X30g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Fish Nuggets Papryka 240g",
+    "scannedName": "Fish Nuggets Papryka 240g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Fish Nuggets Zielona Cebulka 240g",
+    "scannedName": "Fish Nuggets Zielona Cebulka 240g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Chusteczki Delikatne 10x10szt",
+    "scannedName": "Chusteczki Delikatne 10x10szt",
+    "oldCategory": "kosmetyki"
+  },
+  {
+    "name": "Bułka z serem żółtym 70g",
+    "scannedName": "Bułka z serem żółtym 70g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Skyr Truskawka Brzoskwinia Marakuja 150g",
+    "scannedName": "Skyr Truskawka Brzoskwinia Marakuja 150g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Skyr Classic Jogobella 150g",
+    "scannedName": "Skyr Classic Jogob 150g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Ser Kaszubski Czarny 100g",
+    "scannedName": "SerKaszebCzarnu.100g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Kluski Ryżowe Tteokbokki 300g",
+    "scannedName": "KluRyzITteokbokki300g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Kimchi",
+    "scannedName": "KIMCHI 0.115",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Miso 0.145",
+    "scannedName": "MISO 0.145",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Schab/Szynka 100g",
+    "scannedName": "Schab/Szynka 100g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Kwasek Cytrynowy Bakalland 20g",
+    "scannedName": "KwasekCytrynBakel20g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Słonecznik łuskany Bakalland 500g",
+    "scannedName": "SlonecznikkusBak500g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Sos słodko-kwaśny 290g",
+    "scannedName": "SosSlodkoKuasny290g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Bułka pasterska 90g",
+    "scannedName": "Butka pasterska 90g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Danie Kurczak Teriyaki 96g",
+    "scannedName": "DanieKurTerDyka96g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Danie Dynia Mix 122g",
+    "scannedName": "DanieDykaMix17-122g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Płatki śniadaniowe Poduszki 350g",
+    "scannedName": "PoduszkiNugoliT350g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Chleb Bezglutenowy Ciemny 250g",
+    "scannedName": "ChlebBezgl.Ciem.250g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Kasza Jęczmienna Dorota 500g",
+    "scannedName": "KauziarDorBraz500g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Wafelki PrincePolo XXL 38-42g",
+    "scannedName": "WafelPriPolXXL38-42g",
+    "oldCategory": "słodycze i przekąski"
+  },
+  {
+    "name": "Wafle Zeczko 200g",
+    "scannedName": "WafleZeczo200g",
+    "oldCategory": "słodycze i przekąski"
+  },
+  {
+    "name": "Czekolada Precle i Karmel 95g",
+    "scannedName": "CzekoPreckarnMelt95g",
+    "oldCategory": "słodycze i przekąski"
+  },
+  {
+    "name": "Frytki Karbowane Proste 1kg",
+    "scannedName": "FruytkiKarbPrPott1kg",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Kiełbasa Śląska 450g",
+    "scannedName": "KielbSląsie1450g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Fistaszki Bakaland 400g",
+    "scannedName": "FistaszkiBakad400g",
+    "oldCategory": "słodycze i przekąski"
+  },
+  {
+    "name": "Nudle Kinchi Nandong 120g",
+    "scannedName": "NudleKinChNandong120g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Pstrąg Wędzony Marinero kg",
+    "scannedName": "PstraglWedzMarineroKg",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "JoguZottPrIn180g",
+    "scannedName": "JoguZottPrIn180g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Rogal Swieton 200g",
+    "scannedName": "Rogal Swieton 200g",
+    "oldCategory": "słodycze i przekąski"
+  },
+  {
+    "name": "Pasta Colgate White 75ml",
+    "scannedName": "PastColgWhiteLum 75ml",
+    "oldCategory": "kosmetyki"
+  },
+  {
+    "name": "Płatki Owsiane Błyskawiczne 500g",
+    "scannedName": "Płatki Owsiane Błysk 500g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Ogórki 400g",
+    "scannedName": "Ogórki 400g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Napój Owsiany GoVege 1L",
+    "scannedName": "Napój Owsiany GoVege 1L",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Mix sałat z rukolą",
+    "scannedName": "Mix sałat z rukolą",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Chipsy w kotle prażone",
+    "scannedName": "Chipsy w kotle praż.",
+    "oldCategory": "słodycze i przekąski"
+  },
+  {
+    "name": "Focaccia",
+    "scannedName": "Focaccia",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Herbatka Polskie Zioła",
+    "scannedName": "Herbatka pol. zioła",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Pokrzywa/Melisa herbata",
+    "scannedName": "Pokrz./Melisa herb.",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Mięta/Rumianek herbata",
+    "scannedName": "Mięta/Rumianek herb.",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "El Tequito Oliwki",
+    "scannedName": "El Tequito Oliwki",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Rękawice gumowe",
+    "scannedName": "Rękawice gumowe",
+    "oldCategory": "inne"
+  },
+  {
+    "name": "Dżem 100% Wiśniowy Rapsodia 200g",
+    "scannedName": "DzenWisnia6Kcal200g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Marchew z Groszkiem MK 750g",
+    "scannedName": "MarcheZGroszMK750g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Gnocchi świeże 500g",
+    "scannedName": "GnocchiSwieze500g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Popcorn Solony",
+    "scannedName": "PopcornSolTop",
+    "oldCategory": "słodycze i przekąski"
+  },
+  {
+    "name": "Jaja Ngo L.",
+    "scannedName": "Jae Ngo L.",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Warzywa na patelnię mrożone",
+    "scannedName": "Warz HaPat MroKr",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Jogurt Jana",
+    "scannedName": "Jogatura (Jana)",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Piwo Książęce Pszeniczne 0,5L 0%",
+    "scannedName": "Piucksiąžtoszo",
+    "oldCategory": "słodycze i przekąski"
+  },
+  {
+    "name": "Zupa  Amino 61g",
+    "scannedName": "Zupa algor Anin 61g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Zupa gulaszowa Amino 59g",
+    "scannedName": "Zupa Gulasz Amino 59g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Zupa barszcz czerwony Anin 66g",
+    "scannedName": "Zupa Bar Czerw Anin 66g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Winogrono jasne luz",
+    "scannedName": "Winogrono jas luz",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Mieszanka Bakalii 125g",
+    "scannedName": "Mieszanka Baitz 125g",
+    "oldCategory": "słodycze i przekąski"
+  },
+  {
+    "name": "Puree Kubek Truskawka Banan 150g",
+    "scannedName": "PureKub Tr-Ban Jab150gN",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Puree Kubek Banan 150g",
+    "scannedName": "PureKubekBanMan150gN",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Puree Kubek Jagoda Banan 150g",
+    "scannedName": "PureKubek JagBan150gN",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Jogurt z Granolą Truskawka 230g",
+    "scannedName": "JogZGranTrusk 230g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Przekąska",
+    "scannedName": "przekaska",
+    "oldCategory": "słodycze i przekąski"
+  },
+  {
+    "name": "Bułka grahamka",
+    "scannedName": "Bułka grachamka",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Foodposiłek",
+    "scannedName": "foodposilek",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Orzechy w czekoladzie 60g",
+    "scannedName": "OrzeWCzekolMeltl60g",
+    "oldCategory": "słodycze i przekąski"
+  },
+  {
+    "name": "Pinsa Margherita 130g",
+    "scannedName": "Pinsa Margherita 130g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Draże Kapitan Koko 130g",
+    "scannedName": "DRAŻE.KAPITAN.KOKO.130G",
+    "oldCategory": "słodycze i przekąski"
+  },
+  {
+    "name": "Spodnie piżamowe",
+    "scannedName": "Spodnie piżamowe",
+    "oldCategory": "ubrania"
+  },
+  {
+    "name": "Racuchy z jabłkami 1320g",
+    "scannedName": "Racuchy z jabłkami 1320g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Kotlet drobiowy 400g",
+    "scannedName": "Kotlet drobiowy 400g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Winogrona różowe luz",
+    "scannedName": "Wino różowe luz",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Kapsułki Ultra Juicy 36szt",
+    "scannedName": "Kaps Ultra Juicy 36szt",
+    "oldCategory": "chemia"
+  },
+  {
+    "name": "Agent Max Tłuszcz 750ml",
+    "scannedName": "Agen Max Tłuszcz 750ml",
+    "oldCategory": "chemia"
+  },
+  {
+    "name": "Zmywak Zosia 5",
+    "scannedName": "Zmywak Zosiax 5",
+    "oldCategory": "dom"
+  },
+  {
+    "name": "Jogurt naturalny Jana 200g",
+    "scannedName": "Jogurt naturalny Jana 200g",
+    "oldCategory": "spożywcze"
+  },
+  {
+    "name": "Fairy płyn Lemon 750ml",
+    "scannedName": "Fairy płyn Lemon 750ml",
+    "oldCategory": "chemia"
+  },
+  {
+    "name": "Żel Fanesiki 400ml mix",
+    "scannedName": "Żel Fanesiki 400ml Mix",
+    "oldCategory": "kosmetyki"
+  },
+  {
+    "name": "Ścierki perforowane 4 szt.",
+    "scannedName": "Ścierki Perforowane 4 szt",
+    "oldCategory": "dom"
+  },
+  {
+    "name": "Papier nawilżony Queen 60 szt",
+    "scannedName": "Papier Nawilżone Queen 60s",
+    "oldCategory": "kosmetyki"
+  },
+  {
+    "name": "Wafle lekkie 130g",
+    "scannedName": "Wafle lekkie 130g",
+    "oldCategory": "słodycze i przekąski"
+  },
+  {
+    "name": "Krem Duo Nussmilk 400g",
+    "scannedName": "KremDuoNussmilk400g",
+    "oldCategory": "słodycze i przekąski"
+  }
+]

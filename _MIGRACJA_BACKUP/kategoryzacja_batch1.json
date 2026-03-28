@@ -1,0 +1,2402 @@
+{
+  "SER SALAMI 150G|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "DZEM HERBAPOL OWOCE LA|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "JOG.JANA NAT.200G|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "GROSZEK PUDLISZKI 400G|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "KUKURYDZA DN KONS 260|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "BOCZEK KAMINARZ WĘDZ.|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "CHLEB RAZOWY Z ZIAR.KR|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "CHIPSY LONG CHIPS MAGI|||słodycze i przekąski": {
+    "category": "Spożywcze",
+    "subCategory": "Słodycze/Przekąski",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "przyjemność"
+    }
+  },
+  "HERB HERBAPOL 20T|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "HERB.HERBAPOL LIP|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "HERB.HERBAPOL 20T|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "MC OGÓRKI MAŁOSOL|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "BEZMIĘSNA SZYNKA|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "CHLEB WIELOZIARN|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "BUŁKA ZIEMNIAC|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "CUKIER DR.OET.166|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Płyn Pervoll 2L|||chemia": {
+    "category": "Mieszkanie",
+    "subCategory": "Chemia",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Fasola po Bretońsku w Pudelku 610g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Bułka Paryska 240g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Ser Mlekovita Edam 150g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Ser Mlekovita Gouda 150g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Dove Żel ExFresh 400ml|||kosmetyki": {
+    "category": "Zdrowie & Uroda",
+    "subCategory": "Kosmetyki",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Dove Żel Clean 400ml|||kosmetyki": {
+    "category": "Zdrowie & Uroda",
+    "subCategory": "Kosmetyki",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Pierś Pieczona Kraina Wędlin 100g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Papryka Słodka Czerwona|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Awokado|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Dania gotowe/Z dostawy",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Torba T-SHIRT|||inne": {
+    "category": "Inne",
+    "subCategory": "Pozostałe",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "KlopWieprzPudl590g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "MuslTropVitanella1kg|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "KiełbŚniadKurcz340g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Banan Luz|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "CiastkaNadzieWagMix|||słodycze i przekąski": {
+    "category": "Spożywcze",
+    "subCategory": "Słodycze/Przekąski",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "przyjemność"
+    }
+  },
+  "BułkaPorannaFit80g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "VILEDA Ultramax Box zestaw kompletny do mycia podłóg + książeczka gratis|||dom": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "przyjemność"
+    }
+  },
+  "Lotto|||rozrywka": {
+    "category": "Rozrywka",
+    "subCategory": "Hobby",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "przyjemność"
+    }
+  },
+  "BrzoskwMrożKrain300g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "NapOws/RyżGoVege1l|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "LodyPistacjMar(500ml|||słodycze i przekąski": {
+    "category": "Spożywcze",
+    "subCategory": "Słodycze/Przekąski",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "przyjemność"
+    }
+  },
+  "RoszponMytaVF100g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "MakaChowMein250g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "SSojAFlavours500ml|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "MakarSingap1kg|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "KonPonCulineo190g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Dania gotowe/Z dostawy",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "BajgielZziarnami100g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "POKROWIEC na WERSALKĘ 190-210cm CIEMNY SZARY welur|||dom": {
+    "category": "Mieszkanie",
+    "subCategory": "Wyposażenie",
+    "tags": {
+      "nature": "jednorazowy",
+      "purpose": "konieczny"
+    }
+  },
+  "BULKA MO WROCLAWSKA C|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "RURKI PANI KUKI Z KREMEM KAKAOWYM 150 g|||słodycze i przekąski": {
+    "category": "Spożywcze",
+    "subCategory": "Słodycze/Przekąski",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "przyjemność"
+    }
+  },
+  "Mąka Pełnoziarnista 1kg|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Orzeszki Baked Chilly Lime 240g|||słodycze i przekąski": {
+    "category": "Spożywcze",
+    "subCategory": "Słodycze/Przekąski",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "przyjemność"
+    }
+  },
+  "Napój Owsiany GoVege 1l|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Jaja W Wyb L 10szt|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Lody Pistacjowe Marletto 500ml|||słodycze i przekąski": {
+    "category": "Spożywcze",
+    "subCategory": "Słodycze/Przekąski",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "przyjemność"
+    }
+  },
+  "Dżem Brzoskwiniowy Rapsodia 220g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Mieszanka warzywna 160g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Gruszki Konferencja Luz|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Draże Kokosowe Skawa 130g|||słodycze i przekąski": {
+    "category": "Spożywcze",
+    "subCategory": "Słodycze/Przekąski",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "przyjemność"
+    }
+  },
+  "Mąka Typ 650 Polskie pola 1kg|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Papier Toaletowy Morela 3x60s|||dom": {
+    "category": "Zdrowie & Uroda",
+    "subCategory": "Higieniczne",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Racuchy z Jabłkami 320g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Dania gotowe/Z dostawy",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Kotlet Schabowy 400g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Dania gotowe/Z dostawy",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Napój Sojowy GOVEGE 1L|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Winogrono 400 g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Kefir Malinowy KOT O.5L|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Oliwki Mari Chili 150g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Torba T-shirt|||dom": {
+    "category": "Inne",
+    "subCategory": "Pozostałe",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Twist Musli 95 g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "HP Jogurt owocowy|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Jogurt natur. 200g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Baklawa 250g|||słodycze i przekąski": {
+    "category": "Spożywcze",
+    "subCategory": "Słodycze/Przekąski",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "przyjemność"
+    }
+  },
+  "HP Deser XXL|||słodycze i przekąski": {
+    "category": "Spożywcze",
+    "subCategory": "Słodycze/Przekąski",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "przyjemność"
+    }
+  },
+  "Pierogi z łosos.|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Dania gotowe/Z dostawy",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Dzem 100% z trusk.|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Makaron bez glutenu|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Marchewka z groszk.|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Draże Korsarz XXL|||słodycze i przekąski": {
+    "category": "Spożywcze",
+    "subCategory": "Słodycze/Przekąski",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "przyjemność"
+    }
+  },
+  "Bio napój owsiany|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Pomidory rzym.500g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Cukinia luz|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Reklamówka mała rec.|||inne": {
+    "category": "Inne",
+    "subCategory": "Pozostałe",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "P WarkaRadler 0,5l|||słodycze i przekąski": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "przyjemność"
+    }
+  },
+  "PivoZyuMalino 0,5l|||słodycze i przekąski": {
+    "category": "Spożywcze",
+    "subCategory": "Słodycze/Przekąski",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "przyjemność"
+    }
+  },
+  "LodyDiunalińsni 900ml|||słodycze i przekąski": {
+    "category": "Spożywcze",
+    "subCategory": "Słodycze/Przekąski",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "przyjemność"
+    }
+  },
+  "DanieGulaszCuline 50|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "DanieJapOyakata 93 g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Dania gotowe/Z dostawy",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "ChlezytnZZiarn 400g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "KremNawilżSOFT 100ml|||kosmetyki": {
+    "category": "Zdrowie & Uroda",
+    "subCategory": "Kosmetyki",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "lotto|||rozrywka": {
+    "category": "Rozrywka",
+    "subCategory": "Hobby",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "przyjemność"
+    }
+  },
+  "Czekolada b/z orzech|||słodycze i przekąski": {
+    "category": "Spożywcze",
+    "subCategory": "Słodycze/Przekąski",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "przyjemność"
+    }
+  },
+  "High Protein Parówki|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Miłosław piwo 0%|||słodycze i przekąski": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "przyjemność"
+    }
+  },
+  "Kozel pivo|||słodycze i przekąski": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "przyjemność"
+    }
+  },
+  "Radler Aloe Vera 20%|||słodycze i przekąski": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "przyjemność"
+    }
+  },
+  "Loyd Herb. ziel/czar.|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Glads Danie WOK 95g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Dania gotowe/Z dostawy",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Kotlet drobiowy|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Dania gotowe/Z dostawy",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Lunch time danie got|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Dania gotowe/Z dostawy",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Wafle cienkie kukur.|||słodycze i przekąski": {
+    "category": "Spożywcze",
+    "subCategory": "Słodycze/Przekąski",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "przyjemność"
+    }
+  },
+  "Makaron wok|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Dania gotowe/Z dostawy",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Blue Dragon Sos|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Nowy Wiśnicz Pierogi|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Dania gotowe/Z dostawy",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Mando w czek/Migdały|||słodycze i przekąski": {
+    "category": "Spożywcze",
+    "subCategory": "Słodycze/Przekąski",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "przyjemność"
+    }
+  },
+  "Cymes Lemoniada 20%|||słodycze i przekąski": {
+    "category": "Spożywcze",
+    "subCategory": "Słodycze/Przekąski",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "przyjemność"
+    }
+  },
+  "Ciasto Sernik Lion|||słodycze i przekąski": {
+    "category": "Spożywcze",
+    "subCategory": "Słodycze/Przekąski",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "przyjemność"
+    }
+  },
+  "Jabłka Gala luz|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Prześcieradlo|||dom": {
+    "category": "Mieszkanie",
+    "subCategory": "Wyposażenie",
+    "tags": {
+      "nature": "jednorazowy",
+      "purpose": "konieczny"
+    }
+  },
+  "Chleb Orkisz Ziarn 410g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Sałatka Kis Ogór 510/310g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Dania gotowe/Z dostawy",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Jogurt naturalny Activ 165g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Pizza Farmer 600g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Dania gotowe/Z dostawy",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Racuchy Z Jabłkami 320g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Dania gotowe/Z dostawy",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Żurawina 250g opak|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Odświeżel Oriental 150g|||dom": {
+    "category": "Mieszkanie",
+    "subCategory": "Chemia",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Inea - internet|||rachunki": {
+    "category": "Inne",
+    "subCategory": "Internet/TV",
+    "tags": {
+      "nature": "stały",
+      "purpose": "konieczny"
+    }
+  },
+  "Telefon|||rachunki": {
+    "category": "Inne",
+    "subCategory": "Telefon",
+    "tags": {
+      "nature": "stały",
+      "purpose": "konieczny"
+    }
+  },
+  "MieszankaProtBak150g|||słodycze i przekąski": {
+    "category": "Spożywcze",
+    "subCategory": "Słodycze/Przekąski",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "przyjemność"
+    }
+  },
+  "OrzeszkiPolewa260g|||słodycze i przekąski": {
+    "category": "Spożywcze",
+    "subCategory": "Słodycze/Przekąski",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "przyjemność"
+    }
+  },
+  "KabanosyMysliusk175g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "MusProteinBanTof170g|||słodycze i przekąski": {
+    "category": "Spożywcze",
+    "subCategory": "Słodycze/Przekąski",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "przyjemność"
+    }
+  },
+  "MusProteinCzeko170g|||słodycze i przekąski": {
+    "category": "Spożywcze",
+    "subCategory": "Słodycze/Przekąski",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "przyjemność"
+    }
+  },
+  "Chleb Slonecz 480g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "DanTorSSRanOyaka83g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "DanTorMiRanOyaka89g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "BarszczCzerMiniar60g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "BULKA WIELOZIARNISTA 110g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "LODY CHUMURKA 90mL|||słodycze i przekąski": {
+    "category": "Spożywcze",
+    "subCategory": "Słodycze/Przekąski",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "przyjemność"
+    }
+  },
+  "WODA OSTR. 0,5L|||spożywcze": {
+    "category": "Mieszkanie",
+    "subCategory": "Media(prąd/gaz/woda)",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "P LechFreeAct 10.5l|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "przyjemność"
+    }
+  },
+  "PiwoLechFree0, 5l(Pusz|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "przyjemność"
+    }
+  },
+  "ChlebürkiszZiarn410g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "NapOws/RyżGoVege 1L|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "PomidPaski270 150g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "WarzywanaPatel450g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "HarzPolOrieTur450g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "LodyFlurryOuLes250ml|||słodycze i przekąski": {
+    "category": "Spożywcze",
+    "subCategory": "Słodycze/Przekąski",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "przyjemność"
+    }
+  },
+  "LodyFlurryStoka250ml|||słodycze i przekąski": {
+    "category": "Spożywcze",
+    "subCategory": "Słodycze/Przekąski",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "przyjemność"
+    }
+  },
+  "DesOrzecDessella200g|||słodycze i przekąski": {
+    "category": "Spożywcze",
+    "subCategory": "Słodycze/Przekąski",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "przyjemność"
+    }
+  },
+  "DesStKarDessella200g|||słodycze i przekąski": {
+    "category": "Spożywcze",
+    "subCategory": "Słodycze/Przekąski",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "przyjemność"
+    }
+  },
+  "Pizzalberyjska600g|||słodycze i przekąski": {
+    "category": "Spożywcze",
+    "subCategory": "Słodycze/Przekąski",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "przyjemność"
+    }
+  },
+  "SalatKisOgór510/310g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Ręcznik Queen 2 4|||dom": {
+    "category": "Mieszkanie",
+    "subCategory": "Wyposażenie",
+    "tags": {
+      "nature": "jednorazowy",
+      "purpose": "konieczny"
+    }
+  },
+  "Udo ind majer WGKg|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "SpaghettiMaktow900g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Pomarańcze Des Luz|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "KrenCrunchy500g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Tabl Rennie X24|||zdrowie": {
+    "category": "Zdrowie & Uroda",
+    "subCategory": "apteka",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "BułkaRazouua80g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Prad|||rachunki": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Wafelek Roger|||słodycze i przekąski": {
+    "category": "Spożywcze",
+    "subCategory": "Słodycze/Przekąski",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "przyjemność"
+    }
+  },
+  "Vifon Danie błyskaw.|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Dania gotowe/Z dostawy",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Zielnik Pol.herbatka|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Venondo Tofu XXL 2p.|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Chleb żytni słonecz|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Roślinne Kiełbaski|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Mieszanka studencka|||słodycze i przekąski": {
+    "category": "Spożywcze",
+    "subCategory": "Słodycze/Przekąski",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "przyjemność"
+    }
+  },
+  "Wafelek Roger orzech|||słodycze i przekąski": {
+    "category": "Spożywcze",
+    "subCategory": "Słodycze/Przekąski",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "przyjemność"
+    }
+  },
+  "Wafelek Roger mlecz.|||słodycze i przekąski": {
+    "category": "Spożywcze",
+    "subCategory": "Słodycze/Przekąski",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "przyjemność"
+    }
+  },
+  "Dżem 100% z trusk. 2|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Precel z solą|||słodycze i przekąski": {
+    "category": "Spożywcze",
+    "subCategory": "Słodycze/Przekąski",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "przyjemność"
+    }
+  },
+  "Reklamówka 50µ|||inne": {
+    "category": "Inne",
+    "subCategory": "Pozostałe",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Lody amerykańskie|||słodycze i przekąski": {
+    "category": "Spożywcze",
+    "subCategory": "Słodycze/Przekąski",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "przyjemność"
+    }
+  },
+  "Pri Ziemniaczki 400g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Makaron Fusilli|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Seler naciowy szt.|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Jog.nat.z bak.prob.|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Danie obiadowe 1|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Bio napoj ousiany 2|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Nandong Danie błysk.|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Chleb żytni.stonecz.|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Reklanówka mała rec.|||inne": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Schab Wędzony Zawadzkiego 200g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Filet Indyk Parzony Krojony 100g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Ciastka Na Wagę Mix|||słodycze i przekąski": {
+    "category": "Spożywcze",
+    "subCategory": "Słodycze/Przekąski",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "przyjemność"
+    }
+  },
+  "Bajgiel Z Ziarnami 100g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Racuchy Z Jabłkami 1320g|||słodycze i przekąski": {
+    "category": "Spożywcze",
+    "subCategory": "Słodycze/Przekąski",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "przyjemność"
+    }
+  },
+  "Mix Sałat Kłosy VF 120g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Jogurt Naturalny Primo 180g+20g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Torba T-SHIRT|||dom": {
+    "category": "Inne",
+    "subCategory": "Pozostałe",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Bułka Razowa 80g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "PaczekNadzTiramis92g|||słodycze i przekąski": {
+    "category": "Spożywcze",
+    "subCategory": "Słodycze/Przekąski",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "przyjemność"
+    }
+  },
+  "Uniqa - fundusz|||oszczędności": {
+    "category": "Finanse",
+    "subCategory": "Oszczędności / Inwestycje",
+    "tags": {
+      "nature": "stały",
+      "purpose": "inwestycja"
+    }
+  },
+  "WafleKokosBon200g|||słodycze i przekąski": {
+    "category": "Spożywcze",
+    "subCategory": "Słodycze/Przekąski",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "przyjemność"
+    }
+  },
+  "CiastoWafel300g|||słodycze i przekąski": {
+    "category": "Spożywcze",
+    "subCategory": "Słodycze/Przekąski",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "przyjemność"
+    }
+  },
+  "PivoKsiążZłPszo 0,5l|||słodycze i przekąski": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "przyjemność"
+    }
+  },
+  "Chleb Żytni 600g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "SzynkPolęduMix100g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "SerGoudaŚwiat 150g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "MydłoOliwkaLinda500m|||kosmetyki": {
+    "category": "Zdrowie & Uroda",
+    "subCategory": "Kosmetyki",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "OgórBurgNS670 400g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "NapDusianyGoVege 1l|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "ParówIndykKWNatu200g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Półbagietka110g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Kaki 1kg opak|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Rogal Suletton 200g|||słodycze i przekąski": {
+    "category": "Spożywcze",
+    "subCategory": "Słodycze/Przekąski",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "przyjemność"
+    }
+  },
+  "Ziemniaki Jad Luz|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Gołąbki Pudlisz590g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Dania gotowe/Z dostawy",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "FixCulineo Napoli 45g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Dania gotowe/Z dostawy",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Sieciówka|||transport": {
+    "category": "Transport",
+    "subCategory": "Komunikacja miejska",
+    "tags": {
+      "nature": "stały",
+      "purpose": "konieczny"
+    }
+  },
+  "SFD OMEGA 3 STRONG 90 kap|||zdrowie": {
+    "category": "Zdrowie & Uroda",
+    "subCategory": "apteka",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "HighProtein Pudding|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Słodycze/Przekąski",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "przyjemność"
+    }
+  },
+  "Pierogi z mięsem 400g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Dania gotowe/Z dostawy",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Jogurt z musem owocowym|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Czekolada mleczna z orzechami|||słodycze i przekąski": {
+    "category": "Spożywcze",
+    "subCategory": "Słodycze/Przekąski",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "przyjemność"
+    }
+  },
+  "Czekolada gorzka z orzechami|||słodycze i przekąski": {
+    "category": "Spożywcze",
+    "subCategory": "Słodycze/Przekąski",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "przyjemność"
+    }
+  },
+  "Surówka 450g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Mieszanka chińska|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Chleb żytni słonecznikowy|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Zioła w piramidkach|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Ciecierzyca 540g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Krock cukierki|||słodycze i przekąski": {
+    "category": "Spożywcze",
+    "subCategory": "Słodycze/Przekąski",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "przyjemność"
+    }
+  },
+  "Wegański deser H.P.|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Słodycze/Przekąski",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "przyjemność"
+    }
+  },
+  "BIO Ocet jabłkowy|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Reklamówka 50µ|||dom": {
+    "category": "Inne",
+    "subCategory": "Pozostałe",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "PAPIER QUEEN BROLEK|||dom": {
+    "category": "Mieszkanie",
+    "subCategory": "Wyposażenie",
+    "tags": {
+      "nature": "jednorazowy",
+      "purpose": "konieczny"
+    }
+  },
+  "KOTLET DROB400G|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Dania gotowe/Z dostawy",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "KOTLET MIEL400g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Dania gotowe/Z dostawy",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "HOT DOG 290 G|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Dania gotowe/Z dostawy",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "COLAORIGINTZER1.5L|||słodycze i przekąski": {
+    "category": "Spożywcze",
+    "subCategory": "Słodycze/Przekąski",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "przyjemność"
+    }
+  },
+  "RECZNIK Milla X2|||dom": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "PLATKI OWS GORSKIE500g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "CHLEB 7 ZBOZ 390 G|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "GALARETA D/W 160g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "KEFIR 1.5 400g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "TABL MANTI COMPLEX|||zdrowie": {
+    "category": "Zdrowie & Uroda",
+    "subCategory": "apteka",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "PAPI QUEEN AQUA 50szt|||dom": {
+    "category": "Mieszkanie",
+    "subCategory": "Wyposażenie",
+    "tags": {
+      "nature": "jednorazowy",
+      "purpose": "konieczny"
+    }
+  },
+  "JOG NATURAL JANA 200g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "SOK Z CYTR GOBIO0.2L|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "DEO ORIGINAL STR8150ML|||kosmetyki": {
+    "category": "Zdrowie & Uroda",
+    "subCategory": "Kosmetyki",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "TuńczykZWarMeks 280g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "BorówkaMrożKrain500g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "BrzoskuMrożKrain500g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Dżen Trusk Rap220g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "CHLEB 7 ZBOŻ 390 G|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "NaleśnikiJabłko400g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Dania gotowe/Z dostawy",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "SałatMarinero160g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Mango Dojrzałe Szt|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "MixSałatZRzymską160g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "CiastkaNaWageMix|||słodycze i przekąski": {
+    "category": "Spożywcze",
+    "subCategory": "Słodycze/Przekąski",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "przyjemność"
+    }
+  },
+  "JogNaturPrino370g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Kiwi Zielone szt|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Odżywka Białkowa Waniliowa 30g|||spożywcze": {
+    "category": "Zdrowie & Uroda",
+    "subCategory": "Suplementy",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Odżywka Białkowa Ciasteczkowa 30g|||spożywcze": {
+    "category": "Zdrowie & Uroda",
+    "subCategory": "Suplementy",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Mix Sałat Włoskich 120g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Naleśniki Jabłkowe 400g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Dania gotowe/Z dostawy",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "G ROSHEN WAF. COC. ALM.216|||słodycze i przekąski": {
+    "category": "Spożywcze",
+    "subCategory": "Słodycze/Przekąski",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "przyjemność"
+    }
+  },
+  "Roślinna kaszanka|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Mix młodych listków|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Bułki Hot-Dog, franc.|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Bułka bawarska|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Warzywa mrożone|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Naleśniki z truskaw.|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Dania gotowe/Z dostawy",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Banany luz|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "ACTIVIA BEZ LAKTO|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "TASMA PAKOWA AKRY|||inne": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "MUSZELKA Z CYNAMO|||słodycze i przekąski": {
+    "category": "Spożywcze",
+    "subCategory": "Słodycze/Przekąski",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "przyjemność"
+    }
+  },
+  "GNIAZDKO BORÓWKA|||słodycze i przekąski": {
+    "category": "Spożywcze",
+    "subCategory": "Słodycze/Przekąski",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "przyjemność"
+    }
+  },
+  "CHLEB GÓRSKI|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "MC POLĘDWICA SOPO|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "MC SCHAB PIECZONY|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "MC SER SALAMI 150|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "TORBA RECYKLING|||inne": {
+    "category": "Inne",
+    "subCategory": "Pozostałe",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "WODA OD NOWA 0,5L-A|||spożywcze": {
+    "category": "Mieszkanie",
+    "subCategory": "Media(prąd/gaz/woda)",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "MINI BAGIETKA 75g-C|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "BULKA WIELKOZIARNISTA 110g-C|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Cynamon Cejloński Mielony 100g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Pestki dyni łuskane 500g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Krem z orzechów ziemnych z kawałkami 1000g|||spożywcze": {
+    "category": "Zdrowie & Uroda",
+    "subCategory": "Kosmetyki",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Krajanka sojowa bez GMO 250g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Kukurydza popcorn 1000g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Chipsy bananowe całe 500g|||słodycze i przekąski": {
+    "category": "Spożywcze",
+    "subCategory": "Słodycze/Przekąski",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "przyjemność"
+    }
+  },
+  "Granulat sojowy 250g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Nasiona chia 500g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Płatki owsiane 1000g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Słonecznik łuskany 500g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Rennie|||zdrowie": {
+    "category": "Zdrowie & Uroda",
+    "subCategory": "apteka",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Mcenndy Ciasto|||słodycze i przekąski": {
+    "category": "Spożywcze",
+    "subCategory": "Słodycze/Przekąski",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "przyjemność"
+    }
+  },
+  "Chleb żytni,słonecz.|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Gruszki deserowe|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Słodycze/Przekąski",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "przyjemność"
+    }
+  },
+  "Rzodkiewki 250g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Sałat MarinTuńKon 160g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "CHLEB 7 ZIAREN 390 G|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Mintaj Panier 770-180g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Wafelki Bonit 8x25g|||słodycze i przekąski": {
+    "category": "Spożywcze",
+    "subCategory": "Słodycze/Przekąski",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "przyjemność"
+    }
+  },
+  "Kurczak Połaj 400g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Mix Sałat Z Lodową 180g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "ORTANOL MAX KAPS.DOJEL.TWARDE|||zdrowie": {
+    "category": "Mieszkanie",
+    "subCategory": "Chemia",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Tofu naturalne, wędz1|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "GOONG Danie instant|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Džem 100% z trusk.|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Płatki Corn Flakes|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Graal Sałatka z tuń.|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Dania gotowe/Z dostawy",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Jogurt nat.b.laktozy|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Reklamówka mata rec.|||inne": {
+    "category": "Inne",
+    "subCategory": "Pozostałe",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Perwoll Black Płyn 1L|||chemia": {
+    "category": "Mieszkanie",
+    "subCategory": "Chemia",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Kret Granulki Udrażniające 40g|||chemia": {
+    "category": "Mieszkanie",
+    "subCategory": "Chemia",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Brita Dzbanek 2,4L|||dom": {
+    "category": "Mieszkanie",
+    "subCategory": "Wyposażenie",
+    "tags": {
+      "nature": "jednorazowy",
+      "purpose": "konieczny"
+    }
+  },
+  "MEDI MEDIVEN ACTIVE Podkolanów|||zdrowie": {
+    "category": "Zdrowie & Uroda",
+    "subCategory": "apteka",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "dostawa|||inne": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Wafle Kokosowe Bon 200g|||słodycze i przekąski": {
+    "category": "Spożywcze",
+    "subCategory": "Słodycze/Przekąski",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "przyjemność"
+    }
+  },
+  "Frankfurty Myśliwskie 320g|||spożywcze": {
+    "category": "Spożywcze",
+    "subCategory": "Jedzenie/Napoje",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "konieczny"
+    }
+  },
+  "Lody GoAct StKar 460ml|||słodycze i przekąski": {
+    "category": "Spożywcze",
+    "subCategory": "Słodycze/Przekąski",
+    "tags": {
+      "nature": "zmienny",
+      "purpose": "przyjemność"
+    }
+  }
+}
