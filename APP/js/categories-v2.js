@@ -460,16 +460,21 @@ async function deleteCategory(id, isParent) {
 
     try {
         await apiCall(`/api/categories/v2/${id}`, 'DELETE');
-        
-        // Aktualizacja lokalna zakupów PRZED usunięciem kategorii z definicji (aby mieć dostęp do nazw)
-        updateLocalPurchasesAfterCategoryChange(cat.name, 'inne', cat.parentId || null, true);
 
-        if (isParent) {
-            structuredCategories = structuredCategories.filter(c => c.id !== id && c.parentId !== id);
+        // Po usunięciu kategorii backend ustawia fallback (Inne/Pozostałe albo inne),
+        // więc odświeżamy dane z serwera zamiast lokalnej symulacji.
+        if (typeof fetchInitialData === 'function') {
+            await fetchInitialData(false);
+            if (typeof renderCategoriesListV2 === 'function') renderCategoriesListV2();
+            if (typeof renderCategoriesList === 'function') renderCategoriesList();
         } else {
-            structuredCategories = structuredCategories.filter(c => c.id !== id);
+            if (isParent) {
+                structuredCategories = structuredCategories.filter(c => c.id !== id && c.parentId !== id);
+            } else {
+                structuredCategories = structuredCategories.filter(c => c.id !== id);
+            }
+            renderCategoriesListV2();
         }
-        renderCategoriesListV2();
     } catch (err) {
         alert('Błąd: ' + err.message);
     }

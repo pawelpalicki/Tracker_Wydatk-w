@@ -313,14 +313,14 @@ async function updateCategoryInPurchasesV2(userId, categoryId, oldName, newName,
 
             // 1. Obsługa kategorii głównej
             if (parentId === null) {
-                if (purchase.category === oldName) {
+                if (namesEqualCI(purchase.category, oldName)) {
                     updateData.category = isDelete ? 'inne' : newName;
                     needsUpdate = true;
                 }
                 
                 if (purchase.items && Array.isArray(purchase.items)) {
                     const newItems = purchase.items.map(item => {
-                        if (item.category === oldName) {
+                        if (namesEqualCI(item.category, oldName)) {
                             needsUpdate = true;
                             return { 
                                 ...item, 
@@ -337,7 +337,7 @@ async function updateCategoryInPurchasesV2(userId, categoryId, oldName, newName,
             else {
                 if (purchase.items && Array.isArray(purchase.items)) {
                     const newItems = purchase.items.map(item => {
-                        if (item.subCategory === oldName && item.category === parentName) {
+                        if (namesEqualCI(item.subCategory, oldName) && namesEqualCI(item.category, parentName)) {
                             needsUpdate = true;
                             return { ...item, subCategory: isDelete ? '' : newName };
                         }
@@ -366,6 +366,121 @@ async function updateCategoryInPurchasesV2(userId, categoryId, oldName, newName,
         console.log(`Zakończono masową aktualizację. Zaktualizowano dokumentów: ${totalUpdated}`);
     } catch (err) {
         console.error(`BŁĄD masowej aktualizacji dla użytkownika ${userId}:`, err);
+    }
+}
+
+function normalizeCategoryName(name) {
+    return (name || '').toString().trim().toLowerCase();
+}
+
+function namesEqualCI(a, b) {
+    return normalizeCategoryName(a) === normalizeCategoryName(b);
+}
+
+function mergeUniqueNamesCI(existing = [], namesToAdd = []) {
+    const out = [...existing];
+    namesToAdd.forEach((name) => {
+        if (!name) return;
+        const exists = out.some((n) => namesEqualCI(n, name));
+        if (!exists) out.push(name);
+    });
+    return out;
+}
+
+function removeNameCI(existing = [], nameToRemove = '') {
+    return existing.filter((n) => !namesEqualCI(n, nameToRemove));
+}
+
+function renameNameCI(existing = [], oldName = '', newName = '') {
+    const withoutOld = removeNameCI(existing, oldName);
+    return mergeUniqueNamesCI(withoutOld, [newName]);
+}
+
+function resolveOrphanFallback(structuredCategories = [], deletingParentId = null) {
+    const remaining = (structuredCategories || []).filter(c => c.id !== deletingParentId && c.parentId !== deletingParentId);
+    const parentInne = remaining.find(c => !c.parentId && namesEqualCI(c.name, 'inne'));
+    if (!parentInne) {
+        return { category: 'inne', subCategory: '' };
+    }
+    const subPozostale = remaining.find(c => c.parentId === parentInne.id && namesEqualCI(c.name, 'pozostałe'));
+    return {
+        category: parentInne.name || 'inne',
+        subCategory: subPozostale ? (subPozostale.name || '') : ''
+    };
+}
+
+async function updateCategoryInPurchasesWithFallback(userId, oldName, parentId, fallback) {
+    const fallbackCategory = fallback?.category || 'inne';
+    const fallbackSubCategory = fallback?.subCategory || '';
+
+    console.log(`Fallback osieroconych: ${oldName} -> ${fallbackCategory}${fallbackSubCategory ? `/${fallbackSubCategory}` : ''}`);
+
+    try {
+        const snapshot = await purchasesCollection.where('userId', '==', userId).get();
+        if (snapshot.empty) return;
+
+        let parentName = null;
+        if (parentId !== null) {
+            const userDoc = await usersCollection.doc(userId).get();
+            const userData = userDoc.data() || {};
+            const parentCat = (userData.structuredCategories || []).find(c => c.id === parentId);
+            parentName = parentCat ? parentCat.name : null;
+        }
+
+        let batch = db.batch();
+        let count = 0;
+
+        for (const doc of snapshot.docs) {
+            const purchase = doc.data();
+            let needsUpdate = false;
+            const updateData = {};
+
+            if (parentId === null) {
+                if (namesEqualCI(purchase.category, oldName)) {
+                    updateData.category = fallbackCategory;
+                    needsUpdate = true;
+                }
+                if (purchase.items && Array.isArray(purchase.items)) {
+                    const newItems = purchase.items.map(item => {
+                        if (namesEqualCI(item.category, oldName)) {
+                            needsUpdate = true;
+                            return {
+                                ...item,
+                                category: fallbackCategory,
+                                subCategory: fallbackSubCategory
+                            };
+                        }
+                        return item;
+                    });
+                    if (needsUpdate) updateData.items = newItems;
+                }
+            } else {
+                if (purchase.items && Array.isArray(purchase.items)) {
+                    const newItems = purchase.items.map(item => {
+                        if (namesEqualCI(item.subCategory, oldName) && namesEqualCI(item.category, parentName)) {
+                            needsUpdate = true;
+                            return { ...item, subCategory: '' };
+                        }
+                        return item;
+                    });
+                    if (needsUpdate) updateData.items = newItems;
+                }
+            }
+
+            if (needsUpdate) {
+                batch.update(doc.ref, updateData);
+                count++;
+                if (count >= 400) {
+                    await batch.commit();
+                    batch = db.batch();
+                    count = 0;
+                }
+            }
+        }
+
+        if (count > 0) await batch.commit();
+    } catch (err) {
+        console.error(`BŁĄD fallbacku kategorii dla użytkownika ${userId}:`, err);
     }
 }
 
@@ -881,8 +996,14 @@ app.post('/api/categories/v2', authMiddleware, async (req, res) => {
         }
 
         const userRef = usersCollection.doc(req.userId);
+        const userDoc = await userRef.get();
+        const userData = userDoc.exists ? userDoc.data() : {};
+        const parentNames = structuredCategories.filter(c => !c.parentId).map(c => c.name).filter(Boolean);
+        const mergedCustom = mergeUniqueNamesCI(userData.customCategories || [], parentNames);
+
         await userRef.update({
-            structuredCategories: structuredCategories
+            structuredCategories: structuredCategories,
+            customCategories: mergedCustom
         });
         
         res.status(200).json({ success: true });
@@ -915,12 +1036,25 @@ app.put('/api/categories/v2/:id', authMiddleware, async (req, res) => {
         const oldCat = cats[idx];
         const oldName = oldCat.name;
         const parentId = oldCat.parentId || null;
+        const siblingExists = cats.some((c, i) =>
+            i !== idx &&
+            (c.parentId || null) === parentId &&
+            namesEqualCI(c.name, name)
+        );
+        if (siblingExists) {
+            return res.status(400).json({ error: 'Kategoria o tej nazwie już istnieje na tym poziomie.' });
+        }
 
         cats[idx] = { ...cats[idx], name };
         if (icon !== undefined) cats[idx].icon = icon;
         if (color !== undefined) cats[idx].color = color;
 
-        await userRef.update({ structuredCategories: cats });
+        let customCategories = userData.customCategories || [];
+        if (parentId === null) {
+            customCategories = renameNameCI(customCategories, oldName, name);
+        }
+
+        await userRef.update({ structuredCategories: cats, customCategories });
 
         // Jeśli nazwa się zmieniła, zaktualizuj wszystkie zakupy
         if (oldName !== name) {
@@ -955,10 +1089,10 @@ app.delete('/api/categories/v2/:id', authMiddleware, async (req, res) => {
         const parentId = target.parentId || null;
 
         // 1. Kaskadowa aktualizacja zakupów
+        let fallback = null;
         if (parentId === null) {
-            // Jeśli rodzic -> wszystkie podelementy tego rodzica w zakupach idą do 'inne'
-            // ORAZ wszystkie podkategorie tego rodzica w definicjach też usuwamy (widoczne niżej)
-            await updateCategoryInPurchasesV2(req.userId, id, oldName, 'inne', null, true);
+            fallback = resolveOrphanFallback(cats, id);
+            await updateCategoryInPurchasesWithFallback(req.userId, oldName, null, fallback);
         } else {
             // Jeśli podkategoria -> tylko ona znika z zakupów (pole subCategory = "")
             await updateCategoryInPurchasesV2(req.userId, id, oldName, '', parentId, true);
@@ -971,7 +1105,14 @@ app.delete('/api/categories/v2/:id', authMiddleware, async (req, res) => {
             cats = cats.filter(c => c.id !== id);
         }
 
-        await userRef.update({ structuredCategories: cats });
+        const updatedCustom = parentId === null
+            ? mergeUniqueNamesCI(
+                removeNameCI(userData.customCategories || [], oldName),
+                [fallback?.category || 'inne']
+            )
+            : (userData.customCategories || []);
+
+        await userRef.update({ structuredCategories: cats, customCategories: updatedCustom });
         res.json({ success: true });
     } catch (error) {
         console.error("Błąd usuwania kategorii v2:", error);
@@ -1009,24 +1150,31 @@ app.put('/api/categories/:name', authMiddleware, async (req, res) => {
     }
 
     try {
-        // Krok 1: Zaktualizuj nazwę w liście niestandardowej użytkownika
+        // Krok 1: Zaktualizuj nazwę w liście niestandardowej i strukturze użytkownika
         const userRef = usersCollection.doc(req.userId);
         await db.runTransaction(async (transaction) => {
             const userDoc = await transaction.get(userRef);
             if (!userDoc.exists) {
                 throw new Error("User not found");
             }
-            const customCategories = userDoc.data().customCategories || [];
-            const oldNameIndex = customCategories.indexOf(oldName);
-
-            if (oldNameIndex > -1) {
-                customCategories.splice(oldNameIndex, 1);
+            const userData = userDoc.data() || {};
+            const hasStructuredConflict = (userData.structuredCategories || []).some(cat =>
+                !cat.parentId &&
+                namesEqualCI(cat.name, newNameLower) &&
+                !namesEqualCI(cat.name, oldName)
+            );
+            if (hasStructuredConflict) {
+                throw new Error('Kategoria o tej nazwie już istnieje.');
             }
-            if (!customCategories.includes(newNameLower)) {
-                customCategories.push(newNameLower);
-            }
+            const customCategories = renameNameCI(userData.customCategories || [], oldName, newNameLower);
+            const structuredCategories = (userData.structuredCategories || []).map(cat => {
+                if (!cat.parentId && namesEqualCI(cat.name, oldName)) {
+                    return { ...cat, name: newNameLower };
+                }
+                return cat;
+            });
 
-            transaction.update(userRef, { customCategories });
+            transaction.update(userRef, { customCategories, structuredCategories });
         });
 
         // Krok 2: Zaktualizuj nazwę w istniejących zakupach
@@ -1038,10 +1186,12 @@ app.put('/api/categories/:name', authMiddleware, async (req, res) => {
             const batch = db.batch();
             budgetsSnapshot.docs.forEach(doc => {
                 const budgetData = doc.data();
-                if (budgetData.budgets && budgetData.budgets[oldName]) {
+                if (budgetData.budgets && typeof budgetData.budgets === 'object') {
+                    const oldBudgetKey = Object.keys(budgetData.budgets).find(k => namesEqualCI(k, oldName));
+                    if (!oldBudgetKey) return;
                     const newBudgets = { ...budgetData.budgets };
-                    newBudgets[newNameLower] = newBudgets[oldName];
-                    delete newBudgets[oldName];
+                    newBudgets[newNameLower] = newBudgets[oldBudgetKey];
+                    delete newBudgets[oldBudgetKey];
                     batch.update(doc.ref, { budgets: newBudgets });
                 }
             });
@@ -1052,6 +1202,9 @@ app.put('/api/categories/:name', authMiddleware, async (req, res) => {
 
     } catch (error) {
         console.error("Błąd zmiany nazwy kategorii:", error);
+        if (error && error.message === 'Kategoria o tej nazwie już istnieje.') {
+            return res.status(400).json({ error: error.message });
+        }
         res.status(500).json({ error: 'Błąd serwera podczas zmiany nazwy kategorii.' });
     }
 });
@@ -1061,13 +1214,23 @@ app.delete('/api/categories/:name', authMiddleware, async (req, res) => {
     const { name } = req.params;
 
     try {
-        // Krok 1: Zaktualizuj kategorię w istniejących zakupach na "inne"
-        await updateCategoryInPurchasesV2(req.userId, null, name, 'inne', null, true);
-
-        // Krok 2: Usuń kategorię z listy niestandardowej w profilu użytkownika
         const userRef = usersCollection.doc(req.userId);
+        const userDoc = await userRef.get();
+        const userData = userDoc.exists ? userDoc.data() : {};
+        const structured = userData.structuredCategories || [];
+        const targetParent = structured.find(c => !c.parentId && namesEqualCI(c.name, name));
+        const fallback = resolveOrphanFallback(structured, targetParent ? targetParent.id : null);
+
+        // Krok 1: Zaktualizuj kategorię w istniejących zakupach na fallback
+        await updateCategoryInPurchasesWithFallback(req.userId, name, null, fallback);
+
+        // Krok 2: Usuń kategorię z listy niestandardowej i struktury profilu użytkownika
+        const newStructured = targetParent
+            ? structured.filter(c => c.id !== targetParent.id && c.parentId !== targetParent.id)
+            : structured;
         await userRef.update({
-            customCategories: FieldValue.arrayRemove(name)
+            customCategories: removeNameCI(userData.customCategories || [], name),
+            structuredCategories: newStructured
         });
 
         // Krok 3: Usuń kategorię ze wszystkich zdefiniowanych budżetów tego użytkownika
@@ -1077,9 +1240,11 @@ app.delete('/api/categories/:name', authMiddleware, async (req, res) => {
             budgetsSnapshot.docs.forEach(doc => {
                 const budgetData = doc.data();
                 // Sprawdź, czy usuwana kategoria istnieje w tym budżecie
-                if (budgetData.budgets && budgetData.budgets[name]) {
+                if (budgetData.budgets && typeof budgetData.budgets === 'object') {
+                    const budgetKey = Object.keys(budgetData.budgets).find(k => namesEqualCI(k, name));
+                    if (!budgetKey) return;
                     const newBudgets = { ...budgetData.budgets };
-                    delete newBudgets[name];
+                    delete newBudgets[budgetKey];
                     batch.update(doc.ref, { budgets: newBudgets });
                 }
             });
