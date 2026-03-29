@@ -193,15 +193,15 @@ async function initializeComparisonChart(availableMonths = []) {
 
     if (natureBtn) {
         natureBtn.addEventListener('click', () => {
-            const options = [
-                { value: 'all', label: 'Wszystkie natury' },
-                { value: 'zmienny', label: 'Zmienny' },
-                { value: 'stały', label: 'Stały' },
-                { value: 'jednorazowy', label: 'Jednorazowy' }
-            ];
+            const dynamic = typeof getTagOptions === 'function'
+                ? getTagOptions('nature').map(t => ({ value: t.value, label: t.label || t.value, icon: t.icon || '' }))
+                : [];
+            const options = [{ value: 'all', label: 'Wszystkie natury' }, ...dynamic];
             openSelectionDrawer('Filtruj naturę', options, (val) => {
                 currentComparisonNature = val === 'all' ? null : val;
-                natureLabel.textContent = val === 'all' ? 'Wszys. Natury' : val.charAt(0).toUpperCase() + val.slice(1);
+                natureLabel.textContent = val === 'all'
+                    ? 'Wszys. Natury'
+                    : (typeof getTagLabel === 'function' ? (getTagLabel('nature', val) || val) : val);
                 renderChart();
             }, currentComparisonNature || 'all');
         });
@@ -209,15 +209,15 @@ async function initializeComparisonChart(availableMonths = []) {
 
     if (purposeBtn) {
         purposeBtn.addEventListener('click', () => {
-            const options = [
-                { value: 'all', label: 'Wszystkie cele' },
-                { value: 'konieczny', label: 'Konieczny' },
-                { value: 'przyjemność', label: 'Przyjemność' },
-                { value: 'inwestycja', label: 'Inwestycja' }
-            ];
+            const dynamic = typeof getTagOptions === 'function'
+                ? getTagOptions('purpose').map(t => ({ value: t.value, label: t.label || t.value, icon: t.icon || '' }))
+                : [];
+            const options = [{ value: 'all', label: 'Wszystkie cele' }, ...dynamic];
             openSelectionDrawer('Filtruj celowość', options, (val) => {
                 currentComparisonPurpose = val === 'all' ? null : val;
-                purposeLabel.textContent = val === 'all' ? 'Wszys. Cele' : val.charAt(0).toUpperCase() + val.slice(1);
+                purposeLabel.textContent = val === 'all'
+                    ? 'Wszys. Cele'
+                    : (typeof getTagLabel === 'function' ? (getTagLabel('purpose', val) || val) : val);
                 renderChart();
             }, currentComparisonPurpose || 'all');
         });

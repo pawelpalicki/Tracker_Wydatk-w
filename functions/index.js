@@ -46,6 +46,54 @@ const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 
 
 // --- Funkcje pomocnicze ---
 const DEFAULT_CATEGORIES = ['spożywcze', 'chemia', 'transport', 'rozrywka', 'zdrowie', 'ubrania', 'dom', 'rachunki', 'kaucje', 'inne'];
+const DEFAULT_TAG_DEFINITIONS = {
+    nature: [
+        { value: 'zmienny', label: 'Zmienny', icon: '📊' },
+        { value: 'stały', label: 'Stały', icon: '📌' },
+        { value: 'jednorazowy', label: 'Jednorazowy', icon: '⚡' }
+    ],
+    purpose: [
+        { value: 'konieczny', label: 'Konieczny', icon: '🏠' },
+        { value: 'przyjemność', label: 'Przyjemność', icon: '🎉' },
+        { value: 'inwestycja', label: 'Inwestycja', icon: '📈' }
+    ]
+};
+
+function normalizeTagValue(value) {
+    return (value || '').toString().trim().toLowerCase();
+}
+
+function normalizeTagDefinitions(input) {
+    const src = input && typeof input === 'object' ? input : {};
+    const out = {};
+    ['nature', 'purpose'].forEach(group => {
+        const arr = Array.isArray(src[group]) ? src[group] : [];
+        const normalized = [];
+        arr.forEach(item => {
+            const value = normalizeTagValue(item && item.value);
+            const label = (item && item.label ? item.label : value).toString().trim();
+            if (!value) return;
+            if (normalized.some(x => x.value === value)) return;
+            normalized.push({
+                value,
+                label: label || value,
+                icon: (item && item.icon ? item.icon : '').toString().trim()
+            });
+        });
+        if (normalized.length === 0) {
+            out[group] = DEFAULT_TAG_DEFINITIONS[group].map(t => ({ ...t }));
+        } else {
+            out[group] = normalized;
+        }
+    });
+    return out;
+}
+
+function getDefaultTagValue(tagDefinitions, group) {
+    const arr = (tagDefinitions && tagDefinitions[group]) || [];
+    if (arr.length > 0 && arr[0].value) return arr[0].value;
+    return (DEFAULT_TAG_DEFINITIONS[group] && DEFAULT_TAG_DEFINITIONS[group][0].value) || '';
+}
 
 // Funkcja do pobierania kursu waluty
 async function getExchangeRate(fromCurrency, toCurrency = 'PLN') {
@@ -95,6 +143,7 @@ async function getUserMetadata(userId) {
 
     let structuredCategories = userData.structuredCategories || [];
     let customCategories = userData.customCategories || [];
+    const tagDefinitions = normalizeTagDefinitions(userData.tagDefinitions);
 
     // --- INTELIGENTNA SYNCHRONIZACJA DWUKIERUNKOWA ---
     let needsProfileUpdate = false;
@@ -140,7 +189,8 @@ async function getUserMetadata(userId) {
     if (needsProfileUpdate) {
         await userRef.update({ 
             structuredCategories,
-            customCategories: customCategories.sort()
+            customCategories: customCategories.sort(),
+            tagDefinitions
         });
     }
 
@@ -154,6 +204,7 @@ async function getUserMetadata(userId) {
         return {
             categories: customCategories,
             structuredCategories: structuredCategories,
+            tagDefinitions,
             shops: userData.shops || [],
             availableMonths: availableMonths
         };
@@ -190,6 +241,7 @@ async function getUserMetadata(userId) {
     await userRef.set({
         customCategories: combinedCategories,
         structuredCategories: structuredCategories,
+        tagDefinitions,
         shops: shops,
         availableMonths: availableMonths,
         metadataInitialized: true,
@@ -199,6 +251,7 @@ async function getUserMetadata(userId) {
     return {
         categories: combinedCategories,
         structuredCategories: structuredCategories,
+        tagDefinitions,
         shops: shops,
         availableMonths: availableMonths
     };
@@ -208,8 +261,83 @@ async function getUserCategories(userId) {
     const metadata = await getUserMetadata(userId);
     return {
         flat: metadata.categories,
-        structured: metadata.structuredCategories
+        structured: metadata.structuredCategories,
+        tags: metadata.tagDefinitions
     };
+}
+
+async function updateTagInUserData(userId, group, oldValue, newValue, isDelete, fallbackValue) {
+    const normalizedOld = normalizeTagValue(oldValue);
+    const normalizedNew = normalizeTagValue(newValue);
+    const normalizedFallback = normalizeTagValue(fallbackValue);
+    const replacement = isDelete ? normalizedFallback : normalizedNew;
+    if (!normalizedOld || !replacement) return;
+
+    const purchasesSnapshot = await purchasesCollection.where('userId', '==', userId).get();
+    let batch = db.batch();
+    let count = 0;
+    for (const doc of purchasesSnapshot.docs) {
+        const purchase = doc.data();
+        let changed = false;
+        const updateData = {};
+
+        if (purchase.tags && normalizeTagValue(purchase.tags[group]) === normalizedOld) {
+            updateData.tags = { ...purchase.tags, [group]: replacement };
+            changed = true;
+        }
+
+        if (Array.isArray(purchase.items)) {
+            const newItems = purchase.items.map(item => {
+                const current = normalizeTagValue(item.tags && item.tags[group]);
+                if (current === normalizedOld) {
+                    changed = true;
+                    return {
+                        ...item,
+                        tags: {
+                            ...(item.tags || {}),
+                            [group]: replacement
+                        }
+                    };
+                }
+                return item;
+            });
+            if (changed) updateData.items = newItems;
+        }
+
+        if (changed) {
+            batch.update(doc.ref, updateData);
+            count++;
+            if (count >= 400) {
+                await batch.commit();
+                batch = db.batch();
+                count = 0;
+            }
+        }
+    }
+    if (count > 0) await batch.commit();
+
+    const recurringSnapshot = await recurringExpensesCollection.where('userId', '==', userId).get();
+    batch = db.batch();
+    count = 0;
+    for (const doc of recurringSnapshot.docs) {
+        const expense = doc.data();
+        const current = normalizeTagValue(expense.tags && expense.tags[group]);
+        if (current === normalizedOld) {
+            batch.update(doc.ref, {
+                tags: {
+                    ...(expense.tags || {}),
+                    [group]: replacement
+                }
+            });
+            count++;
+            if (count >= 400) {
+                await batch.commit();
+                batch = db.batch();
+                count = 0;
+            }
+        }
+    }
+    if (count > 0) await batch.commit();
 }
 
 function validateDate(dateStr) {
@@ -241,7 +369,7 @@ async function retryWithBackoff(fn, retries = 2, delay = 1000) {
 
 async function extractAndCategorizePurchase(file, categories) {
     const imagePart = { inlineData: { data: file.buffer.toString("base64"), mimeType: file.mimetype } };
-    const prompt = getPrompt(categories);
+    const prompt = getPrompt(categories, categories.tags || {});
 
     try {
         const generationFn = () => model.generateContent([prompt, imagePart]);
@@ -984,6 +1112,110 @@ app.get('/api/categories/v2', authMiddleware, async (req, res) => {
     } catch (error) {
         console.error("Błąd pobierania kategorii hierarchicznych:", error);
         res.status(500).json({ error: 'Błąd serwera podczas pobierania kategorii w wersji 2' });
+    }
+});
+
+app.get('/api/tags', authMiddleware, async (req, res) => {
+    try {
+        const metadata = await getUserMetadata(req.userId);
+        res.json(metadata.tagDefinitions || normalizeTagDefinitions(null));
+    } catch (error) {
+        console.error("Błąd pobierania tagów:", error);
+        res.status(500).json({ error: 'Błąd serwera podczas pobierania tagów.' });
+    }
+});
+
+app.post('/api/tags/:group', authMiddleware, async (req, res) => {
+    try {
+        const { group } = req.params;
+        if (!['nature', 'purpose'].includes(group)) {
+            return res.status(400).json({ error: 'Nieprawidłowa grupa tagów.' });
+        }
+        const value = normalizeTagValue(req.body.value);
+        const label = (req.body.label || value).toString().trim();
+        const icon = (req.body.icon || '').toString().trim();
+        if (!value) return res.status(400).json({ error: 'Wartość tagu jest wymagana.' });
+
+        const userRef = usersCollection.doc(req.userId);
+        const userDoc = await userRef.get();
+        const userData = userDoc.exists ? userDoc.data() : {};
+        const tagDefinitions = normalizeTagDefinitions(userData.tagDefinitions);
+        if (tagDefinitions[group].some(t => t.value === value)) {
+            return res.status(400).json({ error: 'Tag o tej wartości już istnieje.' });
+        }
+        tagDefinitions[group].push({ value, label: label || value, icon });
+        await userRef.set({ tagDefinitions }, { merge: true });
+        res.status(201).json({ success: true, tagDefinitions });
+    } catch (error) {
+        console.error("Błąd dodawania tagu:", error);
+        res.status(500).json({ error: 'Błąd serwera podczas dodawania tagu.' });
+    }
+});
+
+app.put('/api/tags/:group/:value', authMiddleware, async (req, res) => {
+    try {
+        const { group } = req.params;
+        const oldValue = normalizeTagValue(req.params.value);
+        if (!['nature', 'purpose'].includes(group)) {
+            return res.status(400).json({ error: 'Nieprawidłowa grupa tagów.' });
+        }
+        const newValue = normalizeTagValue(req.body.value);
+        const label = (req.body.label || newValue).toString().trim();
+        const icon = (req.body.icon || '').toString().trim();
+        if (!oldValue || !newValue) return res.status(400).json({ error: 'Wartość tagu jest wymagana.' });
+
+        const userRef = usersCollection.doc(req.userId);
+        const userDoc = await userRef.get();
+        const userData = userDoc.exists ? userDoc.data() : {};
+        const tagDefinitions = normalizeTagDefinitions(userData.tagDefinitions);
+        const idx = tagDefinitions[group].findIndex(t => t.value === oldValue);
+        if (idx === -1) return res.status(404).json({ error: 'Tag nie istnieje.' });
+        if (oldValue !== newValue && tagDefinitions[group].some(t => t.value === newValue)) {
+            return res.status(400).json({ error: 'Tag o tej wartości już istnieje.' });
+        }
+        tagDefinitions[group][idx] = { value: newValue, label: label || newValue, icon };
+        await userRef.set({ tagDefinitions }, { merge: true });
+
+        if (oldValue !== newValue) {
+            const fallback = getDefaultTagValue(tagDefinitions, group);
+            await updateTagInUserData(req.userId, group, oldValue, newValue, false, fallback);
+        }
+
+        res.json({ success: true, tagDefinitions });
+    } catch (error) {
+        console.error("Błąd aktualizacji tagu:", error);
+        res.status(500).json({ error: 'Błąd serwera podczas aktualizacji tagu.' });
+    }
+});
+
+app.delete('/api/tags/:group/:value', authMiddleware, async (req, res) => {
+    try {
+        const { group } = req.params;
+        const targetValue = normalizeTagValue(req.params.value);
+        if (!['nature', 'purpose'].includes(group)) {
+            return res.status(400).json({ error: 'Nieprawidłowa grupa tagów.' });
+        }
+        if (!targetValue) return res.status(400).json({ error: 'Wartość tagu jest wymagana.' });
+
+        const userRef = usersCollection.doc(req.userId);
+        const userDoc = await userRef.get();
+        const userData = userDoc.exists ? userDoc.data() : {};
+        const tagDefinitions = normalizeTagDefinitions(userData.tagDefinitions);
+        const before = tagDefinitions[group].length;
+        tagDefinitions[group] = tagDefinitions[group].filter(t => t.value !== targetValue);
+        if (tagDefinitions[group].length === before) {
+            return res.status(404).json({ error: 'Tag nie istnieje.' });
+        }
+        if (tagDefinitions[group].length === 0) {
+            return res.status(400).json({ error: 'Nie można usunąć ostatniego tagu z grupy.' });
+        }
+        const fallback = getDefaultTagValue(tagDefinitions, group);
+        await userRef.set({ tagDefinitions }, { merge: true });
+        await updateTagInUserData(req.userId, group, targetValue, '', true, fallback);
+        res.json({ success: true, tagDefinitions });
+    } catch (error) {
+        console.error("Błąd usuwania tagu:", error);
+        res.status(500).json({ error: 'Błąd serwera podczas usuwania tagu.' });
     }
 });
 

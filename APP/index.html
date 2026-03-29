@@ -587,6 +587,37 @@
             </div>
         </div>
 
+        <div id="tags-manager-card" class="glass-card rounded-2xl p-4 mb-4">
+            <h3 class="text-base font-bold text-white mb-3">Tagi produktów</h3>
+            <p class="text-xs text-gray-500 mb-4">Dynamiczna lista wartości dla tagów "Natura" i "Celowość".</p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="bg-white/5 border border-white/10 rounded-2xl p-3">
+                    <div class="flex items-center justify-between mb-2">
+                        <h4 class="text-sm font-semibold text-white">Natura</h4>
+                        <button id="add-nature-tag-btn" class="px-2.5 py-1.5 text-xs rounded-lg bg-brand-600 hover:bg-brand-700 text-white transition-colors">
+                            Dodaj
+                        </button>
+                    </div>
+                    <div id="tag-nature-list" class="space-y-2">
+                        <!-- renderowane przez JS -->
+                    </div>
+                </div>
+
+                <div class="bg-white/5 border border-white/10 rounded-2xl p-3">
+                    <div class="flex items-center justify-between mb-2">
+                        <h4 class="text-sm font-semibold text-white">Celowość</h4>
+                        <button id="add-purpose-tag-btn" class="px-2.5 py-1.5 text-xs rounded-lg bg-brand-600 hover:bg-brand-700 text-white transition-colors">
+                            Dodaj
+                        </button>
+                    </div>
+                    <div id="tag-purpose-list" class="space-y-2">
+                        <!-- renderowane przez JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Legacy: stara płaska lista (ukryta, używana przez stary system) -->
         <div class="hidden">
             <div id="categories-list"></div>

@@ -104,6 +104,7 @@ function switchTab(tabName, pushToHistory = true) {
         renderCategoriesList();
         if (tabName === 'settings-categories' && typeof renderCategoriesListV2 === 'function') {
             renderCategoriesListV2();
+            if (typeof renderTagsManager === 'function') renderTagsManager();
         }
         populateBudgetMonthSelector();
         renderBudgetInputs();

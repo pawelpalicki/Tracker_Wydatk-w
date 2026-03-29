@@ -483,8 +483,8 @@ async function deleteCategory(id, isParent) {
 // =====================================================================
 // TAGI PARAGONU
 // =====================================================================
-let purchaseTagNature = 'zmienny';
-let purchaseTagPurpose = 'konieczny';
+let purchaseTagNature = (typeof getTagDefaultValue === 'function') ? getTagDefaultValue('nature', 'zmienny') : 'zmienny';
+let purchaseTagPurpose = (typeof getTagDefaultValue === 'function') ? getTagDefaultValue('purpose', 'konieczny') : 'konieczny';
 
 function initPurchaseTags() {
     const natureBtn = document.getElementById('tag-nature-btn');
@@ -492,44 +492,126 @@ function initPurchaseTags() {
 
     if (natureBtn) {
         natureBtn.addEventListener('click', () => {
-            openSelectionDrawer('Natura wydatku', [
-                { value: 'zmienny',    label: 'Zmienny',    icon: '📊' },
-                { value: 'stały',      label: 'Stały',      icon: '📌' },
-                { value: 'jednorazowy',label: 'Jednorazowy',icon: '⚡' },
-            ], (val, label) => {
+            if (typeof openDynamicTagSelection !== 'function') return;
+            openDynamicTagSelection('nature', 'Natura wydatku', purchaseTagNature, (val, label) => {
                 purchaseTagNature = val;
                 document.getElementById('tag-nature-label').textContent =
                     label.charAt(0).toUpperCase() + label.slice(1);
-            }, purchaseTagNature);
+            });
         });
     }
 
     if (purposeBtn) {
         purposeBtn.addEventListener('click', () => {
-            openSelectionDrawer('Cel wydatku', [
-                { value: 'konieczny',   label: 'Konieczny',   icon: '🏠' },
-                { value: 'przyjemność', label: 'Przyjemność', icon: '🎉' },
-                { value: 'inwestycja',  label: 'Inwestycja',  icon: '📈' },
-            ], (val, label) => {
+            if (typeof openDynamicTagSelection !== 'function') return;
+            openDynamicTagSelection('purpose', 'Cel wydatku', purchaseTagPurpose, (val, label) => {
                 purchaseTagPurpose = val;
                 document.getElementById('tag-purpose-label').textContent =
                     label.charAt(0).toUpperCase() + label.slice(1);
-            }, purchaseTagPurpose);
+            });
         });
     }
 }
 
 function resetPurchaseTags() {
-    setPurchaseTags('zmienny', 'konieczny');
+    const defaultNature = typeof getTagDefaultValue === 'function' ? getTagDefaultValue('nature', 'zmienny') : 'zmienny';
+    const defaultPurpose = typeof getTagDefaultValue === 'function' ? getTagDefaultValue('purpose', 'konieczny') : 'konieczny';
+    setPurchaseTags(defaultNature, defaultPurpose);
 }
 
 function setPurchaseTags(nature, purpose) {
-    purchaseTagNature = nature || 'zmienny';
-    purchaseTagPurpose = purpose || 'konieczny';
+    const defaultNature = typeof getTagDefaultValue === 'function' ? getTagDefaultValue('nature', 'zmienny') : 'zmienny';
+    const defaultPurpose = typeof getTagDefaultValue === 'function' ? getTagDefaultValue('purpose', 'konieczny') : 'konieczny';
+    purchaseTagNature = nature || defaultNature;
+    purchaseTagPurpose = purpose || defaultPurpose;
     const natEl = document.getElementById('tag-nature-label');
     const purEl = document.getElementById('tag-purpose-label');
-    if (natEl) natEl.textContent = purchaseTagNature.charAt(0).toUpperCase() + purchaseTagNature.slice(1);
-    if (purEl) purEl.textContent = purchaseTagPurpose.charAt(0).toUpperCase() + purchaseTagPurpose.slice(1);
+    if (natEl) natEl.textContent = typeof getTagLabel === 'function'
+        ? (getTagLabel('nature', purchaseTagNature) || purchaseTagNature)
+        : (purchaseTagNature.charAt(0).toUpperCase() + purchaseTagNature.slice(1));
+    if (purEl) purEl.textContent = typeof getTagLabel === 'function'
+        ? (getTagLabel('purpose', purchaseTagPurpose) || purchaseTagPurpose)
+        : (purchaseTagPurpose.charAt(0).toUpperCase() + purchaseTagPurpose.slice(1));
+}
+
+function renderTagManagerList(group, listId) {
+    const listEl = document.getElementById(listId);
+    if (!listEl) return;
+    const tags = typeof getTagOptions === 'function' ? getTagOptions(group) : [];
+    if (!tags.length) {
+        listEl.innerHTML = `<p class="text-xs text-gray-500 italic">Brak tagów</p>`;
+        return;
+    }
+    listEl.innerHTML = tags.map(tag => `
+        <div class="flex items-center justify-between px-3 py-2 rounded-xl bg-white/5 border border-white/10">
+            <div class="min-w-0">
+                <div class="text-sm text-white truncate">${tag.icon || ''} ${tag.label || tag.value}</div>
+                <div class="text-[10px] text-gray-500 mt-0.5">${tag.value}</div>
+            </div>
+            <div class="flex items-center gap-1 ml-2">
+                <button class="tag-edit-btn p-1.5 rounded-lg text-gray-400 hover:text-blue-400 hover:bg-white/5 transition-colors"
+                    data-group="${group}" data-value="${tag.value}" title="Edytuj">
+                    <i class="fas fa-pen text-xs"></i>
+                </button>
+                <button class="tag-delete-btn p-1.5 rounded-lg text-gray-400 hover:text-red-400 hover:bg-white/5 transition-colors"
+                    data-group="${group}" data-value="${tag.value}" title="Usuń">
+                    <i class="fas fa-trash text-xs"></i>
+                </button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function renderTagsManager() {
+    renderTagManagerList('nature', 'tag-nature-list');
+    renderTagManagerList('purpose', 'tag-purpose-list');
+}
+
+async function createTag(group) {
+    const value = prompt('Podaj wartość tagu (np. "okazjonalny"):');
+    if (!value || !value.trim()) return;
+    const label = prompt('Podaj etykietę (opcjonalnie, np. "Okazjonalny"):', value.trim()) || value.trim();
+    const icon = prompt('Podaj ikonę emoji (opcjonalnie):', '');
+    await apiCall(`/api/tags/${group}`, 'POST', { value: value.trim(), label: label.trim(), icon: (icon || '').trim() });
+    if (typeof fetchInitialData === 'function') await fetchInitialData(false);
+    renderTagsManager();
+}
+
+async function editTag(group, oldValue) {
+    const currentLabel = (typeof getTagLabel === 'function' ? getTagLabel(group, oldValue) : oldValue) || oldValue;
+    const value = prompt('Nowa wartość tagu:', oldValue);
+    if (!value || !value.trim()) return;
+    const label = prompt('Nowa etykieta:', currentLabel) || value.trim();
+    const icon = prompt('Ikona emoji (opcjonalnie):', '');
+    await apiCall(`/api/tags/${group}/${encodeURIComponent(oldValue)}`, 'PUT', { value: value.trim(), label: label.trim(), icon: (icon || '').trim() });
+    if (typeof fetchInitialData === 'function') await fetchInitialData(false);
+    renderTagsManager();
+}
+
+async function deleteTag(group, value) {
+    if (!confirm(`Usunąć tag "${value}"?`)) return;
+    await apiCall(`/api/tags/${group}/${encodeURIComponent(value)}`, 'DELETE');
+    if (typeof fetchInitialData === 'function') await fetchInitialData(false);
+    renderTagsManager();
+}
+
+function initTagsManagerEvents() {
+    const addNatureBtn = document.getElementById('add-nature-tag-btn');
+    const addPurposeBtn = document.getElementById('add-purpose-tag-btn');
+    addNatureBtn?.addEventListener('click', () => createTag('nature').catch(err => alert('Błąd: ' + err.message)));
+    addPurposeBtn?.addEventListener('click', () => createTag('purpose').catch(err => alert('Błąd: ' + err.message)));
+
+    document.getElementById('tags-manager-card')?.addEventListener('click', (e) => {
+        const editBtn = e.target.closest('.tag-edit-btn');
+        if (editBtn) {
+            editTag(editBtn.dataset.group, editBtn.dataset.value).catch(err => alert('Błąd: ' + err.message));
+            return;
+        }
+        const deleteBtn = e.target.closest('.tag-delete-btn');
+        if (deleteBtn) {
+            deleteTag(deleteBtn.dataset.group, deleteBtn.dataset.value).catch(err => alert('Błąd: ' + err.message));
+        }
+    });
 }
 
 // =====================================================================
@@ -618,4 +700,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Tagi paragonu
     initPurchaseTags();
+    initTagsManagerEvents();
+    renderTagsManager();
 });
+
+window.renderTagsManager = renderTagsManager;

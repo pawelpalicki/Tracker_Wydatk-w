@@ -16,8 +16,12 @@ function clearPurchaseItems() {
 }
 
 function addItemRow(item = {}) {
-    const defaultNature = typeof purchaseTagNature !== 'undefined' ? purchaseTagNature : 'zmienny';
-    const defaultPurpose = typeof purchaseTagPurpose !== 'undefined' ? purchaseTagPurpose : 'konieczny';
+    const defaultNature = typeof purchaseTagNature !== 'undefined'
+        ? purchaseTagNature
+        : (typeof getTagDefaultValue === 'function' ? getTagDefaultValue('nature', 'zmienny') : 'zmienny');
+    const defaultPurpose = typeof purchaseTagPurpose !== 'undefined'
+        ? purchaseTagPurpose
+        : (typeof getTagDefaultValue === 'function' ? getTagDefaultValue('purpose', 'konieczny') : 'konieczny');
 
     const newItem = {
         name: item.name || '',
@@ -139,27 +143,19 @@ function initProductDrawer() {
     drawerOverlay.addEventListener('click', closeProductDrawer);
 
     natureBtn.addEventListener('click', () => {
-        const options = [
-            { value: 'zmienny', label: 'Zmienny (np. jedzenie, chemia)' },
-            { value: 'stały', label: 'Stały (np. czynsz, raty)' },
-            { value: 'jednorazowy', label: 'Jednorazowy (np. AGD, meble)' }
-        ];
-        openSelectionDrawer('Natura produktu', options, (val) => {
+        if (typeof openDynamicTagSelection !== 'function') return;
+        openDynamicTagSelection('nature', 'Natura produktu', natureBtn.dataset.value, (val, label) => {
             natureBtn.dataset.value = val;
-            document.getElementById('product-drawer-nature-label').textContent = val;
-        }, natureBtn.dataset.value);
+            document.getElementById('product-drawer-nature-label').textContent = label || val;
+        });
     });
 
     purposeBtn.addEventListener('click', () => {
-        const options = [
-            { value: 'konieczny', label: 'Konieczny (potrzeby)' },
-            { value: 'przyjemność', label: 'Przyjemność (zachcianki)' },
-            { value: 'inwestycja', label: 'Inwestycja (na rozwój)' }
-        ];
-        openSelectionDrawer('Celowość produktu', options, (val) => {
+        if (typeof openDynamicTagSelection !== 'function') return;
+        openDynamicTagSelection('purpose', 'Celowość produktu', purposeBtn.dataset.value, (val, label) => {
             purposeBtn.dataset.value = val;
-            document.getElementById('product-drawer-purpose-label').textContent = val;
-        }, purposeBtn.dataset.value);
+            document.getElementById('product-drawer-purpose-label').textContent = label || val;
+        });
     });
 
     categoryBtn.addEventListener('click', (e) => {
@@ -212,8 +208,8 @@ function initProductDrawer() {
         }
 
         const tags = {
-            nature: natureBtn.dataset.value || 'zmienny',
-            purpose: purposeBtn.dataset.value || 'konieczny'
+            nature: natureBtn.dataset.value || (typeof getTagDefaultValue === 'function' ? getTagDefaultValue('nature', 'zmienny') : 'zmienny'),
+            purpose: purposeBtn.dataset.value || (typeof getTagDefaultValue === 'function' ? getTagDefaultValue('purpose', 'konieczny') : 'konieczny')
         };
 
         const newItem = { name, price, category, subCategory, tags };
@@ -287,13 +283,13 @@ function openProductDrawer(index = null) {
         catIcon.style.color = color;
         catIcon.style.backgroundColor = `${color}20`;
         
-        const nVal = item.tags?.nature || 'zmienny';
+        const nVal = item.tags?.nature || (typeof getTagDefaultValue === 'function' ? getTagDefaultValue('nature', 'zmienny') : 'zmienny');
         natureBtn.dataset.value = nVal;
-        natureLabel.textContent = nVal;
+        natureLabel.textContent = typeof getTagLabel === 'function' ? (getTagLabel('nature', nVal) || nVal) : nVal;
         
-        const pVal = item.tags?.purpose || 'konieczny';
+        const pVal = item.tags?.purpose || (typeof getTagDefaultValue === 'function' ? getTagDefaultValue('purpose', 'konieczny') : 'konieczny');
         purposeBtn.dataset.value = pVal;
-        purposeLabel.textContent = pVal;
+        purposeLabel.textContent = typeof getTagLabel === 'function' ? (getTagLabel('purpose', pVal) || pVal) : pVal;
         
     } else {
         title.textContent = 'Dodaj produkt';
@@ -307,13 +303,17 @@ function openProductDrawer(index = null) {
         catIcon.style.color = '#6b7280';
         catIcon.style.backgroundColor = '#6b728020';
         
-        const defaultNature = typeof purchaseTagNature !== 'undefined' ? purchaseTagNature : 'zmienny';
-        const defaultPurpose = typeof purchaseTagPurpose !== 'undefined' ? purchaseTagPurpose : 'konieczny';
+        const defaultNature = typeof purchaseTagNature !== 'undefined'
+            ? purchaseTagNature
+            : (typeof getTagDefaultValue === 'function' ? getTagDefaultValue('nature', 'zmienny') : 'zmienny');
+        const defaultPurpose = typeof purchaseTagPurpose !== 'undefined'
+            ? purchaseTagPurpose
+            : (typeof getTagDefaultValue === 'function' ? getTagDefaultValue('purpose', 'konieczny') : 'konieczny');
         
         natureBtn.dataset.value = defaultNature;
-        natureLabel.textContent = defaultNature;
+        natureLabel.textContent = typeof getTagLabel === 'function' ? (getTagLabel('nature', defaultNature) || defaultNature) : defaultNature;
         purposeBtn.dataset.value = defaultPurpose;
-        purposeLabel.textContent = defaultPurpose;
+        purposeLabel.textContent = typeof getTagLabel === 'function' ? (getTagLabel('purpose', defaultPurpose) || defaultPurpose) : defaultPurpose;
     }
 
     drawerOverlay.classList.remove('hidden');
@@ -665,8 +665,12 @@ async function fillFormWithAnalysis(analysis) {
     });
 
     currentPurchaseItems = processedItems.map(item => {
-        const defaultNature = typeof purchaseTagNature !== 'undefined' ? purchaseTagNature : 'zmienny';
-        const defaultPurpose = typeof purchaseTagPurpose !== 'undefined' ? purchaseTagPurpose : 'konieczny';
+        const defaultNature = typeof purchaseTagNature !== 'undefined'
+            ? purchaseTagNature
+            : (typeof getTagDefaultValue === 'function' ? getTagDefaultValue('nature', 'zmienny') : 'zmienny');
+        const defaultPurpose = typeof purchaseTagPurpose !== 'undefined'
+            ? purchaseTagPurpose
+            : (typeof getTagDefaultValue === 'function' ? getTagDefaultValue('purpose', 'konieczny') : 'konieczny');
         
         let categoryName = item.category || 'inne';
         let subCategoryName = item.subCategory || '';

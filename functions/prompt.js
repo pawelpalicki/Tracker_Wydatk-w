@@ -1,4 +1,4 @@
-const getPrompt = (categoriesData) => {
+const getPrompt = (categoriesData, tagDefinitions = {}) => {
   const { flat, structured } = categoriesData;
 
   // Budowa czytelnego drzewa kategorii dla Gemini
@@ -19,6 +19,15 @@ const getPrompt = (categoriesData) => {
   const hierarchyString = Object.entries(hierarchyMap)
     .map(([parent, subs]) => `- ${parent}${subs.length > 0 ? ': [' + subs.join(', ') + ']' : ''}`)
     .join('\n');
+
+  const natureValues = (Array.isArray(tagDefinitions.nature) && tagDefinitions.nature.length > 0)
+    ? tagDefinitions.nature.map(t => t.value).filter(Boolean)
+    : ['stały', 'zmienny', 'jednorazowy'];
+  const purposeValues = (Array.isArray(tagDefinitions.purpose) && tagDefinitions.purpose.length > 0)
+    ? tagDefinitions.purpose.map(t => t.value).filter(Boolean)
+    : ['konieczny', 'przyjemność', 'inwestycja'];
+  const natureValuesStr = natureValues.join(' | ');
+  const purposeValuesStr = purposeValues.join(' | ');
 
   return `
         Twoim zadaniem jest BARDZO DOKŁADNA analiza paragonu lub faktury i zwrócenie danych WYŁĄCZNIE w formacie JSON.
@@ -65,8 +74,8 @@ const getPrompt = (categoriesData) => {
               "category": "string (kategoria nadrzędna)",
               "subCategory": "string (podkategoria z listy, jeśli pasuje)",
               "tags": {
-                "nature": "string (stały | zmienny | jednorazowy)",
-                "purpose": "string (konieczny | przyjemność | inwestycja)"
+                "nature": "string (${natureValuesStr})",
+                "purpose": "string (${purposeValuesStr})"
               }
             }
           ]
@@ -85,14 +94,8 @@ const getPrompt = (categoriesData) => {
         - Jeśli brak pasującej podkategorii, pozostaw "subCategory" jako pusty ciąg.
         - Jeśli brak pasującej kategorii nadrzędnej, użyj "inne".
         4. **Inteligentne Tagi**: Przypisz tagi na podstawie nazwy i typu produktu:
-           - **nature**: 
-             - "stały" (rachunki, czynsz, abonamenty, stałe opłaty)
-             - "zmienny" (jedzenie, chemia, drobne zakupy codzienne)
-             - "jednorazowy" (rzadkie zakupy, sprzęt, meble, ubrania kupowane okazjonalnie)
-           - **purpose**:
-             - "konieczny" (podstawowe potrzeby, leki, media, transport)
-             - "przyjemność" (zachcianki, rozrywka, przekąski, hobby)
-             - "inwestycja" (produkty i usługi budujące wartość, edukacja, rozwój)
+           - **nature**: wybierz jedną wartość z listy: ${natureValuesStr}
+           - **purpose**: wybierz jedną wartość z listy: ${purposeValuesStr}
         5. **Nazwy**: Zachowaj oryginalne, popraw tylko skróty jeśli jesteś PEWIEN (np. "CHLEB RAZ" -> "Chleb Razowy").
         6. **Weryfikacja końcowa**: Suma price wszystkich items[] MUSI być równa kwocie DO ZAPŁATY z paragonu. Jeśli się nie zgadza — sprawdź obliczenia rabatów.
         7. **Format Wyjściowy**: Tylko czysty JSON.

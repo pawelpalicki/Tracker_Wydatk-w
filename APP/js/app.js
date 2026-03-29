@@ -27,6 +27,18 @@ let structuredCategories = []; // Tablica obiektów {id, name, parentId, color, 
 let allShops = [];
 let allSpecialBudgets = [];
 let allRecurringExpenses = [];
+let tagDefinitions = {
+    nature: [
+        { value: 'zmienny', label: 'Zmienny', icon: '📊' },
+        { value: 'stały', label: 'Stały', icon: '📌' },
+        { value: 'jednorazowy', label: 'Jednorazowy', icon: '⚡' }
+    ],
+    purpose: [
+        { value: 'konieczny', label: 'Konieczny', icon: '🏠' },
+        { value: 'przyjemność', label: 'Przyjemność', icon: '🎉' },
+        { value: 'inwestycja', label: 'Inwestycja', icon: '📈' }
+    ]
+};
 let editingSpecialBudgetId = null;
 let editingRecurringExpenseId = null; // ID for editing recurring expense
 let nextPurchaseCursor = null;
@@ -190,6 +202,41 @@ function getCategoryColor(category) {
     }
     return categoryColors[category];
 }
+
+function getTagOptions(group) {
+    return (tagDefinitions && Array.isArray(tagDefinitions[group])) ? tagDefinitions[group] : [];
+}
+
+function getTagDefaultValue(group, fallback = '') {
+    const options = getTagOptions(group);
+    if (options.length > 0 && options[0].value) return options[0].value;
+    return fallback;
+}
+
+function getTagLabel(group, value) {
+    const options = getTagOptions(group);
+    const match = options.find(t => t.value === value);
+    return (match && match.label) ? match.label : (value || '');
+}
+
+function openDynamicTagSelection(group, title, currentValue, onSelect, allLabel = null) {
+    const options = getTagOptions(group).map(t => ({
+        value: t.value,
+        label: t.label || t.value,
+        icon: t.icon || ''
+    }));
+    const finalOptions = allLabel ? [{ value: 'all', label: allLabel }, ...options] : options;
+    if (!finalOptions.length) {
+        alert('Brak zdefiniowanych tagów dla tej grupy.');
+        return;
+    }
+    openSelectionDrawer(title, finalOptions, (val, label) => onSelect(val, label), currentValue || (allLabel ? 'all' : finalOptions[0].value));
+}
+
+window.getTagOptions = getTagOptions;
+window.getTagDefaultValue = getTagDefaultValue;
+window.getTagLabel = getTagLabel;
+window.openDynamicTagSelection = openDynamicTagSelection;
 
 function updateCustomDropdownValue(selectId, labelId) {
     const select = document.getElementById(selectId);
@@ -733,27 +780,17 @@ function setupAppEventListeners() {
 
     // Tagi dla wydatków cyklicznych
     document.getElementById('recurring-nature-btn')?.addEventListener('click', () => {
-        const options = [
-            { value: 'stały',      label: 'Stały',      icon: '📌' },
-            { value: 'zmienny',    label: 'Zmienny',    icon: '📊' },
-            { value: 'jednorazowy',label: 'Jednorazowy',icon: '⚡' },
-        ];
-        const current = document.getElementById('recurring-nature-label').textContent.toLowerCase();
-        openSelectionDrawer('Natura wydatku', options, (val, label) => {
-            document.getElementById('recurring-nature-label').textContent = val;
-        }, current);
+        openDynamicTagSelection('nature', 'Natura wydatku', recurringNatureValue, (val) => {
+            recurringNatureValue = val;
+            document.getElementById('recurring-nature-label').textContent = getTagLabel('nature', val) || val;
+        });
     });
 
     document.getElementById('recurring-purpose-btn')?.addEventListener('click', () => {
-        const options = [
-            { value: 'konieczny',   label: 'Konieczny',   icon: '🏠' },
-            { value: 'przyjemność', label: 'Przyjemność', icon: '🎉' },
-            { value: 'inwestycja',  label: 'Inwestycja',  icon: '📈' },
-        ];
-        const current = document.getElementById('recurring-purpose-label').textContent.toLowerCase();
-        openSelectionDrawer('Cel wydatku', options, (val, label) => {
-            document.getElementById('recurring-purpose-label').textContent = val;
-        }, current);
+        openDynamicTagSelection('purpose', 'Cel wydatku', recurringPurposeValue, (val) => {
+            recurringPurposeValue = val;
+            document.getElementById('recurring-purpose-label').textContent = getTagLabel('purpose', val) || val;
+        });
     });
 
     const addCategoryDrawerBtn = document.getElementById('add-category-drawer-btn');
@@ -844,27 +881,17 @@ function setupAppEventListeners() {
 
     // Tagi dla wydatków cyklicznych
     document.getElementById('recurring-nature-btn')?.addEventListener('click', () => {
-        const options = [
-            { value: 'stały',      label: 'Stały',      icon: '📌' },
-            { value: 'zmienny',    label: 'Zmienny',    icon: '📊' },
-            { value: 'jednorazowy',label: 'Jednorazowy',icon: '⚡' },
-        ];
-        openSelectionDrawer('Natura wydatku', options, (val) => {
+        openDynamicTagSelection('nature', 'Natura wydatku', recurringNatureValue, (val) => {
             recurringNatureValue = val;
-            document.getElementById('recurring-nature-label').textContent = val;
-        }, recurringNatureValue);
+            document.getElementById('recurring-nature-label').textContent = getTagLabel('nature', val) || val;
+        });
     });
 
     document.getElementById('recurring-purpose-btn')?.addEventListener('click', () => {
-        const options = [
-            { value: 'konieczny',   label: 'Konieczny',   icon: '🏠' },
-            { value: 'przyjemność', label: 'Przyjemność', icon: '🎉' },
-            { value: 'inwestycja',  label: 'Inwestycja',  icon: '📈' },
-        ];
-        openSelectionDrawer('Cel wydatku', options, (val) => {
+        openDynamicTagSelection('purpose', 'Cel wydatku', recurringPurposeValue, (val) => {
             recurringPurposeValue = val;
-            document.getElementById('recurring-purpose-label').textContent = val;
-        }, recurringPurposeValue);
+            document.getElementById('recurring-purpose-label').textContent = getTagLabel('purpose', val) || val;
+        });
     });
 
     // DODAJ TEN EVENT LISTENER TUTAJ:
@@ -990,13 +1017,21 @@ function populateBudgetFilterSelect() {
 async function fetchInitialData(shouldSwitchToDefault = true) {
     try {
         // Pobierz dane, które nie wymagają paginacji
-        [allCategories, structuredCategories, allShops, allSpecialBudgets, allRecurringExpenses] = await Promise.all([
+        [allCategories, structuredCategories, allShops, allSpecialBudgets, allRecurringExpenses, tagDefinitions] = await Promise.all([
             apiCall('/api/categories'),
             apiCall('/api/categories/v2'),
             apiCall('/api/shops'),
             apiCall('/api/special-budgets'),
-            apiCall('/api/recurring-expenses') // Fetch recurring expenses
+            apiCall('/api/recurring-expenses'),
+            apiCall('/api/tags')
         ]);
+
+        recurringNatureValue = getTagDefaultValue('nature', recurringNatureValue || 'stały');
+        recurringPurposeValue = getTagDefaultValue('purpose', recurringPurposeValue || 'konieczny');
+        const recurringNatureLabel = document.getElementById('recurring-nature-label');
+        const recurringPurposeLabel = document.getElementById('recurring-purpose-label');
+        if (recurringNatureLabel) recurringNatureLabel.textContent = getTagLabel('nature', recurringNatureValue) || recurringNatureValue;
+        if (recurringPurposeLabel) recurringPurposeLabel.textContent = getTagLabel('purpose', recurringPurposeValue) || recurringPurposeValue;
 
         // Załaduj pierwszą stronę zakupów
         await loadInitialPurchases();
@@ -1389,12 +1424,12 @@ function enterRecurringExpenseEditMode(expenseId) {
     if (categoryIconEl) categoryIconEl.innerHTML = `<i class="fas ${icon}" style="color: ${color}"></i>`;
 
     // Tagi
-    recurringNatureValue = (expense.tags && expense.tags.nature) ? expense.tags.nature : 'stały';
-    recurringPurposeValue = (expense.tags && expense.tags.purpose) ? expense.tags.purpose : 'konieczny';
+    recurringNatureValue = (expense.tags && expense.tags.nature) ? expense.tags.nature : getTagDefaultValue('nature', 'stały');
+    recurringPurposeValue = (expense.tags && expense.tags.purpose) ? expense.tags.purpose : getTagDefaultValue('purpose', 'konieczny');
     const natureLabelEl = document.getElementById('recurring-nature-label');
     const purposeLabelEl = document.getElementById('recurring-purpose-label');
-    if (natureLabelEl) natureLabelEl.textContent = recurringNatureValue;
-    if (purposeLabelEl) purposeLabelEl.textContent = recurringPurposeValue;
+    if (natureLabelEl) natureLabelEl.textContent = getTagLabel('nature', recurringNatureValue) || recurringNatureValue;
+    if (purposeLabelEl) purposeLabelEl.textContent = getTagLabel('purpose', recurringPurposeValue) || recurringPurposeValue;
 
     if (expense.schedule) {
         scheduleTypeValue = expense.schedule.type;
@@ -1424,12 +1459,12 @@ function exitRecurringExpenseEditMode() {
     editingRecurringExpenseId = null;
     addRecurringExpenseForm.reset();
 
-    recurringNatureValue = 'stały';
-    recurringPurposeValue = 'konieczny';
+    recurringNatureValue = getTagDefaultValue('nature', 'stały');
+    recurringPurposeValue = getTagDefaultValue('purpose', 'konieczny');
     const natureLabelEl = document.getElementById('recurring-nature-label');
     const purposeLabelEl = document.getElementById('recurring-purpose-label');
-    if (natureLabelEl) natureLabelEl.textContent = 'stały';
-    if (purposeLabelEl) purposeLabelEl.textContent = 'konieczny';
+    if (natureLabelEl) natureLabelEl.textContent = getTagLabel('nature', recurringNatureValue) || recurringNatureValue;
+    if (purposeLabelEl) purposeLabelEl.textContent = getTagLabel('purpose', recurringPurposeValue) || recurringPurposeValue;
 
     handleScheduleTypeChange();
     addRecurringExpenseForm.querySelector('button[type="submit"]').textContent = 'Dodaj subskrypcję';
