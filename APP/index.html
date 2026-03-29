@@ -1047,6 +1047,27 @@
                             clip-rule="evenodd" />
                     </svg>
                 </button>
+
+                <!-- Dodany przycisk Budżety Specjalne -->
+                <button id="more-special-budgets-btn"
+                    class="w-full flex items-center justify-between p-4 bg-white/5 hover:bg-white/10 rounded-xl transition-all">
+                    <div class="flex items-center space-x-3 text-white">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M2 6a2 2 0 012-2h12a2 2 0 012 2v2a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
+                            <path fill-rule="evenodd"
+                                d="M2 11a2 2 0 012-2h12a2 2 0 012 2v5a2 2 0 01-2 2H4a2 2 0 01-2-2v-5zm3.5 2a.5.5 0 00-.5.5v1a.5.5 0 00.5.5h1a.5.5 0 00.5-.5v-1a.5.5 0 00-.5-.5h-1z"
+                                clip-rule="evenodd" />
+                        </svg>
+                        <span class="font-medium">Budżety specjalne</span>
+                    </div>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500" viewBox="0 0 20 20"
+                        fill="currentColor">
+                        <path fill-rule="evenodd"
+                            d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                            clip-rule="evenodd" />
+                    </svg>
+                </button>
+
                 <button id="more-logout-btn"
                     class="w-full flex items-center justify-between p-4 bg-white/5 hover:bg-white/10 rounded-xl transition-all">
                     <div class="flex items-center space-x-3 text-red-400">
@@ -1172,8 +1193,8 @@
     </div>
 
     <!-- Bottom Navigation Bar -->
-    <nav id="bottom-nav" class="fixed bottom-0 left-0 right-0 z-40 glass-card border-t border-white/10">
-        <div class="max-w-lg mx-auto flex justify-around items-center h-16 px-2">
+    <nav id="bottom-nav" class="fixed bottom-0 left-0 right-0 z-[60] glass-card border-t border-white/10">
+        <div class="max-w-lg mx-auto flex justify-around items-center h-16 px-2 relative">
             <button data-tab="home"
                 class="bottom-nav-btn active flex flex-col items-center justify-center py-2 px-3 rounded-xl transition-all"
                 title="Start">
@@ -1193,6 +1214,18 @@
                 </svg>
                 <span class="text-[10px] mt-0.5 font-medium">Lista</span>
             </button>
+
+            <!-- Przycisk DODAJ w centrum -->
+            <div class="relative flex items-center justify-center w-16 h-16 -mt-8">
+                <button id="main-fab-btn"
+                    class="bg-green-600 text-white rounded-full w-14 h-14 flex items-center justify-center shadow-xl hover:bg-green-700 transition-all duration-300 ease-in-out transform hover:scale-105 active:scale-95 border-4 border-[#16162d]">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor" stroke-width="3">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                    </svg>
+                </button>
+            </div>
+
             <button data-tab="analysis"
                 class="bottom-nav-btn flex flex-col items-center justify-center py-2 px-3 rounded-xl transition-all"
                 title="Analiza">
@@ -1202,17 +1235,6 @@
                         d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
                 </svg>
                 <span class="text-[10px] mt-0.5 font-medium">Analiza</span>
-            </button>
-            <button data-tab="special-budgets"
-                class="bottom-nav-btn flex flex-col items-center justify-center py-2 px-3 rounded-xl transition-all"
-                title="Budżety">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path d="M2 6a2 2 0 012-2h12a2 2 0 012 2v2a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
-                    <path fill-rule="evenodd"
-                        d="M2 11a2 2 0 012-2h12a2 2 0 012 2v5a2 2 0 01-2 2H4a2 2 0 01-2-2v-5zm3.5 2a.5.5 0 00-.5.5v1a.5.5 0 00.5.5h1a.5.5 0 00.5-.5v-1a.5.5 0 00-.5-.5h-1z"
-                        clip-rule="evenodd" />
-                </svg>
-                <span class="text-[10px] mt-0.5 font-medium">Budżety</span>
             </button>
             <button data-tab="more"
                 class="bottom-nav-btn flex flex-col items-center justify-center py-2 px-3 rounded-xl transition-all"
@@ -1226,65 +1248,43 @@
         </div>
     </nav>
 
-    <!-- Floating Action Button -->
+    <!-- Transparent overlay to catch clicks outside -->
     <div id="fab-overlay"
-        class="hidden fixed inset-0 bg-black/60 z-[40] transition-opacity duration-300 opacity-0 pointer-events-none">
+        class="hidden fixed inset-0 bg-transparent z-[65] pointer-events-none">
     </div>
 
-    <div id="fab-container" class="fixed right-6 bottom-24 z-50 flex flex-col items-end space-y-4">
-        <div id="fab-actions" class="flex flex-col items-end space-y-4 mb-2 hidden">
+    <div id="fab-container" class="fixed left-1/2 -translate-x-1/2 bottom-20 z-[70] pointer-events-none transition-all duration-300">
+        <div id="fab-actions" class="hidden flex flex-row items-center justify-center gap-4 p-3 px-6 bg-[#1e1e38]/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl pointer-events-auto transform translate-y-4 opacity-0 transition-all duration-300">
             <!-- Dodaj Ręcznie -->
-            <button id="fab-add-manual-btn" class="fab-sub-item flex items-center justify-end space-x-3 group">
-                <span
-                    class="fab-label px-3 py-1.5 bg-gray-900/80 text-white text-sm font-medium rounded-lg shadow border border-white/10 backdrop-blur-md opacity-90 group-hover:opacity-100 transition-opacity">Dodaj
-                    ręcznie</span>
-                <div
-                    class="fab-sub-btn w-12 h-12 bg-blue-500 text-white rounded-full shadow-lg flex items-center justify-center transition-all duration-200 transform hover:scale-105 active:scale-95">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            <button id="fab-add-manual-btn" class="flex flex-col items-center gap-1 group">
+                <div class="w-12 h-12 bg-blue-500/20 text-blue-400 rounded-xl flex items-center justify-center transition-all group-hover:bg-blue-500 group-hover:text-white group-active:scale-90 border border-blue-500/30">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                     </svg>
                 </div>
+                <span class="text-[10px] text-gray-300 font-medium">Ręcznie</span>
             </button>
 
-            <!-- Wybierz File -->
-            <button id="fab-select-file-btn" class="fab-sub-item flex items-center justify-end space-x-3 group">
-                <span
-                    class="fab-label px-3 py-1.5 bg-gray-900/80 text-white text-sm font-medium rounded-lg shadow border border-white/10 backdrop-blur-md opacity-90 group-hover:opacity-100 transition-opacity">Wybierz
-                    plik</span>
-                <div
-                    class="fab-sub-btn w-12 h-12 bg-purple-500 text-white rounded-full shadow-lg flex items-center justify-center transition-all duration-200 transform hover:scale-105 active:scale-95">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                            d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+            <!-- Wybierz Plik -->
+            <button id="fab-select-file-btn" class="flex flex-col items-center gap-1 group">
+                <div class="w-12 h-12 bg-purple-500/20 text-purple-400 rounded-xl flex items-center justify-center transition-all group-hover:bg-purple-500 group-hover:text-white group-active:scale-90 border border-purple-500/30">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                     </svg>
                 </div>
+                <span class="text-[10px] text-gray-300 font-medium">Plik</span>
             </button>
 
             <!-- Aparat -->
-            <button id="fab-scan-receipt-btn" class="fab-sub-item flex items-center justify-end space-x-3 group">
-                <span
-                    class="fab-label px-3 py-1.5 bg-gray-900/80 text-white text-sm font-medium rounded-lg shadow border border-white/10 backdrop-blur-md opacity-90 group-hover:opacity-100 transition-opacity">Skanuj
-                    aparat</span>
-                <div
-                    class="fab-sub-btn w-12 h-12 bg-green-500 text-white rounded-full shadow-lg flex items-center justify-center transition-all duration-200 transform hover:scale-105 active:scale-95">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd"
-                            d="M4 5a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V7a2 2 0 00-2-2h-1.586a1 1 0 01-.707-.293l-1.121-1.121A2 2 0 0011.172 3H8.828a2 2 0 00-1.414.586L6.293 4.707A1 1 0 015.586 5H4zm6 9a3 3 0 100-6 3 3 0 000 6z"
-                            clip-rule="evenodd" />
+            <button id="fab-scan-receipt-btn" class="flex flex-col items-center gap-1 group">
+                <div class="w-12 h-12 bg-green-500/20 text-green-400 rounded-xl flex items-center justify-center transition-all group-hover:bg-green-500 group-hover:text-white group-active:scale-90 border border-green-500/30">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M4 5a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V7a2 2 0 00-2-2h-1.586a1 1 0 01-.707-.293l-1.121-1.121A2 2 0 0011.172 3H8.828a2 2 0 00-1.414.586L6.293 4.707A1 1 0 015.586 5H4zm6 9a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd" />
                     </svg>
                 </div>
+                <span class="text-[10px] text-gray-300 font-medium">Skanuj</span>
             </button>
         </div>
-        <button id="main-fab-btn"
-            class="bg-green-600 text-white rounded-full w-16 h-16 flex items-center justify-center shadow-xl hover:bg-green-700 transition-all duration-300 ease-in-out transform hover:scale-105">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24"
-                stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
-            </svg>
-        </button>
     </div>
 
     <!-- Category Selection Drawer -->

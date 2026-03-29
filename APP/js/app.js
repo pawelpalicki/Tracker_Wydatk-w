@@ -351,62 +351,9 @@ async function resizeImage(file, maxSize = 1920, quality = 0.92) {
 const lastScrollPositions = new WeakMap();
 
 function handleFABScroll(e) {
-    const target = e.target;
-    // Determine current scroll position
-    let currentScrollY = 0;
-
-    if (target === window || target === document) {
-        currentScrollY = window.pageYOffset || document.documentElement.scrollTop || window.scrollY || 0;
-    } else if (target instanceof Element) {
-        currentScrollY = target.scrollTop;
-    }
-
-    // Get last scroll position for this specific target
-    let lastScrollY = lastScrollPositions.get(target) || 0;
-
-    // Update last scroll position immediately
-    lastScrollPositions.set(target, currentScrollY);
-
-    // Skip if difference is negligible (e.g. overscroll or tiny movements)
-    if (Math.abs(currentScrollY - lastScrollY) < 5) return;
-
-    // Auto-show FAB at the very bottom (of the specific container or window)
-    let containerHeight = 0;
-    let contentHeight = 0;
-
-    if (target === window || target === document) {
-        containerHeight = window.innerHeight;
-        contentHeight = document.body.offsetHeight;
-    } else if (target instanceof Element) {
-        containerHeight = target.clientHeight;
-        contentHeight = target.scrollHeight;
-    }
-
-    // If near bottom, show
-    if (containerHeight + currentScrollY >= contentHeight - 50) {
-        if (fabContainer.classList.contains('hide')) {
-
-            fabContainer.classList.remove('hide');
-        }
-        return;
-    }
-
-    // Direction check
-    if (currentScrollY > lastScrollY && currentScrollY > 50) {
-        // Scrolling DOWN
-        if (!fabContainer.classList.contains('hide')) {
-
-            fabContainer.classList.add('hide');
-            fabActions.classList.add('hidden');
-            mainFabBtn.classList.remove('expanded');
-        }
-    } else if (currentScrollY < lastScrollY) {
-        // Scrolling UP
-        if (fabContainer.classList.contains('hide')) {
-
-            fabContainer.classList.remove('hide');
-        }
-    }
+    // FAB is now part of the bottom nav, we don't want to hide it on scroll anymore
+    // as it would make the main "Add" button inaccessible.
+    return;
 }
 
 // Floating Action Button (FAB) logic
@@ -423,25 +370,28 @@ function toggleFab(isFromPopState = false) {
     }
 
     isFabExpanded = !isFabExpanded;
-    fabActions.classList.toggle('hidden', !isFabExpanded);
-    fabActions.classList.toggle('expanded', isFabExpanded);
-    mainFabBtn.classList.toggle('expanded', isFabExpanded);
-
+    
     const overlay = document.getElementById('fab-overlay');
-    overlay.classList.toggle('hidden', !isFabExpanded);
-    setTimeout(() => {
-        overlay.classList.toggle('active', isFabExpanded);
-    }, 10);
-
-    // Animate sub-buttons
-    const subItems = fabActions.querySelectorAll('.fab-sub-item');
-    subItems.forEach((item, index) => {
-        if (isFabExpanded) {
-            item.style.transitionDelay = `${index * 50}ms`;
-        } else {
-            item.style.transitionDelay = `${(subItems.length - 1 - index) * 50}ms`;
-        }
-    });
+    
+    if (isFabExpanded) {
+        fabActions.classList.remove('hidden');
+        overlay.classList.remove('hidden');
+        mainFabBtn.classList.add('expanded');
+        setTimeout(() => {
+            overlay.classList.add('active');
+            fabActions.style.opacity = '1';
+            fabActions.style.transform = 'translateY(0)';
+        }, 10);
+    } else {
+        mainFabBtn.classList.remove('expanded');
+        overlay.classList.remove('active');
+        fabActions.style.opacity = '0';
+        fabActions.style.transform = 'translateY(16px)';
+        setTimeout(() => {
+            fabActions.classList.add('hidden');
+            overlay.classList.add('hidden');
+        }, 300);
+    }
 }
 
 // --- Główna Logika Aplikacji ---
@@ -460,6 +410,13 @@ function setupAppEventListeners() {
     if (moreLogoutBtn) {
         moreLogoutBtn.addEventListener('click', () => {
             auth.signOut();
+        });
+    }
+
+    const moreSpecialBudgetsBtn = document.getElementById('more-special-budgets-btn');
+    if (moreSpecialBudgetsBtn) {
+        moreSpecialBudgetsBtn.addEventListener('click', () => {
+            switchTab('special-budgets');
         });
     }
     // Initialize swipe container
@@ -915,6 +872,13 @@ function setupAppEventListeners() {
     mainFabBtn.addEventListener('click', () => {
         toggleFab();
     });
+
+    const fabOverlay = document.getElementById('fab-overlay');
+    if (fabOverlay) {
+        fabOverlay.addEventListener('click', () => {
+            if (isFabExpanded) toggleFab();
+        });
+    }
 
     fabAddManualBtn.addEventListener('click', () => {
         switchTab('add');

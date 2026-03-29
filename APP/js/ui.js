@@ -16,7 +16,7 @@ const VIEW_DEPTH = {
     'list': 1,
     'add': 1,
     'analysis': 1,
-    'special-budgets': 1,
+    'special-budgets': 2,
     'more': 1,
     'settings': 2,
     'edit-purchase': 2, // Wirtualna zakładka dla edycji (głębiej niż lista)
@@ -144,7 +144,7 @@ const NAV_TITLES = {
     'settings-recurring': 'Subskrypcje',
 };
 
-const TABS_WITH_BACK = ['settings', 'settings-categories', 'settings-budget', 'settings-special', 'settings-recurring'];
+const TABS_WITH_BACK = ['special-budgets', 'settings', 'settings-categories', 'settings-budget', 'settings-special', 'settings-recurring'];
 
 function updateNavbar(tabName) {
     const title = document.getElementById('nav-title');
