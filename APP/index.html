@@ -43,6 +43,16 @@
 
 <body class="dark bg-[#0f0f23] font-sans text-white">
 
+    <div id="analysis-animation-container" class="hidden fixed inset-0 bg-[#0d0d0d] z-[110] flex items-center justify-center">
+        <div id="wrap" class="flex flex-col items-center gap-3 w-full max-w-sm px-3">
+          <canvas id="c"></canvas>
+          <div id="label" class="text-xs text-[#555] tracking-widest uppercase">
+            analizuje dokument<span id="dots" class="text-[#7c3aed]"></span>
+          </div>
+        </div>
+    </div>
+
+
     <div id="global-analysis-loader"
         class="hidden fixed top-0 left-0 right-0 h-1 z-[100] bg-blue-500/20 overflow-hidden">
         <div class="h-full bg-brand-500 animate-loading-bar shadow-[0_0_10px_rgba(79,70,229,0.5)]">
@@ -1466,6 +1476,7 @@
     <script src="js/long-term-budget.js"></script>
     <script src="js/special-budgets.js"></script>
     <script src="js/categories-v2.js"></script>
+    <script src="js/analysis-animation.js"></script>
     <script src="js/app.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/pl.js"></script>

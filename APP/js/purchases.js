@@ -536,17 +536,24 @@ async function handleCategoryActions(e) {
 // --- Analiza paragonów ---
 async function handleAnalyzeReceipt() {
     if (!currentFile) {
-        alert('Najpierw wybierz plik z paragonem.');
+        alert('Proszę, wybierz najpierw plik z paragonem.');
         return;
     }
+    
     const globalLoader = document.getElementById('global-analysis-loader');
     if (globalLoader) globalLoader.classList.remove('hidden');
-    const scannerContainer = document.getElementById('scanner-container');
-    if (scannerContainer) scannerContainer.classList.remove('hidden');
+    
+    const analysisAnimationContainer = document.getElementById('analysis-animation-container');
+    if (analysisAnimationContainer) {
+        analysisAnimationContainer.classList.remove('hidden');
+    }
+    if (typeof analysisAnimation !== 'undefined') {
+        analysisAnimation.start();
+    }
 
-    analysisSpinner.classList.remove('hidden');
     analyzeReceiptBtn.disabled = true;
     imagePreviewContainer.classList.add('hidden');
+
     try {
         let fileToSend = currentFile;
         if (currentFile.type.startsWith('image/')) {
@@ -555,19 +562,30 @@ async function handleAnalyzeReceipt() {
         const { analysis } = await apiCallWithFile('/api/analyze-receipt', fileToSend);
         await fillFormWithAnalysis(analysis);
     } catch (error) {
-        alert('Błąd analizy paragonu: ' + error.message);
+        alert('Wystąpił błąd podczas analizy paragonu. Spróbuj ponownie. Błąd: ' + error.message);
     } finally {
-        const globalLoader = document.getElementById('global-analysis-loader');
         if (globalLoader) globalLoader.classList.add('hidden');
-        const scannerContainer = document.getElementById('scanner-container');
-        if (scannerContainer) scannerContainer.classList.add('hidden');
+        
+        const analysisAnimationContainer = document.getElementById('analysis-animation-container');
+        if (analysisAnimationContainer) {
+            analysisAnimationContainer.classList.add('hidden');
+        }
+        if (typeof analysisAnimation !== 'undefined') {
+            analysisAnimation.stop();
+        }
 
-        analysisSpinner.classList.add('hidden');
         analyzeReceiptBtn.disabled = false;
         receiptFileInput.value = '';
         currentFile = null;
+        
+        // Hide the scanner container itself after analysis
+        const scannerContainer = document.getElementById('scanner-container');
+        if (scannerContainer) {
+            scannerContainer.classList.add('hidden');
+        }
     }
 }
+
 async function fillFormWithAnalysis(analysis) {
     shopInput.value = analysis.shop || '';
     dateInput.value = analysis.date || new Date().toISOString().split('T')[0];
@@ -577,27 +595,24 @@ async function fillFormWithAnalysis(analysis) {
     if (analysis.originalCurrency && analysis.originalCurrency !== 'PLN') {
         const rate = analysis.exchangeRate ? analysis.exchangeRate.toFixed(4) : 'nieznany';
         const itemCount = (analysis.items || []).length;
-        const originalTotal = (analysis.items || []).reduce((sum, item) => sum + (item.price / analysis.exchangeRate), 0);
+        const originalTotal = (analysis.items || []).reduce((sum, item) => sum + (item.price / (analysis.exchangeRate || 1)), 0);
         const convertedTotal = (analysis.items || []).reduce((sum, item) => sum + item.price, 0);
 
         // Sprawdź czy kurs został pobrany pomyślnie
         if (analysis.rateSuccess === false) {
-            // Nie udało się pobrać kursu - zaproponuj ręczne wprowadzenie
             const userRate = prompt(
                 `⚠️ Nie udało się automatycznie pobrać kursu wymiany dla ${analysis.originalCurrency}!\n\n` +
-                `Wykryto ${itemCount} produktów w walucie ${analysis.originalCurrency}.\n` +
-                `Suma oryginalna: ${originalTotal.toFixed(2)} ${analysis.originalCurrency}\n\n` +
-                `Wprowadź kurs wymiany ręcznie:\n` +
+                `Wykryto ${itemCount} produktów za łączną kwotę ${originalTotal.toFixed(2)} ${analysis.originalCurrency}.\n\n` +
+                `Wprowadź kurs wymiany ręcznie (np. 4.32 dla EUR):\n` +
                 `1 ${analysis.originalCurrency} = ? PLN`,
                 '1.0'
             );
 
             if (userRate && !isNaN(parseFloat(userRate)) && parseFloat(userRate) > 0) {
                 try {
-                    // Wywołaj endpoint do ręcznego przeliczenia
                     const originalItems = (analysis.items || []).map(item => ({
                         ...item,
-                        price: item.price / analysis.exchangeRate // Przywróć oryginalną cenę
+                        price: item.price / (analysis.exchangeRate || 1)
                     }));
 
                     const conversionResult = await apiCall('/api/convert-currency', 'POST', {
@@ -606,7 +621,6 @@ async function fillFormWithAnalysis(analysis) {
                         exchangeRate: parseFloat(userRate)
                     });
 
-                    // Zaktualizuj analizę z nowym kursem
                     analysis.items = conversionResult.items;
                     analysis.exchangeRate = conversionResult.exchangeRate;
                     analysis.rateSuccess = true;
@@ -615,31 +629,27 @@ async function fillFormWithAnalysis(analysis) {
 
                     alert(
                         `✅ Kurs został zaktualizowany!\n\n` +
-                        `📊 Szczegóły przeliczenia:\n` +
-                        `• Waluta oryginalna: ${analysis.originalCurrency}\n` +
-                        `• Kurs wymiany: 1 ${analysis.originalCurrency} = ${userRate} PLN\n` +
-                        `• Liczba produktów: ${itemCount}\n` +
+                        `Oto podsumowanie przeliczenia:\n` +
+                        `• Kurs: 1 ${analysis.originalCurrency} = ${userRate} PLN\n` +
                         `• Suma oryginalna: ${originalTotal.toFixed(2)} ${analysis.originalCurrency}\n` +
                         `• Suma po przeliczeniu: ${newConvertedTotal.toFixed(2)} PLN\n\n` +
-                        `✅ Wszystkie ceny zostały przeliczone z nowym kursem.`
+                        `Wszystkie ceny zostały przeliczone.`
                     );
                 } catch (error) {
-                    alert('Błąd podczas przeliczania kursu: ' + error.message);
+                    alert('Błąd podczas ręcznego przeliczania kursu: ' + error.message);
                     return;
                 }
             } else {
-                alert('Anulowano przeliczenie. Produkty pozostaną w oryginalnej walucie.');
+                alert('Anulowano przeliczenie. Ceny mogą być nieprawidłowe.');
             }
         } else {
-            // Kurs został pobrany pomyślnie - pokaż standardowy komunikat
-            const message = `💱 Wykryto paragon w walucie ${analysis.originalCurrency}!\n\n` +
-                `📊 Szczegóły przeliczenia:\n` +
-                `• Waluta oryginalna: ${analysis.originalCurrency}\n` +
-                `• Kurs wymiany: 1 ${analysis.originalCurrency} = ${rate} PLN\n` +
-                `• Liczba produktów: ${itemCount}\n` +
+            const message = `💱 Wykryto paragon w walucie obcej: ${analysis.originalCurrency}!\n\n` +
+                `Dokonano automatycznego przeliczenia na PLN.\n\n` +
+                `Szczegóły:\n` +
+                `• Kurs: 1 ${analysis.originalCurrency} ≈ ${rate} PLN\n` +
                 `• Suma oryginalna: ${(originalTotal || 0).toFixed(2)} ${analysis.originalCurrency}\n` +
                 `• Suma po przeliczeniu: ${formatAmount(convertedTotal)}\n\n` +
-                `✅ Wszystkie ceny zostały automatycznie przeliczone na PLN.`;
+                `Sprawdź, czy kwoty w formularzu są poprawne.`;
 
             alert(message);
         }
@@ -655,23 +665,19 @@ async function fillFormWithAnalysis(analysis) {
     });
 
     currentPurchaseItems = processedItems.map(item => {
-        // Podstawowe wartości domyślne (jeśli AI zawiedzie)
         const defaultNature = typeof purchaseTagNature !== 'undefined' ? purchaseTagNature : 'zmienny';
         const defaultPurpose = typeof purchaseTagPurpose !== 'undefined' ? purchaseTagPurpose : 'konieczny';
         
-        // Znajdź kategorię nadrzędną
         let categoryName = item.category || 'inne';
         let subCategoryName = item.subCategory || '';
 
-        // Walidacja kategorii nadrzędnej
         const parentCat = (typeof structuredCategories !== 'undefined') 
             ? structuredCategories.find(c => c.name.toLowerCase() === categoryName.toLowerCase() && !c.parentId)
             : null;
 
         if (parentCat) {
-            categoryName = parentCat.name; // Ujednolicenie wielkości liter
+            categoryName = parentCat.name;
             
-            // Walidacja podkategorii
             if (subCategoryName) {
                 const subCat = structuredCategories.find(c => 
                     c.name.toLowerCase() === subCategoryName.toLowerCase() && 
@@ -680,7 +686,7 @@ async function fillFormWithAnalysis(analysis) {
                 if (subCat) {
                     subCategoryName = subCat.name;
                 } else {
-                    subCategoryName = ''; // Jeśli podkategoria nie pasuje do rodzica, wyczyść
+                    subCategoryName = '';
                 }
             }
         } else {
@@ -702,5 +708,5 @@ async function fillFormWithAnalysis(analysis) {
     
     renderPurchaseItems();
     updatePurchaseSummary();
-    alert('Formularz został wypełniony danymi z paragonu. AI zasugerowało kategorie i tagi pozycji.');
+    alert('Gotowe! Analiza AI zakończona. Sprawdź i uzupełnij dane, a następnie zapisz cały zakup.');
 }

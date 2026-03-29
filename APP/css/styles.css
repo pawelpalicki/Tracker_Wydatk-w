@@ -848,3 +848,25 @@ input[type="date"] {
     font-weight: 500;
     color: white;
 }
+
+/* ===== Analysis Animation Styles ===== */
+#analysis-animation-container {
+    font-family: monospace;
+}
+
+#analysis-animation-container canvas {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+#analysis-animation-container #label {
+    font-size: 10px;
+    color: #555;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+#analysis-animation-container #label span {
+    color: #7c3aed;
+}
