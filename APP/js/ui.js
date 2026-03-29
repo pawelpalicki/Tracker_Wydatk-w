@@ -162,16 +162,22 @@ function initFilterDrawers() {
     if (categoryBtn) {
         categoryBtn.onclick = () => {
             if (typeof openHierarchicalCategoryDrawer === 'function') {
-                openHierarchicalCategoryDrawer(null, typeof filterCategoryValue !== 'undefined' ? filterCategoryValue : '', '', (cat) => {
-                    if (typeof filterCategoryValue !== 'undefined') filterCategoryValue = cat;
-                    const labelText = cat ? cat.charAt(0).toUpperCase() + cat.slice(1) : 'Kategoria';
+                openHierarchicalCategoryDrawer(
+                    null,
+                    typeof filterCategoryValue !== 'undefined' ? filterCategoryValue : '',
+                    typeof filterSubCategoryValue !== 'undefined' ? filterSubCategoryValue : '',
+                    (pName, sName) => {
+                    if (typeof filterCategoryValue !== 'undefined') filterCategoryValue = pName || '';
+                    if (typeof filterSubCategoryValue !== 'undefined') filterSubCategoryValue = sName || '';
+                    const labelText = pName ? (sName ? `${pName} / ${sName}` : pName) : 'Kategoria';
                     document.getElementById('filter-category-label').textContent = labelText;
-                    setFilterButtonState(categoryBtn, categoryClear, !!cat);
+                    setFilterButtonState(categoryBtn, categoryClear, !!pName);
                     if (typeof handleFilterChange === 'function') handleFilterChange();
                 });
             } else {
                 openCategoryDrawer(null, typeof filterCategoryValue !== 'undefined' ? filterCategoryValue : '', (cat) => {
                     if (typeof filterCategoryValue !== 'undefined') filterCategoryValue = cat;
+                    if (typeof filterSubCategoryValue !== 'undefined') filterSubCategoryValue = '';
                     const labelText = cat ? cat.charAt(0).toUpperCase() + cat.slice(1) : 'Kategoria';
                     document.getElementById('filter-category-label').textContent = labelText;
                     setFilterButtonState(categoryBtn, categoryClear, !!cat);
@@ -249,6 +255,7 @@ function initFilterDrawers() {
     const clearFilterValue = (type) => {
         if (type === 'category') {
             filterCategoryValue = '';
+            if (typeof filterSubCategoryValue !== 'undefined') filterSubCategoryValue = '';
             document.getElementById('filter-category-label').textContent = 'Kategoria';
             setFilterButtonState(categoryBtn, categoryClear, false);
         } else if (type === 'budget') {
@@ -311,6 +318,7 @@ function initFilterDrawers() {
         clearBtn.onclick = () => {
             if (keywordInput) keywordInput.value = '';
             if (typeof filterCategoryValue !== 'undefined') filterCategoryValue = '';
+            if (typeof filterSubCategoryValue !== 'undefined') filterSubCategoryValue = '';
             if (typeof filterBudgetValue !== 'undefined') filterBudgetValue = '';
             if (typeof filterShopValue !== 'undefined') filterShopValue = '';
             

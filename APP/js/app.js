@@ -116,6 +116,7 @@ const filterDateStart = document.getElementById('filter-date-start');
 const filterDateEnd = document.getElementById('filter-date-end');
 const filterDateRange = document.getElementById('filter-date-range');
 let filterCategoryValue = '';
+let filterSubCategoryValue = '';
 let filterShopValue = '';
 let filterBudgetValue = '';
 const filterMinAmount = document.getElementById('filter-min-amount');
@@ -721,8 +722,9 @@ function setupAppEventListeners() {
 
     document.getElementById('filter-category-btn')?.addEventListener('click', () => {
         if (typeof openHierarchicalCategoryDrawer === 'function') {
-            openHierarchicalCategoryDrawer(null, filterCategoryValue || '', '', (pName, sName) => {
-                filterCategoryValue = pName; // Filtrowanie po kategorii głównej
+            openHierarchicalCategoryDrawer(null, filterCategoryValue || '', filterSubCategoryValue || '', (pName, sName) => {
+                filterCategoryValue = pName;
+                filterSubCategoryValue = sName || '';
                 document.getElementById('filter-category-label').textContent = sName ? `${pName} / ${sName}` : pName;
                 handleFilterChange();
             });
@@ -927,6 +929,7 @@ async function handleFilterChange() {
     const params = new URLSearchParams();
     if (filterKeyword.value) params.append('keyword', filterKeyword.value);
     if (filterCategoryValue) params.append('category', filterCategoryValue);
+    if (filterSubCategoryValue) params.append('subCategory', filterSubCategoryValue);
     if (filterShopValue) params.append('shop', filterShopValue);
     if (filterBudgetValue) params.append('budget', filterBudgetValue);
     if (filterMinAmount.value) params.append('minAmount', filterMinAmount.value);

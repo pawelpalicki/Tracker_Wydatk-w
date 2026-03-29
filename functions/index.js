@@ -609,10 +609,10 @@ app.delete('/api/recurring-expenses/:id', authMiddleware, async (req, res) => {
 // GET: Pobierz wszystkie zakupy dla zalogowanego użytkownika (z automatycznym dodawaniem wydatków cyklicznych)
 app.get('/api/purchases', authMiddleware, async (req, res) => {
     try {
-        const { lastVisible, keyword, category, shop, budget, minAmount, maxAmount, startDate, endDate } = req.query;
+        const { lastVisible, keyword, category, subCategory, shop, budget, minAmount, maxAmount, startDate, endDate } = req.query;
         const limit = 30; // Liczba zakupów na stronę dla paginacji
 
-        const isAnyFilterActive = keyword || category || shop || budget || minAmount || maxAmount || startDate || endDate;
+        const isAnyFilterActive = keyword || category || subCategory || shop || budget || minAmount || maxAmount || startDate || endDate;
 
         let query = purchasesCollection.where('userId', '==', req.userId);
 
@@ -656,9 +656,13 @@ app.get('/api/purchases', authMiddleware, async (req, res) => {
                     p.items.some(item => item.name.toLowerCase().includes(lowerKeyword))
                 );
             }
-            if (category) {
+            if (category || subCategory) {
                 purchases = purchases.filter(p =>
-                    p.items.some(item => item.category === category)
+                    p.items.some(item => {
+                        const matchesCategory = !category || item.category === category;
+                        const matchesSubCategory = !subCategory || (item.subCategory || '') === subCategory;
+                        return matchesCategory && matchesSubCategory;
+                    })
                 );
             }
 
