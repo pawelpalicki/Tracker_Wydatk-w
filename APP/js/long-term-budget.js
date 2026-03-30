@@ -5,8 +5,7 @@ let longTermBudgetInitialized = false;
 
 let currentComparisonCategory = null;
 let currentComparisonSubCategory = null;
-let currentComparisonNature = null;
-let currentComparisonPurpose = null;
+let currentComparisonTags = {}; // Wszystkie dynamiczne filtry tagów
 
 // Helper dla customowych pickerów miesięcy (długoterminowa analiza zakresu)
 function initCustomMonthPicker(btnId, popupId, labelId, inputId, defaultVal, availableMonths) {
@@ -183,65 +182,48 @@ async function initializeComparisonChart(availableMonths = []) {
         renderComparisonBarChart(isMtd, mode, currentSelYear);
     };
 
-    // --- Nowe Filtry Analizy ---
-    const natureBtn = document.getElementById('analysis-filter-nature-btn');
-    const natureLabel = document.getElementById('analysis-filter-nature-label');
-    const purposeBtn = document.getElementById('analysis-filter-purpose-btn');
-    const purposeLabel = document.getElementById('analysis-filter-purpose-label');
+    // Udostępnij funkcję renderChart globalnie jako updateComparisonChart
+    window.updateComparisonChart = renderChart;
+
+    // Podkategoria - statyczny filtr (pojawia się gdy jest kategoria)
     const subBtn = document.getElementById('analysis-filter-subcategory-btn');
     const subLabel = document.getElementById('analysis-filter-subcategory-label');
-
-    if (natureBtn) {
-        natureBtn.addEventListener('click', () => {
-            const dynamic = typeof getTagOptions === 'function'
-                ? getTagOptions('nature').map(t => ({ value: t.value, label: t.label || t.value, icon: t.icon || '' }))
-                : [];
-            const options = [{ value: 'all', label: 'Wszystkie natury' }, ...dynamic];
-            openSelectionDrawer('Filtruj naturę', options, (val) => {
-                currentComparisonNature = val === 'all' ? null : val;
-                natureLabel.textContent = val === 'all'
-                    ? 'Wszys. Natury'
-                    : (typeof getTagLabel === 'function' ? (getTagLabel('nature', val) || val) : val);
-                renderChart();
-            }, currentComparisonNature || 'all');
-        });
-    }
-
-    if (purposeBtn) {
-        purposeBtn.addEventListener('click', () => {
-            const dynamic = typeof getTagOptions === 'function'
-                ? getTagOptions('purpose').map(t => ({ value: t.value, label: t.label || t.value, icon: t.icon || '' }))
-                : [];
-            const options = [{ value: 'all', label: 'Wszystkie cele' }, ...dynamic];
-            openSelectionDrawer('Filtruj celowość', options, (val) => {
-                currentComparisonPurpose = val === 'all' ? null : val;
-                purposeLabel.textContent = val === 'all'
-                    ? 'Wszys. Cele'
-                    : (typeof getTagLabel === 'function' ? (getTagLabel('purpose', val) || val) : val);
-                renderChart();
-            }, currentComparisonPurpose || 'all');
-        });
-    }
 
     if (subBtn) {
         subBtn.addEventListener('click', () => {
              if (!currentComparisonCategory) return;
-             
-             // Znajdź podkategorie dla aktualnej kategorii
              const parent = structuredCategories.find(c => c.name === currentComparisonCategory && !c.parentId);
              if (!parent) return;
-             
              const subs = structuredCategories.filter(c => c.parentId === parent.id);
              const options = [
                  { value: 'all', label: 'Wszystkie podkategorie' },
                  ...subs.map(s => ({ value: s.name, label: s.name }))
              ];
-             
              openSelectionDrawer(`Podkategorie: ${currentComparisonCategory}`, options, (val) => {
                  currentComparisonSubCategory = val === 'all' ? null : val;
                  subLabel.textContent = val === 'all' ? 'Wszystkie podkategorie' : val;
                  renderChart();
              }, currentComparisonSubCategory || 'all');
+        });
+    }
+
+    // Dynamiczne filtry tagów - event delegation na kontenerze
+    const tagFiltersContainer = document.getElementById('analysis-tag-filters-container');
+    if (tagFiltersContainer) {
+        tagFiltersContainer.addEventListener('click', (e) => {
+            const btn = e.target.closest('.analysis-tag-filter-btn');
+            if (!btn) return;
+            const group = btn.dataset.group;
+            const currentVal = currentComparisonTags[group] || 'all';
+            const options = typeof getTagOptions === 'function'
+                ? [{ value: 'all', label: 'Wszystkie' }, ...getTagOptions(group).map(t => ({ value: t.value, label: t.label || t.value, icon: t.icon || '' }))]
+                : [{ value: 'all', label: 'Wszystkie' }];
+            const groupLabel = typeof getTagGroupLabel === 'function' ? getTagGroupLabel(group) : group;
+            openSelectionDrawer(`Filtruj: ${groupLabel}`, options, (val) => {
+                currentComparisonTags[group] = val === 'all' ? null : val;
+                renderChart();
+                renderAnalysisTagFilterButton();
+            }, currentVal);
         });
     }
 
@@ -309,6 +291,7 @@ async function initializeComparisonChart(availableMonths = []) {
     modeToggle.addEventListener('change', renderChart);
 
     handlePeriodChange();
+    renderAnalysisTagFilterButton(); // Renderuj przycisk tagów przy starcie
     renderChart();
 }
 
@@ -342,12 +325,12 @@ async function renderComparisonBarChart(mtdMode, periodMode, selectedYear) {
     if (currentComparisonSubCategory) {
         url += `&subCategory=${encodeURIComponent(currentComparisonSubCategory)}`;
     }
-    if (currentComparisonNature) {
-        url += `&nature=${encodeURIComponent(currentComparisonNature)}`;
-    }
-    if (currentComparisonPurpose) {
-        url += `&purpose=${encodeURIComponent(currentComparisonPurpose)}`;
-    }
+    // Dynamiczne filtry tagów
+    Object.entries(currentComparisonTags).forEach(([group, value]) => {
+        if (value && value !== 'all') {
+            url += `&${encodeURIComponent(group)}=${encodeURIComponent(value)}`;
+        }
+    });
 
     try {
         const stats = await apiCall(url);
@@ -916,3 +899,25 @@ function renderCategoryProgressBars(data) {
         container.appendChild(progressBar);
     });
 }
+
+// =====================================================================
+// DYNAMICZNY FILTR TAGÓW W ANALIZIE (WERSJA ZUNIFIKOWANA)
+// =====================================================================
+function renderAnalysisTagFilterButton() {
+    const labelEl = document.getElementById('analysis-filter-tags-label');
+    const btn = document.getElementById('analysis-filter-tags-btn');
+    if (!labelEl || !btn) return;
+
+    const summary = buildTagsSummary(currentComparisonTags);
+    labelEl.textContent = summary === 'Wybierz tagi...' ? 'Wszystkie tagi' : summary;
+
+    btn.onclick = () => {
+        openTagsDrawer(currentComparisonTags, (newTags) => {
+            currentComparisonTags = newTags;
+            renderAnalysisTagFilterButton();
+            updateComparisonChart();
+        }, true); // true = filter mode
+    };
+}
+
+window.renderAnalysisTagFilterButton = renderAnalysisTagFilterButton;

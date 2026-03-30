@@ -16,22 +16,14 @@ function clearPurchaseItems() {
 }
 
 function addItemRow(item = {}) {
-    const defaultNature = typeof purchaseTagNature !== 'undefined'
-        ? purchaseTagNature
-        : (typeof getTagDefaultValue === 'function' ? getTagDefaultValue('nature', 'zmienny') : 'zmienny');
-    const defaultPurpose = typeof purchaseTagPurpose !== 'undefined'
-        ? purchaseTagPurpose
-        : (typeof getTagDefaultValue === 'function' ? getTagDefaultValue('purpose', 'konieczny') : 'konieczny');
-
+    // Zbierz domyślne wartości dla wszystkich grup tagów
+    const defaultTags = typeof getDefaultTagValues === 'function' ? getDefaultTagValues() : { nature: 'zmienny', purpose: 'konieczny' };
     const newItem = {
         name: item.name || '',
         price: typeof item.price === 'number' ? item.price : (parseFloat(item.price) || 0),
         category: item.category || 'inne',
         subCategory: item.subCategory || '',
-        tags: {
-            nature: (item.tags && item.tags.nature) || defaultNature,
-            purpose: (item.tags && item.tags.purpose) || defaultPurpose
-        }
+        tags: Object.assign({}, defaultTags, item.tags || {})
     };
     currentPurchaseItems.push(newItem);
     renderPurchaseItems();
@@ -61,6 +53,19 @@ function renderPurchaseItems() {
         const iconName = (subCat && subCat.icon) || (parentCat && parentCat.icon) || (typeof categoryIcons !== 'undefined' ? categoryIcons[item.category] : 'fa-tag') || 'fa-tag';
         const color = (parentCat && parentCat.color) || (typeof getCategoryColor === 'function' ? getCategoryColor(item.category) : '#6b7280');
 
+        // Tagi - dynamicznie dla wszystkich grup
+                    let tagsHtml = '';
+                    if (item.tags && typeof item.tags === 'object') {
+                        const tagGroups = typeof getTagGroups === 'function' ? getTagGroups() : Object.keys(item.tags);
+                        tagsHtml = tagGroups
+                            .filter(g => item.tags[g])
+                            .map(g => {
+                                const groupLabel = typeof getTagGroupLabel === 'function' ? getTagGroupLabel(g) : g;
+                                const tagLabel = typeof getTagLabel === 'function' ? (getTagLabel(g, item.tags[g]) || item.tags[g]) : item.tags[g];
+                                return `<span class="px-2 py-1 rounded-lg bg-white/5 border border-white/10 text-[11px] text-gray-400">${groupLabel[0]}: <span class="text-gray-200 font-medium">${tagLabel}</span></span>`;
+                            }).join('');
+                    }
+
         itemRow.innerHTML = `
             <div class="flex items-start gap-3">
                 <!-- Ikona kategorii -->
@@ -83,12 +88,7 @@ function renderPurchaseItems() {
                     <!-- Tagi i akcje -->
                     <div class="flex justify-between items-center mt-2 pt-2 border-t border-white/5">
                         <div class="flex flex-wrap gap-1.5">
-                            <span class="px-2 py-1 rounded-lg bg-white/5 border border-white/10 text-[11px] text-gray-400">
-                                N: <span class="text-gray-200 font-medium">${item.tags?.nature || 'zmienny'}</span>
-                            </span>
-                            <span class="px-2 py-1 rounded-lg bg-white/5 border border-white/10 text-[11px] text-gray-400">
-                                C: <span class="text-gray-200 font-medium">${item.tags?.purpose || 'konieczny'}</span>
-                            </span>
+                            ${tagsHtml}
                         </div>
                         <div class="flex gap-1 ml-2">
                             <button type="button" class="edit-item-btn text-blue-400 hover:text-white hover:bg-blue-500/20 w-8 h-8 flex items-center justify-center rounded-lg transition-all" data-index="${index}">
@@ -123,7 +123,9 @@ function renderPurchaseItems() {
     updatePurchaseSummary();
 }
 
-// --- Product Drawer Logic ---
+// Aktualny obiekt tagów dla product drawera
+let _productDrawerTags = {};
+
 function initProductDrawer() {
     const drawerOverlay = document.getElementById('product-drawer-overlay');
     const drawer = document.getElementById('product-drawer');
@@ -133,28 +135,21 @@ function initProductDrawer() {
     // Category Selector in Drawer
     const categoryBtn = document.getElementById('product-drawer-category-btn');
     
-    // Tags Selectors in Drawer
-    const natureBtn = document.getElementById('product-drawer-nature-btn');
-    const purposeBtn = document.getElementById('product-drawer-purpose-btn');
+    // Unified Tags Button in Drawer
+    const tagsBtn = document.getElementById('product-drawer-tags-btn');
 
     if (!drawer) return; // Wait until DOM is loaded
 
     closeBtn.addEventListener('click', closeProductDrawer);
     drawerOverlay.addEventListener('click', closeProductDrawer);
 
-    natureBtn.addEventListener('click', () => {
-        if (typeof openDynamicTagSelection !== 'function') return;
-        openDynamicTagSelection('nature', 'Natura produktu', natureBtn.dataset.value, (val, label) => {
-            natureBtn.dataset.value = val;
-            document.getElementById('product-drawer-nature-label').textContent = label || val;
-        });
-    });
-
-    purposeBtn.addEventListener('click', () => {
-        if (typeof openDynamicTagSelection !== 'function') return;
-        openDynamicTagSelection('purpose', 'Celowość produktu', purposeBtn.dataset.value, (val, label) => {
-            purposeBtn.dataset.value = val;
-            document.getElementById('product-drawer-purpose-label').textContent = label || val;
+    tagsBtn?.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (typeof openTagsDrawer !== 'function') return;
+        openTagsDrawer(_productDrawerTags, (newTags) => {
+            _productDrawerTags = newTags;
+            const summaryEl = document.getElementById('product-drawer-tags-summary');
+            if (summaryEl) summaryEl.textContent = typeof buildTagsSummary === 'function' ? buildTagsSummary(newTags) : 'Wybierz tagi...';
         });
     });
 
@@ -207,10 +202,7 @@ function initProductDrawer() {
             category = compositeCat;
         }
 
-        const tags = {
-            nature: natureBtn.dataset.value || (typeof getTagDefaultValue === 'function' ? getTagDefaultValue('nature', 'zmienny') : 'zmienny'),
-            purpose: purposeBtn.dataset.value || (typeof getTagDefaultValue === 'function' ? getTagDefaultValue('purpose', 'konieczny') : 'konieczny')
-        };
+        const tags = Object.assign({}, _productDrawerTags);
 
         const newItem = { name, price, category, subCategory, tags };
 
@@ -249,11 +241,8 @@ function openProductDrawer(index = null) {
     const catLabel = document.getElementById('product-drawer-category-label');
     const catIcon = document.getElementById('product-drawer-category-icon');
     
-    const natureBtn = document.getElementById('product-drawer-nature-btn');
-    const natureLabel = document.getElementById('product-drawer-nature-label');
-    const purposeBtn = document.getElementById('product-drawer-purpose-btn');
-    const purposeLabel = document.getElementById('product-drawer-purpose-label');
     
+
     // Ustawienie początkowych lub predefiniowanych wartości
     if (index !== null && index >= 0 && index < currentPurchaseItems.length) {
         title.textContent = 'Edytuj produkt';
@@ -283,13 +272,11 @@ function openProductDrawer(index = null) {
         catIcon.style.color = color;
         catIcon.style.backgroundColor = `${color}20`;
         
-        const nVal = item.tags?.nature || (typeof getTagDefaultValue === 'function' ? getTagDefaultValue('nature', 'zmienny') : 'zmienny');
-        natureBtn.dataset.value = nVal;
-        natureLabel.textContent = typeof getTagLabel === 'function' ? (getTagLabel('nature', nVal) || nVal) : nVal;
-        
-        const pVal = item.tags?.purpose || (typeof getTagDefaultValue === 'function' ? getTagDefaultValue('purpose', 'konieczny') : 'konieczny');
-        purposeBtn.dataset.value = pVal;
-        purposeLabel.textContent = typeof getTagLabel === 'function' ? (getTagLabel('purpose', pVal) || pVal) : pVal;
+        const defaultTags = typeof getDefaultTagValues === 'function' ? getDefaultTagValues() : { nature: 'zmienny', purpose: 'konieczny' };
+        _productDrawerTags = Object.assign({}, defaultTags, item.tags || {});
+        const tagsBtn = document.getElementById('product-drawer-tags-btn');
+        const tagsSummaryEl = document.getElementById('product-drawer-tags-summary');
+        if (tagsSummaryEl) tagsSummaryEl.textContent = typeof buildTagsSummary === 'function' ? buildTagsSummary(_productDrawerTags) : '';
         
     } else {
         title.textContent = 'Dodaj produkt';
@@ -303,17 +290,10 @@ function openProductDrawer(index = null) {
         catIcon.style.color = '#6b7280';
         catIcon.style.backgroundColor = '#6b728020';
         
-        const defaultNature = typeof purchaseTagNature !== 'undefined'
-            ? purchaseTagNature
-            : (typeof getTagDefaultValue === 'function' ? getTagDefaultValue('nature', 'zmienny') : 'zmienny');
-        const defaultPurpose = typeof purchaseTagPurpose !== 'undefined'
-            ? purchaseTagPurpose
-            : (typeof getTagDefaultValue === 'function' ? getTagDefaultValue('purpose', 'konieczny') : 'konieczny');
-        
-        natureBtn.dataset.value = defaultNature;
-        natureLabel.textContent = typeof getTagLabel === 'function' ? (getTagLabel('nature', defaultNature) || defaultNature) : defaultNature;
-        purposeBtn.dataset.value = defaultPurpose;
-        purposeLabel.textContent = typeof getTagLabel === 'function' ? (getTagLabel('purpose', defaultPurpose) || defaultPurpose) : defaultPurpose;
+        const defaultTags = typeof getDefaultTagValues === 'function' ? getDefaultTagValues() : { nature: 'zmienny', purpose: 'konieczny' };
+        _productDrawerTags = Object.assign({}, defaultTags);
+        const tagsSummaryEl = document.getElementById('product-drawer-tags-summary');
+        if (tagsSummaryEl) tagsSummaryEl.textContent = typeof buildTagsSummary === 'function' ? buildTagsSummary(_productDrawerTags) : 'Wybierz tagi...';
     }
 
     drawerOverlay.classList.remove('hidden');
@@ -416,18 +396,23 @@ function renderPurchasesList(purchasesToRender, append = false) {
             </div>
             <div class="purchase-items hidden p-4 space-y-4 bg-white/5 rounded-b-2xl border-t border-white/5">
                 <!-- Tagi paragonu -->
-                ${p.tags ? `
-                <div class="flex gap-2 mb-2 p-2 bg-white/5 rounded-xl border border-white/5">
-                    <div class="flex flex-col flex-1">
-                        <span class="text-[10px] text-gray-500 uppercase tracking-widest">N</span>
-                        <span class="text-sm text-white font-medium">${p.tags.nature || 'zmienny'}</span>
-                    </div>
-                    <div class="flex flex-col flex-1">
-                        <span class="text-[10px] text-gray-500 uppercase tracking-widest">C</span>
-                        <span class="text-sm text-white font-medium">${p.tags.purpose || 'konieczny'}</span>
-                    </div>
+                ${p.tags && Object.keys(p.tags).length > 0 ? `
+                <div class="flex flex-wrap gap-4 px-4 py-3 bg-white/5 border-t border-white/5 rounded-xl border border-white/10 mb-4">
+                    ${getTagGroups().map(group => {
+                        const val = p.tags[group];
+                        if (!val) return '';
+                        const groupLabel = String(getTagGroupLabel(group) || group || '');
+                        const tagLabel = typeof getTagLabel === 'function' ? getTagLabel(group, val) : val;
+                        return `
+                            <div class="flex flex-col">
+                                <span class="text-[10px] text-gray-500 uppercase tracking-widest">${groupLabel.charAt(0)}</span>
+                                <span class="text-xs text-white font-medium">${tagLabel}</span>
+                            </div>
+                        `;
+                    }).join('')}
                 </div>` : ''}
 
+                <div class="space-y-4">
                 ${(p.items || []).map(item => {
                     const catName = item.category || 'inne';
                     const subName = item.subCategory || '';
@@ -443,25 +428,31 @@ function renderPurchasesList(purchasesToRender, append = false) {
                     const color = (parentCat && parentCat.color) || (typeof getCategoryColor === 'function' ? getCategoryColor(catName) : '#6b7280');
                     const labelText = subName ? `${catName} / ${subName}` : catName;
 
+                    // Dynamiczne tagi dla przedmiotu
+                    const itemTagsHtml = getTagGroups().map(group => {
+                        const val = item.tags && item.tags[group];
+                        if (!val) return '';
+                        const groupLabel = String(getTagGroupLabel(group) || group || '');
+                        const tagLabel = typeof getTagLabel === 'function' ? getTagLabel(group, val) : val;
+                        return `<span class="text-[10px] text-gray-500">${groupLabel.charAt(0)}: <span class="text-gray-300">${tagLabel}</span></span>`;
+                    }).join(' ');
+
                     return `
-                    <div class="flex justify-between items-end py-1 border-b border-white/5 last:border-0">
+                    <div class="flex justify-between items-end py-1 border-b border-white/5 last:border-0 text-sm">
                         <div class="flex flex-col">
-                            <div class="category-tag-mini flex items-center gap-2 mb-1">
-                                <div class="category-icon-mini" style="background-color: ${color}20; color: ${color}">
+                            <div class="flex items-center gap-2 mb-1">
+                                <div class="w-5 h-5 rounded flex items-center justify-center text-[10px]" style="background-color: ${color}20; color: ${color}">
                                     <i class="fas ${icon}"></i>
                                 </div>
-                                <span class="text-[10px] text-gray-400 uppercase tracking-tight">${labelText}</span>
+                                <span class="text-[10px] text-gray-400 tracking-tight">${labelText}</span>
                             </div>
-                            <div class="text-sm font-semibold text-white">${item.name}</div>
-                            <!-- Tagi pozycji w historii -->
-                            <div class="flex gap-1.5 mt-1">
-                                <span class="text-[10px] text-gray-500">N: <span class="text-gray-300">${item.tags?.nature || 'zmienny'}</span></span>
-                                <span class="text-[10px] text-gray-500">C: <span class="text-gray-300">${item.tags?.purpose || 'konieczny'}</span></span>
-                            </div>
+                            <div class="font-semibold text-white">${item.name}</div>
+                            ${itemTagsHtml ? `<div class="flex flex-wrap gap-x-2 gap-y-0.5 mt-0.5">${itemTagsHtml}</div>` : ''}
                         </div>
                         <div class="font-bold text-white whitespace-nowrap text-base">${formatAmount(item.price || 0)}</div>
                     </div>
                 `;}).join('')}
+                </div>
                 
                 <!-- Expanded view actions -->
                 <div class="flex gap-3 pt-2 mt-2 border-t border-white/5">
@@ -665,13 +656,6 @@ async function fillFormWithAnalysis(analysis) {
     });
 
     currentPurchaseItems = processedItems.map(item => {
-        const defaultNature = typeof purchaseTagNature !== 'undefined'
-            ? purchaseTagNature
-            : (typeof getTagDefaultValue === 'function' ? getTagDefaultValue('nature', 'zmienny') : 'zmienny');
-        const defaultPurpose = typeof purchaseTagPurpose !== 'undefined'
-            ? purchaseTagPurpose
-            : (typeof getTagDefaultValue === 'function' ? getTagDefaultValue('purpose', 'konieczny') : 'konieczny');
-        
         let categoryName = item.category || 'inne';
         let subCategoryName = item.subCategory || '';
 
@@ -681,7 +665,6 @@ async function fillFormWithAnalysis(analysis) {
 
         if (parentCat) {
             categoryName = parentCat.name;
-            
             if (subCategoryName) {
                 const subCat = structuredCategories.find(c => 
                     c.name.toLowerCase() === subCategoryName.toLowerCase() && 
@@ -698,15 +681,25 @@ async function fillFormWithAnalysis(analysis) {
             subCategoryName = '';
         }
 
+        // Dynamiczne tagi dla produktu
+        const tags = {};
+        const groups = typeof getTagGroups === 'function' ? getTagGroups() : ['nature', 'purpose'];
+        
+        groups.forEach(group => {
+            const aiValue = (item.tags && item.tags[group]);
+            const defaultValue = typeof getTagDefaultValue === 'function' 
+                ? getTagDefaultValue(group) 
+                : (group === 'nature' ? 'zmienny' : 'konieczny');
+            
+            tags[group] = aiValue || defaultValue;
+        });
+
         return {
             name: item.name || '',
             price: typeof item.price === 'number' ? item.price : (parseFloat(item.price) || 0),
             category: categoryName,
             subCategory: subCategoryName,
-            tags: {
-                nature: (item.tags && item.tags.nature) || defaultNature,
-                purpose: (item.tags && item.tags.purpose) || defaultPurpose
-            }
+            tags: tags
         };
     });
     

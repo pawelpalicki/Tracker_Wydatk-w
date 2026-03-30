@@ -367,9 +367,15 @@ async function renderHomeRecentTransactions() {
                                     </div>
                                     <span class="text-white font-bold whitespace-nowrap">${formatAmount(item.price)}</span>
                                 </div>
-                                <div class="flex gap-2 ml-5 mt-0.5">
-                                    <span class="text-[10px] text-gray-500">N: <span class="text-gray-400">${item.tags?.nature || 'zmienny'}</span></span>
-                                    <span class="text-[10px] text-gray-500">C: <span class="text-gray-400">${item.tags?.purpose || 'konieczny'}</span></span>
+                                <div class="flex flex-wrap gap-x-3 gap-y-0.5 ml-5 mt-0.5">
+                                    ${(typeof getTagGroups === 'function' ? getTagGroups() : ['nature', 'purpose'])
+                                        .map(group => {
+                                            const val = item.tags?.[group];
+                                            if (!val) return '';
+                                            const gLabel = typeof getTagGroupLabel === 'function' ? getTagGroupLabel(group) : group;
+                                            const tLabel = typeof getTagLabel === 'function' ? getTagLabel(group, val) : val;
+                                            return `<span class="text-[10px] text-gray-500">${gLabel.charAt(0).toUpperCase()}: <span class="text-gray-400">${tLabel}</span></span>`;
+                                        }).join('')}
                                 </div>
                             </div>
                         `;

@@ -142,8 +142,7 @@ const recurringName = document.getElementById('recurring-name');
 const recurringAmount = document.getElementById('recurring-amount');
 let recurringCategoryValue = '';
 let recurringSubCategoryValue = ''; // NOWA ZMIENNA
-let recurringNatureValue = 'stały';
-let recurringPurposeValue = 'konieczny';
+let recurringTagValues = {}; // Tagi dla cyklicznego (wszystkie grupy)
 let scheduleTypeValue = 'monthly';
 const monthlySettings = document.getElementById('recurring-monthly-settings');
 const weeklySettings = document.getElementById('recurring-weekly-settings');
@@ -233,10 +232,178 @@ function openDynamicTagSelection(group, title, currentValue, onSelect, allLabel 
     openSelectionDrawer(title, finalOptions, (val, label) => onSelect(val, label), currentValue || (allLabel ? 'all' : finalOptions[0].value));
 }
 
+// Zwraca etykietę grupy tagów (np. 'nature' -> 'Natura')
+function getTagGroupLabel(group) {
+    if (!group) return '';
+    const labelKey = group + '_label';
+    if (tagDefinitions && typeof tagDefinitions[labelKey] === 'string' && tagDefinitions[labelKey]) {
+        return tagDefinitions[labelKey];
+    }
+    const defaultLabels = { nature: 'Natura', purpose: 'Celowość' };
+    if (defaultLabels[group]) return defaultLabels[group];
+    
+    // Fallback do sformatowanego klucza
+    const sGroup = String(group);
+    if (!sGroup) return '';
+    return sGroup.charAt(0).toUpperCase() + sGroup.slice(1);
+}
+
+// Zwraca tekst podsumowania tagów (np. 'Zmienny • Konieczny')
+function buildTagsSummary(tagsObj) {
+    if (!tagsObj || typeof tagsObj !== 'object') return 'Wybierz tagi...';
+    const groups = getTagGroups();
+    const parts = groups
+        .map(group => {
+            const val = tagsObj[group];
+            if (!val) return null;
+            return getTagLabel(group, val);
+        })
+        .filter(Boolean);
+    return parts.length > 0 ? parts.join(' • ') : 'Wybierz tagi...';
+}
+
+// Zwraca listę wszystkich kluczy grup tagów (z wyłączeniem meta-kluczy _label)
+function getTagGroups() {
+    return Object.keys(tagDefinitions || {}).filter(k => !k.endsWith('_label') && Array.isArray(tagDefinitions[k]));
+}
+
+// Inicjalizuje wartości domyślne tagów dla wszystkich grup
+function getDefaultTagValues() {
+    const result = {};
+    getTagGroups().forEach(group => {
+        result[group] = getTagDefaultValue(group, '');
+    });
+    return result;
+}
+
+let _tagsDrawerCallback = null;
+let _tagsDrawerCurrentValues = {};
+let _tagsDrawerIsFilter = false;
+
+// Otwiera jeden, zbiorczy szufladę tagów dla wszystkich grup
+function openTagsDrawer(currentTags, onConfirm, isFilter = false) {
+    const overlay = document.getElementById('tags-selection-overlay');
+    const drawer = document.getElementById('tags-selection-drawer');
+    const content = document.getElementById('tags-selection-content');
+    if (!drawer || !content) {
+        console.warn('Tags selection drawer not found in DOM');
+        return;
+    }
+
+    _tagsDrawerCallback = onConfirm;
+    _tagsDrawerIsFilter = isFilter;
+    _tagsDrawerCurrentValues = Object.assign({}, isFilter ? {} : getDefaultTagValues(), currentTags || {});
+
+    const groups = getTagGroups();
+    content.innerHTML = '';
+
+    groups.forEach(group => {
+        const options = getTagOptions(group);
+        const groupLabel = String(getTagGroupLabel(group) || group || '');
+        const currentVal = _tagsDrawerCurrentValues[group] || (isFilter ? 'all' : (options[0] && options[0].value) || '');
+
+        const groupEl = document.createElement('div');
+        groupEl.innerHTML = `
+            <div class="mb-2">
+                <p class="text-xs text-gray-500 uppercase tracking-widest font-semibold mb-2">${groupLabel}</p>
+                <div class="flex flex-wrap gap-2">
+                    ${isFilter ? `
+                        <button class="tag-select-btn px-3 py-1.5 rounded-lg text-xs transition-all border ${currentVal === 'all' || !currentVal ? 'bg-brand-600 text-white border-brand-500' : 'bg-white/5 text-gray-400 border-white/10 hover:bg-white/10'}"
+                            data-group="${group}" data-value="all">
+                            Wszystkie
+                        </button>
+                    ` : ''}
+                    ${options.map(opt => `
+                        <button class="tag-select-btn px-3 py-1.5 rounded-lg text-xs transition-all border ${currentVal === opt.value ? 'bg-brand-600 text-white border-brand-500' : 'bg-white/5 text-gray-400 border-white/10 hover:bg-white/10'}"
+                            data-group="${group}" data-value="${opt.value}">
+                            ${opt.label || opt.value}
+                        </button>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+        content.appendChild(groupEl);
+    });
+
+    // Delegacja kliknięć w tagi
+    content.onclick = (e) => {
+        const btn = e.target.closest('.tag-select-btn');
+        if (!btn) return;
+        const group = btn.dataset.group;
+        const val = btn.dataset.value;
+
+        // Odznacz poprzedni w tej grupie
+        const btns = content.querySelectorAll(`.tag-select-btn[data-group="${group}"]`);
+        btns.forEach(b => b.classList.replace('bg-brand-600', 'bg-white/5'));
+        btns.forEach(b => b.classList.replace('text-white', 'text-gray-400'));
+        btns.forEach(b => b.classList.replace('border-brand-500', 'border-white/10'));
+
+        // Zaznacz nowy
+        btn.classList.replace('bg-white/5', 'bg-brand-600');
+        btn.classList.replace('text-gray-400', 'text-white');
+        btn.classList.replace('border-white/10', 'border-brand-500');
+
+        _tagsDrawerCurrentValues[group] = (val === 'all') ? null : val;
+    };
+
+    overlay.classList.remove('hidden');
+    setTimeout(() => {
+        overlay.classList.add('active');
+        drawer.classList.add('active');
+    }, 10);
+    document.body.style.overflow = 'hidden';
+}
+
+function closeTagsDrawer() {
+    const overlay = document.getElementById('tags-selection-overlay');
+    const drawer = document.getElementById('tags-selection-drawer');
+    if (!overlay || !drawer) return;
+
+    overlay.classList.remove('active');
+    drawer.classList.remove('active');
+    setTimeout(() => {
+        overlay.classList.add('hidden');
+        document.body.style.overflow = '';
+    }, 300);
+}
+
+function confirmTagsSelection() {
+    if (_tagsDrawerCallback) {
+        _tagsDrawerCallback(_tagsDrawerCurrentValues);
+    }
+    closeTagsDrawer();
+}
+
+// Dodaj Listenery dla przycisków szuflady tagów (zatwierdź/anuluj)
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('tags-selection-confirm')?.addEventListener('click', confirmTagsSelection);
+    document.getElementById('tags-selection-cancel')?.addEventListener('click', closeTagsDrawer);
+    document.getElementById('tags-selection-overlay')?.addEventListener('click', (e) => {
+        if (e.target.id === 'tags-selection-overlay') closeTagsDrawer();
+    });
+});
+
+function initTagsSelectionDrawer() {
+    document.getElementById('close-tags-selection-drawer')?.addEventListener('click', closeTagsDrawer);
+    document.getElementById('tags-selection-overlay')?.addEventListener('click', closeTagsDrawer);
+    document.getElementById('tags-selection-confirm-btn')?.addEventListener('click', () => {
+        if (typeof _tagsDrawerCallback === 'function') {
+            _tagsDrawerCallback(Object.assign({}, _tagsDrawerCurrentValues));
+        }
+        closeTagsDrawer();
+    });
+}
+
 window.getTagOptions = getTagOptions;
 window.getTagDefaultValue = getTagDefaultValue;
 window.getTagLabel = getTagLabel;
+window.getTagGroupLabel = getTagGroupLabel;
+window.getTagGroups = getTagGroups;
+window.getDefaultTagValues = getDefaultTagValues;
+window.buildTagsSummary = buildTagsSummary;
 window.openDynamicTagSelection = openDynamicTagSelection;
+window.openTagsDrawer = openTagsDrawer;
+window.closeTagsDrawer = closeTagsDrawer;
 
 function updateCustomDropdownValue(selectId, labelId) {
     const select = document.getElementById(selectId);
@@ -778,20 +945,17 @@ function setupAppEventListeners() {
         }
     });
 
-    // Tagi dla wydatków cyklicznych
-    document.getElementById('recurring-nature-btn')?.addEventListener('click', () => {
-        openDynamicTagSelection('nature', 'Natura wydatku', recurringNatureValue, (val) => {
-            recurringNatureValue = val;
-            document.getElementById('recurring-nature-label').textContent = getTagLabel('nature', val) || val;
+    // Tagi dla wydatków cyklicznych - jeden przycisk
+    document.getElementById('recurring-tags-btn')?.addEventListener('click', () => {
+        openTagsDrawer(recurringTagValues, (newTags) => {
+            recurringTagValues = newTags;
+            const summaryEl = document.getElementById('recurring-tags-summary');
+            if (summaryEl) summaryEl.textContent = buildTagsSummary(newTags);
         });
     });
 
-    document.getElementById('recurring-purpose-btn')?.addEventListener('click', () => {
-        openDynamicTagSelection('purpose', 'Cel wydatku', recurringPurposeValue, (val) => {
-            recurringPurposeValue = val;
-            document.getElementById('recurring-purpose-label').textContent = getTagLabel('purpose', val) || val;
-        });
-    });
+    // Initializuj szufladę tagów
+    initTagsSelectionDrawer();
 
     const addCategoryDrawerBtn = document.getElementById('add-category-drawer-btn');
     const newCategoryDrawerForm = document.getElementById('new-category-drawer-form');
@@ -879,21 +1043,6 @@ function setupAppEventListeners() {
         }, recurringDayOfWeekValue);
     });
 
-    // Tagi dla wydatków cyklicznych
-    document.getElementById('recurring-nature-btn')?.addEventListener('click', () => {
-        openDynamicTagSelection('nature', 'Natura wydatku', recurringNatureValue, (val) => {
-            recurringNatureValue = val;
-            document.getElementById('recurring-nature-label').textContent = getTagLabel('nature', val) || val;
-        });
-    });
-
-    document.getElementById('recurring-purpose-btn')?.addEventListener('click', () => {
-        openDynamicTagSelection('purpose', 'Cel wydatku', recurringPurposeValue, (val) => {
-            recurringPurposeValue = val;
-            document.getElementById('recurring-purpose-label').textContent = getTagLabel('purpose', val) || val;
-        });
-    });
-
     // DODAJ TEN EVENT LISTENER TUTAJ:
     document.getElementById('toggle-budget-details')?.addEventListener('click', toggleBudgetDetails);
     document.getElementById('toggle-legend-details')?.addEventListener('click', toggleChartLegend);
@@ -910,6 +1059,7 @@ function setupAppEventListeners() {
     }
 
     fabAddManualBtn.addEventListener('click', () => {
+        if (typeof clearPurchaseItems === 'function') clearPurchaseItems();
         switchTab('add');
         setTimeout(() => shopInput.focus(), 100);
         toggleFab();
@@ -940,6 +1090,92 @@ function setupAppEventListeners() {
 
     document.getElementById('nav-notifications-btn')?.addEventListener('click', () => {
         alert('Powiadomienia będą dostępne wkrótce! (Etap 4)');
+    });
+
+    // --- Obsługa otwierania szuflad kategorii i budżetu ---
+    document.getElementById('budget-type-btn')?.addEventListener('click', () => {
+        const options = [
+            { value: 'monthly', label: 'Budżet miesięczny', icon: '💰' }
+        ];
+        if (typeof allSpecialBudgets !== 'undefined') {
+            allSpecialBudgets.forEach(b => {
+                options.push({ value: b.id, label: b.name, icon: '🏷️' });
+            });
+        }
+        openSelectionDrawer('Wybierz budżet', options, (val, label) => {
+            const btn = document.getElementById('budget-type-btn');
+            const labelEl = document.getElementById('budget-type-label');
+            if (btn && labelEl) {
+                labelEl.textContent = label;
+                btn.dataset.value = val;
+            }
+        }, document.getElementById('budget-type-btn')?.dataset.value || 'monthly');
+    });
+
+    document.getElementById('recurring-category-btn')?.addEventListener('click', () => {
+        const currentVal = document.getElementById('recurring-category-btn').dataset.value || '';
+        let [vCat, vSub] = currentVal.split('|');
+
+        if (typeof openHierarchicalCategoryDrawer === 'function') {
+            openHierarchicalCategoryDrawer(null, vCat, vSub, (pName, sName) => {
+                const combined = sName ? `${pName}|${sName}` : pName;
+                const btn = document.getElementById('recurring-category-btn');
+                const labelEl = document.getElementById('recurring-category-label');
+                const iconEl = document.getElementById('recurring-category-icon');
+
+                if (btn && labelEl) {
+                    btn.dataset.value = combined;
+                    labelEl.textContent = sName ? `${pName} / ${sName}` : pName;
+                    
+                    const parentCat = (typeof structuredCategories !== 'undefined') 
+                        ? structuredCategories.find(c => c.name === pName && !c.parentId)
+                        : null;
+                    const subCat = (typeof structuredCategories !== 'undefined' && parentCat)
+                        ? structuredCategories.find(c => c.name === sName && c.parentId === parentCat.id)
+                        : null;
+                    const iconName = (subCat && subCat.icon) || (parentCat && parentCat.icon) || 'fa-folder';
+                    const color = (parentCat && parentCat.color) || '#6b7280';
+
+                    if (iconEl) {
+                        iconEl.innerHTML = `<i class="fas ${iconName}"></i>`;
+                        iconEl.style.color = color;
+                    }
+                }
+            });
+        }
+    });
+
+    document.getElementById('recurring-tags-btn')?.addEventListener('click', () => {
+        const summaryEl = document.getElementById('recurring-tags-summary');
+        const currentTagsStr = summaryEl.dataset.tags || '{}';
+        let currentTags = {};
+        try { currentTags = JSON.parse(currentTagsStr); } catch(e) {}
+
+        if (typeof openTagsDrawer === 'function') {
+            openTagsDrawer(currentTags, (newTags) => {
+                summaryEl.dataset.tags = JSON.stringify(newTags);
+                summaryEl.textContent = buildTagsSummary(newTags) || 'Wybierz tagi...';
+            }, false);
+        }
+    });
+
+    document.getElementById('analysis-filter-tags-btn')?.addEventListener('click', () => {
+        if (typeof openTagsDrawer === 'function') {
+            // currentComparisonTags is global in long-term-budget.js
+            const currentTags = typeof currentComparisonTags !== 'undefined' ? currentComparisonTags : {};
+            openTagsDrawer(currentTags, (newTags) => {
+                if (typeof currentComparisonTags !== 'undefined') {
+                    // Directly update and trigger chart refresh if in long-term-budget context
+                    window.currentComparisonTags = newTags;
+                    if (typeof renderAnalysisTagFilterButton === 'function') renderAnalysisTagFilterButton();
+                    if (typeof updateComparisonChart === 'function') updateComparisonChart();
+                } else {
+                    // Fallback or other context
+                    const labelEl = document.getElementById('analysis-filter-tags-label');
+                    if (labelEl) labelEl.textContent = buildTagsSummary(newTags) || 'Wszystkie tagi';
+                }
+            }, true);
+        }
     });
 }
 
@@ -1026,12 +1262,12 @@ async function fetchInitialData(shouldSwitchToDefault = true) {
             apiCall('/api/tags')
         ]);
 
-        recurringNatureValue = getTagDefaultValue('nature', recurringNatureValue || 'stały');
-        recurringPurposeValue = getTagDefaultValue('purpose', recurringPurposeValue || 'konieczny');
-        const recurringNatureLabel = document.getElementById('recurring-nature-label');
-        const recurringPurposeLabel = document.getElementById('recurring-purpose-label');
-        if (recurringNatureLabel) recurringNatureLabel.textContent = getTagLabel('nature', recurringNatureValue) || recurringNatureValue;
-        if (recurringPurposeLabel) recurringPurposeLabel.textContent = getTagLabel('purpose', recurringPurposeValue) || recurringPurposeValue;
+        // Inicjalizuj domyślne tagi cykliczne ze wszystkich grup
+        recurringTagValues = getDefaultTagValues();
+        const recurringTagsSummaryEl = document.getElementById('recurring-tags-summary');
+        if (recurringTagsSummaryEl) recurringTagsSummaryEl.textContent = buildTagsSummary(recurringTagValues);
+        // Renderuj dynamiczne filtry tagów w analizie
+        if (typeof renderAnalysisTagFilterButton === 'function') renderAnalysisTagFilterButton();
 
         // Załaduj pierwszą stronę zakupów
         await loadInitialPurchases();
@@ -1308,10 +1544,7 @@ async function handleAddOrUpdateRecurringExpense(e) {
     const category = recurringCategoryValue;
     const subCategory = recurringSubCategoryValue; // DODANE
     const scheduleType = scheduleTypeValue;
-    const tags = {
-        nature: recurringNatureValue,
-        purpose: recurringPurposeValue
-    };
+    const tags = Object.assign({}, recurringTagValues);
 
     let schedule = { type: scheduleType };
     let isValid = false;
@@ -1423,13 +1656,11 @@ function enterRecurringExpenseEditMode(expenseId) {
     const categoryIconEl = document.getElementById('recurring-category-icon');
     if (categoryIconEl) categoryIconEl.innerHTML = `<i class="fas ${icon}" style="color: ${color}"></i>`;
 
-    // Tagi
-    recurringNatureValue = (expense.tags && expense.tags.nature) ? expense.tags.nature : getTagDefaultValue('nature', 'stały');
-    recurringPurposeValue = (expense.tags && expense.tags.purpose) ? expense.tags.purpose : getTagDefaultValue('purpose', 'konieczny');
-    const natureLabelEl = document.getElementById('recurring-nature-label');
-    const purposeLabelEl = document.getElementById('recurring-purpose-label');
-    if (natureLabelEl) natureLabelEl.textContent = getTagLabel('nature', recurringNatureValue) || recurringNatureValue;
-    if (purposeLabelEl) purposeLabelEl.textContent = getTagLabel('purpose', recurringPurposeValue) || recurringPurposeValue;
+    // Tagi (wszystkie grupy)
+    const defaults = getDefaultTagValues();
+    recurringTagValues = Object.assign({}, defaults, expense.tags || {});
+    const tagsSummaryEl = document.getElementById('recurring-tags-summary');
+    if (tagsSummaryEl) tagsSummaryEl.textContent = buildTagsSummary(recurringTagValues);
 
     if (expense.schedule) {
         scheduleTypeValue = expense.schedule.type;
@@ -1459,12 +1690,9 @@ function exitRecurringExpenseEditMode() {
     editingRecurringExpenseId = null;
     addRecurringExpenseForm.reset();
 
-    recurringNatureValue = getTagDefaultValue('nature', 'stały');
-    recurringPurposeValue = getTagDefaultValue('purpose', 'konieczny');
-    const natureLabelEl = document.getElementById('recurring-nature-label');
-    const purposeLabelEl = document.getElementById('recurring-purpose-label');
-    if (natureLabelEl) natureLabelEl.textContent = getTagLabel('nature', recurringNatureValue) || recurringNatureValue;
-    if (purposeLabelEl) purposeLabelEl.textContent = getTagLabel('purpose', recurringPurposeValue) || recurringPurposeValue;
+    recurringTagValues = getDefaultTagValues();
+    const tagsSummaryEl = document.getElementById('recurring-tags-summary');
+    if (tagsSummaryEl) tagsSummaryEl.textContent = buildTagsSummary(recurringTagValues);
 
     handleScheduleTypeChange();
     addRecurringExpenseForm.querySelector('button[type="submit"]').textContent = 'Dodaj subskrypcję';

@@ -690,6 +690,18 @@ select option {
     transform: translateY(0);
 }
 
+/* Tags Selection Drawer Styles */
+#tags-selection-overlay.active {
+    display: block !important;
+    opacity: 1;
+    pointer-events: auto;
+}
+
+#tags-selection-drawer.active {
+    display: flex !important;
+    transform: translateY(0);
+}
+
 /* Reduced height and improved layouts */
 .drawer-grid-layout {
     display: grid !important;

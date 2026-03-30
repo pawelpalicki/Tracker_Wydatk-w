@@ -481,135 +481,290 @@ async function deleteCategory(id, isParent) {
 }
 
 // =====================================================================
-// TAGI PARAGONU
+// TAGI PARAGONU — dynamiczny manager grup
 // =====================================================================
-let purchaseTagNature = (typeof getTagDefaultValue === 'function') ? getTagDefaultValue('nature', 'zmienny') : 'zmienny';
-let purchaseTagPurpose = (typeof getTagDefaultValue === 'function') ? getTagDefaultValue('purpose', 'konieczny') : 'konieczny';
 
-function initPurchaseTags() {
-    const natureBtn = document.getElementById('tag-nature-btn');
-    const purposeBtn = document.getElementById('tag-purpose-btn');
-
-    if (natureBtn) {
-        natureBtn.addEventListener('click', () => {
-            if (typeof openDynamicTagSelection !== 'function') return;
-            openDynamicTagSelection('nature', 'Natura wydatku', purchaseTagNature, (val, label) => {
-                purchaseTagNature = val;
-                document.getElementById('tag-nature-label').textContent =
-                    label.charAt(0).toUpperCase() + label.slice(1);
-            });
-        });
-    }
-
-    if (purposeBtn) {
-        purposeBtn.addEventListener('click', () => {
-            if (typeof openDynamicTagSelection !== 'function') return;
-            openDynamicTagSelection('purpose', 'Cel wydatku', purchaseTagPurpose, (val, label) => {
-                purchaseTagPurpose = val;
-                document.getElementById('tag-purpose-label').textContent =
-                    label.charAt(0).toUpperCase() + label.slice(1);
-            });
-        });
-    }
-}
-
-function resetPurchaseTags() {
-    const defaultNature = typeof getTagDefaultValue === 'function' ? getTagDefaultValue('nature', 'zmienny') : 'zmienny';
-    const defaultPurpose = typeof getTagDefaultValue === 'function' ? getTagDefaultValue('purpose', 'konieczny') : 'konieczny';
-    setPurchaseTags(defaultNature, defaultPurpose);
-}
-
-function setPurchaseTags(nature, purpose) {
-    const defaultNature = typeof getTagDefaultValue === 'function' ? getTagDefaultValue('nature', 'zmienny') : 'zmienny';
-    const defaultPurpose = typeof getTagDefaultValue === 'function' ? getTagDefaultValue('purpose', 'konieczny') : 'konieczny';
-    purchaseTagNature = nature || defaultNature;
-    purchaseTagPurpose = purpose || defaultPurpose;
-    const natEl = document.getElementById('tag-nature-label');
-    const purEl = document.getElementById('tag-purpose-label');
-    if (natEl) natEl.textContent = typeof getTagLabel === 'function'
-        ? (getTagLabel('nature', purchaseTagNature) || purchaseTagNature)
-        : (purchaseTagNature.charAt(0).toUpperCase() + purchaseTagNature.slice(1));
-    if (purEl) purEl.textContent = typeof getTagLabel === 'function'
-        ? (getTagLabel('purpose', purchaseTagPurpose) || purchaseTagPurpose)
-        : (purchaseTagPurpose.charAt(0).toUpperCase() + purchaseTagPurpose.slice(1));
-}
-
-function renderTagManagerList(group, listId) {
-    const listEl = document.getElementById(listId);
-    if (!listEl) return;
+// Renderuje jedną grupę tagów jako kafelki z przyciskami edycji/usuwania
+function renderTagGroupSection(group) {
+    const groupLabel = typeof getTagGroupLabel === 'function' ? getTagGroupLabel(group) : group;
     const tags = typeof getTagOptions === 'function' ? getTagOptions(group) : [];
-    if (!tags.length) {
-        listEl.innerHTML = `<p class="text-xs text-gray-500 italic">Brak tagów</p>`;
-        return;
-    }
-    listEl.innerHTML = tags.map(tag => `
-        <div class="flex items-center justify-between px-3 py-2 rounded-xl bg-white/5 border border-white/10">
-            <div class="min-w-0">
-                <div class="text-sm text-white truncate">${tag.icon || ''} ${tag.label || tag.value}</div>
-                <div class="text-[10px] text-gray-500 mt-0.5">${tag.value}</div>
+    const isBuiltin = ['nature', 'purpose'].includes(group);
+
+    const tagsHtml = tags.length === 0
+        ? `<p class="text-xs text-gray-500 italic">Brak tagów</p>`
+        : tags.map(tag => `
+            <div class="flex items-center justify-between px-3 py-2 rounded-xl bg-white/5 border border-white/10">
+                <div class="min-w-0">
+                    <div class="text-sm text-white truncate">${tag.icon || ''} ${tag.label || tag.value}</div>
+                    <div class="text-[10px] text-gray-500 mt-0.5">${tag.value}</div>
+                </div>
+                <div class="flex items-center gap-1 ml-2">
+                    <button class="tag-edit-btn p-1.5 rounded-lg text-gray-400 hover:text-blue-400 hover:bg-white/5 transition-colors"
+                        data-group="${group}" data-value="${tag.value}" title="Edytuj">
+                        <i class="fas fa-pen text-xs"></i>
+                    </button>
+                    <button class="tag-delete-btn p-1.5 rounded-lg text-gray-400 hover:text-red-400 hover:bg-white/5 transition-colors"
+                        data-group="${group}" data-value="${tag.value}" title="Usuń">
+                        <i class="fas fa-trash text-xs"></i>
+                    </button>
+                </div>
             </div>
-            <div class="flex items-center gap-1 ml-2">
-                <button class="tag-edit-btn p-1.5 rounded-lg text-gray-400 hover:text-blue-400 hover:bg-white/5 transition-colors"
-                    data-group="${group}" data-value="${tag.value}" title="Edytuj">
-                    <i class="fas fa-pen text-xs"></i>
-                </button>
-                <button class="tag-delete-btn p-1.5 rounded-lg text-gray-400 hover:text-red-400 hover:bg-white/5 transition-colors"
-                    data-group="${group}" data-value="${tag.value}" title="Usuń">
-                    <i class="fas fa-trash text-xs"></i>
-                </button>
+        `).join('');
+
+    return `
+        <div class="bg-white/5 border border-white/10 rounded-2xl p-3" data-tag-group="${group}">
+            <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center gap-2">
+                    <h4 class="text-sm font-semibold text-white">${groupLabel}</h4>
+                    ${isBuiltin ? '<span class="text-[10px] text-gray-600 px-1.5 py-0.5 rounded bg-white/5">wbudowana</span>' : ''}
+                </div>
+                <div class="flex items-center gap-1">
+                    <button class="add-tag-in-group-btn px-2.5 py-1.5 text-xs rounded-lg bg-brand-600 hover:bg-brand-700 text-white transition-colors"
+                        data-group="${group}">Dodaj</button>
+                    ${!isBuiltin ? `
+                        <button class="edit-tag-group-btn p-1.5 rounded-lg text-gray-500 hover:text-blue-400 hover:bg-white/5 transition-colors" data-group="${group}" title="Edytuj nazwę grupy">
+                            <i class="fas fa-edit text-xs"></i>
+                        </button>
+                        <button class="delete-tag-group-btn p-1.5 rounded-lg text-gray-500 hover:text-red-400 hover:bg-white/5 transition-colors" data-group="${group}" title="Usuń grupę">
+                            <i class="fas fa-times text-xs"></i>
+                        </button>
+                    ` : ''}
+                </div>
+            </div>
+            <div class="space-y-2">
+                ${tagsHtml}
             </div>
         </div>
-    `).join('');
+    `;
 }
 
+// Główna funkcja renderująca wszystkie grupy
 function renderTagsManager() {
-    renderTagManagerList('nature', 'tag-nature-list');
-    renderTagManagerList('purpose', 'tag-purpose-list');
+    const container = document.getElementById('tags-groups-container');
+    if (!container) return;
+
+    const groups = typeof getTagGroups === 'function' ? getTagGroups() : ['nature', 'purpose'];
+    if (groups.length === 0) {
+        container.innerHTML = '<p class="text-xs text-gray-500 italic">Brak grup tagów.</p>';
+        return;
+    }
+    container.innerHTML = groups.map(renderTagGroupSection).join('');
 }
 
-async function createTag(group) {
-    const value = prompt('Podaj wartość tagu (np. "okazjonalny"):');
-    if (!value || !value.trim()) return;
-    const label = prompt('Podaj etykietę (opcjonalnie, np. "Okazjonalny"):', value.trim()) || value.trim();
-    const icon = prompt('Podaj ikonę emoji (opcjonalnie):', '');
-    await apiCall(`/api/tags/${group}`, 'POST', { value: value.trim(), label: label.trim(), icon: (icon || '').trim() });
-    if (typeof fetchInitialData === 'function') await fetchInitialData(false);
-    renderTagsManager();
+// --- FORMULARZE TAGÓW (zamiast prompt()) ---
+
+function openTagFormModal(group, oldValue = null) {
+    const modal = document.getElementById('tag-form-modal');
+    const titleEl = document.getElementById('tag-form-modal-title');
+    const labelInput = document.getElementById('tag-form-label-input');
+    const valuePreview = document.getElementById('tag-form-value-preview');
+    const iconInput = document.getElementById('tag-form-icon-input');
+    const groupInput = document.getElementById('tag-form-group');
+    const oldValInput = document.getElementById('tag-form-old-value');
+    if (!modal) return;
+
+    groupInput.value = group;
+    oldValInput.value = oldValue || '';
+
+    if (oldValue) {
+        const existing = (typeof getTagOptions === 'function' ? getTagOptions(group) : []).find(t => t.value === oldValue);
+        titleEl.textContent = 'Edytuj tag';
+        labelInput.value = existing ? existing.label : oldValue;
+        iconInput.value = existing ? existing.icon : '';
+        valuePreview.textContent = oldValue;
+    } else {
+        titleEl.textContent = 'Nowy tag';
+        labelInput.value = '';
+        iconInput.value = '';
+        valuePreview.textContent = '—';
+    }
+
+    // Auto-generuj value preview ze label
+    const updatePreview = () => {
+        const raw = labelInput.value.trim().toLowerCase()
+            .replace(/\s+/g, '_')
+            .replace(/[^a-z0-9_\u00e0-\u017e-]/g, '')
+            .slice(0, 32);
+        valuePreview.textContent = raw || '—';
+    };
+    labelInput.oninput = updatePreview;
+
+    modal.classList.remove('hidden');
 }
 
-async function editTag(group, oldValue) {
-    const currentLabel = (typeof getTagLabel === 'function' ? getTagLabel(group, oldValue) : oldValue) || oldValue;
-    const value = prompt('Nowa wartość tagu:', oldValue);
-    if (!value || !value.trim()) return;
-    const label = prompt('Nowa etykieta:', currentLabel) || value.trim();
-    const icon = prompt('Ikona emoji (opcjonalnie):', '');
-    await apiCall(`/api/tags/${group}/${encodeURIComponent(oldValue)}`, 'PUT', { value: value.trim(), label: label.trim(), icon: (icon || '').trim() });
-    if (typeof fetchInitialData === 'function') await fetchInitialData(false);
-    renderTagsManager();
+async function saveTagFromModal() {
+    const group = document.getElementById('tag-form-group').value;
+    const oldValue = document.getElementById('tag-form-old-value').value;
+    const labelRaw = document.getElementById('tag-form-label-input').value.trim();
+    const icon = document.getElementById('tag-form-icon-input').value.trim();
+
+    if (!labelRaw) { alert('Podaj etykietę tagu.'); return; }
+
+    const value = labelRaw.toLowerCase()
+        .replace(/\s+/g, '_')
+        .replace(/[^a-z0-9_\u00e0-\u017e-]/g, '')
+        .slice(0, 32);
+
+    if (!value) { alert('Nie można wygenerować wartości. Spróbuj innej etykiety.'); return; }
+
+    try {
+        if (oldValue) {
+            await apiCall(`/api/tags/${group}/${encodeURIComponent(oldValue)}`, 'PUT', { value, label: labelRaw, icon });
+        } else {
+            await apiCall(`/api/tags/${group}`, 'POST', { value, label: labelRaw, icon });
+        }
+        document.getElementById('tag-form-modal').classList.add('hidden');
+        if (typeof fetchInitialData === 'function') await fetchInitialData(false);
+        renderTagsManager();
+    } catch (err) {
+        alert('Błąd: ' + err.message);
+    }
 }
 
-async function deleteTag(group, value) {
-    if (!confirm(`Usunąć tag "${value}"?`)) return;
-    await apiCall(`/api/tags/${group}/${encodeURIComponent(value)}`, 'DELETE');
-    if (typeof fetchInitialData === 'function') await fetchInitialData(false);
-    renderTagsManager();
+async function deleteTagConfirm(group, value) {
+    if (!confirm(`Usunąć tag "${value}"? Wydatki z tym tagiem zostaną przypisane do domyślnej wartości grupy.`)) return;
+    try {
+        await apiCall(`/api/tags/${group}/${encodeURIComponent(value)}`, 'DELETE');
+        if (typeof fetchInitialData === 'function') await fetchInitialData(false);
+        renderTagsManager();
+    } catch (err) {
+        alert('Błąd: ' + err.message);
+    }
+}
+
+function openTagGroupModal(existingGroup = null) {
+    const modal = document.getElementById('tag-group-modal');
+    const titleEl = document.getElementById('tag-group-modal-title') || { textContent: '' };
+    const labelInput = document.getElementById('tag-group-label-input');
+    const keyPreview = document.getElementById('tag-group-key-preview');
+    const firstLabel = document.getElementById('tag-group-first-label');
+    const firstIcon = document.getElementById('tag-group-first-icon');
+    const editGroupInput = document.getElementById('tag-group-edit-id') || { value: '' };
+    const initialTagContainer = document.getElementById('tag-group-initial-tag-container');
+    
+    if (!modal) return;
+
+    if (existingGroup) {
+        const label = typeof getTagGroupLabel === 'function' ? getTagGroupLabel(existingGroup) : existingGroup;
+        titleEl.textContent = 'Edytuj grupę tagów';
+        labelInput.value = label;
+        keyPreview.textContent = existingGroup;
+        editGroupInput.value = existingGroup;
+        if (initialTagContainer) initialTagContainer.classList.add('hidden');
+    } else {
+        titleEl.textContent = 'Nowa grupa tagów';
+        labelInput.value = '';
+        keyPreview.textContent = '—';
+        editGroupInput.value = '';
+        if (firstLabel) firstLabel.value = '';
+        if (firstIcon) firstIcon.value = '';
+        if (initialTagContainer) initialTagContainer.classList.remove('hidden');
+    }
+
+    const updateKey = () => {
+        const raw = labelInput.value.trim().toLowerCase()
+            .replace(/\s+/g, '_')
+            .replace(/[^a-z0-9_-]/g, '')
+            .slice(0, 32);
+        keyPreview.textContent = raw || '—';
+    };
+    labelInput.oninput = updateKey;
+    modal.classList.remove('hidden');
+}
+
+async function saveTagGroup() {
+    const labelInput = document.getElementById('tag-group-label-input');
+    const firstLabelInput = document.getElementById('tag-group-first-label');
+    const firstIconInput = document.getElementById('tag-group-first-icon');
+    const keyPreview = document.getElementById('tag-group-key-preview');
+    const editGroupId = (document.getElementById('tag-group-edit-id') || { value: '' }).value;
+
+    const label = labelInput ? labelInput.value.trim() : '';
+    const firstLabel = firstLabelInput ? firstLabelInput.value.trim() : '';
+    const firstIcon = firstIconInput ? firstIconInput.value.trim() : '';
+    const groupKey = keyPreview ? keyPreview.textContent.trim() : '';
+
+    if (!label) { alert('Podaj nazwę grupy.'); return; }
+    
+    try {
+        if (editGroupId) {
+            // Edycja istniejącej grupy
+            await apiCall(`/api/tags/groups/${encodeURIComponent(editGroupId)}`, 'PUT', { label });
+        } else {
+            // Tworzenie nowej grupy
+            if (!firstLabel) { alert('Podaj pierwszą wartość grupy.'); return; }
+            if (groupKey === '—' || !groupKey) { alert('Błąd: Nieprawidłowy klucz grupy.'); return; }
+            await apiCall('/api/tags/groups', 'POST', { group: groupKey, label, firstLabel, firstIcon });
+        }
+        document.getElementById('tag-group-modal').classList.add('hidden');
+        if (typeof fetchInitialData === 'function') await fetchInitialData(false);
+        renderTagsManager();
+    } catch (err) {
+        alert('Błąd: ' + err.message);
+    }
+}
+
+async function deleteTagGroup(group) {
+    const groupLabel = typeof getTagGroupLabel === 'function' ? getTagGroupLabel(group) : group;
+    if (!confirm(`Usunąć całą grupę "${groupLabel}"? Wydatki z tymi tagami zostaną bez tagu dla tej grupy.`)) return;
+    try {
+        await apiCall(`/api/tags/groups/${encodeURIComponent(group)}`, 'DELETE');
+        if (typeof fetchInitialData === 'function') await fetchInitialData(false);
+        renderTagsManager();
+    } catch (err) {
+        alert('Błąd: ' + err.message);
+    }
 }
 
 function initTagsManagerEvents() {
-    const addNatureBtn = document.getElementById('add-nature-tag-btn');
-    const addPurposeBtn = document.getElementById('add-purpose-tag-btn');
-    addNatureBtn?.addEventListener('click', () => createTag('nature').catch(err => alert('Błąd: ' + err.message)));
-    addPurposeBtn?.addEventListener('click', () => createTag('purpose').catch(err => alert('Błąd: ' + err.message)));
+    // Przycisk "Dodaj grupę tagów"
+    document.getElementById('add-tag-group-btn')?.addEventListener('click', () => openTagGroupModal(null));
 
-    document.getElementById('tags-manager-card')?.addEventListener('click', (e) => {
+    // Przyciski modalu tagu
+    document.getElementById('tag-form-cancel-btn')?.addEventListener('click', () => {
+        document.getElementById('tag-form-modal').classList.add('hidden');
+    });
+    document.getElementById('tag-form-modal-backdrop')?.addEventListener('click', () => {
+        document.getElementById('tag-form-modal').classList.add('hidden');
+    });
+    document.getElementById('tag-form-save-btn')?.addEventListener('click', saveTagFromModal);
+
+    // Przyciski modalu grupy
+    document.getElementById('tag-group-cancel-btn')?.addEventListener('click', () => {
+        document.getElementById('tag-group-modal').classList.add('hidden');
+    });
+    document.getElementById('tag-group-modal-backdrop')?.addEventListener('click', () => {
+        document.getElementById('tag-group-modal').classList.add('hidden');
+    });
+    document.getElementById('tag-group-save-btn')?.addEventListener('click', saveTagGroup);
+
+    // Delegacja eventów w kontenre grup (edycja/usuwanie tagów, usuwanie grupy)
+    document.getElementById('tags-groups-container')?.addEventListener('click', (e) => {
+        const addBtn = e.target.closest('.add-tag-in-group-btn');
+        if (addBtn) {
+            openTagFormModal(addBtn.dataset.group, null);
+            return;
+        }
         const editBtn = e.target.closest('.tag-edit-btn');
         if (editBtn) {
-            editTag(editBtn.dataset.group, editBtn.dataset.value).catch(err => alert('Błąd: ' + err.message));
+            openTagFormModal(editBtn.dataset.group, editBtn.dataset.value);
             return;
         }
         const deleteBtn = e.target.closest('.tag-delete-btn');
         if (deleteBtn) {
-            deleteTag(deleteBtn.dataset.group, deleteBtn.dataset.value).catch(err => alert('Błąd: ' + err.message));
+            deleteTagConfirm(deleteBtn.dataset.group, deleteBtn.dataset.value)
+                .catch(err => alert('Błąd: ' + err.message));
+            return;
+        }
+        const editGroupBtn = e.target.closest('.edit-tag-group-btn');
+        if (editGroupBtn) {
+            openTagGroupModal(editGroupBtn.dataset.group);
+            return;
+        }
+        const delGroupBtn = e.target.closest('.delete-tag-group-btn');
+        if (delGroupBtn) {
+            deleteTagGroup(delGroupBtn.dataset.group)
+                .catch(err => alert('Błąd: ' + err.message));
         }
     });
 }
@@ -651,7 +806,7 @@ function openHierarchicalCategoryDrawer(row, currentCategory, currentSubCategory
 
             if (subs.length === 0) {
                 if (onSelect) onSelect(parent.name, '');
-                closeSelectionDrawer();
+                if (typeof closeSelectionDrawer === 'function') closeSelectionDrawer();
                 return;
             }
 
@@ -670,12 +825,12 @@ function openHierarchicalCategoryDrawer(row, currentCategory, currentSubCategory
                     if (onSelect) onSelect(parent.name, sub ? sub.name : '');
                 },
                 currentSubCategory || '',
-                'grid', // Zmiana z 'list' na 'grid'
+                'grid',
                 false,
                 true,
-                openStep1
+                () => openStep1()
             );
-        }, currentParentId, 'grid', false, false);
+        }, currentParentId, 'grid');
     };
 
     openStep1();
@@ -698,8 +853,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('cat-v2-sub-form').classList.add('hidden');
     });
 
-    // Tagi paragonu
-    initPurchaseTags();
+    // Manager tagów
     initTagsManagerEvents();
     renderTagsManager();
 });
