@@ -159,27 +159,11 @@ function initProductDrawer() {
         let [vCat, vSub] = currentVal.split('|');
         if (typeof openHierarchicalCategoryDrawer === 'function') {
             openHierarchicalCategoryDrawer(drawer, vCat || '', vSub || '', (pName, sName) => {
-                const combined = sName ? `${pName}|${sName}` : pName;
-                document.getElementById('product-drawer-category-value').value = combined;
-                
-                const labelText = sName ? `${pName} / ${sName}` : pName;
-                document.getElementById('product-drawer-category-label').textContent = labelText;
-                
-                const parentCat = (typeof structuredCategories !== 'undefined') 
-                    ? structuredCategories.find(c => c.name === pName && !c.parentId)
-                    : null;
-                
-                const subCat = (typeof structuredCategories !== 'undefined' && parentCat)
-                    ? structuredCategories.find(c => c.name === sName && c.parentId === parentCat.id)
-                    : null;
-
-                const iconName = (subCat && subCat.icon) || (parentCat && parentCat.icon) || (typeof categoryIcons !== 'undefined' ? categoryIcons[pName] : 'fa-tag') || 'fa-tag';
-                const color = (parentCat && parentCat.color) || (typeof getCategoryColor === 'function' ? getCategoryColor(pName) : '#6b7280');
-                
-                const iconEl = document.getElementById('product-drawer-category-icon');
-                iconEl.innerHTML = `<i class="fas ${iconName}"></i>`;
-                iconEl.style.color = color;
-                iconEl.style.backgroundColor = `${color}20`;
+                applyCategorySelectionState({
+                    valueEl: document.getElementById('product-drawer-category-value'),
+                    labelEl: document.getElementById('product-drawer-category-label'),
+                    iconEl: document.getElementById('product-drawer-category-icon')
+                }, pName, sName, 'Wybierz kategorię');
             });
         }
     });
@@ -252,26 +236,11 @@ function openProductDrawer(index = null) {
         nameInput.value = item.name;
         priceInput.value = item.price.toFixed(2);
         
-        const combinedCat = item.subCategory ? `${item.category}|${item.subCategory}` : item.category;
-        catValue.value = combinedCat;
-        catLabel.textContent = item.subCategory ? `${item.category} / ${item.subCategory}` : item.category;
-        
-        // Konfiguracja kolorów ikon i labeli dla kategorii
-        const parentCat = (typeof structuredCategories !== 'undefined') 
-            ? structuredCategories.find(c => c.name === item.category && !c.parentId)
-            : null;
-            
-        const subCat = (typeof structuredCategories !== 'undefined' && parentCat)
-            ? structuredCategories.find(c => c.name === item.subCategory && c.parentId === parentCat.id)
-            : null;
-
-        const iconName = (subCat && subCat.icon) || (parentCat && parentCat.icon) || (typeof categoryIcons !== 'undefined' ? categoryIcons[item.category] : 'fa-tag') || 'fa-tag';
-        const color = (parentCat && parentCat.color) || (typeof getCategoryColor === 'function' ? getCategoryColor(item.category) : '#6b7280');
-        
-        catIcon.innerHTML = `<i class="fas ${iconName}"></i>`;
-        catIcon.style.color = color;
-        catIcon.style.backgroundColor = `${color}20`;
-        
+        applyCategorySelectionState({
+            valueEl: catValue,
+            labelEl: catLabel,
+            iconEl: catIcon
+        }, item.category, item.subCategory, 'Wybierz kategorię');
         const defaultTags = typeof getDefaultTagValues === 'function' ? getDefaultTagValues() : { nature: 'zmienny', purpose: 'konieczny' };
         _productDrawerTags = Object.assign({}, defaultTags, item.tags || {});
         const tagsBtn = document.getElementById('product-drawer-tags-btn');
@@ -282,14 +251,12 @@ function openProductDrawer(index = null) {
         title.textContent = 'Dodaj produkt';
         form.reset();
         idxInput.value = "";
-        
-        // Wartości domyślne dla nowego produktu
-        catValue.value = 'inne';
-        catLabel.textContent = 'Inne';
-        catIcon.innerHTML = '<i class="fas fa-tag"></i>';
-        catIcon.style.color = '#6b7280';
-        catIcon.style.backgroundColor = '#6b728020';
-        
+        applyCategorySelectionState({
+            valueEl: catValue,
+            labelEl: catLabel,
+            iconEl: catIcon
+        }, 'inne', '', 'Wybierz kategori�');
+
         const defaultTags = typeof getDefaultTagValues === 'function' ? getDefaultTagValues() : { nature: 'zmienny', purpose: 'konieczny' };
         _productDrawerTags = Object.assign({}, defaultTags);
         const tagsSummaryEl = document.getElementById('product-drawer-tags-summary');
@@ -707,3 +674,4 @@ async function fillFormWithAnalysis(analysis) {
     updatePurchaseSummary();
     alert('Gotowe! Analiza AI zakończona. Sprawdź i uzupełnij dane, a następnie zapisz cały zakup.');
 }
+

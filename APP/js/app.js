@@ -232,6 +232,17 @@ function openDynamicTagSelection(group, title, currentValue, onSelect, allLabel 
     openSelectionDrawer(title, finalOptions, (val, label) => onSelect(val, label), currentValue || (allLabel ? 'all' : finalOptions[0].value));
 }
 
+function applyRecurringCategorySelection(parentName = '', subCategoryName = '') {
+    recurringCategoryValue = parentName || '';
+    recurringSubCategoryValue = subCategoryName || '';
+
+    applyCategorySelectionState({
+        buttonEl: document.getElementById('recurring-category-btn'),
+        labelEl: document.getElementById('recurring-category-label'),
+        iconEl: document.getElementById('recurring-category-icon')
+    }, recurringCategoryValue, recurringSubCategoryValue, 'Wybierz kategorię');
+}
+
 // Zwraca etykietę grupy tagów (np. 'nature' -> 'Natura')
 function getTagGroupLabel(group) {
     if (!group) return '';
@@ -915,32 +926,7 @@ function setupAppEventListeners() {
             const currentCat = recurringCategoryValue || '';
             const currentSub = recurringSubCategoryValue || '';
             openHierarchicalCategoryDrawer(null, currentCat, currentSub, (pName, sName) => {
-                recurringCategoryValue = pName;
-                recurringSubCategoryValue = sName;
-                const labelText = sName ? `${pName} / ${sName}` : pName;
-                document.getElementById('recurring-category-label').textContent = labelText;
-                
-                const parentCat = (typeof structuredCategories !== 'undefined') 
-                    ? structuredCategories.find(c => c.name === pName && !c.parentId)
-                    : null;
-                const subCat = (typeof structuredCategories !== 'undefined' && parentCat)
-                    ? structuredCategories.find(c => c.name === sName && c.parentId === parentCat.id)
-                    : null;
-
-                const icon = (subCat && subCat.icon) || (parentCat && parentCat.icon) || 'fa-tag';
-                const color = (parentCat && parentCat.color) || '#6b7280';
-                document.getElementById('recurring-category-icon').innerHTML = `<i class="fas ${icon}" style="color: ${color}"></i>`;
-            });
-        }
-    });
-
-    document.getElementById('filter-category-btn')?.addEventListener('click', () => {
-        if (typeof openHierarchicalCategoryDrawer === 'function') {
-            openHierarchicalCategoryDrawer(null, filterCategoryValue || '', filterSubCategoryValue || '', (pName, sName) => {
-                filterCategoryValue = pName;
-                filterSubCategoryValue = sName || '';
-                document.getElementById('filter-category-label').textContent = sName ? `${pName} / ${sName}` : pName;
-                handleFilterChange();
+                applyRecurringCategorySelection(pName, sName);
             });
         }
     });
@@ -1092,72 +1078,6 @@ function setupAppEventListeners() {
         alert('Powiadomienia będą dostępne wkrótce! (Etap 4)');
     });
 
-    // --- Obsługa otwierania szuflad kategorii i budżetu ---
-    document.getElementById('budget-type-btn')?.addEventListener('click', () => {
-        const options = [
-            { value: 'monthly', label: 'Budżet miesięczny', icon: '💰' }
-        ];
-        if (typeof allSpecialBudgets !== 'undefined') {
-            allSpecialBudgets.forEach(b => {
-                options.push({ value: b.id, label: b.name, icon: '🏷️' });
-            });
-        }
-        openSelectionDrawer('Wybierz budżet', options, (val, label) => {
-            const btn = document.getElementById('budget-type-btn');
-            const labelEl = document.getElementById('budget-type-label');
-            if (btn && labelEl) {
-                labelEl.textContent = label;
-                btn.dataset.value = val;
-            }
-        }, document.getElementById('budget-type-btn')?.dataset.value || 'monthly');
-    });
-
-    document.getElementById('recurring-category-btn')?.addEventListener('click', () => {
-        const currentVal = document.getElementById('recurring-category-btn').dataset.value || '';
-        let [vCat, vSub] = currentVal.split('|');
-
-        if (typeof openHierarchicalCategoryDrawer === 'function') {
-            openHierarchicalCategoryDrawer(null, vCat, vSub, (pName, sName) => {
-                const combined = sName ? `${pName}|${sName}` : pName;
-                const btn = document.getElementById('recurring-category-btn');
-                const labelEl = document.getElementById('recurring-category-label');
-                const iconEl = document.getElementById('recurring-category-icon');
-
-                if (btn && labelEl) {
-                    btn.dataset.value = combined;
-                    labelEl.textContent = sName ? `${pName} / ${sName}` : pName;
-                    
-                    const parentCat = (typeof structuredCategories !== 'undefined') 
-                        ? structuredCategories.find(c => c.name === pName && !c.parentId)
-                        : null;
-                    const subCat = (typeof structuredCategories !== 'undefined' && parentCat)
-                        ? structuredCategories.find(c => c.name === sName && c.parentId === parentCat.id)
-                        : null;
-                    const iconName = (subCat && subCat.icon) || (parentCat && parentCat.icon) || 'fa-folder';
-                    const color = (parentCat && parentCat.color) || '#6b7280';
-
-                    if (iconEl) {
-                        iconEl.innerHTML = `<i class="fas ${iconName}"></i>`;
-                        iconEl.style.color = color;
-                    }
-                }
-            });
-        }
-    });
-
-    document.getElementById('recurring-tags-btn')?.addEventListener('click', () => {
-        const summaryEl = document.getElementById('recurring-tags-summary');
-        const currentTagsStr = summaryEl.dataset.tags || '{}';
-        let currentTags = {};
-        try { currentTags = JSON.parse(currentTagsStr); } catch(e) {}
-
-        if (typeof openTagsDrawer === 'function') {
-            openTagsDrawer(currentTags, (newTags) => {
-                summaryEl.dataset.tags = JSON.stringify(newTags);
-                summaryEl.textContent = buildTagsSummary(newTags) || 'Wybierz tagi...';
-            }, false);
-        }
-    });
 
     document.getElementById('analysis-filter-tags-btn')?.addEventListener('click', () => {
         if (typeof openTagsDrawer === 'function') {
@@ -1638,23 +1558,7 @@ function enterRecurringExpenseEditMode(expenseId) {
     recurringAmount.value = expense.amount;
     
     // Kategoria i Podkategoria
-    recurringCategoryValue = expense.category || '';
-    recurringSubCategoryValue = expense.subCategory || '';
-    const labelText = recurringSubCategoryValue ? `${recurringCategoryValue} / ${recurringSubCategoryValue}` : (recurringCategoryValue || 'Wybierz kategorię');
-    const categoryLabelEl = document.getElementById('recurring-category-label');
-    if (categoryLabelEl) categoryLabelEl.textContent = labelText;
-
-    const parentCat = (typeof structuredCategories !== 'undefined') 
-        ? structuredCategories.find(c => c.name === recurringCategoryValue && !c.parentId)
-        : null;
-    const subCat = (typeof structuredCategories !== 'undefined' && parentCat)
-        ? structuredCategories.find(c => c.name === recurringSubCategoryValue && c.parentId === parentCat.id)
-        : null;
-
-    const icon = (subCat && subCat.icon) || (parentCat && parentCat.icon) || 'fa-tag';
-    const color = (parentCat && parentCat.color) || '#6b7280';
-    const categoryIconEl = document.getElementById('recurring-category-icon');
-    if (categoryIconEl) categoryIconEl.innerHTML = `<i class="fas ${icon}" style="color: ${color}"></i>`;
+    applyRecurringCategorySelection(expense.category || '', expense.subCategory || '');
 
     // Tagi (wszystkie grupy)
     const defaults = getDefaultTagValues();

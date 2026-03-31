@@ -830,7 +830,7 @@ function openHierarchicalCategoryDrawer(row, currentCategory, currentSubCategory
                 true,
                 () => openStep1()
             );
-        }, currentParentId, 'grid');
+        }, currentParentId, 'grid', false, false);
     };
 
     openStep1();

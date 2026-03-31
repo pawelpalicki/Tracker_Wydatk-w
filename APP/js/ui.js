@@ -358,6 +358,75 @@ function initFilterDrawers() {
     }
 }
 
+function getParentCategoryByName(parentName) {
+    if (!parentName || typeof structuredCategories === 'undefined' || !Array.isArray(structuredCategories)) {
+        return null;
+    }
+    return structuredCategories.find(category => category.name === parentName && !category.parentId) || null;
+}
+
+function getSubCategoryByName(parentName, subCategoryName) {
+    if (!subCategoryName) return null;
+    const parentCategory = getParentCategoryByName(parentName);
+    if (!parentCategory || typeof structuredCategories === 'undefined' || !Array.isArray(structuredCategories)) {
+        return null;
+    }
+    return structuredCategories.find(category => category.name === subCategoryName && category.parentId === parentCategory.id) || null;
+}
+
+function getCategorySelectionState(parentName = '', subCategoryName = '', fallbackLabel = 'Wybierz kategorię') {
+    const safeParentName = parentName || '';
+    const safeSubCategoryName = subCategoryName || '';
+    const parentCategory = getParentCategoryByName(safeParentName);
+    const subCategory = getSubCategoryByName(safeParentName, safeSubCategoryName);
+    const iconName =
+        (subCategory && subCategory.icon) ||
+        (parentCategory && parentCategory.icon) ||
+        ((typeof categoryIcons !== 'undefined' && safeParentName) ? categoryIcons[safeParentName.toLowerCase()] : null) ||
+        'fa-tag';
+    const color =
+        (parentCategory && parentCategory.color) ||
+        (typeof getCategoryColor === 'function' && safeParentName ? getCategoryColor(safeParentName) : '#6b7280');
+
+    return {
+        parentName: safeParentName,
+        subCategoryName: safeSubCategoryName,
+        parentCategory,
+        subCategory,
+        iconName,
+        color,
+        labelText: safeParentName ? (safeSubCategoryName ? `${safeParentName} / ${safeSubCategoryName}` : safeParentName) : fallbackLabel,
+        compositeValue: safeSubCategoryName ? `${safeParentName}|${safeSubCategoryName}` : safeParentName
+    };
+}
+
+function applyCategorySelectionState(targets = {}, parentName = '', subCategoryName = '', fallbackLabel = 'Wybierz kategorię') {
+    const state = getCategorySelectionState(parentName, subCategoryName, fallbackLabel);
+    const { labelEl, iconEl, valueEl, buttonEl } = targets;
+
+    if (labelEl) {
+        labelEl.textContent = state.labelText;
+    }
+
+    if (valueEl) {
+        valueEl.value = state.compositeValue;
+    }
+
+    if (buttonEl) {
+        buttonEl.dataset.value = state.compositeValue;
+    }
+
+    if (iconEl) {
+        iconEl.innerHTML = `<i class="fas ${state.iconName}"></i>`;
+        iconEl.style.color = state.color;
+        if (iconEl.classList.contains('rounded-xl') || iconEl.classList.contains('rounded-lg') || iconEl.classList.contains('rounded-full')) {
+            iconEl.style.backgroundColor = `${state.color}20`;
+        }
+    }
+
+    return state;
+}
+
 function openFilterDrawer(title, type, onApply) {
     const overlay = document.getElementById('filter-drawer-overlay');
     const drawer = document.getElementById('filter-drawer');
