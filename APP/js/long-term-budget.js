@@ -1,923 +1,1280 @@
-// Tracker Wydatków - Long-term Budget Analysis Functions
+// Tracker Wydatkow - Unified long-term analysis
 
-let longTermBudgetChart;
+let longTermBudgetChart = null;
 let longTermBudgetInitialized = false;
 
 let currentComparisonCategory = null;
 let currentComparisonSubCategory = null;
-let currentComparisonTags = {}; // Wszystkie dynamiczne filtry tagów
+let currentComparisonTags = {};
 
-// Helper dla customowych pickerów miesięcy (długoterminowa analiza zakresu)
-function initCustomMonthPicker(btnId, popupId, labelId, inputId, defaultVal, availableMonths) {
-    const btn = document.getElementById(btnId);
-    const popup = document.getElementById(popupId);
-    const label = document.getElementById(labelId);
-    const input = document.getElementById(inputId);
-    if (!btn || !popup || !label || !input) return;
+let comparisonAvailableMonths = [];
+let comparisonAvailableYears = [];
+let comparisonSelectedYear = new Date().getFullYear();
+let comparisonPeriod = '6months';
+let comparisonBucketDetails = [];
+let comparisonReferenceDate = new Date();
+let comparisonLongPressTimer = null;
+let comparisonLongPressTriggered = false;
+let comparisonSuppressNextClick = false;
+let comparisonTouchMoved = false;
+let comparisonParentChipsScrollLeft = 0;
+let comparisonSubChipsScrollLeft = 0;
+let comparisonShouldPreserveChipScroll = false;
+let comparisonSwipeStartX = 0;
+let comparisonSwipeStartY = 0;
+let comparisonSwipeLocked = false;
 
-    const monthNames = ['sty', 'lut', 'mar', 'kwi', 'maj', 'cze', 'lip', 'sie', 'wrz', 'paź', 'lis', 'gru'];
-    popup.innerHTML = '';
+const ANALYSIS_MONTH_NAMES_SHORT = ['sty', 'lut', 'mar', 'kwi', 'maj', 'cze', 'lip', 'sie', 'wrz', 'paz', 'lis', 'gru'];
+const ANALYSIS_WEEKDAY_LABELS = ['Pon', 'Wt', 'Sr', 'Czw', 'Pt', 'Sob', 'Nd'];
 
-    let monthsToDisplay = availableMonths && availableMonths.length > 0 ? availableMonths : [];
-    if (monthsToDisplay.length === 0) {
-        const today = new Date();
-        monthsToDisplay = [`${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`];
-    }
-
-    monthsToDisplay.forEach(valStr => {
-        const [yy, mm] = valStr.split('-');
-        const labelStr = `${monthNames[parseInt(mm, 10) - 1]} ${yy}`;
-        const option = document.createElement('button');
-        option.className = 'w-full text-left px-3 py-2 rounded-lg text-sm text-white hover:bg-white/10 transition-colors';
-        option.textContent = labelStr;
-        option.onclick = (e) => {
-            e.stopPropagation();
-            input.value = valStr;
-            label.textContent = labelStr;
-            popup.classList.add('hidden');
-        };
-        popup.appendChild(option);
-    });
-
-    const setDisplay = (val) => {
-        if (!val) return;
-        const [yy, mm] = val.split('-');
-        label.textContent = `${monthNames[parseInt(mm, 10) - 1]} ${yy}`;
-        input.value = val;
-    };
-    setDisplay(defaultVal);
-
-    btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        popup.classList.toggle('hidden');
-    });
-    document.addEventListener('click', (e) => {
-        if (!popup.contains(e.target) && e.target !== btn && !btn.contains(e.target)) {
-            popup.classList.add('hidden');
-        }
-    });
+function normalizeAnalysisTagValue(value) {
+    return value == null ? '' : String(value).trim().toLowerCase();
 }
 
-// --- Funkcje analizy długoterminowej ---
-async function initializeLongTermBudget() {
-    // Rejestrujemy wtyczkę, aby mieć pewność, że jest dostępna
-    Chart.register(ChartDataLabels);
+function toDateString(date) {
+    return date.toISOString().split('T')[0];
+}
 
-    // Sprawdź czy już zainicjalizowano
-    if (longTermBudgetInitialized) {
-        return;
+function parseLocalDate(dateString) {
+    const [year, month, day] = dateString.split('-').map(Number);
+    return new Date(year, (month || 1) - 1, day || 1);
+}
+
+function getMonthKeyFromDate(date) {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function getDaysInMonth(year, monthNumber) {
+    return new Date(year, monthNumber, 0).getDate();
+}
+
+function formatMonthLabel(monthKey) {
+    const [year, month] = monthKey.split('-').map(Number);
+    return `${ANALYSIS_MONTH_NAMES_SHORT[(month || 1) - 1]} ${year}`;
+}
+
+function getMonthStart(date) {
+    return new Date(date.getFullYear(), date.getMonth(), 1);
+}
+
+function addDays(date, days) {
+    const result = new Date(date);
+    result.setDate(result.getDate() + days);
+    return result;
+}
+
+function addMonths(date, months) {
+    return new Date(date.getFullYear(), date.getMonth() + months, 1);
+}
+
+function formatDateRange(startDate, endDate) {
+    const start = parseLocalDate(startDate);
+    const end = parseLocalDate(endDate);
+    return `${start.toLocaleDateString('pl-PL')} - ${end.toLocaleDateString('pl-PL')}`;
+}
+
+async function ensureComparisonAvailableMonths() {
+    if (comparisonAvailableMonths.length > 0) {
+        return comparisonAvailableMonths;
     }
 
-    const periodTypeSelect = document.getElementById('period-type-select');
-    const customRangeContainer = document.getElementById('custom-range-container');
-    const refreshBtn = document.getElementById('refresh-long-term-btn');
-    const toggleMonthlyDetails = document.getElementById('toggle-monthly-details');
-    const customStartMonth = document.getElementById('custom-start-month');
-    const customEndMonth = document.getElementById('custom-end-month');
-
-    // Sprawdź czy elementy istnieją
-    if (!periodTypeSelect || !refreshBtn) {
-        console.warn('Elementy długoterminowej analizy budżetu nie zostały znalezione');
-        return;
-    }
-
-    // Pobierz dostępne miesiące (korzystamy z globalnej zmiennej jeśli jest, albo pobieramy API)
-    let availableMonths = window.availableMonthsListGlobal || [];
-    if (availableMonths.length === 0) {
+    const cached = Array.isArray(window.availableMonthsListGlobal) ? window.availableMonthsListGlobal : [];
+    if (cached.length > 0) {
+        comparisonAvailableMonths = [...cached].sort().reverse();
+    } else {
         try {
             const stats = await apiCall('/api/statistics');
-            if (stats.availableMonths) {
-                availableMonths = [...stats.availableMonths].sort().reverse();
-                window.availableMonthsListGlobal = availableMonths;
-            }
-        } catch (e) {
-            console.error("Błąd pobierania miesięcy", e);
-        }
-    }
-
-    // Ustaw domyślne daty dla zakresu niestandardowego
-    const currentMonth = availableMonths.length > 0 ? availableMonths[0] : new Date().toISOString().substring(0, 7);
-    const sixMonthsAgo = availableMonths.length > 5 ? availableMonths[5] : (availableMonths[availableMonths.length - 1] || currentMonth);
-
-    initCustomMonthPicker('custom-start-btn', 'custom-start-popup', 'custom-start-label', 'custom-start-month', sixMonthsAgo, availableMonths);
-    initCustomMonthPicker('custom-end-btn', 'custom-end-popup', 'custom-end-label', 'custom-end-month', currentMonth, availableMonths);
-
-    // Custom Dropdown dla periodTypeSelect
-    const periodTypeBtn = document.getElementById('period-type-btn');
-    const periodTypeLabel = document.getElementById('period-type-label');
-    const periodTypePopup = document.getElementById('period-type-popup');
-    const periodOptionBtns = document.querySelectorAll('.period-option-btn');
-
-    if (periodTypeBtn && periodTypePopup && periodTypeLabel) {
-        periodTypeBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            periodTypePopup.classList.toggle('hidden');
-        });
-        document.addEventListener('click', (e) => {
-            if (!periodTypePopup.contains(e.target) && e.target !== periodTypeBtn && !periodTypeBtn.contains(e.target)) {
-                periodTypePopup.classList.add('hidden');
-            }
-        });
-        periodOptionBtns.forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                periodTypeSelect.value = btn.dataset.value;
-                periodTypeLabel.textContent = btn.textContent;
-                periodTypePopup.classList.add('hidden');
-                handlePeriodTypeChange();
-                // Opcjonalnie wywołaj zmianę, ale handlePeriodTypeChange robi to co trzeba
-            });
-        });
-        const initOpt = periodTypeSelect.querySelector(`option[value="${periodTypeSelect.value}"]`);
-        if (initOpt) periodTypeLabel.textContent = initOpt.textContent;
-    }
-
-    // Event listenery
-    periodTypeSelect.addEventListener('change', handlePeriodTypeChange);
-    refreshBtn.addEventListener('click', renderLongTermBudgetAnalysis);
-    if (toggleMonthlyDetails) {
-        toggleMonthlyDetails.addEventListener('click', toggleMonthlyDetailsTable);
-    }
-
-    // Oznacz jako zainicjalizowane
-    longTermBudgetInitialized = true;
-
-    // Załaduj domyślne dane budżetów
-    await renderLongTermBudgetAnalysis();
-
-    // Inicjalizacja wykresu porównawczego
-    await initializeComparisonChart(availableMonths);
-}
-
-async function initializeComparisonChart(availableMonths = []) {
-    const periodSelect = document.getElementById('comparison-period-select');
-    const yearSelect = document.getElementById('comparison-year-select');
-    const yearWrapper = document.getElementById('comparison-year-wrapper');
-    const modeToggle = document.getElementById('comparison-mode-toggle');
-    const segmentBtns = document.querySelectorAll('.segment-btn');
-
-    const yearBtn = document.getElementById('comparison-year-dropdown-btn');
-    const yearPopup = document.getElementById('comparison-year-popup');
-    const yearLabel = document.getElementById('comparison-year-label');
-
-    if (!periodSelect || !yearSelect || !modeToggle) return;
-
-    // Generowanie dostępnych lat na podstawie availableMonths
-    let availableYears = [];
-    if (availableMonths && availableMonths.length > 0) {
-        const yearsSet = new Set(availableMonths.map(m => m.split('-')[0]));
-        availableYears = Array.from(yearsSet).map(Number).sort((a, b) => b - a);
-    }
-    if (availableYears.length === 0) {
-        availableYears = [new Date().getFullYear()];
-    }
-
-    let currentSelYear = availableYears[0];
-    yearSelect.innerHTML = availableYears.map(y => `<option value="${y}">${y}</option>`).join('');
-    yearSelect.value = currentSelYear;
-
-    const renderChart = () => {
-        const mode = periodSelect.value;
-        const isMtd = modeToggle.checked ? 'mtd' : 'full';
-        renderComparisonBarChart(isMtd, mode, currentSelYear);
-    };
-
-    // Udostępnij funkcję renderChart globalnie jako updateComparisonChart
-    window.updateComparisonChart = renderChart;
-
-    // Podkategoria - statyczny filtr (pojawia się gdy jest kategoria)
-    const subBtn = document.getElementById('analysis-filter-subcategory-btn');
-    const subLabel = document.getElementById('analysis-filter-subcategory-label');
-
-    if (subBtn) {
-        subBtn.addEventListener('click', () => {
-             if (!currentComparisonCategory) return;
-             const parent = structuredCategories.find(c => c.name === currentComparisonCategory && !c.parentId);
-             if (!parent) return;
-             const subs = structuredCategories.filter(c => c.parentId === parent.id);
-             const options = [
-                 { value: 'all', label: 'Wszystkie podkategorie' },
-                 ...subs.map(s => ({ value: s.name, label: s.name }))
-             ];
-             openSelectionDrawer(`Podkategorie: ${currentComparisonCategory}`, options, (val) => {
-                 currentComparisonSubCategory = val === 'all' ? null : val;
-                 subLabel.textContent = val === 'all' ? 'Wszystkie podkategorie' : val;
-                 renderChart();
-             }, currentComparisonSubCategory || 'all');
-        });
-    }
-
-    // Dynamiczne filtry tagów - event delegation na kontenerze
-    const tagFiltersContainer = document.getElementById('analysis-tag-filters-container');
-    if (tagFiltersContainer) {
-        tagFiltersContainer.addEventListener('click', (e) => {
-            const btn = e.target.closest('.analysis-tag-filter-btn');
-            if (!btn) return;
-            const group = btn.dataset.group;
-            const currentVal = currentComparisonTags[group] || 'all';
-            const options = typeof getTagOptions === 'function'
-                ? [{ value: 'all', label: 'Wszystkie' }, ...getTagOptions(group).map(t => ({ value: t.value, label: t.label || t.value, icon: t.icon || '' }))]
-                : [{ value: 'all', label: 'Wszystkie' }];
-            const groupLabel = typeof getTagGroupLabel === 'function' ? getTagGroupLabel(group) : group;
-            openSelectionDrawer(`Filtruj: ${groupLabel}`, options, (val) => {
-                currentComparisonTags[group] = val === 'all' ? null : val;
-                renderChart();
-                renderAnalysisTagFilterButton();
-            }, currentVal);
-        });
-    }
-
-    if (yearBtn && yearPopup && yearLabel) {
-        yearPopup.innerHTML = availableYears.map(y =>
-            `<button class="year-option-btn w-full text-center px-3 py-2 rounded-lg text-sm text-white hover:bg-white/10 transition-colors" data-value="${y}">${y}</button>`
-        ).join('');
-        yearLabel.textContent = currentSelYear;
-
-        yearBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            yearPopup.classList.toggle('hidden');
-        });
-
-        document.addEventListener('click', (e) => {
-            if (!yearPopup.contains(e.target) && e.target !== yearBtn && !yearBtn.contains(e.target)) {
-                yearPopup.classList.add('hidden');
-            }
-        });
-
-        yearPopup.querySelectorAll('.year-option-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                currentSelYear = parseInt(btn.dataset.value, 10);
-                yearLabel.textContent = currentSelYear;
-                yearSelect.value = currentSelYear;
-                yearPopup.classList.add('hidden');
-                renderChart();
-            });
-        });
-    }
-
-    // Segments Logic
-    segmentBtns.forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            segmentBtns.forEach(b => b.classList.remove('active'));
-            e.target.classList.add('active');
-            periodSelect.value = e.target.dataset.value;
-            handlePeriodChange();
-            renderChart();
-        });
-    });
-
-    const handlePeriodChange = () => {
-        if (periodSelect.value === 'year') {
-            if (yearWrapper) yearWrapper.classList.remove('hidden');
-            else yearSelect.classList.remove('hidden');
-        } else {
-            if (yearWrapper) yearWrapper.classList.add('hidden');
-            else yearSelect.classList.add('hidden');
-        }
-    };
-
-    periodSelect.addEventListener('change', () => {
-        handlePeriodChange();
-        renderChart();
-    });
-
-    yearSelect.addEventListener('change', (e) => {
-        currentSelYear = parseInt(e.target.value, 10);
-        if (yearLabel) yearLabel.textContent = currentSelYear;
-        renderChart();
-    });
-
-    modeToggle.addEventListener('change', renderChart);
-
-    handlePeriodChange();
-    renderAnalysisTagFilterButton(); // Renderuj przycisk tagów przy starcie
-    renderChart();
-}
-
-async function renderComparisonBarChart(mtdMode, periodMode, selectedYear) {
-    const container = document.getElementById('comparison-chart-container');
-    const noData = document.getElementById('no-data-bar-chart');
-    if (!container || !noData) return;
-
-    // The backend uses mode = '6months', 'year', 'mtd' or 'full'.
-    // If we want mtd AND 6months, wait, the backend currently accepts ONLY ONE mode.
-    // Let's modify the apiCall slightly. We can pass period & mtd natively if we update frontend logic.
-    // Wait, the backend currently checks if `mode==='mtd'`, if `mode==='6months'`, etc.
-    // So if it's '6months', it will NOT do 'mtd'.
-    // We should pass them separately. Let's send `mode=${periodMode}` and `mtd=${mtdMode==='mtd'}` if needed, or update backend?
-    // Actually, in the backend I wrote: `if (mode === 'mtd')`.
-    // It's fine for now, we'll just send mode=periodMode if not MTD, or mode='mtd' if MTD? No, that breaks period bounds!
-    // Let me use query strings `mode=${isMtd}` and `period=${periodMode}` if I update backend later, but for now fallback to:
-
-    let url = `/api/statistics/comparison?mode=${periodMode}`;
-    if (periodMode === 'year' && selectedYear) {
-        url += `&year=${selectedYear}`;
-    }
-    // Append a custom mtd param to the backend
-    if (mtdMode === 'mtd') {
-        url += `&mtd=true`; // I will update backend to read custom 'mtd' param shortly.
-    }
-
-    if (currentComparisonCategory) {
-        url += `&category=${encodeURIComponent(currentComparisonCategory)}`;
-    }
-    if (currentComparisonSubCategory) {
-        url += `&subCategory=${encodeURIComponent(currentComparisonSubCategory)}`;
-    }
-    // Dynamiczne filtry tagów
-    Object.entries(currentComparisonTags).forEach(([group, value]) => {
-        if (value && value !== 'all') {
-            url += `&${encodeURIComponent(group)}=${encodeURIComponent(value)}`;
-        }
-    });
-
-    try {
-        const stats = await apiCall(url);
-        const ctx = document.getElementById('comparison-chart').getContext('2d');
-        const currentDay = new Date().getDate();
-
-        renderComparisonCategoryFilters(mtdMode, periodMode, selectedYear);
-
-        const textColor = '#e5e7eb';
-        const gridColor = 'rgba(255, 255, 255, 0.1)';
-        const mutedTextColor = '#9ca3af';
-
-        if (comparisonChart) comparisonChart.destroy();
-
-        if (!stats.monthlyTotals || stats.monthlyTotals.length === 0) {
-            noData.classList.remove('hidden');
-            container.classList.add('hidden');
-        } else {
-            noData.classList.add('hidden');
-            container.classList.remove('hidden');
-            const labels = stats.monthlyTotals.map(item => {
-                const [y, m] = item.month.split('-');
-                return `${m}/${y.slice(-2)}`;
-            });
-            const data = stats.monthlyTotals.map(item => item.total);
-
-            // Pobierz kolor z głównego skryptu jeśli dostępny, lub użyj domyślnego
-            const barColor = currentComparisonCategory ? window.getCategoryColor(currentComparisonCategory) : '#3B82F6';
-            const titleStr = currentComparisonCategory
-                ? `Porównanie: ${currentComparisonCategory}`
-                : 'Suma wydatków';
-
-            const datasetLabel = mtdMode === 'mtd' ? `Wydano (do ${currentDay}. dnia)` : titleStr;
-
-            // Ustawienie dynamicznego tytułu nad wykresem
-            const titleElement = document.getElementById('comparison-chart-title');
-            if (titleElement) {
-                if (currentComparisonCategory) {
-                    titleElement.textContent = `Porównanie: ${currentComparisonCategory.charAt(0).toUpperCase() + currentComparisonCategory.slice(1)}`;
-                } else if (mtdMode === 'mtd') {
-                    titleElement.textContent = `Porównanie do ${currentDay}. dnia miesiąca`;
-                } else {
-                    titleElement.textContent = 'Pełne sumy miesięczne';
-                }
-            }
-
-            comparisonChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels,
-                    datasets: [{
-                        label: datasetLabel,
-                        data,
-                        backgroundColor: barColor,
-                        borderRadius: 4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            callbacks: {
-                                label: function (context) { return new Intl.NumberFormat('pl-PL', { style: 'currency', currency: 'PLN' }).format(context.parsed.y); }
-                            }
-                        },
-                        datalabels: {
-                            display: context => context.dataset.data[context.dataIndex] > 0 && data.length <= 8,
-                            color: textColor,
-                            anchor: 'end',
-                            align: 'top',
-                            offset: 2,
-                            formatter: (value) => Math.round(value) + ' zł',
-                            font: { weight: 'bold', size: 10 }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            suggestedMax: Math.max(...data) * 1.2,
-                            ticks: { color: mutedTextColor, callback: (v) => v + ' zł' },
-                            grid: { color: gridColor }
-                        },
-                        x: {
-                            ticks: { color: mutedTextColor },
-                            grid: { display: false }
-                        }
-                    },
-                    layout: { padding: { top: 20 } }
-                }
-            });
-        }
-    } catch (e) {
-        console.error("Błąd wykresu porównawczego:", e);
-    }
-}
-
-async function renderComparisonCategoryFilters(mtdMode, periodMode, selectedYear) {
-    const filterContainer = document.getElementById('comparison-category-filters');
-    if (!filterContainer) return;
-
-    let categories = window.allCategories || [];
-    if (categories.length === 0) {
-        try { categories = await apiCall('/api/categories'); } catch (e) { }
-    }
-
-    let html = `<button class="filter-chip px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-colors duration-200 ${!currentComparisonCategory ? 'bg-brand-500 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}" data-category="all">Wszystkie</button>`;
-
-    categories.forEach(cat => {
-        const isSelected = currentComparisonCategory === cat;
-        html += `<button class="filter-chip px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-colors duration-200 ${isSelected ? 'bg-brand-500 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}" data-category="${cat}">${cat.charAt(0).toUpperCase() + cat.slice(1)}</button>`;
-    });
-
-    filterContainer.innerHTML = html;
-
-    filterContainer.querySelectorAll('.filter-chip').forEach(chip => {
-        chip.addEventListener('click', (e) => {
-            const cat = e.target.dataset.category;
-            const subBtn = document.getElementById('analysis-filter-subcategory-btn');
-            const subLabel = document.getElementById('analysis-filter-subcategory-label');
-
-            currentComparisonCategory = cat === 'all' ? null : cat;
-            currentComparisonSubCategory = null; // Reset subcategory when category changes
-            
-            if (subBtn && subLabel) {
-                if (currentComparisonCategory) {
-                    // Sprawdź czy są podkategorie
-                    const parent = (typeof structuredCategories !== 'undefined') 
-                        ? structuredCategories.find(c => c.name === currentComparisonCategory && !c.parentId)
-                        : null;
-                    const hasSubs = parent && structuredCategories.some(c => c.parentId === parent.id);
-                    
-                    if (hasSubs) {
-                        subBtn.classList.remove('hidden');
-                        subLabel.textContent = 'Wszystkie podkategorie';
-                    } else {
-                        subBtn.classList.add('hidden');
-                    }
-                } else {
-                    subBtn.classList.add('hidden');
-                }
-            }
-
-            renderComparisonBarChart(mtdMode, periodMode, selectedYear);
-        });
-    });
-
-}
-
-function handlePeriodTypeChange() {
-    const periodType = document.getElementById('period-type-select').value;
-    const customRangeContainer = document.getElementById('custom-range-container');
-
-    if (periodType === 'custom') {
-        customRangeContainer.classList.remove('hidden');
-    } else {
-        customRangeContainer.classList.add('hidden');
-    }
-}
-
-function getDateRange() {
-    const periodType = document.getElementById('period-type-select').value;
-    const today = new Date();
-
-    if (periodType === 'custom') {
-        const startMonth = document.getElementById('custom-start-month').value;
-        const endMonth = document.getElementById('custom-end-month').value;
-
-        if (!startMonth || !endMonth) {
-            throw new Error('Proszę wybrać zakres dat');
-        }
-
-        return { startMonth, endMonth };
-    } else {
-        const monthsBack = parseInt(periodType);
-
-        let endYear = today.getFullYear();
-        let endMonth = today.getMonth(); // 0-indexed current month
-
-        // Adjust to the last day of the previous month
-        if (endMonth === 0) { // If current month is January
-            endMonth = 11; // Previous month is December
-            endYear--;     // Previous year
-        } else {
-            endMonth--; // Previous month
-        }
-
-        // endMonth is now 0-indexed month of the *previous* month (e.g., 10 for November if today is December)
-        // endYear is the year of that previous month
-
-        let startYear = endYear;
-        let startMonth = endMonth - monthsBack + 1; // Calculate start month index
-
-        if (startMonth < 0) {
-            startYear += Math.floor(startMonth / 12); // Adjust year if startMonth goes into previous year
-            startMonth = (startMonth % 12 + 12) % 12; // Normalize month to 0-11 range
-        }
-
-        const startMonthStr = `${startYear}-${String(startMonth + 1).padStart(2, '0')}`; // +1 because months are 1-indexed for display
-        const endMonthStr = `${endYear}-${String(endMonth + 1).padStart(2, '0')}`; // +1 because months are 1-indexed for display
-
-        return {
-            startMonth: startMonthStr,
-            endMonth: endMonthStr
-        };
-    }
-}
-
-function generateMonthRange(startMonth, endMonth) {
-    const months = [];
-    const [startYear, startM] = startMonth.split('-').map(Number);
-    const [endYear, endM] = endMonth.split('-').map(Number);
-
-    let currentYear = startYear;
-    let currentMonth = startM;
-
-    while (currentYear < endYear || (currentYear === endYear && currentMonth <= endM)) {
-        const monthStr = String(currentMonth).padStart(2, '0');
-        months.push(`${currentYear}-${monthStr}`);
-
-        currentMonth++;
-        if (currentMonth > 12) {
-            currentMonth = 1;
-            currentYear++;
-        }
-    }
-    return months;
-}
-
-async function fetchLongTermData(startMonth, endMonth) {
-    const months = generateMonthRange(startMonth, endMonth);
-    const promises = months.map(async (month) => {
-        const [year, monthNum] = month.split('-');
-
-        try {
-            const [statsData, budgetData] = await Promise.all([
-                apiCall(`/api/statistics?year=${year}&month=${monthNum}`),
-                apiCall(`/api/budgets/${year}/${monthNum}`)
-            ]);
-
-            const totalSpending = Object.values(statsData.spendingByCategory || {}).reduce((sum, amount) => sum + amount, 0);
-            const totalBudget = Object.values(budgetData.budgets || {}).reduce((sum, amount) => sum + amount, 0);
-
-            return {
-                month,
-                spending: totalSpending,
-                budget: totalBudget,
-                spendingByCategory: statsData.spendingByCategory || {},
-                budgets: budgetData.budgets || {}
-            };
+            comparisonAvailableMonths = Array.isArray(stats.availableMonths) ? [...stats.availableMonths].sort().reverse() : [];
+            window.availableMonthsListGlobal = comparisonAvailableMonths;
         } catch (error) {
-            console.warn(`Brak danych dla miesiąca ${month}:`, error);
-            return {
-                month,
-                spending: 0,
-                budget: 0,
-                spendingByCategory: {},
-                budgets: {}
-            };
+            console.error('Blad pobierania dostepnych miesiecy analizy:', error);
+            comparisonAvailableMonths = [];
         }
-    });
+    }
 
-    return await Promise.all(promises);
+    const years = new Set(comparisonAvailableMonths.map(month => parseInt(month.split('-')[0], 10)).filter(Boolean));
+    const currentYear = new Date().getFullYear();
+    years.add(currentYear);
+    comparisonAvailableYears = Array.from(years).sort((a, b) => b - a);
+    if (!comparisonAvailableYears.includes(comparisonSelectedYear)) {
+        comparisonSelectedYear = comparisonAvailableYears[0] || currentYear;
+    }
+
+    return comparisonAvailableMonths;
 }
 
-async function renderLongTermBudgetAnalysis() {
-    try {
-        const { startMonth, endMonth } = getDateRange();
-        const data = await fetchLongTermData(startMonth, endMonth);
+async function fetchAllPurchasesInRange(startDate, endDate) {
+    let lastVisible = '';
+    let hasMore = true;
+    const purchases = [];
 
-        // Filtruj miesiące z danymi
-        const dataWithBudget = data.filter(item => item.budget > 0 || item.spending > 0);
+    while (hasMore) {
+        const params = new URLSearchParams({ startDate, endDate });
+        if (lastVisible) params.append('lastVisible', lastVisible);
 
-        if (dataWithBudget.length === 0) {
-            showNoLongTermData();
-            return;
+        const response = await apiCall(`/api/purchases?${params.toString()}`);
+        const page = Array.isArray(response.purchases) ? response.purchases : [];
+        purchases.push(...page.filter(purchase => !purchase.specialBudgetId));
+
+        lastVisible = response.nextCursor || '';
+        hasMore = Boolean(lastVisible);
+    }
+
+    return purchases;
+}
+
+async function fetchBudgetMapForMonths(monthKeys) {
+    const uniqueMonths = Array.from(new Set(monthKeys.filter(Boolean)));
+    const entries = await Promise.all(uniqueMonths.map(async (monthKey) => {
+        const [year, month] = monthKey.split('-');
+        try {
+            const response = await apiCall(`/api/budgets/${year}/${month}`);
+            return [monthKey, response && typeof response.budgets === 'object' ? response.budgets : {}];
+        } catch (error) {
+            console.warn(`Brak budzetu dla ${monthKey}:`, error);
+            return [monthKey, {}];
         }
+    }));
 
-        // Renderuj komponenty
-        renderLongTermSummary(dataWithBudget);
-        renderLongTermChart(dataWithBudget);
-        renderCategoryProgressBars(dataWithBudget);
-        renderMonthlyDetailsTable(dataWithBudget);
+    return new Map(entries);
+}
 
-        // Pokaż kontenery
-        document.getElementById('category-analysis-container').classList.remove('hidden');
-        document.getElementById('monthly-details-container').classList.remove('hidden');
-        document.getElementById('no-long-term-data').classList.add('hidden');
+function getBudgetValueForMonth(budgetMap, monthKey) {
+    const monthBudget = budgetMap.get(monthKey) || {};
+    if (currentComparisonCategory) {
+        return Number(monthBudget[currentComparisonCategory] || 0);
+    }
+    return Object.values(monthBudget).reduce((sum, value) => sum + (Number(value) || 0), 0);
+}
 
-    } catch (error) {
-        console.error('Błąd analizy długoterminowej:', error);
-        alert('Błąd podczas ładowania analizy długoterminowej: ' + error.message);
-        showNoLongTermData();
+function getFilteredPurchaseItems(purchases) {
+    return purchases.flatMap(purchase => {
+        const purchaseTags = purchase.tags || {};
+        return (purchase.items || [])
+            .filter(item => {
+                if (currentComparisonCategory && (item.category || 'inne') !== currentComparisonCategory) {
+                    return false;
+                }
+                if (currentComparisonSubCategory && (item.subCategory || '') !== currentComparisonSubCategory) {
+                    return false;
+                }
+
+                for (const [group, expectedValue] of Object.entries(currentComparisonTags || {})) {
+                    if (!expectedValue) continue;
+                    const itemValue = normalizeAnalysisTagValue((item.tags && item.tags[group]) || purchaseTags[group]);
+                    if (itemValue !== normalizeAnalysisTagValue(expectedValue)) {
+                        return false;
+                    }
+                }
+
+                return true;
+            })
+            .map(item => ({
+                name: item.name || 'Wydatek',
+                price: Number(item.price || 0),
+                category: item.category || 'inne',
+                subCategory: item.subCategory || '',
+                purchaseDate: purchase.date,
+                shop: purchase.shop || ''
+            }));
+    });
+}
+
+function getCurrentWeekBuckets(referenceDate = comparisonReferenceDate) {
+    const dayIndex = (referenceDate.getDay() + 6) % 7;
+    const monday = new Date(referenceDate);
+    monday.setDate(referenceDate.getDate() - dayIndex);
+
+    return Array.from({ length: 7 }, (_, index) => {
+        const date = new Date(monday);
+        date.setDate(monday.getDate() + index);
+        return {
+            key: toDateString(date),
+            label: ANALYSIS_WEEKDAY_LABELS[index],
+            title: `${ANALYSIS_WEEKDAY_LABELS[index]} ${date.toLocaleDateString('pl-PL', { day: 'numeric', month: 'long' })}`,
+            startDate: toDateString(date),
+            endDate: toDateString(date),
+            monthKey: getMonthKeyFromDate(date),
+            dayNumber: date.getDate()
+        };
+    });
+}
+
+function getCurrentMonthBuckets(referenceDate = comparisonReferenceDate) {
+    const year = referenceDate.getFullYear();
+    const month = referenceDate.getMonth() + 1;
+    const daysInMonth = getDaysInMonth(year, month);
+    const ranges = [
+        { start: 1, end: Math.min(7, daysInMonth) },
+        { start: 8, end: Math.min(14, daysInMonth) },
+        { start: 15, end: Math.min(21, daysInMonth) },
+        { start: 22, end: Math.min(28, daysInMonth) }
+    ];
+
+    if (daysInMonth > 28) {
+        ranges.push({ start: 29, end: daysInMonth });
+    }
+
+    return ranges.map(range => ({
+        key: `${year}-${String(month).padStart(2, '0')}:${range.start}-${range.end}`,
+        label: `${range.start}-${range.end}`,
+        title: `${range.start}-${range.end} ${referenceDate.toLocaleDateString('pl-PL', { month: 'long', year: 'numeric' })}`,
+        startDate: `${year}-${String(month).padStart(2, '0')}-${String(range.start).padStart(2, '0')}`,
+        endDate: `${year}-${String(month).padStart(2, '0')}-${String(range.end).padStart(2, '0')}`,
+        monthKey: `${year}-${String(month).padStart(2, '0')}`,
+        rangeDays: range.end - range.start + 1
+    }));
+}
+
+function getRollingMonthBuckets(monthCount, referenceDate = comparisonReferenceDate) {
+    const buckets = [];
+    const monthStart = getMonthStart(referenceDate);
+
+    for (let offset = monthCount - 1; offset >= 0; offset--) {
+        const date = addMonths(monthStart, -offset);
+        const monthKey = getMonthKeyFromDate(date);
+        buckets.push({
+            key: monthKey,
+            label: formatMonthLabel(monthKey),
+            title: date.toLocaleDateString('pl-PL', { month: 'long', year: 'numeric' }),
+            startDate: `${monthKey}-01`,
+            endDate: `${monthKey}-${String(getDaysInMonth(date.getFullYear(), date.getMonth() + 1)).padStart(2, '0')}`,
+            monthKey
+        });
+    }
+
+    return buckets;
+}
+
+function getYearBuckets(selectedYear) {
+    return Array.from({ length: 12 }, (_, index) => {
+        const monthNumber = index + 1;
+        const monthKey = `${selectedYear}-${String(monthNumber).padStart(2, '0')}`;
+        return {
+            key: monthKey,
+            label: ANALYSIS_MONTH_NAMES_SHORT[index],
+            title: new Date(selectedYear, index, 1).toLocaleDateString('pl-PL', { month: 'long', year: 'numeric' }),
+            startDate: `${monthKey}-01`,
+            endDate: `${monthKey}-${String(getDaysInMonth(selectedYear, monthNumber)).padStart(2, '0')}`,
+            monthKey
+        };
+    });
+}
+
+function getComparisonBuckets() {
+    if (comparisonPeriod === 'week') return getCurrentWeekBuckets();
+    if (comparisonPeriod === 'month') return getCurrentMonthBuckets();
+    if (comparisonPeriod === '6months') return getRollingMonthBuckets(6);
+    return getYearBuckets(comparisonSelectedYear);
+}
+
+function getDisplayedComparisonRangeText(buckets) {
+    if (!buckets.length) return '';
+
+    if (comparisonPeriod === 'week') {
+        return formatDateRange(buckets[0].startDate, buckets[buckets.length - 1].endDate);
+    }
+
+    if (comparisonPeriod === 'month') {
+        return parseLocalDate(buckets[0].startDate).toLocaleDateString('pl-PL', { month: 'long', year: 'numeric' });
+    }
+
+    if (comparisonPeriod === '6months') {
+        return `${formatMonthLabel(buckets[0].monthKey)} - ${formatMonthLabel(buckets[buckets.length - 1].monthKey)}`;
+    }
+
+    return `styczen - grudzien ${comparisonSelectedYear}`;
+}
+
+function shouldUseToDateMode() {
+    return (comparisonPeriod === '6months' || comparisonPeriod === 'year') &&
+        Boolean(document.getElementById('comparison-mode-toggle')?.checked);
+}
+
+function hasActiveComparisonTagFilters() {
+    return Object.values(currentComparisonTags || {}).some(value => Boolean(value));
+}
+
+function canShowBudgetComparison() {
+    return (comparisonPeriod === '6months' || comparisonPeriod === 'year') &&
+        !hasActiveComparisonTagFilters() &&
+        !currentComparisonSubCategory;
+}
+
+function getComparisonParentCategories() {
+    if (!Array.isArray(structuredCategories)) return [];
+    return structuredCategories.filter(category => !category.parentId);
+}
+
+function getComparisonSelectedParentCategory() {
+    return getParentCategoryByName(currentComparisonCategory || '');
+}
+
+function getComparisonSubCategories() {
+    const parentCategory = getComparisonSelectedParentCategory();
+    if (!parentCategory || !Array.isArray(structuredCategories)) return [];
+    return structuredCategories.filter(category => category.parentId === parentCategory.id);
+}
+
+function getComparisonSelectedSubCategory() {
+    return getSubCategoryByName(currentComparisonCategory || '', currentComparisonSubCategory || '');
+}
+
+function renderComparisonCategoryChips() {
+    const container = document.getElementById('comparison-category-filters');
+    if (!container) return;
+
+    const previousParentScroller = document.getElementById('comparison-parent-chips');
+    const previousSubScroller = document.getElementById('comparison-subcategory-chips');
+    if (previousParentScroller && !comparisonShouldPreserveChipScroll) {
+        comparisonParentChipsScrollLeft = previousParentScroller.scrollLeft;
+    }
+    if (previousSubScroller && !comparisonShouldPreserveChipScroll) {
+        comparisonSubChipsScrollLeft = previousSubScroller.scrollLeft;
+    }
+
+    const parents = getComparisonParentCategories();
+    const subCategories = getComparisonSubCategories();
+    const selectedParent = getComparisonSelectedParentCategory();
+
+    const createChipButton = ({ label, isActive, onClick, compact = false, color = '#64748b', icon = 'fa-tag', preserveScroll = null }) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.tabIndex = -1;
+        button.className = [
+            'shrink-0 rounded-full border transition-colors whitespace-nowrap',
+            compact ? 'px-2.5 py-1.5 text-[10px]' : 'px-3 py-2 text-[11px]',
+            isActive
+                ? 'border-brand-500 bg-brand-500/15 text-white'
+                : 'border-white/10 bg-white/[0.04] text-gray-300 hover:bg-white/10 hover:text-white'
+        ].join(' ');
+        button.innerHTML = `
+            <span class="flex items-center gap-2">
+                <span class="flex h-5 w-5 items-center justify-center rounded-full text-[10px]" style="background:${isActive ? color : `${color}22`}; color:${isActive ? '#ffffff' : color};">
+                    <i class="fas ${icon}"></i>
+                </span>
+                <span>${label}</span>
+            </span>
+        `;
+        button.addEventListener('pointerdown', (event) => {
+            event.preventDefault();
+            comparisonShouldPreserveChipScroll = true;
+            if (typeof preserveScroll === 'function') {
+                preserveScroll();
+            }
+        });
+        button.onclick = onClick;
+        return button;
+    };
+
+    const parentSection = document.createElement('div');
+    parentSection.className = 'block';
+    const parentScroller = document.createElement('div');
+    parentScroller.id = 'comparison-parent-chips';
+    parentScroller.className = 'flex w-full gap-2 overflow-x-auto pb-1 scrollbar-hide';
+    parentScroller.addEventListener('scroll', () => {
+        comparisonParentChipsScrollLeft = parentScroller.scrollLeft;
+    }, { passive: true });
+    parentScroller.appendChild(createChipButton({ label: 'Wszystkie', isActive: !currentComparisonCategory, preserveScroll: () => {
+        comparisonParentChipsScrollLeft = parentScroller.scrollLeft;
+    }, onClick: async () => {
+        currentComparisonCategory = null;
+        currentComparisonSubCategory = null;
+        updateComparisonCategoryFilterUI();
+        await renderUnifiedComparisonChart();
+    }, color: '#64748b', icon: 'fa-layer-group' }));
+
+    parents.forEach(parent => {
+        parentScroller.appendChild(createChipButton({
+            label: parent.name,
+            isActive: currentComparisonCategory === parent.name,
+            color: parent.color || '#64748b',
+            icon: parent.icon || 'fa-tag',
+            preserveScroll: () => {
+                comparisonParentChipsScrollLeft = parentScroller.scrollLeft;
+            },
+            onClick: async () => {
+            currentComparisonCategory = currentComparisonCategory === parent.name ? null : parent.name;
+            currentComparisonSubCategory = null;
+            updateComparisonControlsVisibility();
+            updateComparisonCategoryFilterUI();
+            await renderUnifiedComparisonChart();
+        }}));
+    });
+    parentSection.appendChild(parentScroller);
+
+    const fragment = document.createDocumentFragment();
+    fragment.appendChild(parentSection);
+
+    if (currentComparisonCategory && subCategories.length > 0) {
+        const subSection = document.createElement('div');
+        subSection.className = 'block mt-2';
+        const subScroller = document.createElement('div');
+        subScroller.id = 'comparison-subcategory-chips';
+        subScroller.className = 'flex w-full gap-2 overflow-x-auto pb-1 scrollbar-hide';
+        subScroller.addEventListener('scroll', () => {
+            comparisonSubChipsScrollLeft = subScroller.scrollLeft;
+        }, { passive: true });
+        subScroller.appendChild(createChipButton({
+            label: 'Wszystkie podkategorie',
+            isActive: !currentComparisonSubCategory,
+            preserveScroll: () => {
+            comparisonParentChipsScrollLeft = parentScroller.scrollLeft;
+            comparisonSubChipsScrollLeft = subScroller.scrollLeft;
+        },
+            onClick: async () => {
+            currentComparisonCategory = selectedParent?.name || currentComparisonCategory;
+            currentComparisonSubCategory = null;
+            updateComparisonControlsVisibility();
+            updateComparisonCategoryFilterUI();
+            await renderUnifiedComparisonChart();
+        }, compact: true, color: selectedParent?.color || '#64748b', icon: selectedParent?.icon || 'fa-tag' }));
+
+        subCategories.forEach(subCategory => {
+            subScroller.appendChild(createChipButton({
+                label: subCategory.name,
+                isActive: currentComparisonSubCategory === subCategory.name,
+                color: selectedParent?.color || '#64748b',
+                icon: subCategory.icon || selectedParent?.icon || 'fa-tag',
+                preserveScroll: () => {
+                comparisonParentChipsScrollLeft = parentScroller.scrollLeft;
+                comparisonSubChipsScrollLeft = subScroller.scrollLeft;
+            },
+                onClick: async () => {
+                currentComparisonCategory = selectedParent?.name || currentComparisonCategory;
+                currentComparisonSubCategory = currentComparisonSubCategory === subCategory.name ? null : subCategory.name;
+                updateComparisonControlsVisibility();
+                updateComparisonCategoryFilterUI();
+                await renderUnifiedComparisonChart();
+            }, compact: true }));
+        });
+
+        subSection.appendChild(subScroller);
+        fragment.appendChild(subSection);
+    }
+
+    container.replaceChildren(fragment);
+
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            const nextParentScroller = document.getElementById('comparison-parent-chips');
+            const nextSubScroller = document.getElementById('comparison-subcategory-chips');
+
+            if (nextParentScroller) {
+                nextParentScroller.scrollLeft = comparisonParentChipsScrollLeft;
+            }
+
+            if (nextSubScroller) {
+                nextSubScroller.scrollLeft = comparisonSubChipsScrollLeft;
+            } else {
+                comparisonSubChipsScrollLeft = 0;
+            }
+
+            comparisonShouldPreserveChipScroll = false;
+        });
+    });
+}
+
+function updateComparisonControlsVisibility() {
+    const yearWrapper = document.getElementById('comparison-year-wrapper');
+    const toggleWrapper = document.getElementById('comparison-mode-toggle-wrapper');
+    const subCategoryButton = document.getElementById('analysis-filter-subcategory-btn');
+    const subCategories = getComparisonSubCategories();
+
+    if (yearWrapper) {
+        yearWrapper.classList.add('hidden');
+    }
+
+    if (toggleWrapper) {
+        toggleWrapper.classList.toggle('hidden', !(comparisonPeriod === '6months' || comparisonPeriod === 'year'));
+    }
+
+    if (subCategoryButton) {
+        subCategoryButton.classList.toggle('hidden', subCategories.length === 0);
     }
 }
 
-function showNoLongTermData() {
-    document.getElementById('no-long-term-data').classList.remove('hidden');
-    document.getElementById('category-analysis-container').classList.add('hidden');
-    document.getElementById('monthly-details-container').classList.add('hidden');
+function updateComparisonSummary(totalSpending, totalBudget) {
+    const showBudget = canShowBudgetComparison();
+    const difference = totalBudget - totalSpending;
+    const spendingEl = document.getElementById('comparison-total-spending');
+    const budgetEl = document.getElementById('comparison-total-budget');
+    const differenceEl = document.getElementById('comparison-total-difference');
 
-    // Wyczyść podsumowanie
-    document.getElementById('avg-monthly-spending').textContent = formatAmount(0);
-    document.getElementById('avg-monthly-budget').textContent = formatAmount(0);
-    document.getElementById('budget-effectiveness').textContent = '0%';
+    if (spendingEl) spendingEl.textContent = formatAmount(totalSpending);
+    if (budgetEl) budgetEl.textContent = showBudget ? formatAmount(totalBudget) : '—';
+    if (differenceEl) {
+        differenceEl.textContent = showBudget ? `${difference >= 0 ? '+' : '-'}${formatAmount(Math.abs(difference))}` : '—';
+        differenceEl.classList.toggle('text-green-400', showBudget && difference >= 0);
+        differenceEl.classList.toggle('text-red-400', showBudget && difference < 0);
+        differenceEl.classList.toggle('text-white', !showBudget);
+    }
+}
 
-    // Zniszcz wykres jeśli istnieje
+function updateComparisonCategoryFilterUI() {
+    const parentButton = document.getElementById('analysis-filter-category-btn');
+    const labelEl = document.getElementById('analysis-filter-category-label');
+    const iconEl = document.getElementById('analysis-filter-category-icon');
+    const clearBtn = document.getElementById('analysis-filter-category-clear');
+    const subCategoryLabelEl = document.getElementById('analysis-filter-subcategory-label');
+    const selectedParent = getComparisonSelectedParentCategory();
+    const subCategories = getComparisonSubCategories();
+
+    if (parentButton && labelEl && iconEl) {
+        applyCategorySelectionState({
+            buttonEl: parentButton,
+            labelEl,
+            iconEl
+        }, currentComparisonCategory || '', '', 'Wszystkie kategorie');
+    }
+
+    if (subCategoryLabelEl) {
+        if (!selectedParent || subCategories.length === 0) {
+            subCategoryLabelEl.textContent = 'Wszystkie podkategorie';
+        } else {
+            subCategoryLabelEl.textContent = currentComparisonSubCategory || 'Wszystkie podkategorie';
+        }
+    }
+
+    if (clearBtn) {
+        clearBtn.classList.toggle('hidden', !currentComparisonCategory);
+    }
+
+    renderComparisonCategoryChips();
+}
+
+function updateComparisonMetaInfo(bucketCount) {
+    const titleEl = document.getElementById('comparison-chart-title');
+    const rangeEl = document.getElementById('comparison-selected-range') || document.getElementById('comparison-category-filters');
+    const toDateMode = shouldUseToDateMode();
+    const showBudget = canShowBudgetComparison();
+    const rangeText = getDisplayedComparisonRangeText(comparisonBucketDetails);
+
+    let title = 'Analiza okresu';
+    if (comparisonPeriod === 'week') title = 'Wydatki dziennie dla biezacego tygodnia';
+    if (comparisonPeriod === 'month') title = 'Wydatki tygodniami biezacego miesiaca';
+    if (comparisonPeriod === '6months') title = showBudget
+        ? (toDateMode ? 'Ostatnie 6 miesiecy do tego samego dnia' : 'Ostatnie 6 miesiecy')
+        : 'Ostatnie 6 miesiecy wydatkow';
+    if (comparisonPeriod === 'year') title = showBudget
+        ? (toDateMode ? `Rok ${comparisonSelectedYear} do tego samego dnia miesiaca` : `Rok ${comparisonSelectedYear}`)
+        : `Rok ${comparisonSelectedYear} miesiac po miesiacu`;
+
+    if (titleEl) {
+        titleEl.textContent = title;
+        titleEl.classList.add('hidden');
+    }
+    if (rangeEl) {
+        rangeEl.className = 'text-[11px] sm:text-xs font-medium text-gray-400';
+        rangeEl.textContent = bucketCount > 0
+            ? rangeText
+            : 'Brak danych dla wybranego zakresu.';
+    }
+}
+
+function applyComparisonCompactLayout() {
+    const analysisTab = document.getElementById('analysis-tab');
+    const categoryButton = document.getElementById('analysis-filter-category-btn');
+    const subCategoryButton = document.getElementById('analysis-filter-subcategory-btn');
+    const clearCategoryButton = document.getElementById('analysis-filter-category-clear');
+    const tagsButton = document.getElementById('analysis-filter-tags-btn');
+    const chartTitle = document.getElementById('comparison-chart-title');
+    const chartCard = document.getElementById('comparison-chart-container')?.closest('.glass-card');
+    const toggleWrapper = document.getElementById('comparison-mode-toggle-wrapper');
+    const yearWrapper = document.getElementById('comparison-year-wrapper');
+    const segmentControl = document.getElementById('comparison-segment-control');
+    const summary = document.getElementById('comparison-summary');
+    const filtersContainer = document.getElementById('comparison-category-filters');
+    const oldFiltersCard = categoryButton?.closest('.glass-card');
+    const chartContainer = document.getElementById('comparison-chart-container');
+
+    if (!chartCard || !categoryButton || !subCategoryButton || !clearCategoryButton || !tagsButton || !chartTitle || !toggleWrapper || !yearWrapper || !segmentControl || !summary || !filtersContainer || !chartContainer) {
+        return;
+    }
+
+    if (chartCard.dataset.compactLayoutApplied === 'true') {
+        return;
+    }
+    chartCard.dataset.compactLayoutApplied = 'true';
+
+    const tabHeader = analysisTab?.firstElementChild;
+    if (tabHeader) {
+        tabHeader.classList.add('hidden');
+    }
+
+    chartCard.className = 'glass-card rounded-[24px] p-3 sm:p-4 flex flex-col h-full border border-white/10 bg-white/[0.04] shadow-[0_20px_60px_rgba(0,0,0,0.24)]';
+
+    const headerRow = chartCard.firstElementChild;
+    if (headerRow) {
+        headerRow.className = 'hidden';
+    }
+
+    const titleWrap = headerRow?.firstElementChild;
+    const heading = titleWrap?.querySelector('h3');
+    if (titleWrap) {
+        titleWrap.className = 'hidden';
+    }
+    if (heading) {
+        heading.className = 'hidden';
+    }
+    chartTitle.className = 'text-[11px] sm:text-xs font-medium text-gray-400 mt-1';
+    chartTitle.classList.add('hidden');
+
+    tagsButton.className = 'relative inline-flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-gray-300 shadow-sm hover:bg-white/10 hover:text-white transition-colors';
+    tagsButton.setAttribute('title', 'Filtr tagow');
+    tagsButton.setAttribute('aria-label', 'Filtr tagow');
+    tagsButton.innerHTML = `
+        <i class="fas fa-tags text-sm"></i>
+        <span id="analysis-filter-tags-indicator" class="hidden absolute -right-1 -top-1 h-3 w-3 rounded-full bg-brand-500 ring-2 ring-[#111827]"></span>
+        <span id="analysis-filter-tags-label" class="hidden">Wszystkie tagi</span>
+    `;
+
+    yearWrapper.classList.add('hidden');
+
+    toggleWrapper.className = 'hidden items-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.04] px-2 py-1.5';
+    const toggleLabel = toggleWrapper.querySelector('span');
+    if (toggleLabel) {
+        toggleLabel.className = 'text-[11px] font-medium text-gray-400 whitespace-nowrap';
+        toggleLabel.textContent = 'Do dzis';
+    }
+
+    const segmentRow = segmentControl.parentElement;
+    if (segmentRow) {
+        segmentRow.className = 'mb-2 overflow-hidden';
+    }
+    segmentControl.className = 'grid w-full grid-cols-4 items-center rounded-2xl border border-white/10 bg-white/[0.04] p-1 gap-1';
+
+    summary.className = 'mb-2.5 rounded-2xl border border-white/10 bg-gradient-to-r from-white/[0.06] to-white/[0.03] px-3 py-2.5';
+    summary.innerHTML = `
+        <div class="grid grid-cols-3 gap-2">
+            <div class="min-w-0 border-r border-white/8 pr-2">
+                <p class="text-[10px] uppercase tracking-[0.18em] text-gray-500">Wydatki</p>
+                <p id="comparison-total-spending" class="mt-1 truncate text-sm sm:text-base font-semibold text-white">0,00 zl</p>
+            </div>
+            <div class="min-w-0 border-r border-white/8 pr-2">
+                <p class="text-[10px] uppercase tracking-[0.18em] text-gray-500">Budzet</p>
+                <p id="comparison-total-budget" class="mt-1 truncate text-sm sm:text-base font-semibold text-white">0,00 zl</p>
+            </div>
+            <div class="min-w-0">
+                <p class="text-[10px] uppercase tracking-[0.18em] text-gray-500">Roznica</p>
+                <p id="comparison-total-difference" class="mt-1 truncate text-sm sm:text-base font-semibold text-white">0,00 zl</p>
+            </div>
+        </div>
+    `;
+    chartCard.insertBefore(summary, segmentRow);
+
+    let chartMeta = document.getElementById('comparison-chart-meta');
+    if (!chartMeta) {
+        chartMeta = document.createElement('div');
+        chartMeta.id = 'comparison-chart-meta';
+        chartMeta.className = 'mb-2 flex items-center justify-between gap-3';
+        segmentRow.insertAdjacentElement('afterend', chartMeta);
+    }
+
+    let rangeInfo = document.getElementById('comparison-selected-range');
+    if (!rangeInfo) {
+        rangeInfo = document.createElement('div');
+        rangeInfo.id = 'comparison-selected-range';
+        rangeInfo.className = 'text-[11px] sm:text-xs font-medium text-gray-400';
+    }
+    const chartMetaActions = document.createElement('div');
+    chartMetaActions.className = 'ml-auto flex items-center gap-3 shrink-0';
+    toggleWrapper.className = 'hidden items-center gap-2 px-0 py-0 self-center';
+    const toggleTrack = toggleWrapper.querySelector('label');
+    if (toggleTrack) {
+        toggleTrack.className = 'relative inline-flex items-center cursor-pointer align-middle';
+    }
+    const toggleText = toggleWrapper.querySelector('span');
+    if (toggleText) {
+        toggleText.className = 'text-[11px] font-medium text-gray-400 leading-none whitespace-nowrap';
+    }
+    chartMetaActions.appendChild(toggleWrapper);
+    chartMetaActions.appendChild(tagsButton);
+    chartMeta.replaceChildren(rangeInfo, chartMetaActions);
+
+    chartContainer.className = 'h-72 sm:h-80 w-full flex-grow';
+
+    filtersContainer.className = 'mt-2.5 border-t border-white/8 pt-2.5 space-y-2';
+    filtersContainer.style.display = 'block';
+    filtersContainer.style.width = '100%';
+    filtersContainer.style.minWidth = '0';
+    filtersContainer.style.overflowX = 'visible';
+    filtersContainer.style.paddingBottom = '0';
+    filtersContainer.style.gap = '0';
+    categoryButton.classList.add('hidden');
+    subCategoryButton.classList.add('hidden');
+    clearCategoryButton.classList.add('hidden');
+    renderComparisonCategoryChips();
+
+    oldFiltersCard?.classList.add('hidden');
+    analysisTab?.classList.remove('analysis-layout-pending');
+}
+
+function openComparisonBucketDetails(bucket) {
+    if (!bucket) return;
+    renderCategoryDetailsModal(bucket.title || bucket.label || 'Szczegoly', bucket.items || [], false);
+}
+
+function buildComparisonChart(buckets) {
+    const container = document.getElementById('comparison-chart-container');
+    const canvas = document.getElementById('comparison-chart');
+    const noData = document.getElementById('no-data-bar-chart');
+    if (!container || !canvas || !noData) return;
+
+    const hasData = buckets.some(bucket => bucket.spending > 0 || bucket.budget > 0);
+    comparisonBucketDetails = buckets;
+    updateComparisonMetaInfo(buckets.length);
+
     if (longTermBudgetChart) {
         longTermBudgetChart.destroy();
         longTermBudgetChart = null;
     }
-}
 
-function renderLongTermSummary(data) {
-    const totalSpending = data.reduce((sum, item) => sum + item.spending, 0);
-    const totalBudget = data.reduce((sum, item) => sum + item.budget, 0);
-    const monthsCount = data.length;
-
-    const avgMonthlySpending = totalSpending / monthsCount;
-    const avgMonthlyBudget = totalBudget / monthsCount;
-    const effectiveness = totalBudget > 0 ? ((totalBudget - totalSpending) / totalBudget) * 100 : 0;
-
-    document.getElementById('avg-monthly-spending').textContent = formatAmount(avgMonthlySpending);
-    document.getElementById('avg-monthly-budget').textContent = formatAmount(avgMonthlyBudget);
-    document.getElementById('budget-effectiveness').textContent = `${Math.max(0, effectiveness).toFixed(0)}%`;
-}
-
-function renderLongTermChart(data) {
-    const ctx = document.getElementById('long-term-budget-chart').getContext('2d');
-
-    if (longTermBudgetChart) {
-        longTermBudgetChart.destroy();
+    if (!hasData) {
+        container.classList.add('hidden');
+        noData.classList.remove('hidden');
+        updateComparisonSummary(0, 0);
+        return;
     }
 
-    const labels = data.map(item => {
-        const [year, month] = item.month.split('-');
-        return new Date(year, month - 1).toLocaleString('pl-PL', { month: 'short', year: 'numeric' });
-    });
+    container.classList.remove('hidden');
+    noData.classList.add('hidden');
 
-    const budgetData = data.map(item => item.budget);
-    const spendingData = data.map(item => item.spending);
+    const labels = buckets.map(bucket => bucket.label);
+    const spendingData = buckets.map(bucket => Number(bucket.spending.toFixed(2)));
+    const budgetData = buckets.map(bucket => Number(bucket.budget.toFixed(2)));
+    const totalSpending = spendingData.reduce((sum, value) => sum + value, 0);
+    const totalBudget = budgetData.reduce((sum, value) => sum + value, 0);
+    const showBudget = canShowBudgetComparison();
+    updateComparisonSummary(totalSpending, totalBudget);
 
-    // Oblicz dynamiczne minimum (zaokrąglone w dół do pełnego tysiąca)
-    const allValues = [...budgetData, ...spendingData].filter(v => v > 0);
-    const minVal = allValues.length > 0 ? Math.min(...allValues) : 0;
-    const yAxisMin = Math.max(0, Math.floor(minVal / 1000) * 1000);
-
+    const ctx = canvas.getContext('2d');
     longTermBudgetChart = new Chart(ctx, {
-        type: 'line',
+        type: 'bar',
         data: {
             labels,
             datasets: [
-                {
-                    label: 'Budżet',
+                ...(showBudget ? [{
+                    label: 'Budzet',
                     data: budgetData,
-                    borderColor: '#10B981',
-                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                    fill: false,
-                    tension: 0.1,
-                    pointRadius: data.length > 9 ? 2 : 4
-                },
+                    grouped: false,
+                    backgroundColor: 'rgba(148, 163, 184, 0.22)',
+                    borderColor: '#94a3b8',
+                    borderWidth: 2,
+                    borderRadius: 12,
+                    maxBarThickness: 34,
+                    order: 1
+                }] : []),
                 {
                     label: 'Wydatki',
                     data: spendingData,
-                    borderColor: '#3B82F6',
-                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                    fill: false,
-                    tension: 0.1,
-                    pointRadius: data.length > 9 ? 2 : 4
+                    grouped: false,
+                    backgroundColor: 'rgba(226, 232, 240, 0.92)',
+                    borderColor: '#f8fafc',
+                    borderWidth: 1,
+                    borderRadius: 10,
+                    maxBarThickness: showBudget ? 18 : 28,
+                    order: 2
                 }
             ]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            events: ['mousemove', 'mouseout', 'click'],
+            layout: {
+                padding: {
+                    top: 12,
+                    right: 4,
+                    left: 0,
+                    bottom: 0
+                }
+            },
+            interaction: {
+                mode: 'index',
+                intersect: false
+            },
+            onClick: (event, elements, chart) => {
+                if (comparisonLongPressTriggered || comparisonSuppressNextClick || comparisonTouchMoved) {
+                    comparisonLongPressTriggered = false;
+                    comparisonSuppressNextClick = false;
+                    return;
+                }
+                if (!elements.length) return;
+                const activeElements = chart.data.datasets.map((_, datasetIndex) => ({
+                    datasetIndex,
+                    index: elements[0].index
+                }));
+                chart.setActiveElements(activeElements);
+                chart.tooltip.setActiveElements(activeElements, { x: event.x, y: event.y });
+                chart.update();
+            },
             plugins: {
                 legend: {
-                    position: 'top',
+                    display: false,
                     labels: {
-                        color: 'white',
-                        usePointStyle: true,
-                        font: { size: 11 }
+                        color: '#d1d5db',
+                        usePointStyle: true
                     }
                 },
                 tooltip: {
-                    mode: 'index',
-                    intersect: false,
                     callbacks: {
-                        label: function (context) {
-                            return context.dataset.label + ': ' +
-                                new Intl.NumberFormat('pl-PL', {
-                                    style: 'currency',
-                                    currency: 'PLN',
-                                    minimumFractionDigits: 2
-                                }).format(context.parsed.y);
-                        }
+                        label: (context) => `${context.dataset.label}: ${formatAmount(context.parsed.y)}`
                     }
                 },
                 datalabels: {
-                    display: context => {
-                        // Jeśli mamy dużo punktów, wyświetlaj co drugi labelek dla czytelności
-                        if (data.length > 9) {
-                            return context.dataIndex % 2 === 0 && context.dataset.data[context.dataIndex] > 0;
-                        }
-                        return context.dataset.data[context.dataIndex] > 0;
-                    },
-                    formatter: (value) => Math.round(value) + ' zł',
-                    color: 'white',
-                    backgroundColor: 'rgba(0, 0, 0, 0.4)',
-                    borderRadius: 4,
-                    padding: 3,
+                    display: false,
+                    color: '#e5e7eb',
+                    anchor: 'end',
+                    align: 'top',
+                    offset: 2,
+                    formatter: (value) => value > 0 ? Math.round(value) : '',
                     font: {
                         weight: 'bold',
-                        size: data.length > 8 ? 9 : 10
-                    },
-                    align: 'top',
-                    anchor: 'end',
-                    offset: 2,
-                    clip: false
+                        size: 10
+                    }
                 }
             },
             scales: {
                 y: {
-                    beginAtZero: false,
-                    min: yAxisMin,
+                    beginAtZero: true,
+                    grace: '8%',
                     ticks: {
-                        color: 'white',
-                        font: { size: 10 },
-                        callback: function (value) {
-                            return Math.round(value) + ' zł';
-                        }
+                        color: '#9ca3af',
+                        callback: value => `${Math.round(value)} zl`
                     },
                     grid: {
-                        color: 'rgba(255, 255, 255, 0.1)'
+                        color: 'rgba(255,255,255,0.08)'
                     }
                 },
                 x: {
                     ticks: {
-                        color: 'white',
-                        font: { size: 10 },
-                        maxRotation: 45,
-                        minRotation: 0
+                        color: '#d1d5db'
                     },
-                    grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                    grid: {
+                        display: false
+                    }
                 }
             }
         }
     });
 }
 
-function renderMonthlyDetailsTable(data) {
-    const tbody = document.getElementById('monthly-details-tbody');
-
-    tbody.innerHTML = data.map(item => {
-        const difference = item.budget - item.spending;
-        const effectiveness = item.budget > 0 ? ((item.budget - item.spending) / item.budget) * 100 : 0;
-
-        const [year, month] = item.month.split('-');
-        const monthName = new Date(year, month - 1).toLocaleString('pl-PL', {
-            month: 'long',
-            year: 'numeric'
-        });
-
-        const differenceClass = difference >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400';
-        const effectivenessClass = effectiveness >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400';
-
-        return `
-            <tr class="hover:bg-gray-50 dark:hover:bg-gray-800">
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                    ${monthName}
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                    ${formatAmount(item.budget)}
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                    ${formatAmount(item.spending)}
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm ${differenceClass}">
-                    ${difference >= 0 ? '+' : ''}${formatAmount(difference)}
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm ${effectivenessClass}">
-                    ${Math.max(0, effectiveness).toFixed(0)}%
-                </td>
-            </tr>
-        `;
-    }).join('');
+function getFilteredItemsForBucket(allItems, bucket) {
+    return allItems.filter(item => item.purchaseDate >= bucket.startDate && item.purchaseDate <= bucket.endDate);
 }
 
-function toggleMonthlyDetailsTable() {
-    const table = document.getElementById('monthly-details-table');
-    const toggleText = document.getElementById('toggle-monthly-text');
-    const toggleIcon = document.getElementById('toggle-monthly-icon');
+function applyToDateFilterForMonthItems(items, monthKey, toDateMode) {
+    if (!toDateMode) return items.filter(item => item.purchaseDate.startsWith(monthKey));
+    const targetDay = new Date().getDate();
+    return items.filter(item => {
+        if (!item.purchaseDate.startsWith(monthKey)) return false;
+        return parseLocalDate(item.purchaseDate).getDate() <= targetDay;
+    });
+}
 
-    if (table.classList.contains('hidden')) {
-        table.classList.remove('hidden');
-        toggleText.textContent = 'Ukryj szczegóły miesięczne';
-        toggleIcon.style.transform = 'rotate(180deg)';
-    } else {
-        table.classList.add('hidden');
-        toggleText.textContent = 'Pokaż szczegóły miesięczne';
-        toggleIcon.style.transform = 'rotate(0deg)';
+function buildWeekBucketsData(filteredItems, budgetMap) {
+    return getCurrentWeekBuckets().map(bucket => {
+        const items = getFilteredItemsForBucket(filteredItems, bucket);
+        const spending = items.reduce((sum, item) => sum + item.price, 0);
+        const budget = 0;
+        return { ...bucket, items, spending, budget };
+    });
+}
+
+function buildMonthBucketsData(filteredItems, budgetMap) {
+    return getCurrentMonthBuckets().map(bucket => {
+        const items = getFilteredItemsForBucket(filteredItems, bucket);
+        const spending = items.reduce((sum, item) => sum + item.price, 0);
+        const budget = 0;
+        return { ...bucket, items, spending, budget };
+    });
+}
+
+function buildMonthlyBucketsData(filteredItems, budgetMap, monthKeys) {
+    const toDateMode = shouldUseToDateMode();
+    const targetDay = new Date().getDate();
+
+    return monthKeys.map(monthKey => {
+        const [year, month] = monthKey.split('-').map(Number);
+        const daysInMonth = getDaysInMonth(year, month);
+        const endDay = toDateMode ? Math.min(targetDay, daysInMonth) : daysInMonth;
+        const items = applyToDateFilterForMonthItems(filteredItems, monthKey, toDateMode);
+        const spending = items.reduce((sum, item) => sum + item.price, 0);
+        const baseBudget = canShowBudgetComparison() ? getBudgetValueForMonth(budgetMap, monthKey) : 0;
+        const budget = toDateMode ? baseBudget * (endDay / daysInMonth) : baseBudget;
+        return {
+            key: monthKey,
+            label: comparisonPeriod === 'year' ? ANALYSIS_MONTH_NAMES_SHORT[month - 1] : formatMonthLabel(monthKey),
+            title: new Date(year, month - 1, 1).toLocaleDateString('pl-PL', { month: 'long', year: 'numeric' }),
+            startDate: `${monthKey}-01`,
+            endDate: `${monthKey}-${String(endDay).padStart(2, '0')}`,
+            monthKey,
+            items,
+            spending,
+            budget
+        };
+    });
+}
+
+async function renderUnifiedComparisonChart() {
+    await ensureComparisonAvailableMonths();
+    updateComparisonControlsVisibility();
+    updateComparisonCategoryFilterUI();
+
+    const buckets = getComparisonBuckets();
+    if (!buckets.length) {
+        buildComparisonChart([]);
+        return;
     }
+
+    const startDate = buckets[0].startDate;
+    const endDate = buckets[buckets.length - 1].endDate;
+    const purchases = await fetchAllPurchasesInRange(startDate, endDate);
+    const filteredItems = getFilteredPurchaseItems(purchases);
+    const monthKeys = buckets.map(bucket => bucket.monthKey);
+    const budgetMap = canShowBudgetComparison() ? await fetchBudgetMapForMonths(monthKeys) : new Map();
+
+    let enrichedBuckets = [];
+    if (comparisonPeriod === 'week') {
+        enrichedBuckets = buildWeekBucketsData(filteredItems, budgetMap);
+    } else if (comparisonPeriod === 'month') {
+        enrichedBuckets = buildMonthBucketsData(filteredItems, budgetMap);
+    } else {
+        enrichedBuckets = buildMonthlyBucketsData(filteredItems, budgetMap, monthKeys);
+    }
+
+    buildComparisonChart(enrichedBuckets);
 }
 
-function renderCategoryProgressBars(data) {
-
-    const container = document.getElementById('category-progress-bars');
-
-    container.innerHTML = '';
-
-    // Agreguj dane po kategoriach
-    const categoryTotals = {};
-
-    data.forEach(monthData => {
-        // Budżety
-        Object.keys(monthData.budgets).forEach(category => {
-            if (!categoryTotals[category]) {
-                categoryTotals[category] = { budget: 0, spending: 0 };
-            }
-            categoryTotals[category].budget += monthData.budgets[category];
-        });
-
-        // Wydatki
-        Object.keys(monthData.spendingByCategory).forEach(category => {
-            if (!categoryTotals[category]) {
-                categoryTotals[category] = { budget: 0, spending: 0 };
-            }
-            categoryTotals[category].spending += monthData.spendingByCategory[category];
-        });
-    });
-
-    // Sortuj kategorie według budżetu (malejąco)
-    const sortedCategories = Object.entries(categoryTotals)
-        .sort(([, a], [, b]) => b.budget - a.budget);
-
-    // Renderuj paski postępu
-    sortedCategories.forEach(([category, totals]) => {
-        const rawPercentage = totals.budget > 0 ? (totals.spending / totals.budget) * 100 : 0;
-        const visualPercentage = Math.min(rawPercentage, 100);
-        const remaining = totals.budget - totals.spending;
-
-        let progressColor = 'bg-green-500';
-        if (rawPercentage > 100) progressColor = 'bg-red-500';
-        else if (rawPercentage > 75) progressColor = 'bg-yellow-500';
-
-        const progressBar = document.createElement('div');
-        progressBar.className = 'bg-gray-200 dark:bg-gray-600 rounded-lg p-3';
-        progressBar.innerHTML = `
-            <div class="flex justify-between items-center mb-2">
-                <span class="text-sm font-medium text-gray-900 dark:text-white">${category.charAt(0).toUpperCase() + category.slice(1)}</span>
-                <span class="text-sm text-gray-600 dark:text-gray-400">${rawPercentage.toFixed(1)}%</span>
-            </div>
-            <div class="w-full bg-gray-300 dark:bg-gray-700 rounded-full h-2 mb-2">
-                <div class="${progressColor} h-2 rounded-full transition-all duration-300" style="width: ${visualPercentage}%"></div>
-            </div>
-            <div class="flex justify-between text-xs text-gray-600 dark:text-gray-400">
-                <span>Wydano: ${formatAmount(totals.spending)}</span>
-                <span>Budżet: ${formatAmount(totals.budget)}</span>
-            </div>
-            <div class="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                ${remaining >= 0 ? 'Pozostało' : 'Przekroczono o'}: ${formatAmount(Math.abs(remaining))}
-            </div>
-        `;
-
-        container.appendChild(progressBar);
+function setActiveComparisonPeriodButton(period) {
+    document.querySelectorAll('#comparison-segment-control .segment-btn').forEach(button => {
+        button.classList.toggle('active', button.dataset.value === period);
     });
 }
 
-// =====================================================================
-// DYNAMICZNY FILTR TAGÓW W ANALIZIE (WERSJA ZUNIFIKOWANA)
-// =====================================================================
+async function setComparisonPeriod(period) {
+    const periodSelect = document.getElementById('comparison-period-select');
+    comparisonPeriod = period;
+    comparisonReferenceDate = new Date();
+    comparisonSelectedYear = new Date().getFullYear();
+    if (periodSelect) {
+        periodSelect.value = comparisonPeriod;
+    }
+    syncComparisonYearUI();
+    setActiveComparisonPeriodButton(comparisonPeriod);
+    await renderUnifiedComparisonChart();
+}
+
+function syncComparisonYearUI() {
+    const yearSelect = document.getElementById('comparison-year-select');
+    const yearLabel = document.getElementById('comparison-year-label');
+    if (yearSelect) yearSelect.value = String(comparisonSelectedYear);
+    if (yearLabel) yearLabel.textContent = String(comparisonSelectedYear);
+}
+
+function canNavigateComparisonRange(step) {
+    const today = new Date();
+
+    if (comparisonPeriod === 'week') {
+        const nextDate = addDays(comparisonReferenceDate, step * 7);
+        return step < 0 || nextDate <= today;
+    }
+
+    if (comparisonPeriod === 'month' || comparisonPeriod === '6months') {
+        const nextMonth = addMonths(comparisonReferenceDate, step);
+        return step < 0 || getMonthStart(nextMonth) <= getMonthStart(today);
+    }
+
+    const nextYear = comparisonSelectedYear + step;
+    return step < 0 || nextYear <= today.getFullYear();
+}
+
+async function changeComparisonRangeByStep(step) {
+    if (!canNavigateComparisonRange(step)) return;
+
+    if (comparisonPeriod === 'week') {
+        comparisonReferenceDate = addDays(comparisonReferenceDate, step * 7);
+    } else if (comparisonPeriod === 'month' || comparisonPeriod === '6months') {
+        comparisonReferenceDate = addMonths(comparisonReferenceDate, step);
+    } else {
+        comparisonSelectedYear += step;
+        syncComparisonYearUI();
+    }
+
+    await renderUnifiedComparisonChart();
+}
+
+function showComparisonBarTooltip(chart, nativeEvent) {
+    if (!chart) return;
+    const elements = chart.getElementsAtEventForMode(nativeEvent, 'nearest', { intersect: false }, true);
+    if (!elements.length) return;
+    const activeElements = chart.data.datasets.map((_, datasetIndex) => ({
+        datasetIndex,
+        index: elements[0].index
+    }));
+    const position = Chart.helpers.getRelativePosition(nativeEvent, chart);
+    chart.setActiveElements(activeElements);
+    chart.tooltip.setActiveElements(activeElements, position);
+    chart.update();
+}
+
+function openComparisonDetailsFromTouchEvent(nativeEvent) {
+    if (!longTermBudgetChart) return;
+    const elements = longTermBudgetChart.getElementsAtEventForMode(nativeEvent, 'nearest', { intersect: false }, true);
+    if (!elements.length) return;
+    const bucket = comparisonBucketDetails[elements[0].index];
+    comparisonLongPressTriggered = true;
+    openComparisonBucketDetails(bucket);
+}
+
+function initializeComparisonChartGestures() {
+    const chartContainer = document.getElementById('comparison-chart-container');
+    const canvas = document.getElementById('comparison-chart');
+    if (!chartContainer || !canvas || chartContainer.dataset.gesturesInitialized === 'true') {
+        return;
+    }
+
+    chartContainer.dataset.gesturesInitialized = 'true';
+
+    chartContainer.addEventListener('touchstart', (event) => {
+        const touch = event.touches[0];
+        if (!touch) return;
+        comparisonTouchMoved = false;
+        comparisonSuppressNextClick = false;
+        comparisonSwipeStartX = touch.clientX;
+        comparisonSwipeStartY = touch.clientY;
+        comparisonSwipeLocked = false;
+    }, { passive: true });
+
+    chartContainer.addEventListener('touchmove', (event) => {
+        const touch = event.touches[0];
+        if (!touch || comparisonSwipeLocked) return;
+        const deltaX = touch.clientX - comparisonSwipeStartX;
+        const deltaY = touch.clientY - comparisonSwipeStartY;
+        if (Math.abs(deltaX) > 12 || Math.abs(deltaY) > 12) {
+            comparisonTouchMoved = true;
+            clearTimeout(comparisonLongPressTimer);
+        }
+    }, { passive: true });
+
+    chartContainer.addEventListener('touchend', async (event) => {
+        const touch = event.changedTouches[0];
+        if (!touch || comparisonSwipeLocked) return;
+
+        clearTimeout(comparisonLongPressTimer);
+
+        const deltaX = touch.clientX - comparisonSwipeStartX;
+        const deltaY = touch.clientY - comparisonSwipeStartY;
+
+        if (Math.abs(deltaX) >= 50 && Math.abs(deltaX) > Math.abs(deltaY)) {
+            comparisonSwipeLocked = true;
+            comparisonSuppressNextClick = true;
+            setTimeout(() => {
+                comparisonSuppressNextClick = false;
+            }, 400);
+            await changeComparisonRangeByStep(deltaX < 0 ? 1 : -1);
+        }
+    }, { passive: true });
+
+    canvas.addEventListener('touchstart', (event) => {
+        comparisonLongPressTriggered = false;
+        comparisonTouchMoved = false;
+        clearTimeout(comparisonLongPressTimer);
+        comparisonLongPressTimer = setTimeout(() => {
+            openComparisonDetailsFromTouchEvent(event);
+        }, 450);
+    }, { passive: true });
+
+    canvas.addEventListener('click', (event) => {
+        if (!comparisonSuppressNextClick && !comparisonTouchMoved) return;
+        event.preventDefault();
+        event.stopPropagation();
+        comparisonSuppressNextClick = false;
+    }, true);
+
+    ['touchend', 'touchcancel'].forEach(eventName => {
+        canvas.addEventListener(eventName, () => {
+            clearTimeout(comparisonLongPressTimer);
+            if (comparisonTouchMoved) {
+                comparisonSuppressNextClick = true;
+                setTimeout(() => {
+                    comparisonSuppressNextClick = false;
+                }, 400);
+            }
+        }, { passive: true });
+    });
+}
+
+function initializeComparisonPeriodControls() {
+    const periodSelect = document.getElementById('comparison-period-select');
+    const yearSelect = document.getElementById('comparison-year-select');
+    const yearPopup = document.getElementById('comparison-year-popup');
+    const yearLabel = document.getElementById('comparison-year-label');
+    const yearButton = document.getElementById('comparison-year-dropdown-btn');
+    const categoryButton = document.getElementById('analysis-filter-category-btn');
+    const subCategoryButton = document.getElementById('analysis-filter-subcategory-btn');
+    const clearCategoryButton = document.getElementById('analysis-filter-category-clear');
+    const modeToggle = document.getElementById('comparison-mode-toggle');
+
+    if (!periodSelect || !yearSelect || !yearPopup || !yearLabel || !yearButton || !modeToggle) {
+        return;
+    }
+
+    if (periodSelect.dataset.initialized === 'true') {
+        return;
+    }
+    periodSelect.dataset.initialized = 'true';
+
+    const refreshYearOptions = () => {
+        yearSelect.innerHTML = comparisonAvailableYears.map(year => `<option value="${year}">${year}</option>`).join('');
+        syncComparisonYearUI();
+        yearPopup.innerHTML = comparisonAvailableYears.map(year => `
+            <button class="year-option-btn w-full text-center px-3 py-2 rounded-lg text-sm text-white hover:bg-white/10 transition-colors" data-value="${year}">
+                ${year}
+            </button>
+        `).join('');
+
+        yearPopup.querySelectorAll('.year-option-btn').forEach(button => {
+            button.addEventListener('click', async (event) => {
+                event.stopPropagation();
+                comparisonSelectedYear = parseInt(button.dataset.value, 10);
+                syncComparisonYearUI();
+                yearPopup.classList.add('hidden');
+                await renderUnifiedComparisonChart();
+            });
+        });
+    };
+
+    document.querySelectorAll('#comparison-segment-control .segment-btn').forEach(button => {
+        button.addEventListener('click', async () => {
+            await setComparisonPeriod(button.dataset.value);
+        });
+    });
+
+    yearButton.addEventListener('click', (event) => {
+        event.stopPropagation();
+        if (comparisonPeriod !== 'year') return;
+        yearPopup.classList.toggle('hidden');
+    });
+
+    document.addEventListener('click', (event) => {
+        if (!yearPopup.contains(event.target) && !yearButton.contains(event.target)) {
+            yearPopup.classList.add('hidden');
+        }
+    });
+
+    yearSelect.addEventListener('change', async (event) => {
+        comparisonSelectedYear = parseInt(event.target.value, 10);
+        syncComparisonYearUI();
+        await renderUnifiedComparisonChart();
+    });
+
+    modeToggle.addEventListener('change', async () => {
+        await renderUnifiedComparisonChart();
+    });
+
+    categoryButton?.addEventListener('click', () => {
+        const parents = getComparisonParentCategories();
+        if (!parents.length) return;
+
+        openSelectionDrawer('Wybierz kategorie', parents.map(parent => ({
+            value: parent.id,
+            label: parent.name,
+            icon: `<i class="fas ${parent.icon || 'fa-tag'}"></i>`,
+            color: (parent.color || '#64748b') + '20'
+        })), async (parentId) => {
+            const parent = parents.find(category => category.id === parentId);
+            currentComparisonCategory = parent ? parent.name : null;
+            currentComparisonSubCategory = null;
+            updateComparisonControlsVisibility();
+            updateComparisonCategoryFilterUI();
+            await renderUnifiedComparisonChart();
+        }, getComparisonSelectedParentCategory()?.id || null, 'grid', false, true);
+    });
+
+    subCategoryButton?.addEventListener('click', () => {
+        const parentCategory = getComparisonSelectedParentCategory();
+        const subCategories = getComparisonSubCategories();
+        if (!parentCategory || !subCategories.length) return;
+
+        openSelectionDrawer(`${parentCategory.name} -> Podkategoria`, [
+            { value: '', label: 'Wszystkie podkategorie' },
+            ...subCategories.map(subCategory => ({
+                value: subCategory.id,
+                label: subCategory.name,
+                icon: `<i class="fas ${subCategory.icon || parentCategory.icon || 'fa-tag'}"></i>`,
+                color: (parentCategory.color || '#64748b') + '20'
+            }))
+        ], async (subCategoryId) => {
+            const selectedSubCategory = subCategories.find(category => category.id === subCategoryId);
+            currentComparisonSubCategory = selectedSubCategory ? selectedSubCategory.name : null;
+            updateComparisonCategoryFilterUI();
+            await renderUnifiedComparisonChart();
+        }, getComparisonSelectedSubCategory()?.id || '', 'grid', false, true);
+    });
+
+    clearCategoryButton?.addEventListener('click', async (event) => {
+        event.stopPropagation();
+        currentComparisonCategory = null;
+        currentComparisonSubCategory = null;
+        updateComparisonCategoryFilterUI();
+        await renderUnifiedComparisonChart();
+    });
+
+    periodSelect.value = comparisonPeriod || '6months';
+    comparisonPeriod = periodSelect.value || '6months';
+    setActiveComparisonPeriodButton(comparisonPeriod);
+    refreshYearOptions();
+    initializeComparisonChartGestures();
+}
+
+async function initializeLongTermBudget() {
+    if (typeof ChartDataLabels !== 'undefined') {
+        Chart.register(ChartDataLabels);
+    }
+
+    await ensureComparisonAvailableMonths();
+    initializeComparisonPeriodControls();
+    applyComparisonCompactLayout();
+    renderAnalysisTagFilterButton();
+
+    const firstSlideToggle = document.getElementById('comparison-mode-toggle-wrapper');
+    if (firstSlideToggle) firstSlideToggle.classList.add('hidden');
+
+    longTermBudgetInitialized = true;
+    window.updateComparisonChart = renderUnifiedComparisonChart;
+    await renderUnifiedComparisonChart();
+}
+
 function renderAnalysisTagFilterButton() {
     const labelEl = document.getElementById('analysis-filter-tags-label');
-    const btn = document.getElementById('analysis-filter-tags-btn');
-    if (!labelEl || !btn) return;
+    const button = document.getElementById('analysis-filter-tags-btn');
+    const indicatorEl = document.getElementById('analysis-filter-tags-indicator');
+    if (!labelEl || !button) return;
 
     const summary = buildTagsSummary(currentComparisonTags);
-    labelEl.textContent = summary === 'Wybierz tagi...' ? 'Wszystkie tagi' : summary;
+    const isActive = summary !== 'Wybierz tagi...';
+    labelEl.textContent = isActive ? summary : 'Wszystkie tagi';
+    button.title = isActive ? `Tagi: ${summary}` : 'Filtr tagow';
+    button.classList.toggle('border-brand-500', isActive);
+    button.classList.toggle('text-white', isActive);
+    button.classList.toggle('bg-brand-500/15', isActive);
+    button.classList.toggle('shadow-[0_10px_30px_rgba(79,70,229,0.22)]', isActive);
+    button.classList.toggle('text-gray-300', !isActive);
+    button.classList.toggle('bg-white/5', !isActive);
+    button.classList.toggle('shadow-sm', !isActive);
+    indicatorEl?.classList.toggle('hidden', !isActive);
 
-    btn.onclick = () => {
-        openTagsDrawer(currentComparisonTags, (newTags) => {
+    button.onclick = () => {
+        openTagsDrawer(currentComparisonTags, async (newTags) => {
             currentComparisonTags = newTags;
             renderAnalysisTagFilterButton();
-            updateComparisonChart();
-        }, true); // true = filter mode
+            await renderUnifiedComparisonChart();
+        }, true);
     };
 }
 
 window.renderAnalysisTagFilterButton = renderAnalysisTagFilterButton;
+window.initializeLongTermBudget = initializeLongTermBudget;
+window.updateComparisonChart = renderUnifiedComparisonChart;

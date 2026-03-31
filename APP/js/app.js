@@ -1078,25 +1078,6 @@ function setupAppEventListeners() {
         alert('Powiadomienia będą dostępne wkrótce! (Etap 4)');
     });
 
-
-    document.getElementById('analysis-filter-tags-btn')?.addEventListener('click', () => {
-        if (typeof openTagsDrawer === 'function') {
-            // currentComparisonTags is global in long-term-budget.js
-            const currentTags = typeof currentComparisonTags !== 'undefined' ? currentComparisonTags : {};
-            openTagsDrawer(currentTags, (newTags) => {
-                if (typeof currentComparisonTags !== 'undefined') {
-                    // Directly update and trigger chart refresh if in long-term-budget context
-                    window.currentComparisonTags = newTags;
-                    if (typeof renderAnalysisTagFilterButton === 'function') renderAnalysisTagFilterButton();
-                    if (typeof updateComparisonChart === 'function') updateComparisonChart();
-                } else {
-                    // Fallback or other context
-                    const labelEl = document.getElementById('analysis-filter-tags-label');
-                    if (labelEl) labelEl.textContent = buildTagsSummary(newTags) || 'Wszystkie tagi';
-                }
-            }, true);
-        }
-    });
 }
 
 const handleInfiniteScroll = () => {

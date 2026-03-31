@@ -443,13 +443,10 @@ select option {
 
 /* Category Chips (Phase 4.1 Comparison) */
 #comparison-category-filters {
-    width: 0;
-    min-width: 100%;
-    display: flex;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    gap: 8px;
-    padding-bottom: 8px;
+    width: 100%;
+    min-width: 0;
+    display: block;
+    overflow: visible;
     scrollbar-width: none;
 }
 
@@ -653,29 +650,40 @@ select option {
 
 
 /* ===== Segmented Control (Analiza) ===== */
+.analysis-layout-pending > * {
+    visibility: hidden;
+}
+
 .segment-btn {
-    padding: 6px 14px;
-    border-radius: 10px;
-    font-size: 12px;
-    font-weight: 500;
-    color: rgba(255, 255, 255, 0.5);
+    padding: 7px 12px;
+    border-radius: 14px;
+    font-size: 11px;
+    line-height: 1;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.6);
     background: transparent;
-    border: none;
+    border: 1px solid transparent;
     cursor: pointer;
     transition: all 0.2s ease;
     white-space: nowrap;
+    letter-spacing: 0.01em;
+    width: 100%;
+    min-height: 36px;
+    text-align: center;
 }
 
 .segment-btn:hover:not(.active) {
-    color: rgba(255, 255, 255, 0.8);
-    background: rgba(255, 255, 255, 0.06);
+    color: rgba(255, 255, 255, 0.92);
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.08);
 }
 
 .segment-btn.active {
-    background: var(--primary);
+    background: linear-gradient(135deg, rgba(79, 70, 229, 0.95), rgba(59, 130, 246, 0.92));
     color: white;
     font-weight: 600;
-    box-shadow: 0 2px 8px rgba(79, 70, 229, 0.3);
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 10px 30px rgba(79, 70, 229, 0.28);
 }
 
 /* ===== Category Drawer (Bottom Sheet) ===== */
