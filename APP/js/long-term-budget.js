@@ -296,7 +296,7 @@ function hasActiveComparisonTagFilters() {
 }
 
 function canShowBudgetComparison() {
-    return (comparisonPeriod === '6months' || comparisonPeriod === 'year') &&
+    return (comparisonPeriod === 'month' || comparisonPeriod === '6months' || comparisonPeriod === 'year') &&
         !hasActiveComparisonTagFilters() &&
         !currentComparisonSubCategory;
 }
@@ -675,7 +675,7 @@ function applyComparisonCompactLayout() {
     if (!rangeInfo) {
         rangeInfo = document.createElement('div');
         rangeInfo.id = 'comparison-selected-range';
-        rangeInfo.className = 'text-[11px] sm:text-xs font-medium text-gray-400';
+        rangeInfo.className = 'flex-1 text-center text-[11px] sm:text-xs font-medium text-gray-400';
     }
     const chartMetaActions = document.createElement('div');
     chartMetaActions.className = 'ml-auto flex items-center gap-3 shrink-0';
@@ -690,7 +690,32 @@ function applyComparisonCompactLayout() {
     }
     chartMetaActions.appendChild(toggleWrapper);
     chartMetaActions.appendChild(tagsButton);
-    chartMeta.replaceChildren(rangeInfo, chartMetaActions);
+
+    // Strzałki nawigacji okresu - wyśrodkowane, obok siebie
+    const navArrows = document.createElement('div');
+    navArrows.className = 'flex items-center gap-2';
+
+    const navPrev = document.createElement('button');
+    navPrev.id = 'comparison-nav-prev';
+    navPrev.className = 'flex w-7 h-7 items-center justify-center rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors';
+    navPrev.setAttribute('aria-label', 'Poprzedni okres');
+    navPrev.innerHTML = '<i class="fas fa-chevron-left text-xs"></i>';
+    navPrev.addEventListener('click', () => changeComparisonRangeByStep(-1));
+
+    const navNext = document.createElement('button');
+    navNext.id = 'comparison-nav-next';
+    navNext.className = 'flex w-7 h-7 items-center justify-center rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors';
+    navNext.setAttribute('aria-label', 'Następny okres');
+    navNext.innerHTML = '<i class="fas fa-chevron-right text-xs"></i>';
+    navNext.addEventListener('click', () => changeComparisonRangeByStep(1));
+
+    navArrows.appendChild(navPrev);
+    navArrows.appendChild(navNext);
+
+    // chartMeta: [strzałka-lewo] [zakres - wyśrodkowany] [strzałka-prawo + akcje]
+    chartMeta.className = 'mb-2 flex items-center gap-2';
+    chartMeta.replaceChildren(navPrev, rangeInfo, chartMetaActions);
+    chartMetaActions.appendChild(navNext);
 
     chartContainer.className = 'h-72 sm:h-80 w-full flex-grow';
 
@@ -878,10 +903,15 @@ function buildWeekBucketsData(filteredItems, budgetMap) {
 }
 
 function buildMonthBucketsData(filteredItems, budgetMap) {
+    const monthKey = `${comparisonReferenceDate.getFullYear()}-${String(comparisonReferenceDate.getMonth() + 1).padStart(2, '0')}`;
+    const daysInMonth = getDaysInMonth(comparisonReferenceDate.getFullYear(), comparisonReferenceDate.getMonth() + 1);
+    const totalBudget = canShowBudgetComparison() ? getBudgetValueForMonth(budgetMap, monthKey) : 0;
+
     return getCurrentMonthBuckets().map(bucket => {
         const items = getFilteredItemsForBucket(filteredItems, bucket);
         const spending = items.reduce((sum, item) => sum + item.price, 0);
-        const budget = 0;
+        // Proporcjonalny budżet dla zakresu dni
+        const budget = totalBudget > 0 ? totalBudget * (bucket.rangeDays / daysInMonth) : 0;
         return { ...bucket, items, spending, budget };
     });
 }
@@ -920,6 +950,7 @@ async function renderUnifiedComparisonChart() {
     const buckets = getComparisonBuckets();
     if (!buckets.length) {
         buildComparisonChart([]);
+        buildShopChart([]);
         return;
     }
 
@@ -940,6 +971,119 @@ async function renderUnifiedComparisonChart() {
     }
 
     buildComparisonChart(enrichedBuckets);
+    buildShopChart(filteredItems);
+}
+
+let shopBarChart = null;
+
+function buildShopChart(filteredItems) {
+    const card = document.getElementById('shop-chart-card');
+    const container = document.getElementById('shop-chart-container');
+    const canvas = document.getElementById('shop-chart');
+    const noData = document.getElementById('no-data-shop-chart');
+    const rangeEl = document.getElementById('shop-chart-range');
+    if (!card || !container || !canvas || !noData) return;
+
+    if (shopBarChart) { shopBarChart.destroy(); shopBarChart = null; }
+
+    // Agreguj wydatki po sklepie, pomijaj wydatki cykliczne (brak prawdziwego sklepu)
+    const shopTotals = {};
+    for (const item of filteredItems) {
+        const shop = (item.shop || '').trim();
+        if (!shop || shop.toLowerCase().startsWith('wydatek cykliczny')) continue;
+        shopTotals[shop] = (shopTotals[shop] || 0) + item.price;
+    }
+
+    const TOP_N = 10;
+    const sorted = Object.entries(shopTotals).sort((a, b) => b[1] - a[1]);
+
+    if (sorted.length === 0) {
+        noData.style.display = 'block';
+        container.style.display = 'none';
+        if (rangeEl) rangeEl.textContent = '';
+        return;
+    }
+
+    noData.style.display = 'none';
+    container.style.display = 'block';
+
+    const top = sorted.slice(0, TOP_N);
+    const rest = sorted.slice(TOP_N);
+    const restEntry = rest.length > 0
+        ? [`Pozostałe (${rest.length})`, rest.reduce((s, [, v]) => s + v, 0)]
+        : null;
+
+    // indexAxis:'y': Chart.js rysuje indeks 0 na górze, ostatni na dole
+    // sorted jest malejąco [największy, ..., najmniejszy]
+    // "Pozostałe" na końcu = na dole
+    if (restEntry) top.push(restEntry);
+    const labels = top.map(([name]) => name);
+    const data = top.map(([, val]) => Number(val.toFixed(2)));
+
+    if (rangeEl) {
+        const buckets = getComparisonBuckets();
+        rangeEl.textContent = buckets.length ? getDisplayedComparisonRangeText(buckets) : '';
+    }
+
+    const barHeight = 28;
+    const chartHeight = Math.max(labels.length * barHeight, 120);
+    const chartWidth = card.offsetWidth - 24;
+    container.style.width = chartWidth + 'px';
+    container.style.height = chartHeight + 'px';
+    canvas.width = chartWidth;
+    canvas.height = chartHeight;
+
+    const maxVal = Math.max(...data);
+    const ctx = canvas.getContext('2d');
+    shopBarChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels,
+            datasets: [{
+                data,
+                backgroundColor: 'rgba(226, 232, 240, 0.92)',
+                borderColor: '#f8fafc',
+                borderWidth: 1,
+                borderRadius: 8,
+                maxBarThickness: 20
+            }]
+        },
+        options: {
+            responsive: false,
+            maintainAspectRatio: false,
+            indexAxis: 'y',
+            layout: { padding: { right: 8, top: 4, bottom: 0, left: 0 } },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: (c) => ` ${formatAmount(c.parsed.x)}`
+                    }
+                },
+                datalabels: {
+                    display: true,
+                    color: '#9ca3af',
+                    anchor: 'end',
+                    align: 'end',
+                    clamp: true,
+                    formatter: (value) => formatAmount(value),
+                    font: { size: 10, weight: '500' }
+                }
+            },
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    suggestedMax: maxVal * 1.25,
+                    ticks: { color: '#9ca3af', callback: v => `${Math.round(v)} zł` },
+                    grid: { color: 'rgba(255,255,255,0.08)' }
+                },
+                y: {
+                    ticks: { color: '#d1d5db', autoSkip: false },
+                    grid: { display: false }
+                }
+            }
+        }
+    });
 }
 
 function setActiveComparisonPeriodButton(period) {

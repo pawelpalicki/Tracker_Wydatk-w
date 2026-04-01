@@ -266,9 +266,9 @@
                 <div id="time-chart-container"></div>
                 <div id="no-data-time-chart"></div>
 
-                <canvas id="shop-chart"></canvas>
-                <div id="shop-chart-container"></div>
-                <div id="no-data-shop-chart"></div>
+                <canvas id="shop-chart-old"></canvas>
+                <div id="shop-chart-container-old"></div>
+                <div id="no-data-shop-chart-old"></div>
 
                 <h2 id="stats-title"></h2>
 
@@ -1098,6 +1098,21 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Wykres wydatków w sklepach -->
+                <div id="shop-chart-card" class="glass-card rounded-[24px] p-3 sm:p-4 w-full flex flex-col border border-white/10 bg-white/[0.04] shadow-[0_20px_60px_rgba(0,0,0,0.24)] mt-4">
+                    <div class="flex items-center justify-between mb-2.5">
+                        <p class="text-[10px] uppercase tracking-[0.18em] text-gray-500">Top sklepy</p>
+                        <p id="shop-chart-range" class="text-[11px] text-gray-400"></p>
+                    </div>
+                    <div id="shop-chart-container" class="w-full relative">
+                        <canvas id="shop-chart"></canvas>
+                    </div>
+                    <div id="no-data-shop-chart" class="hidden text-center py-6">
+                        <p class="text-sm text-gray-400">Brak danych o sklepach.</p>
+                    </div>
+                </div>
+
             </div>
 
             <!-- Zakładka Budżety Specjalne -->
