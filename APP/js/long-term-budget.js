@@ -730,15 +730,8 @@ function buildComparisonChart(buckets) {
         longTermBudgetChart = null;
     }
 
-    if (!hasData) {
-        container.classList.add('hidden');
-        noData.classList.remove('hidden');
-        updateComparisonSummary(0, 0);
-        return;
-    }
-
     container.classList.remove('hidden');
-    noData.classList.add('hidden');
+    noData.classList.toggle('hidden', hasData);
 
     const labels = buckets.map(bucket => bucket.label);
     const spendingData = buckets.map(bucket => Number(bucket.spending.toFixed(2)));
@@ -746,6 +739,7 @@ function buildComparisonChart(buckets) {
     const totalSpending = spendingData.reduce((sum, value) => sum + value, 0);
     const totalBudget = budgetData.reduce((sum, value) => sum + value, 0);
     const showBudget = canShowBudgetComparison();
+    const maxValue = Math.max(0, ...spendingData, ...budgetData);
     updateComparisonSummary(totalSpending, totalBudget);
 
     const ctx = canvas.getContext('2d');
@@ -839,6 +833,7 @@ function buildComparisonChart(buckets) {
                 y: {
                     beginAtZero: true,
                     grace: '8%',
+                    suggestedMax: maxValue > 0 ? undefined : 1,
                     ticks: {
                         color: '#9ca3af',
                         callback: value => `${Math.round(value)} zl`

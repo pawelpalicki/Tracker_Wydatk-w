@@ -226,7 +226,7 @@ function renderHomeCategoryTiles(purchases, budgets = {}) {
     if (!container) return;
     container.innerHTML = '';
 
-    // Group by parent category
+    // Group by parent category and keep budget-only categories visible as 0 spent.
     const byParentCategory = {};
     purchases.forEach(p => {
         (p.items || []).forEach(item => {
@@ -236,7 +236,16 @@ function renderHomeCategoryTiles(purchases, budgets = {}) {
         });
     });
 
-    const sorted = Object.entries(byParentCategory).sort((a, b) => b[1] - a[1]);
+    Object.keys(budgets).forEach(cat => {
+        if (typeof byParentCategory[cat] !== 'number') {
+            byParentCategory[cat] = 0;
+        }
+    });
+
+    const sorted = Object.entries(byParentCategory).sort((a, b) => {
+        if (b[1] !== a[1]) return b[1] - a[1];
+        return a[0].localeCompare(b[0], 'pl');
+    });
 
     if (sorted.length === 0) {
         container.innerHTML = '<p class="text-xs text-gray-500 italic pl-1">Brak danych</p>';
