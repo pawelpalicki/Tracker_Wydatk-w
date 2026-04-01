@@ -155,8 +155,8 @@ function renderBudgetProgress(spending, budgets) {
             ? structuredCategories.find(c => c.name === cat && !c.parentId)
             : null;
 
-        const categoryColor = (parentCat && parentCat.color) || (typeof getCategoryColor === 'function' ? getCategoryColor(cat) : '#6b7280');
-        const icon = (parentCat && parentCat.icon) || (typeof categoryIcons !== 'undefined' ? categoryIcons[cat.toLowerCase()] : 'fa-tag') || 'fa-tag';
+        const categoryColor = (parentCat && parentCat.color) || '#6b7280';
+        const icon = (parentCat && parentCat.icon) || 'fa-tag';
         
         let warningIcon = '';
         let amountClass = 'text-gray-600 dark:text-gray-400';

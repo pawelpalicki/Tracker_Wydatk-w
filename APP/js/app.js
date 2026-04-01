@@ -46,9 +46,7 @@ let isLoadingPurchases = false;
 let editMode = { active: false, purchaseId: null };
 let currentFile = null;
 let cameraStream = null;
-let categoryChart = null;
-let comparisonChart = null;
-let shopChart = null;
+// (Charts references moved to statistics.js or removed)
 let fp_range; // For date range filter
 let lastScrollY = 0; // For FAB scroll detection
 
@@ -77,9 +75,6 @@ const purchasesList = document.getElementById('purchases-list');
 const itemsContainer = document.getElementById('items-container');
 const shopInput = document.getElementById('shop');
 const dateInput = document.getElementById('date');
-const categoriesList = document.getElementById('categories-list');
-const addCategoryForm = document.getElementById('add-category-form');
-const newCategoryInput = document.getElementById('new-category-name');
 const monthlyBalanceValue = document.getElementById('monthly-balance-value');
 const monthlyBalanceLabel = document.getElementById('monthly-balance-label');
 const receiptFileInput = document.getElementById('receipt-file-input');
@@ -101,10 +96,7 @@ const comparisonChartContainer = document.getElementById('comparison-chart-conta
 const noDataBarChart = document.getElementById('no-data-bar-chart');
 const shopChartContainer = document.getElementById('shop-chart-container');
 const noDataShopChart = document.getElementById('no-data-shop-chart');
-const categoryDetailsModal = document.getElementById('category-details-modal');
-const closeCategoryDetailsBtn = document.getElementById('close-category-details-btn');
-const categoryDetailsTitle = document.getElementById('category-details-title');
-const categoryDetailsTableBody = document.getElementById('category-details-table-body');
+// Oczyszczono stare referencje do modalu analizy
 
 const budgetsList = document.getElementById('budgets-list');
 const saveBudgetBtn = document.getElementById('save-budget-btn');
@@ -168,39 +160,7 @@ const editSpecialBudgetAmountInput = document.getElementById('edit-special-budge
 const shopAutocompleteList = document.getElementById('shop-autocomplete-list');
 
 // --- Funkcje Pomocnicze ---
-const categoryColors = {};
-const colorPalette = ['#3b82f6', '#10b981', '#ef4444', '#f97316', '#8b5cf6', '#ec4899', '#f59e0b', '#14b8a6', '#64748b', '#06b6d4', '#a855f7', '#eab308', '#0ea5e9', '#be185d', '#16a34a', '#f43f5e', '#84cc16', '#6366f1', '#d946ef', '#fb7185'];
-let colorIndex = 0;
-
-const categoryIcons = {
-    'jedzenie': 'fa-utensils',
-    'spożywcze': 'fa-shopping-basket',
-    'dom': 'fa-home',
-    'transport': 'fa-car',
-    'rozrywka': 'fa-film',
-    'zdrowie': 'fa-heartbeat',
-    'zakupy': 'fa-shopping-bag',
-    'rachunki': 'fa-file-invoice-dollar',
-    'edukacja': 'fa-graduation-cap',
-    'sport': 'fa-running',
-    'chemia': 'fa-jug-detergent',
-    'kosmetyki': 'fa-pump-soap',
-    'ubrania': 'fa-tshirt',
-    'oszczędności': 'fa-piggy-bank',
-    'słodycze i przekąski': 'fa-cookie-bite',
-    'kaucje': 'fa-recycle',
-    'inne': 'fa-ellipsis-h'
-};
-
-let activeCategoryRow = null; // Track which row is opening the drawer
-
-function getCategoryColor(category) {
-    if (!categoryColors[category]) {
-        categoryColors[category] = colorPalette[colorIndex % colorPalette.length];
-        colorIndex++;
-    }
-    return categoryColors[category];
-}
+// Tagi i inne pomocnicze funkcje obsługujące kategorie i widoki
 
 function getTagOptions(group) {
     return (tagDefinitions && Array.isArray(tagDefinitions[group])) ? tagDefinitions[group] : [];
@@ -427,42 +387,7 @@ function updateCustomDropdownValue(selectId, labelId) {
 }
 
 // --- Category Drawer Logic ---
-function openCategoryDrawer(row, currentCategory, onSelect = null) {
-    activeCategoryRow = row;
-
-    const options = [
-        {
-            value: '',
-            label: 'Wszystkie kategorie',
-            icon: '<i class="fas fa-tags"></i>',
-            color: 'rgba(255,255,255,0.08)'
-        }
-    ].concat(allCategories.map(cat => {
-        const parentCat = (typeof structuredCategories !== 'undefined')
-            ? structuredCategories.find(c => c.name === cat && !c.parentId)
-            : null;
-        const color = (parentCat && parentCat.color) || (typeof getCategoryColor === 'function' ? getCategoryColor(cat) : '#6b7280');
-        const icon = (parentCat && parentCat.icon) || (typeof categoryIcons !== 'undefined' ? categoryIcons[cat.toLowerCase()] : 'fa-tag') || 'fa-tag';
-        
-        return {
-            value: cat,
-            label: cat.charAt(0).toUpperCase() + cat.slice(1),
-            icon: `<i class="fas ${icon}"></i>`,
-            color: color + '20'
-        };
-    }));
-
-    const itemName = row ? (row.querySelector('.item-name')?.value || 'produkcie') : 'filtrach';
-    const title = `Kategoria dla: ${itemName}`;
-
-    openSelectionDrawer(title, options, (val) => {
-        if (onSelect) {
-            onSelect(val);
-        } else {
-            selectCategoryFromDrawer(val);
-        }
-    }, currentCategory, 'grid', row !== null);
-}
+// --- Category Drawer Logic (v2 uses hierarchical drawer) ---
 
 function closeSelectionDrawer(isFromPopState = false) {
     const overlay = document.getElementById('category-drawer-overlay');
@@ -482,45 +407,14 @@ function closeSelectionDrawer(isFromPopState = false) {
         overlay.classList.add('hidden');
         drawer.classList.add('hidden');
         document.body.style.overflow = '';
-        activeCategoryRow = null;
     }, 300);
 }
 
 
 
-function selectCategoryFromDrawer(category) {
-    if (activeCategoryRow) {
-        const select = activeCategoryRow.querySelector('.item-category-select');
-        const label = activeCategoryRow.querySelector('.item-category-label') || activeCategoryRow.querySelector('.category-trigger-label');
-        const iconEl = activeCategoryRow.querySelector('.item-category-icon') || activeCategoryRow.querySelector('.category-trigger-icon');
-
-        select.value = category;
-        label.textContent = category.charAt(0).toUpperCase() + category.slice(1);
-
-        // Update icon on the button if it exists
-        if (iconEl) {
-            const icon = categoryIcons[category] || 'fa-tag';
-            const color = getCategoryColor(category);
-            iconEl.innerHTML = `<i class="fas ${icon}" style="color: ${color}"></i>`;
-        }
-
-        select.dispatchEvent(new Event('change'));
-        closeSelectionDrawer();
-    }
-}
-
-// Global listeners for drawer
+// Global listeners for drawer overlay
 document.addEventListener('click', (e) => {
     if (e.target.id === 'close-category-drawer' || e.target.id === 'category-drawer-overlay') {
-        closeSelectionDrawer();
-    }
-
-    if (e.target.closest('#drawer-add-category-btn')) {
-        if (activeCategoryRow) {
-            const select = activeCategoryRow.querySelector('.item-category-select');
-            select.value = '__add_new__';
-            select.dispatchEvent(new Event('change'));
-        }
         closeSelectionDrawer();
     }
 });
@@ -764,23 +658,6 @@ function setupAppEventListeners() {
     });
 
 
-    addCategoryForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const newName = newCategoryInput.value.trim().toLowerCase();
-        if (newName && !allCategories.includes(newName)) {
-            try {
-                await apiCall('/api/categories', 'POST', { name: newName });
-                newCategoryInput.value = '';
-                // Odśwież wszystko, aby pobrać nową listę kategorii i przerysować interfejs
-                await fetchInitialData(false);
-                renderCategoriesList(); // Odśwież listę w ustawieniach
-            } catch (error) {
-                alert('Nie udało się dodać kategorii: ' + error.message);
-            }
-        } else if (allCategories.includes(newName)) {
-            alert('Taka kategoria już istnieje.');
-        }
-    });
 
     purchasesList.addEventListener('click', async (e) => {
         const editBtn = e.target.closest('.edit-purchase-btn');
@@ -813,7 +690,6 @@ function setupAppEventListeners() {
         }
     });
 
-    categoriesList.addEventListener('click', handleCategoryActions);
     analyzeReceiptBtn.addEventListener('click', handleAnalyzeReceipt);
     receiptFileInput.addEventListener('change', handleFileSelect);
     startCameraBtn.addEventListener('click', startCamera);
@@ -821,13 +697,7 @@ function setupAppEventListeners() {
     capturePhotoBtn.addEventListener('click', capturePhoto);
 
 
-    // Obsługa modala szczegółów kategorii
-    closeCategoryDetailsBtn.addEventListener('click', () => closeOverlay('category-details-modal'));
-    categoryDetailsModal.addEventListener('click', (e) => {
-        if (e.target === categoryDetailsModal) {
-            closeOverlay('category-details-modal');
-        }
-    });
+    // (Obsługa szuflady szczegółów odbywa się w ui.js)
     document.getElementById('category-chart')?.addEventListener('click', handleCategoryChartClick);
 
     // Autouzupełnianie sklepu
@@ -964,14 +834,14 @@ function setupAppEventListeners() {
     saveCategoryDrawerBtn?.addEventListener('click', async () => {
         const newName = newCategoryDrawerInput.value.trim().toLowerCase();
         if (newName) {
-            if (allCategories.includes(newName)) {
+            if (structuredCategories.some(c => c.name === newName)) {
                 alert('Taka kategoria już istnieje.');
                 return;
             }
             try {
                 await apiCall('/api/categories', 'POST', { name: newName });
                 await fetchInitialData(false);
-                if (typeof renderCategoriesList === 'function') renderCategoriesList();
+                if (typeof renderCategoriesListV2 === 'function') renderCategoriesListV2();
 
                 // Auto-select the newly added category
                 if (window.currentOnSelect) {
@@ -1207,9 +1077,12 @@ async function migrateToStructuredCategories() {
         'inne': 'fa-tag'
     };
 
+    // Paleta domyślna
+    const colorPalette = ['#3b82f6', '#10b981', '#ef4444', '#f97316', '#8b5cf6', '#ec4899', '#f59e0b', '#14b8a6', '#64748b', '#06b6d4', '#a855f7', '#eab308', '#0ea5e9', '#be185d', '#16a34a', '#f43f5e', '#84cc16', '#6366f1', '#d946ef', '#fb7185'];
+
     // Generuj nową strukturę
     structuredCategories = allCategories.map((catName, index) => {
-        const color = CAT_COLOR_OPTIONS[index % CAT_COLOR_OPTIONS.length];
+        const color = colorPalette[index % colorPalette.length];
         const icon = defaultIcons[catName.toLowerCase()] || 'fa-tag';
         return {
             id: `migrated-${index}`,
@@ -1677,8 +1550,77 @@ auth.onAuthStateChanged(user => {
     }
 });
 
+function setupAuthEventListeners() {
+    loginForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        handleLogin();
+    });
+    registerForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        handleRegister();
+    });
+    switchAuthLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        const isLogin = authTitle.textContent.includes('Zaloguj');
+        authTitle.textContent = isLogin ? 'Zarejestruj się' : 'Zaloguj się do swojego konta';
+        loginForm.classList.toggle('hidden');
+        registerForm.classList.toggle('hidden');
+        switchAuthLink.textContent = isLogin ? 'Masz już konto? Zaloguj się' : 'Nie masz konta? Zarejestruj się';
+        authErrorDiv.classList.add('hidden');
+    });
+}
+
+async function handleLogin() {
+    const email = loginEmail.value;
+    const password = loginPassword.value;
+    const btn = loginForm.querySelector('button[type="submit"]');
+    const btnText = btn.querySelector('.button-text');
+    const spinner = btn.querySelector('.button-spinner');
+
+    btn.disabled = true;
+    if (btnText) btnText.classList.add('invisible');
+    if (spinner) spinner.classList.remove('hidden');
+    authErrorDiv.classList.add('hidden');
+
+    try {
+        await auth.signInWithEmailAndPassword(email, password);
+    } catch (error) {
+        authErrorDiv.textContent = 'Błąd logowania: ' + error.message;
+        authErrorDiv.classList.remove('hidden');
+    } finally {
+        btn.disabled = false;
+        if (btnText) btnText.classList.remove('invisible');
+        if (spinner) spinner.classList.add('hidden');
+    }
+}
+
+async function handleRegister() {
+    const email = registerEmail.value;
+    const password = registerPassword.value;
+    const btn = registerForm.querySelector('button[type="submit"]');
+    const btnText = btn.querySelector('.button-text');
+    const spinner = btn.querySelector('.button-spinner');
+
+    btn.disabled = true;
+    if (btnText) btnText.classList.add('invisible');
+    if (spinner) spinner.classList.remove('hidden');
+    authErrorDiv.classList.add('hidden');
+
+    try {
+        await auth.createUserWithEmailAndPassword(email, password);
+    } catch (error) {
+        authErrorDiv.textContent = 'Błąd rejestracji: ' + error.message;
+        authErrorDiv.classList.remove('hidden');
+    } finally {
+        btn.disabled = false;
+        if (btnText) btnText.classList.remove('invisible');
+        if (spinner) spinner.classList.add('hidden');
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     setupAuthEventListeners();
+
     // Usunięto wywołanie main() - teraz onAuthStateChanged zarządza stanem
 
     if ('serviceWorker' in navigator) {

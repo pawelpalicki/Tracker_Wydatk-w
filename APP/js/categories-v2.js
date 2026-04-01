@@ -466,7 +466,7 @@ async function deleteCategory(id, isParent) {
         if (typeof fetchInitialData === 'function') {
             await fetchInitialData(false);
             if (typeof renderCategoriesListV2 === 'function') renderCategoriesListV2();
-            if (typeof renderCategoriesList === 'function') renderCategoriesList();
+            if (typeof renderCategoriesListV2 === 'function') renderCategoriesListV2();
         } else {
             if (isParent) {
                 structuredCategories = structuredCategories.filter(c => c.id !== id && c.parentId !== id);

@@ -2,12 +2,10 @@ const functions = require("firebase-functions");
 const express = require('express');
 const multer = require('multer');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
-const { initializeApp, cert, getApps } = require('firebase-admin/app');
+const { initializeApp, getApps } = require('firebase-admin/app');
 const { getFirestore, FieldValue } = require('firebase-admin/firestore');
 const { getAuth } = require('firebase-admin/auth');
 const { onSchedule } = require("firebase-functions/v2/scheduler");
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
 const path = require('path');
 const cors = require('cors');
 const { getPrompt } = require('./prompt.js');
@@ -15,8 +13,7 @@ const { getPrompt } = require('./prompt.js');
 // --- Konfiguracja ---
 const app = express();
 
-// Użyj Firebase Secrets (bezpieczne)
-const JWT_SECRET = process.env.JWT_SECRET;
+// Użyj Firebase Secrets
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
 
@@ -188,14 +185,25 @@ async function getUserMetadata(userId) {
     let customCategories = userData.customCategories || [];
     const tagDefinitions = normalizeTagDefinitions(userData.tagDefinitions);
 
-    // --- INTELIGENTNA SYNCHRONIZACJA DWUKIERUNKOWA ---
     let needsProfileUpdate = false;
 
-    // A. Z płaskiej do strukturalnej (np. stary frontend dodał nową kategorię)
-    const structuredNames = new Set(structuredCategories.map(c => c.name));
+    // 1. Migracja płaskich kategorii do struktury V2 (dla starych kont)
+    if (structuredCategories.length === 0 && customCategories.length > 0) {
+        console.log(`[Sync] Pierwsza migracja kategorii dla ${userId}`);
+        structuredCategories = customCategories.map((cat, index) => ({
+            id: `migrated-${Date.now()}-${index}`,
+            name: cat,
+            parentId: null,
+            icon: 'fa-tag',
+            color: '#3b82f6'
+        }));
+        needsProfileUpdate = true;
+    }
+
+    // 2. Synchronizacja nowych kategorii płaskich do V2 (jeśli dodane starym kodem)
+    const structuredNames = new Set(structuredCategories.map(c => c.name.toLowerCase()));
     customCategories.forEach(cat => {
-        if (!structuredNames.has(cat)) {
-            console.log(`[Sync] Dodawanie nowej kategorii '${cat}' do struktury v2 dla ${userId}`);
+        if (cat && !structuredNames.has(cat.toLowerCase())) {
             structuredCategories.push({
                 id: `sync-${Date.now()}-${Math.random().toString(36).slice(2, 5)}`,
                 name: cat,
@@ -207,96 +215,39 @@ async function getUserMetadata(userId) {
         }
     });
 
-    // B. Ze strukturalnej do płaskiej (np. nowy frontend dodał kategorię główną)
-    const customNamesSet = new Set(customCategories);
-    structuredCategories.filter(c => !c.parentId).forEach(parent => {
-        if (!customNamesSet.has(parent.name)) {
-            console.log(`[Sync] Dodawanie nowej kategorii głównej '${parent.name}' do płaskiej listy dla ${userId}`);
-            customCategories.push(parent.name);
-            needsProfileUpdate = true;
-        }
-    });
-
-    // C. Obsługa braku struktury (pierwsza migracja techniczna)
-    if (structuredCategories.length === 0 && customCategories.length > 0) {
-        structuredCategories = customCategories.map((cat, index) => ({
-            id: `migrated-${index}`,
-            name: cat,
-            parentId: null,
-            icon: 'fa-tag',
-            color: '#3b82f6'
-        }));
+    // 3. Sprawdź miesiące i shopsStale
+    const currentMonth = new Date().toISOString().substring(0, 7);
+    const availableMonths = userData.availableMonths || [];
+    if (!availableMonths.includes(currentMonth)) {
+        availableMonths.push(currentMonth);
+        availableMonths.sort().reverse();
         needsProfileUpdate = true;
     }
 
-    if (needsProfileUpdate) {
-        await userRef.update({
+    if (needsProfileUpdate || !userData.metadataInitialized) {
+        const updateData = {
             structuredCategories,
-            customCategories: customCategories.sort(),
-            tagDefinitions
-        });
-    }
-
-    if (userData.metadataInitialized && !userData.shopsStale && !needsProfileUpdate) {
-        const currentMonth = new Date().toISOString().substring(0, 7);
-        const availableMonths = userData.availableMonths || [];
-        if (!availableMonths.includes(currentMonth)) {
-            availableMonths.push(currentMonth);
-            availableMonths.sort().reverse();
-        }
+            customCategories: [...new Set(structuredCategories.filter(c => !c.parentId).map(c => c.name))].sort(),
+            tagDefinitions,
+            availableMonths,
+            metadataInitialized: true
+        };
+        await userRef.set(updateData, { merge: true });
         return {
-            categories: customCategories,
-            structuredCategories: structuredCategories,
+            categories: updateData.customCategories,
+            structuredCategories,
             tagDefinitions,
             shops: userData.shops || [],
-            availableMonths: availableMonths
+            availableMonths
         };
     }
 
-    // Leniwa inicjalizacja (gdy metadataInitialized jest false lub wymuszono odświeżenie)
-    console.log(`Pełna inicjalizacja metadanych dla użytkownika ${userId}`);
-    const snapshot = await purchasesCollection.where('userId', '==', userId).get();
-    const allPurchases = snapshot.docs.map(doc => doc.data());
-
-    const allItems = allPurchases.flatMap(p => p.items || []);
-    const userCategoriesFromPurchases = allItems.map(item => item.category).filter(Boolean);
-    const combinedCategories = [...new Set([...customCategories, ...userCategoriesFromPurchases])].sort();
-
-    const shops = [...new Set(allPurchases.map(p => p.shop).filter(Boolean))].sort();
-
-    // Re-sync structuredCategories po głębokim odświeżeniu (szukanie w historii zakupów)
-    const finalStructuredNames = new Set(structuredCategories.map(c => c.name));
-    combinedCategories.forEach(cat => {
-        if (!finalStructuredNames.has(cat)) {
-            structuredCategories.push({
-                id: `sync-ref-${Date.now()}-${Math.random().toString(36).slice(2, 5)}`,
-                name: cat,
-                parentId: null,
-                icon: 'fa-tag',
-                color: '#3b82f6'
-            });
-        }
-    });
-
-    const currentMonth = new Date().toISOString().substring(0, 7);
-    const availableMonths = [...new Set([...allPurchases.map(p => p.date ? p.date.substring(0, 7) : null), currentMonth].filter(Boolean))].sort().reverse();
-
-    await userRef.set({
-        customCategories: combinedCategories,
-        structuredCategories: structuredCategories,
-        tagDefinitions,
-        shops: shops,
-        availableMonths: availableMonths,
-        metadataInitialized: true,
-        shopsStale: false
-    }, { merge: true });
-
     return {
-        categories: combinedCategories,
-        structuredCategories: structuredCategories,
+        categories: customCategories,
+        structuredCategories,
         tagDefinitions,
-        shops: shops,
-        availableMonths: availableMonths
+        shops: userData.shops || [],
+        availableMonths
     };
 }
 
@@ -449,97 +400,6 @@ async function extractAndCategorizePurchase(file, categories) {
     }
 }
 
-/**
- * Uniwersalna funkcja do kaskadowej aktualizacji kategorii w zakupach (Rename/Delete)
- * Obsługuje kategorie główne oraz podkategorie.
- */
-async function updateCategoryInPurchasesV2(userId, categoryId, oldName, newName, parentId = null, isDelete = false) {
-    console.log(`Rozpoczęto masową aktualizację kategorii: ${oldName} -> ${newName} (parentId: ${parentId}, delete: ${isDelete})`);
-
-    try {
-        const snapshot = await purchasesCollection.where('userId', '==', userId).get();
-        if (snapshot.empty) {
-            console.log('Brak zakupów do aktualizacji.');
-            return;
-        }
-
-        // Pobierz dane użytkownika RAZ przed pętlą
-        let parentName = null;
-        if (parentId !== null) {
-            const userDoc = await usersCollection.doc(userId).get();
-            const userData = userDoc.data();
-            const parentCat = (userData.structuredCategories || []).find(c => c.id === parentId);
-            parentName = parentCat ? parentCat.name : null;
-            console.log(`Aktualizacja podkategorii dla rodzica: ${parentName}`);
-        }
-
-        let batch = db.batch();
-        let count = 0;
-        let totalUpdated = 0;
-
-        for (const doc of snapshot.docs) {
-            const purchase = doc.data();
-            let needsUpdate = false;
-            const updateData = {};
-
-            // 1. Obsługa kategorii głównej
-            if (parentId === null) {
-                if (namesEqualCI(purchase.category, oldName)) {
-                    updateData.category = isDelete ? 'inne' : newName;
-                    needsUpdate = true;
-                }
-
-                if (purchase.items && Array.isArray(purchase.items)) {
-                    const newItems = purchase.items.map(item => {
-                        if (namesEqualCI(item.category, oldName)) {
-                            needsUpdate = true;
-                            return {
-                                ...item,
-                                category: isDelete ? 'inne' : newName,
-                                subCategory: isDelete ? '' : (item.subCategory || '')
-                            };
-                        }
-                        return item;
-                    });
-                    if (needsUpdate) updateData.items = newItems;
-                }
-            }
-            // 2. Obsługa podkategorii
-            else {
-                if (purchase.items && Array.isArray(purchase.items)) {
-                    const newItems = purchase.items.map(item => {
-                        if (namesEqualCI(item.subCategory, oldName) && namesEqualCI(item.category, parentName)) {
-                            needsUpdate = true;
-                            return { ...item, subCategory: isDelete ? '' : newName };
-                        }
-                        return item;
-                    });
-                    if (needsUpdate) updateData.items = newItems;
-                }
-            }
-
-            if (needsUpdate) {
-                batch.update(doc.ref, updateData);
-                count++;
-                totalUpdated++;
-
-                if (count >= 400) {
-                    await batch.commit();
-                    batch = db.batch();
-                    count = 0;
-                }
-            }
-        }
-
-        if (count > 0) {
-            await batch.commit();
-        }
-        console.log(`Zakończono masową aktualizację. Zaktualizowano dokumentów: ${totalUpdated}`);
-    } catch (err) {
-        console.error(`BŁĄD masowej aktualizacji dla użytkownika ${userId}:`, err);
-    }
-}
-
 function normalizeCategoryName(name) {
     return (name || '').toString().trim().toLowerCase();
 }
@@ -580,11 +440,13 @@ function resolveOrphanFallback(structuredCategories = [], deletingParentId = nul
     };
 }
 
-async function updateCategoryInPurchasesWithFallback(userId, oldName, parentId, fallback) {
+/**
+ * Uniwersalna masowa aktualizacja zakupów dla potrzeb zmiany nazwy lub usuwania kategorii.
+ */
+async function bulkUpdatePurchasesCategory(userId, oldName, newName, options = {}) {
+    const { parentId = null, isDelete = false, fallback = null } = options;
     const fallbackCategory = fallback?.category || 'inne';
     const fallbackSubCategory = fallback?.subCategory || '';
-
-    console.log(`Fallback osieroconych: ${oldName} -> ${fallbackCategory}${fallbackSubCategory ? `/${fallbackSubCategory}` : ''}`);
 
     try {
         const snapshot = await purchasesCollection.where('userId', '==', userId).get();
@@ -603,43 +465,46 @@ async function updateCategoryInPurchasesWithFallback(userId, oldName, parentId, 
 
         for (const doc of snapshot.docs) {
             const purchase = doc.data();
-            let needsUpdate = false;
-            const updateData = {};
+            let changed = false;
+            const update = {};
 
+            // 1. Kategoria główna
             if (parentId === null) {
                 if (namesEqualCI(purchase.category, oldName)) {
-                    updateData.category = fallbackCategory;
-                    needsUpdate = true;
+                    update.category = isDelete ? fallbackCategory : newName;
+                    changed = true;
                 }
-                if (purchase.items && Array.isArray(purchase.items)) {
+                if (Array.isArray(purchase.items)) {
                     const newItems = purchase.items.map(item => {
                         if (namesEqualCI(item.category, oldName)) {
-                            needsUpdate = true;
+                            changed = true;
                             return {
                                 ...item,
-                                category: fallbackCategory,
-                                subCategory: fallbackSubCategory
+                                category: isDelete ? fallbackCategory : newName,
+                                subCategory: isDelete ? fallbackSubCategory : (item.subCategory || '')
                             };
                         }
                         return item;
                     });
-                    if (needsUpdate) updateData.items = newItems;
+                    if (changed) update.items = newItems;
                 }
-            } else {
-                if (purchase.items && Array.isArray(purchase.items)) {
+            }
+            // 2. Podkategoria
+            else {
+                if (Array.isArray(purchase.items)) {
                     const newItems = purchase.items.map(item => {
                         if (namesEqualCI(item.subCategory, oldName) && namesEqualCI(item.category, parentName)) {
-                            needsUpdate = true;
-                            return { ...item, subCategory: '' };
+                            changed = true;
+                            return { ...item, subCategory: isDelete ? '' : newName };
                         }
                         return item;
                     });
-                    if (needsUpdate) updateData.items = newItems;
+                    if (changed) update.items = newItems;
                 }
             }
 
-            if (needsUpdate) {
-                batch.update(doc.ref, updateData);
+            if (changed) {
+                batch.update(doc.ref, update);
                 count++;
                 if (count >= 400) {
                     await batch.commit();
@@ -648,10 +513,9 @@ async function updateCategoryInPurchasesWithFallback(userId, oldName, parentId, 
                 }
             }
         }
-
         if (count > 0) await batch.commit();
     } catch (err) {
-        console.error(`BŁĄD fallbacku kategorii dla użytkownika ${userId}:`, err);
+        console.error(`[BulkUpdate] Błąd dla ${userId}:`, err);
     }
 }
 
@@ -1198,41 +1062,7 @@ app.post('/api/tags/groups', authMiddleware, async (req, res) => {
     }
 });
 
-// POST: Dodaj nową grupę tagów
-app.post('/api/tags/groups', authMiddleware, async (req, res) => {
-    try {
-        const { group, label, firstLabel, firstIcon } = req.body;
-        const normalizedGroup = (group || label || '').toLowerCase().trim().replace(/\s+/g, '_');
-
-        if (!normalizedGroup || !isValidGroupName(normalizedGroup)) {
-            return res.status(400).json({ error: 'Nieprawidłowa nazwa grupy.' });
-        }
-        if (!firstLabel) return res.status(400).json({ error: 'Pierwsza wartość tagu jest wymagana.' });
-
-        const userRef = usersCollection.doc(req.userId);
-        const userDoc = await userRef.get();
-        const userData = userDoc.exists ? userDoc.data() : {};
-        const tagDefinitions = normalizeTagDefinitions(userData.tagDefinitions || {});
-
-        if (tagDefinitions[normalizedGroup]) {
-            return res.status(400).json({ error: 'Grupa o tej nazwie już istnieje.' });
-        }
-
-        const initialTagValue = firstLabel.toLowerCase().trim().replace(/\s+/g, '_');
-        tagDefinitions[normalizedGroup] = [{
-            value: initialTagValue,
-            label: firstLabel,
-            icon: firstIcon || ''
-        }];
-        tagDefinitions[normalizedGroup + '_label'] = label || normalizedGroup;
-
-        await userRef.set({ tagDefinitions }, { merge: true });
-        res.status(201).json({ success: true, tagDefinitions });
-    } catch (error) {
-        console.error("Błąd tworzenia grupy tagów:", error);
-        res.status(500).json({ error: 'Błąd serwera podczas tworzenia grupy.' });
-    }
-});
+// Trasa zapasowa (usunięto duplikat)
 
 // PUT: Aktualizuj etykietę grupy tagów
 app.put('/api/tags/groups/:group', authMiddleware, async (req, res) => {
@@ -1527,9 +1357,7 @@ app.put('/api/categories/v2/:id', authMiddleware, async (req, res) => {
 
         // Jeśli nazwa się zmieniła, zaktualizuj wszystkie zakupy
         if (oldName !== name) {
-            // Nie czekamy (await) na zakończenie masowej aktualizacji, aby nie blokować odpowiedzi UI,
-            // ale tutaj dla pewności lepsza spójność, więc czekamy.
-            await updateCategoryInPurchasesV2(req.userId, id, oldName, name, parentId, false);
+            await bulkUpdatePurchasesCategory(req.userId, oldName, name, { parentId, isDelete: false });
         }
 
         res.json({ success: true, category: cats[idx] });
@@ -1558,13 +1386,11 @@ app.delete('/api/categories/v2/:id', authMiddleware, async (req, res) => {
         const parentId = target.parentId || null;
 
         // 1. Kaskadowa aktualizacja zakupów
-        let fallback = null;
         if (parentId === null) {
             fallback = resolveOrphanFallback(cats, id);
-            await updateCategoryInPurchasesWithFallback(req.userId, oldName, null, fallback);
+            await bulkUpdatePurchasesCategory(req.userId, oldName, '', { fallback, isDelete: true });
         } else {
-            // Jeśli podkategoria -> tylko ona znika z zakupów (pole subCategory = "")
-            await updateCategoryInPurchasesV2(req.userId, id, oldName, '', parentId, true);
+            await bulkUpdatePurchasesCategory(req.userId, oldName, '', { parentId, isDelete: true });
         }
 
         // 2. Usunięcie z definicji kategorii
@@ -1647,7 +1473,7 @@ app.put('/api/categories/:name', authMiddleware, async (req, res) => {
         });
 
         // Krok 2: Zaktualizuj nazwę w istniejących zakupach
-        await updateCategoryInPurchasesV2(req.userId, null, oldName, newNameLower, null, false);
+        await bulkUpdatePurchasesCategory(req.userId, oldName, newNameLower, { isDelete: false });
 
         // Krok 3: Zaktualizuj nazwę w istniejących budżetach
         const budgetsSnapshot = await db.collection('budgets').where('userId', '==', req.userId).get();
@@ -1691,7 +1517,7 @@ app.delete('/api/categories/:name', authMiddleware, async (req, res) => {
         const fallback = resolveOrphanFallback(structured, targetParent ? targetParent.id : null);
 
         // Krok 1: Zaktualizuj kategorię w istniejących zakupach na fallback
-        await updateCategoryInPurchasesWithFallback(req.userId, name, null, fallback);
+        await bulkUpdatePurchasesCategory(req.userId, name, '', { isDelete: true, fallback });
 
         // Krok 2: Usuń kategorię z listy niestandardowej i struktury profilu użytkownika
         const newStructured = targetParent
@@ -2339,7 +2165,7 @@ exports.addRecurringExpensesScheduled = onSchedule('every 24 hours', async (even
 
 // Eksportuj aplikację Express jako funkcję chmurową o nazwie 'api' z sekretami
 exports.api = functions.https.onRequest({
-    secrets: ['JWT_SECRET', 'GEMINI_API_KEY', 'MIGRATION_SECRET_KEY']
+    secrets: ['GEMINI_API_KEY', 'MIGRATION_SECRET_KEY']
 }, app);
 
 // WERSJA TESTOWA (Side-by-side) dla linku preview

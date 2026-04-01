@@ -21,7 +21,7 @@ function addItemRow(item = {}) {
     const newItem = {
         name: item.name || '',
         price: typeof item.price === 'number' ? item.price : (parseFloat(item.price) || 0),
-        category: item.category || 'inne',
+        category: item.category || 'Inne',
         subCategory: item.subCategory || '',
         tags: Object.assign({}, defaultTags, item.tags || {})
     };
@@ -32,20 +32,20 @@ function addItemRow(item = {}) {
 function renderPurchaseItems() {
     if (!itemsContainer) return;
     itemsContainer.innerHTML = '';
-    
+
     currentPurchaseItems.forEach((item, index) => {
         const itemRow = document.createElement('div');
         itemRow.className = 'glass-card rounded-xl p-3 mb-2 flex flex-col gap-2 relative border border-white/5 bg-white/5';
-        
-        let labelText = item.category || 'inne';
+
+        let labelText = item.category || 'Inne';
         if (item.subCategory) {
             labelText += ` / ${item.subCategory}`;
         }
-        
-        const parentCat = (typeof structuredCategories !== 'undefined') 
+
+        const parentCat = (typeof structuredCategories !== 'undefined')
             ? structuredCategories.find(c => c.name === item.category && !c.parentId)
             : null;
-        
+
         const subCat = (typeof structuredCategories !== 'undefined' && parentCat)
             ? structuredCategories.find(c => c.name === item.subCategory && c.parentId === parentCat.id)
             : null;
@@ -54,17 +54,17 @@ function renderPurchaseItems() {
         const color = (parentCat && parentCat.color) || (typeof getCategoryColor === 'function' ? getCategoryColor(item.category) : '#6b7280');
 
         // Tagi - dynamicznie dla wszystkich grup
-                    let tagsHtml = '';
-                    if (item.tags && typeof item.tags === 'object') {
-                        const tagGroups = typeof getTagGroups === 'function' ? getTagGroups() : Object.keys(item.tags);
-                        tagsHtml = tagGroups
-                            .filter(g => item.tags[g])
-                            .map(g => {
-                                const groupLabel = typeof getTagGroupLabel === 'function' ? getTagGroupLabel(g) : g;
-                                const tagLabel = typeof getTagLabel === 'function' ? (getTagLabel(g, item.tags[g]) || item.tags[g]) : item.tags[g];
-                                return `<span class="px-2 py-1 rounded-lg bg-white/5 border border-white/10 text-[11px] text-gray-400">${groupLabel[0]}: <span class="text-gray-200 font-medium">${tagLabel}</span></span>`;
-                            }).join('');
-                    }
+        let tagsHtml = '';
+        if (item.tags && typeof item.tags === 'object') {
+            const tagGroups = typeof getTagGroups === 'function' ? getTagGroups() : Object.keys(item.tags);
+            tagsHtml = tagGroups
+                .filter(g => item.tags[g])
+                .map(g => {
+                    const groupLabel = typeof getTagGroupLabel === 'function' ? getTagGroupLabel(g) : g;
+                    const tagLabel = typeof getTagLabel === 'function' ? (getTagLabel(g, item.tags[g]) || item.tags[g]) : item.tags[g];
+                    return `<span class="px-2 py-1 rounded-lg bg-white/5 border border-white/10 text-[11px] text-gray-400">${groupLabel[0]}: <span class="text-gray-200 font-medium">${tagLabel}</span></span>`;
+                }).join('');
+        }
 
         itemRow.innerHTML = `
             <div class="flex items-start gap-3">
@@ -131,10 +131,10 @@ function initProductDrawer() {
     const drawer = document.getElementById('product-drawer');
     const closeBtn = document.getElementById('close-product-drawer');
     const form = document.getElementById('product-drawer-form');
-    
+
     // Category Selector in Drawer
     const categoryBtn = document.getElementById('product-drawer-category-btn');
-    
+
     // Unified Tags Button in Drawer
     const tagsBtn = document.getElementById('product-drawer-tags-btn');
 
@@ -170,13 +170,13 @@ function initProductDrawer() {
 
     form.addEventListener('submit', (e) => {
         e.preventDefault();
-        
+
         const indexStr = document.getElementById('product-drawer-index').value;
         const name = document.getElementById('product-drawer-name').value.trim();
         const price = parseFloat(document.getElementById('product-drawer-price').value);
-        const compositeCat = document.getElementById('product-drawer-category-value').value || 'inne';
-        
-        let category = 'inne';
+        const compositeCat = document.getElementById('product-drawer-category-value').value || 'Inne';
+
+        let category = 'Inne';
         let subCategory = '';
         if (compositeCat.includes('|')) {
             const [p, s] = compositeCat.split('|');
@@ -216,7 +216,7 @@ function openProductDrawer(index = null) {
     const drawer = document.getElementById('product-drawer');
     const title = document.getElementById('product-drawer-title');
     const form = document.getElementById('product-drawer-form');
-    
+
     // Form fields
     const idxInput = document.getElementById('product-drawer-index');
     const nameInput = document.getElementById('product-drawer-name');
@@ -224,18 +224,18 @@ function openProductDrawer(index = null) {
     const catValue = document.getElementById('product-drawer-category-value');
     const catLabel = document.getElementById('product-drawer-category-label');
     const catIcon = document.getElementById('product-drawer-category-icon');
-    
-    
+
+
 
     // Ustawienie początkowych lub predefiniowanych wartości
     if (index !== null && index >= 0 && index < currentPurchaseItems.length) {
         title.textContent = 'Edytuj produkt';
         const item = currentPurchaseItems[index];
-        
+
         idxInput.value = index;
         nameInput.value = item.name;
         priceInput.value = item.price.toFixed(2);
-        
+
         applyCategorySelectionState({
             valueEl: catValue,
             labelEl: catLabel,
@@ -246,7 +246,7 @@ function openProductDrawer(index = null) {
         const tagsBtn = document.getElementById('product-drawer-tags-btn');
         const tagsSummaryEl = document.getElementById('product-drawer-tags-summary');
         if (tagsSummaryEl) tagsSummaryEl.textContent = typeof buildTagsSummary === 'function' ? buildTagsSummary(_productDrawerTags) : '';
-        
+
     } else {
         title.textContent = 'Dodaj produkt';
         form.reset();
@@ -255,7 +255,7 @@ function openProductDrawer(index = null) {
             valueEl: catValue,
             labelEl: catLabel,
             iconEl: catIcon
-        }, 'inne', '', 'Wybierz kategori�');
+        }, 'Inne', '', 'Wybierz kategorię');
 
         const defaultTags = typeof getDefaultTagValues === 'function' ? getDefaultTagValues() : { nature: 'zmienny', purpose: 'konieczny' };
         _productDrawerTags = Object.assign({}, defaultTags);
@@ -265,13 +265,13 @@ function openProductDrawer(index = null) {
 
     drawerOverlay.classList.remove('hidden');
     drawer.classList.remove('hidden');
-    
+
     // Uruchomienie animacji CSS
     setTimeout(() => {
         drawerOverlay.classList.remove('opacity-0');
         drawer.classList.remove('translate-y-full');
     }, 10);
-    
+
     setTimeout(() => {
         nameInput.focus(); // Ułatwienie natychmiastowego pisania nazwy
     }, 300);
@@ -280,10 +280,10 @@ function openProductDrawer(index = null) {
 function closeProductDrawer() {
     const drawerOverlay = document.getElementById('product-drawer-overlay');
     const drawer = document.getElementById('product-drawer');
-    
+
     drawerOverlay.classList.add('opacity-0');
     drawer.classList.add('translate-y-full');
-    
+
     setTimeout(() => {
         drawerOverlay.classList.add('hidden');
         drawer.classList.add('hidden');
@@ -292,7 +292,7 @@ function closeProductDrawer() {
 
 async function handlePurchaseFormSubmit(e) {
     e.preventDefault();
-    
+
     if (currentPurchaseItems.length === 0) {
         alert('Dodaj przynajmniej jedną pozycję do zakupu.');
         return;
@@ -366,45 +366,45 @@ function renderPurchasesList(purchasesToRender, append = false) {
                 ${p.tags && Object.keys(p.tags).length > 0 ? `
                 <div class="flex flex-wrap gap-4 px-4 py-3 bg-white/5 border-t border-white/5 rounded-xl border border-white/10 mb-4">
                     ${getTagGroups().map(group => {
-                        const val = p.tags[group];
-                        if (!val) return '';
-                        const groupLabel = String(getTagGroupLabel(group) || group || '');
-                        const tagLabel = typeof getTagLabel === 'function' ? getTagLabel(group, val) : val;
-                        return `
+            const val = p.tags[group];
+            if (!val) return '';
+            const groupLabel = String(getTagGroupLabel(group) || group || '');
+            const tagLabel = typeof getTagLabel === 'function' ? getTagLabel(group, val) : val;
+            return `
                             <div class="flex flex-col">
                                 <span class="text-[10px] text-gray-500 uppercase tracking-widest">${groupLabel.charAt(0)}</span>
                                 <span class="text-xs text-white font-medium">${tagLabel}</span>
                             </div>
                         `;
-                    }).join('')}
+        }).join('')}
                 </div>` : ''}
 
                 <div class="space-y-4">
                 ${(p.items || []).map(item => {
-                    const catName = item.category || 'inne';
-                    const subName = item.subCategory || '';
-                    const parentCat = (typeof structuredCategories !== 'undefined') 
-                        ? structuredCategories.find(c => c.name === catName && !c.parentId)
-                        : null;
-                    
-                    const subCat = (typeof structuredCategories !== 'undefined' && parentCat)
-                        ? structuredCategories.find(c => c.name === subName && c.parentId === parentCat.id)
-                        : null;
+            const catName = item.category || 'Inne';
+            const subName = item.subCategory || '';
+            const parentCat = (typeof structuredCategories !== 'undefined')
+                ? structuredCategories.find(c => c.name === catName && !c.parentId)
+                : null;
 
-                    const icon = (subCat && subCat.icon) || (parentCat && parentCat.icon) || (typeof categoryIcons !== 'undefined' ? categoryIcons[catName] : 'fa-tag') || 'fa-tag';
-                    const color = (parentCat && parentCat.color) || (typeof getCategoryColor === 'function' ? getCategoryColor(catName) : '#6b7280');
-                    const labelText = subName ? `${catName} / ${subName}` : catName;
+            const subCat = (typeof structuredCategories !== 'undefined' && parentCat)
+                ? structuredCategories.find(c => c.name === subName && c.parentId === parentCat.id)
+                : null;
 
-                    // Dynamiczne tagi dla przedmiotu
-                    const itemTagsHtml = getTagGroups().map(group => {
-                        const val = item.tags && item.tags[group];
-                        if (!val) return '';
-                        const groupLabel = String(getTagGroupLabel(group) || group || '');
-                        const tagLabel = typeof getTagLabel === 'function' ? getTagLabel(group, val) : val;
-                        return `<span class="text-[10px] text-gray-500">${groupLabel.charAt(0)}: <span class="text-gray-300">${tagLabel}</span></span>`;
-                    }).join(' ');
+            const icon = (subCat && subCat.icon) || (parentCat && parentCat.icon) || (typeof categoryIcons !== 'undefined' ? categoryIcons[catName] : 'fa-tag') || 'fa-tag';
+            const color = (parentCat && parentCat.color) || (typeof getCategoryColor === 'function' ? getCategoryColor(catName) : '#6b7280');
+            const labelText = subName ? `${catName} / ${subName}` : catName;
 
-                    return `
+            // Dynamiczne tagi dla przedmiotu
+            const itemTagsHtml = getTagGroups().map(group => {
+                const val = item.tags && item.tags[group];
+                if (!val) return '';
+                const groupLabel = String(getTagGroupLabel(group) || group || '');
+                const tagLabel = typeof getTagLabel === 'function' ? getTagLabel(group, val) : val;
+                return `<span class="text-[10px] text-gray-500">${groupLabel.charAt(0)}: <span class="text-gray-300">${tagLabel}</span></span>`;
+            }).join(' ');
+
+            return `
                     <div class="flex justify-between items-end py-1 border-b border-white/5 last:border-0 text-sm">
                         <div class="flex flex-col">
                             <div class="flex items-center gap-2 mb-1">
@@ -418,7 +418,8 @@ function renderPurchasesList(purchasesToRender, append = false) {
                         </div>
                         <div class="font-bold text-white whitespace-nowrap text-base">${formatAmount(item.price || 0)}</div>
                     </div>
-                `;}).join('')}
+                `;
+        }).join('')}
                 </div>
                 
                 <!-- Expanded view actions -->
@@ -443,70 +444,56 @@ function renderPurchasesList(purchasesToRender, append = false) {
     }
 }
 
-// --- Logika Zarządzania Kategoriami ---
-function renderCategoriesList() {
-    categoriesList.innerHTML = allCategories.map(cat => `
-        <div class="flex justify-between items-center p-2 border-b border-gray-200 dark:border-gray-700" data-category-name="${cat}">
-            <span class="category-text text-gray-900 dark:text-white">${cat.charAt(0).toUpperCase() + cat.slice(1)}</span>
-            <div class="category-actions">
-                <button class="rename-cat-btn p-1 text-blue-500 hover:text-blue-700" title="Zmień nazwę"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" /><path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd" /></svg></button>
-                <button class="delete-cat-btn p-1 text-red-500 hover:text-red-700" title="Usuń"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" /></svg></button>
-            </div>
-        </div>
-    `).join('');
-}
-
-async function handleCategoryActions(e) {
-    const renameBtn = e.target.closest('.rename-cat-btn');
-    if (renameBtn) {
-        const categoryDiv = e.target.closest('[data-category-name]');
-        const oldName = categoryDiv.dataset.categoryName;
-        const newName = prompt(`Wprowadź nową nazwę dla kategorii "${oldName}":`, oldName);
-        if (newName && newName.trim() !== '' && newName !== oldName) {
-            try {
-                await apiCall(`/api/categories/${oldName}`, 'PUT', { newName: newName.trim().toLowerCase() });
-                await fetchInitialData(false);
-                renderCategoriesList();
-                renderBudgetInputs(); // DODANE
-            } catch (error) {
-                alert('Nie udało się zmienić nazwy: ' + error.message);
-            }
-        }
-    }
-
-    const deleteBtn = e.target.closest('.delete-cat-btn');
-    if (deleteBtn) {
-        const categoryDiv = e.target.closest('[data-category-name]');
-        const name = categoryDiv.dataset.categoryName;
-        if (confirm(`Czy na pewno chcesz usunąć kategorię "${name}"? Wszystkie produkty z tą kategorią zostaną oznaczone jako "inne".`)) {
-            try {
-                await apiCall(`/api/categories/${name}`, 'DELETE');
-                await fetchInitialData(false);
-                renderCategoriesList();
-                renderBudgetInputs(); // DODANE
-            } catch (error) {
-                alert('Nie udało się usunąć kategorii: ' + error.message);
-            }
-        }
-    }
-}
-
 // --- Analiza paragonów ---
 async function handleAnalyzeReceipt() {
     if (!currentFile) {
         alert('Proszę, wybierz najpierw plik z paragonem.');
         return;
     }
-    
+
     const globalLoader = document.getElementById('global-analysis-loader');
     if (globalLoader) globalLoader.classList.remove('hidden');
-    
+
+    const scannerContainer = document.getElementById('scanner-container');
+    const scannerControls = document.getElementById('scanner-controls');
+    const analysisSpinnerEl = document.getElementById('analysis-spinner');
+    const imagePreviewEl = document.getElementById('image-preview-container');
+
+    if (scannerContainer) {
+        scannerContainer.classList.remove('hidden');
+        scannerContainer.style.minHeight = '350px';
+    }
+
     const analysisAnimationContainer = document.getElementById('analysis-animation-container');
     if (analysisAnimationContainer) {
-        analysisAnimationContainer.classList.remove('hidden');
+        scannerControls?.classList.add('hidden');
+        analysisSpinnerEl?.classList.add('hidden');
+        imagePreviewEl?.classList.add('hidden');
+
+        analysisAnimationContainer.style.display = 'flex';
+        analysisAnimationContainer.style.position = 'absolute';
+        analysisAnimationContainer.style.top = '-1.5rem';
+        analysisAnimationContainer.style.left = '0.2rem';
+        analysisAnimationContainer.style.right = '0.2rem';
+        analysisAnimationContainer.style.bottom = '0.5rem';
+        analysisAnimationContainer.style.width = 'calc(100% )';
+        analysisAnimationContainer.style.height = 'calc(100% )';
+        analysisAnimationContainer.style.minHeight = '0';
+        analysisAnimationContainer.style.padding = '0';
+        analysisAnimationContainer.style.margin = '0';
+        analysisAnimationContainer.style.maxWidth = 'none';
+        analysisAnimationContainer.style.border = 'none';
+        analysisAnimationContainer.style.background = 'rgba(15, 23, 42, 0.94)';
+        analysisAnimationContainer.style.backdropFilter = 'blur(10px)';
+        analysisAnimationContainer.style.zIndex = '10';
+        analysisAnimationContainer.style.boxSizing = 'border-box';
+        console.log('[V12] Container size:', analysisAnimationContainer.offsetWidth, 'x', analysisAnimationContainer.offsetHeight);
     }
     if (typeof analysisAnimation !== 'undefined') {
+        console.log('[V12] Starting analysis animation module...');
         analysisAnimation.start();
+    } else {
+        console.warn('[V12] analysisAnimation is undefined!');
     }
 
     analyzeReceiptBtn.disabled = true;
@@ -523,10 +510,9 @@ async function handleAnalyzeReceipt() {
         alert('Wystąpił błąd podczas analizy paragonu. Spróbuj ponownie. Błąd: ' + error.message);
     } finally {
         if (globalLoader) globalLoader.classList.add('hidden');
-        
-        const analysisAnimationContainer = document.getElementById('analysis-animation-container');
+
         if (analysisAnimationContainer) {
-            analysisAnimationContainer.classList.add('hidden');
+            analysisAnimationContainer.style.display = 'none';
         }
         if (typeof analysisAnimation !== 'undefined') {
             analysisAnimation.stop();
@@ -535,10 +521,10 @@ async function handleAnalyzeReceipt() {
         analyzeReceiptBtn.disabled = false;
         receiptFileInput.value = '';
         currentFile = null;
-        
+
         // Hide the scanner container itself after analysis
-        const scannerContainer = document.getElementById('scanner-container');
         if (scannerContainer) {
+            scannerContainer.style.minHeight = '';
             scannerContainer.classList.add('hidden');
         }
     }
@@ -623,18 +609,18 @@ async function fillFormWithAnalysis(analysis) {
     });
 
     currentPurchaseItems = processedItems.map(item => {
-        let categoryName = item.category || 'inne';
+        let categoryName = item.category || 'Inne';
         let subCategoryName = item.subCategory || '';
 
-        const parentCat = (typeof structuredCategories !== 'undefined') 
+        const parentCat = (typeof structuredCategories !== 'undefined')
             ? structuredCategories.find(c => c.name.toLowerCase() === categoryName.toLowerCase() && !c.parentId)
             : null;
 
         if (parentCat) {
             categoryName = parentCat.name;
             if (subCategoryName) {
-                const subCat = structuredCategories.find(c => 
-                    c.name.toLowerCase() === subCategoryName.toLowerCase() && 
+                const subCat = structuredCategories.find(c =>
+                    c.name.toLowerCase() === subCategoryName.toLowerCase() &&
                     c.parentId === parentCat.id
                 );
                 if (subCat) {
@@ -644,20 +630,20 @@ async function fillFormWithAnalysis(analysis) {
                 }
             }
         } else {
-            categoryName = 'inne';
+            categoryName = 'Inne';
             subCategoryName = '';
         }
 
         // Dynamiczne tagi dla produktu
         const tags = {};
         const groups = typeof getTagGroups === 'function' ? getTagGroups() : ['nature', 'purpose'];
-        
+
         groups.forEach(group => {
             const aiValue = (item.tags && item.tags[group]);
-            const defaultValue = typeof getTagDefaultValue === 'function' 
-                ? getTagDefaultValue(group) 
+            const defaultValue = typeof getTagDefaultValue === 'function'
+                ? getTagDefaultValue(group)
                 : (group === 'nature' ? 'zmienny' : 'konieczny');
-            
+
             tags[group] = aiValue || defaultValue;
         });
 
@@ -669,7 +655,7 @@ async function fillFormWithAnalysis(analysis) {
             tags: tags
         };
     });
-    
+
     renderPurchaseItems();
     updatePurchaseSummary();
     alert('Gotowe! Analiza AI zakończona. Sprawdź i uzupełnij dane, a następnie zapisz cały zakup.');

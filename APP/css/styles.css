@@ -871,15 +871,43 @@ input[type="date"] {
 
 /* ===== Analysis Animation Styles ===== */
 #analysis-animation-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: auto !important;
+    height: auto !important;
+    min-height: 0 !important;
     font-family: monospace;
     pointer-events: none;
+    padding: 0;
+    margin: 0;
+    background: rgba(15, 23, 42, 0.94) !important;
+    border: none !important;
+    backdrop-filter: blur(10px);
+    z-index: 10;
+    display: none;
+    box-sizing: border-box;
+    overflow: hidden;
 }
 
 #analysis-animation-container canvas {
     width: 100%;
-    max-width: 360px;
+    max-width: 100%;
     height: auto;
     display: block;
+}
+
+#analysis-animation-container #wrap {
+    width: 100%;
+    max-width: none !important;
+    padding: 0;
+}
+
+#analysis-animation-container #wrap > canvas,
+#analysis-animation-container #wrap > div {
+    width: 100% !important;
 }
 
 #analysis-animation-container #label {

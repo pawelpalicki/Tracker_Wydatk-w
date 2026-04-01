@@ -101,8 +101,7 @@ function switchTab(tabName, pushToHistory = true) {
 
     // Settings sub-tabs logic
     if (tabName === 'settings' || tabName.startsWith('settings-')) {
-        renderCategoriesList();
-        if (tabName === 'settings-categories' && typeof renderCategoriesListV2 === 'function') {
+        if (typeof renderCategoriesListV2 === 'function') {
             renderCategoriesListV2();
             if (typeof renderTagsManager === 'function') renderTagsManager();
         }
@@ -162,29 +161,19 @@ function initFilterDrawers() {
     const categoryBtn = document.getElementById('filter-category-btn');
     if (categoryBtn) {
         categoryBtn.onclick = () => {
-            if (typeof openHierarchicalCategoryDrawer === 'function') {
                 openHierarchicalCategoryDrawer(
                     null,
                     typeof filterCategoryValue !== 'undefined' ? filterCategoryValue : '',
                     typeof filterSubCategoryValue !== 'undefined' ? filterSubCategoryValue : '',
                     (pName, sName) => {
-                    if (typeof filterCategoryValue !== 'undefined') filterCategoryValue = pName || '';
-                    if (typeof filterSubCategoryValue !== 'undefined') filterSubCategoryValue = sName || '';
-                    const labelText = pName ? (sName ? `${pName} / ${sName}` : pName) : 'Kategoria';
-                    document.getElementById('filter-category-label').textContent = labelText;
-                    setFilterButtonState(categoryBtn, categoryClear, !!pName);
-                    if (typeof handleFilterChange === 'function') handleFilterChange();
-                });
-            } else {
-                openCategoryDrawer(null, typeof filterCategoryValue !== 'undefined' ? filterCategoryValue : '', (cat) => {
-                    if (typeof filterCategoryValue !== 'undefined') filterCategoryValue = cat;
-                    if (typeof filterSubCategoryValue !== 'undefined') filterSubCategoryValue = '';
-                    const labelText = cat ? cat.charAt(0).toUpperCase() + cat.slice(1) : 'Kategoria';
-                    document.getElementById('filter-category-label').textContent = labelText;
-                    setFilterButtonState(categoryBtn, categoryClear, !!cat);
-                    if (typeof handleFilterChange === 'function') handleFilterChange();
-                });
-            }
+                        if (typeof filterCategoryValue !== 'undefined') filterCategoryValue = pName || '';
+                        if (typeof filterSubCategoryValue !== 'undefined') filterSubCategoryValue = sName || '';
+                        const labelText = pName ? (sName ? `${pName} / ${sName}` : pName) : 'Kategoria';
+                        document.getElementById('filter-category-label').textContent = labelText;
+                        setFilterButtonState(categoryBtn, categoryClear, !!pName);
+                        if (typeof handleFilterChange === 'function') handleFilterChange();
+                    }
+                );
         };
     }
 
@@ -759,7 +748,7 @@ function enterEditMode(purchaseId) {
         currentPurchaseItems = purchase.items.map(item => ({
             name: item.name || '',
             price: typeof item.price === 'number' ? item.price : (parseFloat(item.price) || 0),
-            category: item.category || 'inne',
+            category: item.category || 'Inne',
             subCategory: item.subCategory || '',
             tags: {
                 nature: (item.tags && item.tags.nature) || (purchase.tags && purchase.tags.nature) || 'zmienny',
@@ -868,14 +857,14 @@ function renderCategoryDetailsModal(category, items, isSubCategoryView = false) 
         if (!isSubCategoryView) {
             const bySub = {};
             items.forEach(it => {
-                const sub = it.subCategory || 'inne';
+                const sub = it.subCategory || 'Inne';
                 if (!bySub[sub]) bySub[sub] = 0;
                 bySub[sub] += it.price || 0;
             });
             
             const sortedSub = Object.entries(bySub).sort((a, b) => b[1] - a[1]);
             
-            if (sortedSub.length > 1 || (sortedSub.length === 1 && sortedSub[0][0] !== 'inne')) {
+            if (sortedSub.length > 1 || (sortedSub.length === 1 && sortedSub[0][0] !== 'Inne')) {
                 let breakdownHtml = `
                     <div class="mb-4 space-y-2">
                         <p class="text-[10px] text-gray-500 uppercase tracking-widest font-bold ml-1 mb-2">Podział na podkategorie</p>

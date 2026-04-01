@@ -314,16 +314,23 @@ const analysisAnimation = (() => {
         drawReceipt();
         drawParticles();
         drawRobot();
+
+        // V12 TEST BORDER
+        ctx.strokeStyle = '#7c3aed';
+        ctx.lineWidth = 4;
+        ctx.strokeRect(0, 0, W, H);
     }
 
     function loop() {
+        if (t % 60 === 0) console.log('[V12] Drawing frame, t:', t);
         update();
         draw();
         animationFrameId = requestAnimationFrame(loop);
     }
 
     function init() {
-        cv = document.getElementById('c');
+        cv = document.getElementById('analysis-scan-canvas');
+        console.log('[V12] Initializing with canvas:', cv);
         if (!cv) return;
         ctx = cv.getContext('2d');
         W = 360;

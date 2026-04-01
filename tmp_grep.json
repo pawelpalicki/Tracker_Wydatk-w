@@ -1,0 +1,8 @@
+[
+  "260: const color = (parentCat && parentCat.color) || (typeof getCategoryColor === 'function' ? getCategoryColor(cat) : '#6b7280');",
+  "261: const icon = (parentCat && parentCat.icon) || (typeof categoryIcons !== 'undefined' ? categoryIcons[cat.toLowerCase()] : 'fa-tag') || 'fa-tag';",
+  "367: const itemColor = (parentCat && parentCat.color) || (typeof getCategoryColor === 'function' ? getCategoryColor(itemCat) : '#6b7280');",
+  "368: const itemIcon = (subCat && subCat.icon) || (parentCat && parentCat.icon) || (typeof categoryIcons !== 'undefined' ? categoryIcons[itemCat.toLowerCase()] : 'fa-tag') || 'fa-tag';",
+  "819: return (parentCat && parentCat.color) || (typeof getCategoryColor === 'function' ? getCategoryColor(label) : '#6b7280');",
+  "959: const icon = (parentCat && parentCat.icon) || (typeof categoryIcons !== 'undefined' ? categoryIcons[currentLabel] : 'fa-tag') || 'fa-tag';"
+]

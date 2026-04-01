@@ -117,7 +117,10 @@ function renderSpecialBudgetsTab() {
                     labels: chartData.map(d => d[0]),
                     datasets: [{
                         data: chartData.map(d => d[1]),
-                        backgroundColor: chartData.map(d => getCategoryColor(d[0])),
+                        backgroundColor: chartData.map(d => {
+                            const pCat = typeof structuredCategories !== 'undefined' ? structuredCategories.find(c => c.name === d[0] && !c.parentId) : null;
+                            return (pCat && pCat.color) || '#6b7280';
+                        }),
                         borderColor: '#4a5568', // dark:bg-gray-700
                         borderWidth: 2
                     }]

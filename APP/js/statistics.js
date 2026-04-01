@@ -258,8 +258,8 @@ function renderHomeCategoryTiles(purchases, budgets = {}) {
             ? structuredCategories.find(c => c.name === cat && !c.parentId)
             : null;
 
-        const color = (parentCat && parentCat.color) || (typeof getCategoryColor === 'function' ? getCategoryColor(cat) : '#6b7280');
-        const icon = (parentCat && parentCat.icon) || (typeof categoryIcons !== 'undefined' ? categoryIcons[cat.toLowerCase()] : 'fa-tag') || 'fa-tag';
+        const color = (parentCat && parentCat.color) || '#6b7280';
+        const icon = (parentCat && parentCat.icon) || 'fa-tag';
         
         const budget = budgets[cat] || 0;
         const pct = budget > 0 ? Math.round((amount / budget) * 100) : null;
@@ -365,8 +365,8 @@ async function renderHomeRecentTransactions() {
                             ? structuredCategories.find(c => c.name === itemSub && c.parentId === parentCat.id)
                             : null;
 
-                        const itemColor = (parentCat && parentCat.color) || (typeof getCategoryColor === 'function' ? getCategoryColor(itemCat) : '#6b7280');
-                        const itemIcon = (subCat && subCat.icon) || (parentCat && parentCat.icon) || (typeof categoryIcons !== 'undefined' ? categoryIcons[itemCat.toLowerCase()] : 'fa-tag') || 'fa-tag';
+                        const itemColor = (parentCat && parentCat.color) || '#6b7280';
+                        const itemIcon = (subCat && subCat.icon) || (parentCat && parentCat.icon) || 'fa-tag';
                         return `
                             <div class="flex flex-col py-1">
                                 <div class="flex justify-between items-center text-[12px]">
@@ -817,7 +817,7 @@ async function updateCategoryPieChart() {
         const parentCat = (typeof structuredCategories !== 'undefined')
             ? structuredCategories.find(c => c.name === label && !c.parentId)
             : null;
-        return (parentCat && parentCat.color) || (typeof getCategoryColor === 'function' ? getCategoryColor(label) : '#6b7280');
+        return (parentCat && parentCat.color) || '#6b7280';
     });
 
     if (categoryChart) categoryChart.destroy();
@@ -957,7 +957,7 @@ function renderInteractiveLegend(chart, total) {
                 const parentCat = (typeof structuredCategories !== 'undefined')
                     ? structuredCategories.find(c => c.name.toLowerCase() === currentLabel && !c.parentId)
                     : null;
-                const icon = (parentCat && parentCat.icon) || (typeof categoryIcons !== 'undefined' ? categoryIcons[currentLabel] : 'fa-tag') || 'fa-tag';
+                const icon = (parentCat && parentCat.icon) || 'fa-tag';
 
                 return `
                 <li data-index="${originalIndex}" data-label="${currentLabel}" class="flex items-center justify-between py-1.5 px-2 rounded-md cursor-pointer transition-colors select-none">

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tracker-wydatkow-cache-v6'; // Zwiększona wersja
+const CACHE_NAME = 'tracker-wydatkow-cache-v12'; // Zwiększona wersja
 const urlsToCache = [
     '/',
     '/index.html',
@@ -11,6 +11,8 @@ const urlsToCache = [
     '/js/purchases.js',
     '/js/long-term-budget.js',
     '/js/special-budgets.js',
+    '/js/categories-v2.js',
+    '/js/analysis-animation.js',
     '/js/app.js',
     '/icon-new.svg',
     '/manifest.json'
@@ -18,6 +20,7 @@ const urlsToCache = [
 
 // Instalacja Service Workera i cache'owanie zasobów
 self.addEventListener('install', event => {
+    self.skipWaiting(); // Wymuś aktywację bez czekania
     event.waitUntil(
         caches.open(CACHE_NAME)
             .then(cache => {
@@ -29,6 +32,7 @@ self.addEventListener('install', event => {
 
 // Aktywacja Service Workera i czyszczenie starych cache'y
 self.addEventListener('activate', event => {
+    event.waitUntil(self.clients.claim()); // Przejmij kontrolę nad wszystkimi klientami od razu
     const cacheWhitelist = [CACHE_NAME];
     event.waitUntil(
         caches.keys().then(cacheNames => {
