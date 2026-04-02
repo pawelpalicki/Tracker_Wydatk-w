@@ -698,7 +698,6 @@ function setupAppEventListeners() {
 
 
     // (Obsługa szuflady szczegółów odbywa się w ui.js)
-    document.getElementById('category-chart')?.addEventListener('click', handleCategoryChartClick);
 
     // Autouzupełnianie sklepu
     shopInput.addEventListener('input', () => renderShopAutocomplete(shopInput.value));

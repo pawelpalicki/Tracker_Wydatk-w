@@ -572,169 +572,6 @@ function updateComparisonMetaInfo(bucketCount) {
     }
 }
 
-function applyComparisonCompactLayout() {
-    const analysisTab = document.getElementById('analysis-tab');
-    const categoryButton = document.getElementById('analysis-filter-category-btn');
-    const subCategoryButton = document.getElementById('analysis-filter-subcategory-btn');
-    const clearCategoryButton = document.getElementById('analysis-filter-category-clear');
-    const tagsButton = document.getElementById('analysis-filter-tags-btn');
-    const chartTitle = document.getElementById('comparison-chart-title');
-    const chartCard = document.getElementById('comparison-chart-container')?.closest('.glass-card');
-    const toggleWrapper = document.getElementById('comparison-mode-toggle-wrapper');
-    const yearWrapper = document.getElementById('comparison-year-wrapper');
-    const segmentControl = document.getElementById('comparison-segment-control');
-    const summary = document.getElementById('comparison-summary');
-    const filtersContainer = document.getElementById('comparison-category-filters');
-    const oldFiltersCard = categoryButton?.closest('.glass-card');
-    const chartContainer = document.getElementById('comparison-chart-container');
-
-    if (!chartCard || !categoryButton || !subCategoryButton || !clearCategoryButton || !tagsButton || !chartTitle || !toggleWrapper || !yearWrapper || !segmentControl || !summary || !filtersContainer || !chartContainer) {
-        return;
-    }
-
-    if (chartCard.dataset.compactLayoutApplied === 'true') {
-        return;
-    }
-    chartCard.dataset.compactLayoutApplied = 'true';
-
-    const tabHeader = analysisTab?.firstElementChild;
-    if (tabHeader) {
-        tabHeader.classList.add('hidden');
-    }
-
-    chartCard.className = 'glass-card rounded-[24px] p-3 sm:p-4 flex flex-col h-full border border-white/10 bg-white/[0.04] shadow-[0_20px_60px_rgba(0,0,0,0.24)]';
-
-    const headerRow = chartCard.firstElementChild;
-    if (headerRow) {
-        headerRow.className = 'hidden';
-    }
-
-    const titleWrap = headerRow?.firstElementChild;
-    const heading = titleWrap?.querySelector('h3');
-    if (titleWrap) {
-        titleWrap.className = 'hidden';
-    }
-    if (heading) {
-        heading.className = 'hidden';
-    }
-    chartTitle.className = 'text-[11px] sm:text-xs font-medium text-gray-400 mt-1';
-    chartTitle.classList.add('hidden');
-
-    tagsButton.className = 'relative inline-flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-gray-300 shadow-sm hover:bg-white/10 hover:text-white transition-colors';
-    tagsButton.setAttribute('title', 'Filtr tagow');
-    tagsButton.setAttribute('aria-label', 'Filtr tagow');
-    tagsButton.innerHTML = `
-        <i class="fas fa-tags text-sm"></i>
-        <span id="analysis-filter-tags-indicator" class="hidden absolute -right-1 -top-1 h-3 w-3 rounded-full bg-brand-500 ring-2 ring-[#111827]"></span>
-        <span id="analysis-filter-tags-label" class="hidden">Wszystkie tagi</span>
-    `;
-
-    yearWrapper.classList.add('hidden');
-
-    toggleWrapper.className = 'hidden items-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.04] px-2 py-1.5';
-    const toggleLabel = toggleWrapper.querySelector('span');
-    if (toggleLabel) {
-        toggleLabel.className = 'text-[11px] font-medium text-gray-400 whitespace-nowrap';
-        toggleLabel.textContent = 'Do dzis';
-    }
-
-    const segmentRow = segmentControl.parentElement;
-    if (segmentRow) {
-        segmentRow.className = 'mb-2 overflow-hidden';
-    }
-    segmentControl.className = 'grid w-full grid-cols-4 items-center rounded-2xl border border-white/10 bg-white/[0.04] p-1 gap-1';
-
-    summary.className = 'mb-2.5 rounded-2xl border border-white/10 bg-gradient-to-r from-white/[0.06] to-white/[0.03] px-3 py-2.5';
-    summary.innerHTML = `
-        <div class="grid grid-cols-3 gap-2">
-            <div class="min-w-0 border-r border-white/8 pr-2">
-                <p class="text-[10px] uppercase tracking-[0.18em] text-gray-500">Wydatki</p>
-                <p id="comparison-total-spending" class="mt-1 truncate text-sm sm:text-base font-semibold text-white">0,00 zl</p>
-            </div>
-            <div class="min-w-0 border-r border-white/8 pr-2">
-                <p class="text-[10px] uppercase tracking-[0.18em] text-gray-500">Budzet</p>
-                <p id="comparison-total-budget" class="mt-1 truncate text-sm sm:text-base font-semibold text-white">0,00 zl</p>
-            </div>
-            <div class="min-w-0">
-                <p class="text-[10px] uppercase tracking-[0.18em] text-gray-500">Roznica</p>
-                <p id="comparison-total-difference" class="mt-1 truncate text-sm sm:text-base font-semibold text-white">0,00 zl</p>
-            </div>
-        </div>
-    `;
-    chartCard.insertBefore(summary, segmentRow);
-
-    let chartMeta = document.getElementById('comparison-chart-meta');
-    if (!chartMeta) {
-        chartMeta = document.createElement('div');
-        chartMeta.id = 'comparison-chart-meta';
-        chartMeta.className = 'mb-2 flex items-center justify-between gap-3';
-        segmentRow.insertAdjacentElement('afterend', chartMeta);
-    }
-
-    let rangeInfo = document.getElementById('comparison-selected-range');
-    if (!rangeInfo) {
-        rangeInfo = document.createElement('div');
-        rangeInfo.id = 'comparison-selected-range';
-        rangeInfo.className = 'flex-1 text-center text-[11px] sm:text-xs font-medium text-gray-400';
-    }
-    const chartMetaActions = document.createElement('div');
-    chartMetaActions.className = 'ml-auto flex items-center gap-3 shrink-0';
-    toggleWrapper.className = 'hidden items-center gap-2 px-0 py-0 self-center';
-    const toggleTrack = toggleWrapper.querySelector('label');
-    if (toggleTrack) {
-        toggleTrack.className = 'relative inline-flex items-center cursor-pointer align-middle';
-    }
-    const toggleText = toggleWrapper.querySelector('span');
-    if (toggleText) {
-        toggleText.className = 'text-[11px] font-medium text-gray-400 leading-none whitespace-nowrap';
-    }
-    chartMetaActions.appendChild(toggleWrapper);
-    chartMetaActions.appendChild(tagsButton);
-
-    // Strzałki nawigacji okresu - wyśrodkowane, obok siebie
-    const navArrows = document.createElement('div');
-    navArrows.className = 'flex items-center gap-2';
-
-    const navPrev = document.createElement('button');
-    navPrev.id = 'comparison-nav-prev';
-    navPrev.className = 'flex w-7 h-7 items-center justify-center rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors';
-    navPrev.setAttribute('aria-label', 'Poprzedni okres');
-    navPrev.innerHTML = '<i class="fas fa-chevron-left text-xs"></i>';
-    navPrev.addEventListener('click', () => changeComparisonRangeByStep(-1));
-
-    const navNext = document.createElement('button');
-    navNext.id = 'comparison-nav-next';
-    navNext.className = 'flex w-7 h-7 items-center justify-center rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors';
-    navNext.setAttribute('aria-label', 'Następny okres');
-    navNext.innerHTML = '<i class="fas fa-chevron-right text-xs"></i>';
-    navNext.addEventListener('click', () => changeComparisonRangeByStep(1));
-
-    navArrows.appendChild(navPrev);
-    navArrows.appendChild(navNext);
-
-    // chartMeta: [strzałka-lewo] [zakres - wyśrodkowany] [strzałka-prawo + akcje]
-    chartMeta.className = 'mb-2 flex items-center gap-2';
-    chartMeta.replaceChildren(navPrev, rangeInfo, chartMetaActions);
-    chartMetaActions.appendChild(navNext);
-
-    chartContainer.className = 'h-72 sm:h-80 w-full flex-grow';
-
-    filtersContainer.className = 'mt-2.5 border-t border-white/8 pt-2.5 space-y-2';
-    filtersContainer.style.display = 'block';
-    filtersContainer.style.width = '100%';
-    filtersContainer.style.minWidth = '0';
-    filtersContainer.style.overflowX = 'visible';
-    filtersContainer.style.paddingBottom = '0';
-    filtersContainer.style.gap = '0';
-    categoryButton.classList.add('hidden');
-    subCategoryButton.classList.add('hidden');
-    clearCategoryButton.classList.add('hidden');
-    renderComparisonCategoryChips();
-
-    oldFiltersCard?.classList.add('hidden');
-    analysisTab?.classList.remove('analysis-layout-pending');
-}
-
 function openComparisonBucketDetails(bucket) {
     if (!bucket) return;
     renderCategoryDetailsModal(bucket.title || bucket.label || 'Szczegoly', bucket.items || [], false);
@@ -1361,6 +1198,9 @@ function initializeComparisonPeriodControls() {
         await renderUnifiedComparisonChart();
     });
 
+    document.getElementById('comparison-nav-prev')?.addEventListener('click', () => changeComparisonRangeByStep(-1));
+    document.getElementById('comparison-nav-next')?.addEventListener('click', () => changeComparisonRangeByStep(1));
+
     periodSelect.value = comparisonPeriod || '6months';
     comparisonPeriod = periodSelect.value || '6months';
     setActiveComparisonPeriodButton(comparisonPeriod);
@@ -1369,17 +1209,15 @@ function initializeComparisonPeriodControls() {
 }
 
 async function initializeLongTermBudget() {
+    if (longTermBudgetInitialized) return;
+
     if (typeof ChartDataLabels !== 'undefined') {
         Chart.register(ChartDataLabels);
     }
 
     await ensureComparisonAvailableMonths();
     initializeComparisonPeriodControls();
-    applyComparisonCompactLayout();
     renderAnalysisTagFilterButton();
-
-    const firstSlideToggle = document.getElementById('comparison-mode-toggle-wrapper');
-    if (firstSlideToggle) firstSlideToggle.classList.add('hidden');
 
     longTermBudgetInitialized = true;
     window.updateComparisonChart = renderUnifiedComparisonChart;

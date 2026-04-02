@@ -241,37 +241,6 @@
             </div>
             <!-- END home-tab -->
 
-            <!-- ARCHIVED: Old stats swipe cards (4 charts) - preserved for future Analiza tab -->
-            <!-- ARCHIVED: Old stats swipe cards (4 charts) - preserved for future Analiza tab -->
-            <div id="stats-tab-archived" class="hidden">
-                <canvas id="category-chart"></canvas>
-                <div id="no-data-pie-chart"></div>
-                <div id="category-chart-container"></div>
-                <div id="interactive-legend-container"></div>
-
-                <canvas id="time-chart"></canvas>
-                <div id="time-chart-container"></div>
-                <div id="no-data-time-chart"></div>
-
-                <canvas id="shop-chart-old"></canvas>
-                <div id="shop-chart-container-old"></div>
-                <div id="no-data-shop-chart-old"></div>
-
-                <h2 id="stats-title"></h2>
-
-                <div id="month-picker-popup" class="hidden month-picker-popup">
-                    <div id="month-picker-body"></div>
-                </div>
-                <button id="month-label-btn">
-                    <span id="month-label-text"></span>
-                </button>
-
-                <!-- Budget Details (used in budget.js) -->
-                <div id="budget-progress-container"></div>
-                <div id="budget-summary-container"></div>
-                <button id="toggle-budget-details"></button>
-            </div>
-
             <div id="add-tab" class="tab-content">
                 <div id="scanner-container" class="glass-card rounded-2xl p-6 mb-6 hidden relative overflow-hidden">
                     <h3 class="text-lg font-semibold mb-4 text-white">Skanowanie paragonu</h3>
@@ -779,308 +748,105 @@
             </div>
 
             <!-- Zakładka Analiza Budżetu -->
-            <div id="analysis-tab" class="tab-content analysis-layout-pending">
-                <div class="hidden"></div>
+            <div id="analysis-tab" class="tab-content">
+                <div class="glass-card rounded-[24px] p-3 sm:p-4 flex flex-col border border-white/10 bg-white/[0.04] shadow-[0_20px_60px_rgba(0,0,0,0.24)]">
+                    
+                    <!-- Podsumowanie -->
+                    <div id="comparison-summary" class="mb-2.5 rounded-2xl border border-white/10 bg-gradient-to-r from-white/[0.06] to-white/[0.03] px-3 py-2.5">
+                        <div class="grid grid-cols-3 gap-2">
+                            <div class="min-w-0 border-r border-white/8 pr-2">
+                                <p class="text-[10px] uppercase tracking-[0.18em] text-gray-500">Wydatki</p>
+                                <p id="comparison-total-spending" class="mt-1 truncate text-sm sm:text-base font-semibold text-white">0,00 zł</p>
+                            </div>
+                            <div class="min-w-0 border-r border-white/8 pr-2">
+                                <p class="text-[10px] uppercase tracking-[0.18em] text-gray-500">Budżet</p>
+                                <p id="comparison-total-budget" class="mt-1 truncate text-sm sm:text-base font-semibold text-white">0,00 zł</p>
+                            </div>
+                            <div class="min-w-0">
+                                <p class="text-[10px] uppercase tracking-[0.18em] text-gray-500">Różnica</p>
+                                <p id="comparison-total-difference" class="mt-1 truncate text-sm sm:text-base font-semibold text-white">0,00 zł</p>
+                            </div>
+                        </div>
+                    </div>
 
-                <!-- Swipe Dots Indicator -->
-                <div id="analysis-swipe-dots" class="hidden justify-center space-x-2 mb-4">
-                    <button class="swipe-dot active" data-index="0"></button>
-                    <button class="swipe-dot" data-index="1"></button>
-                </div>
+                    <!-- Sterowanie okreseem -->
+                    <div class="mb-2 overflow-hidden">
+                        <div id="comparison-segment-control" class="grid w-full grid-cols-4 items-center rounded-2xl border border-white/10 bg-white/[0.04] p-1 gap-1">
+                            <button class="segment-btn" data-value="week">Tydzień</button>
+                            <button class="segment-btn" data-value="month">Miesiąc</button>
+                            <button class="segment-btn active" data-value="6months">6 mies.</button>
+                            <button class="segment-btn" data-value="year">Rok</button>
+                        </div>
+                    </div>
 
-                <!-- Analysis Filters - unified tag filter -->
-                <div class="glass-card rounded-2xl p-4 mb-4 space-y-2">
-                    <div class="flex items-center gap-2">
-                        <button id="analysis-filter-category-btn" type="button"
-                            class="flex-1 flex justify-between items-center rounded-xl border border-white/10 bg-white/5 text-white shadow-sm hover:bg-white/10 transition-colors text-[11px] py-2 px-3 text-left">
-                            <span class="flex items-center min-w-0">
-                                <span id="analysis-filter-category-icon"
-                                    class="category-trigger-icon mr-2 shrink-0 bg-white/10 text-gray-300">
-                                    <i class="fas fa-tag"></i>
-                                </span>
-                                <span id="analysis-filter-category-label" class="truncate font-medium">Wszystkie kategorie</span>
-                            </span>
-                            <svg class="ml-1 w-3 h-3 text-gray-400 shrink-0" fill="none" stroke="currentColor"
-                                viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7">
-                                </path>
+                    <!-- Meta informacje i nawigacja -->
+                    <div id="comparison-chart-meta" class="mb-2 flex items-center gap-2">
+                        <button id="comparison-nav-prev" class="flex w-7 h-7 items-center justify-center rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors" aria-label="Poprzedni okres">
+                            <i class="fas fa-chevron-left text-xs"></i>
+                        </button>
+                        <div id="comparison-selected-range" class="flex-1 text-center text-[11px] sm:text-xs font-medium text-gray-400"></div>
+                        <div class="ml-auto flex items-center gap-3 shrink-0">
+                            <!-- Toggle "Tylko do dziś" -->
+                            <div id="comparison-mode-toggle-wrapper" class="hidden items-center gap-2 px-0 py-0 self-center">
+                                <span class="text-[11px] font-medium text-gray-400 leading-none whitespace-nowrap">Do dziś</span>
+                                <label class="relative inline-flex items-center cursor-pointer align-middle">
+                                    <input type="checkbox" id="comparison-mode-toggle" class="sr-only peer">
+                                    <div class="w-9 h-5 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-brand-600"></div>
+                                </label>
+                            </div>
+                            <!-- Filtr tagów -->
+                            <button id="analysis-filter-tags-btn" type="button" class="relative inline-flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-gray-300 shadow-sm hover:bg-white/10 hover:text-white transition-colors" title="Filtr tagów" aria-label="Filtr tagów">
+                                <i class="fas fa-tags text-sm"></i>
+                                <span id="analysis-filter-tags-indicator" class="hidden absolute -right-1 -top-1 h-3 w-3 rounded-full bg-brand-500 ring-2 ring-[#111827]"></span>
+                                <span id="analysis-filter-tags-label" class="hidden">Wszystkie tagi</span>
+                            </button>
+                            <button id="comparison-nav-next" class="flex w-7 h-7 items-center justify-center rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors" aria-label="Następny okres">
+                                <i class="fas fa-chevron-right text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Selektor roku (ukryty domyślnie) -->
+                    <div class="relative w-full mb-2 hidden" id="comparison-year-wrapper">
+                        <button id="comparison-year-dropdown-btn" class="flex justify-between items-center w-full rounded-xl border border-white/10 bg-white/5 text-white shadow-sm hover:bg-white/10 transition-colors text-sm py-2 px-4 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                            <span id="comparison-year-label">2026</span>
+                            <svg class="ml-2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                             </svg>
                         </button>
-                        <button id="analysis-filter-category-clear" type="button"
-                            class="hidden shrink-0 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-red-300 hover:bg-white/10 transition-colors">
-                            Wyczyść
-                        </button>
+                        <div id="comparison-year-popup" class="hidden absolute z-50 mt-1 w-full rounded-xl bg-gray-800 border border-white/10 shadow-xl p-1 left-0"></div>
+                        <select id="comparison-year-select" class="hidden" aria-hidden="true"></select>
                     </div>
 
-                    <button id="analysis-filter-subcategory-btn" type="button"
-                        class="hidden flex justify-between items-center w-full rounded-xl border border-white/10 bg-white/5 text-white shadow-sm hover:bg-white/10 transition-colors text-[11px] py-2 px-3 text-left">
-                        <span id="analysis-filter-subcategory-label" class="truncate font-medium">Wszystkie podkategorie</span>
-                        <svg class="ml-1 w-3 h-3 text-gray-400 shrink-0" fill="none" stroke="currentColor"
-                            viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7">
-                            </path>
-                        </svg>
-                    </button>
-
-                    <button id="analysis-filter-tags-btn" type="button"
-                        class="flex justify-between items-center w-full rounded-xl border border-white/10 bg-white/5 text-white shadow-sm hover:bg-white/10 transition-colors text-[11px] py-2 px-3 text-left">
-                        <span id="analysis-filter-tags-label" class="truncate font-medium">Wszystkie tagi</span>
-                        <svg class="ml-1 w-3 h-3 text-gray-400 shrink-0" fill="none" stroke="currentColor"
-                            viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7">
-                            </path>
-                        </svg>
-                    </button>
-
-                </div>
-
-                <div id="analysis-swipe-container" class="swipe-container">
-                    <!-- Slide 1: Porównanie historyczne (przeniesione ze Startu) -->
-                    <div class="swipe-slide">
-                        <div class="glass-card rounded-2xl p-4 sm:p-5 flex flex-col h-full">
-                            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3">
-                                <h3 class="text-lg font-semibold text-white mb-2 sm:mb-0">Porównanie wydatków</h3>
-                                <!-- Toggle "Tylko do dziś" – bez zmian -->
-                                <div id="comparison-mode-toggle-wrapper" class="hidden flex items-center">
-                                    <span class="mr-2 text-xs font-medium text-gray-400">Tylko "Do Dziś"</span>
-                                    <label class="relative inline-flex items-center cursor-pointer">
-                                        <input type="checkbox" id="comparison-mode-toggle" class="sr-only peer">
-                                        <div
-                                            class="w-9 h-5 bg-white/10 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-brand-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-brand-600">
-                                        </div>
-                                    </label>
-                                </div>
-                            </div>
-
-                            <!-- Segmented Control – nad wykresem -->
-                            <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between mb-4 gap-3">
-                                <div id="comparison-segment-control" class="grid grid-cols-2 sm:flex bg-white/5 rounded-xl p-1 gap-1 w-full sm:w-auto">
-                                    <button id="comparison-week-btn" class="segment-btn" data-value="week">Tydzień</button>
-                                    <button id="comparison-month-btn" class="segment-btn" data-value="month">Miesiąc</button>
-                                    <button id="comparison-6months-btn" class="segment-btn active" data-value="6months">6 mies.</button>
-                                    <button id="comparison-year-btn" class="segment-btn" data-value="year">Rok</button>
-                                </div>
-                                <!-- Selektor roku – widoczny tylko w trybie "year" -->
-                                <div class="relative w-full sm:w-auto hidden" id="comparison-year-wrapper">
-                                    <button id="comparison-year-dropdown-btn"
-                                        class="flex justify-between items-center w-full min-w-[120px] sm:w-auto rounded-xl border border-white/10 bg-white/5 text-white shadow-sm hover:bg-white/10 transition-colors text-sm py-2 px-4 focus:outline-none focus:ring-2 focus:ring-brand-500">
-                                        <span id="comparison-year-label">2026</span>
-                                        <svg class="ml-2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor"
-                                            viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M19 9l-7 7-7-7"></path>
-                                        </svg>
-                                    </button>
-                                    <div id="comparison-year-popup"
-                                        class="hidden absolute z-50 mt-1 w-full min-w-[120px] rounded-xl bg-gray-800 border border-white/10 shadow-xl p-1 left-0">
-                                        <!-- Opcje w JS -->
-                                    </div>
-                                    <select id="comparison-year-select" class="hidden" aria-hidden="true"></select>
-                                </div>
-                            </div>
-
-                            <!-- Ukryte selecty – zachowane dla kompatybilności z JS -->
-                            <select id="comparison-period-select" class="hidden" aria-hidden="true">
-                                <option value="week">Tydzień</option>
-                                <option value="month">Miesiąc</option>
-                                <option value="6months">Ostatnie 6 mies.</option>
-                                <option value="year">Rok</option>
-                            </select>
-
-                            <div id="comparison-chart-title" class="text-sm font-medium text-gray-300 mb-2">Suma
-                                wydatków</div>
-
-                            <div id="comparison-summary" class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
-                                <div class="rounded-2xl border border-white/5 bg-white/5 p-4">
-                                    <p class="text-xs uppercase tracking-widest text-gray-500">Wydatki</p>
-                                    <p id="comparison-total-spending" class="mt-2 text-2xl font-black text-white">0,00 zł</p>
-                                </div>
-                                <div class="rounded-2xl border border-white/5 bg-white/5 p-4">
-                                    <p class="text-xs uppercase tracking-widest text-gray-500">Budżet</p>
-                                    <p id="comparison-total-budget" class="mt-2 text-2xl font-black text-white">0,00 zł</p>
-                                </div>
-                                <div class="rounded-2xl border border-white/5 bg-white/5 p-4">
-                                    <p class="text-xs uppercase tracking-widest text-gray-500">Różnica</p>
-                                    <p id="comparison-total-difference" class="mt-2 text-2xl font-black text-white">0,00 zł</p>
-                                </div>
-                            </div>
-
-                            <div id="comparison-chart-container" class="h-64 sm:h-72 w-full flex-grow">
-                                <canvas id="comparison-chart"></canvas>
-                            </div>
-
-                            <div id="comparison-category-filters"
-                                class="mt-4 flex overflow-x-auto space-x-2 pb-2 scrollbar-hide">
-                                <!-- Chipsy kategorii będą tutaj -->
-                            </div>
-                            <div id="no-data-bar-chart" class="hidden text-center py-8">
-                                <p class="text-gray-400">Brak historii wydatków do porównania.</p>
-                            </div>
-                        </div>
+                    <!-- Ukryte elementy dla kompatybilności -->
+                    <div class="hidden">
+                        <select id="comparison-period-select" class="hidden" aria-hidden="true">
+                            <option value="week">Tydzień</option>
+                            <option value="month">Miesiąc</option>
+                            <option value="6months" selected>6 mies.</option>
+                            <option value="year">Rok</option>
+                        </select>
+                        <div id="comparison-chart-title">Suma wydatków</div>
+                        <button id="analysis-filter-category-btn"></button>
+                        <button id="analysis-filter-subcategory-btn"></button>
+                        <button id="analysis-filter-category-clear"></button>
+                        <span id="analysis-filter-subcategory-label"></span>
+                        <span id="analysis-filter-category-label"></span>
+                        <span id="analysis-filter-category-icon"></span>
                     </div>
 
-                    <!-- Slide 2: Analiza budżetu długoterminowego -->
-                    <div class="swipe-slide hidden">
-                        <div class="glass-card rounded-2xl p-4 sm:p-5 flex flex-col h-full">
-                            <div class="mb-4">
-                                <h3 class="text-lg font-semibold text-white mb-3">Analiza budżetu
-                                    długoterminowego</h3>
-                                <div
-                                    class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-2 items-start sm:items-center flex-wrap gap-y-3">
-                                    <div class="relative w-full sm:w-auto" id="period-type-wrapper">
-                                        <button id="period-type-btn"
-                                            class="flex justify-between items-center w-full min-w-[200px] sm:w-auto rounded-xl border border-white/10 bg-white/5 text-white shadow-sm hover:bg-white/10 transition-colors text-sm py-2 px-4 focus:outline-none focus:ring-2 focus:ring-brand-500">
-                                            <span id="period-type-label">Ostatnie 6 miesięcy</span>
-                                            <svg class="ml-3 w-4 h-4 text-gray-400" fill="none" stroke="currentColor"
-                                                viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M19 9l-7 7-7-7"></path>
-                                            </svg>
-                                        </button>
-                                        <div id="period-type-popup"
-                                            class="hidden absolute z-50 mt-1 w-full min-w-[200px] rounded-xl bg-gray-800 border border-white/10 shadow-xl p-1 left-0">
-                                            <button
-                                                class="period-option-btn w-full text-left px-3 py-2 rounded-lg text-sm text-white hover:bg-white/10 transition-colors"
-                                                data-value="3">Ostatnie 3 miesiące</button>
-                                            <button
-                                                class="period-option-btn w-full text-left px-3 py-2 rounded-lg text-sm text-white hover:bg-white/10 transition-colors"
-                                                data-value="6">Ostatnie 6 miesięcy</button>
-                                            <button
-                                                class="period-option-btn w-full text-left px-3 py-2 rounded-lg text-sm text-white hover:bg-white/10 transition-colors"
-                                                data-value="9">Ostatnie 9 miesięcy</button>
-                                            <button
-                                                class="period-option-btn w-full text-left px-3 py-2 rounded-lg text-sm text-white hover:bg-white/10 transition-colors"
-                                                data-value="12">Ostatni rok</button>
-                                            <div class="h-px bg-white/10 my-1"></div>
-                                            <button
-                                                class="period-option-btn w-full text-left px-3 py-2 rounded-lg text-sm text-brand-400 hover:bg-brand-500 hover:text-white transition-colors"
-                                                data-value="custom">Zakres niestandardowy</button>
-                                        </div>
-                                        <select id="period-type-select" class="hidden" aria-hidden="true">
-                                            <option value="3">Ostatnie 3 miesiące</option>
-                                            <option value="6">Ostatnie 6 miesięcy</option>
-                                            <option value="9">Ostatnie 9 miesięcy</option>
-                                            <option value="12">Ostatni rok</option>
-                                            <option value="custom">Zakres niestandardowy</option>
-                                        </select>
-                                    </div>
+                    <!-- Wykres -->
+                    <div id="comparison-chart-container" class="h-72 sm:h-80 w-full flex-grow">
+                        <canvas id="comparison-chart"></canvas>
+                    </div>
 
-                                    <!-- Selektor zakresu niestandardowego - w jednej linii z przyciskami -->
-                                    <div id="custom-range-container"
-                                        class="hidden flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto sm:ml-2">
-                                        <div class="relative w-full sm:w-auto">
-                                            <button id="custom-start-btn"
-                                                class="flex justify-between items-center w-full min-w-[130px] rounded-xl border border-white/10 bg-white/5 text-white shadow-sm hover:bg-white/10 transition-colors text-sm py-2 px-3">
-                                                <span class="text-gray-400 mr-2">Od:</span>
-                                                <span id="custom-start-label">sty 2026</span>
-                                            </button>
-                                            <div id="custom-start-popup"
-                                                class="hidden absolute z-50 mt-1 max-h-64 overflow-y-auto w-full min-w-[130px] rounded-xl bg-gray-800 border border-white/10 shadow-xl p-1 left-0">
-                                            </div>
-                                            <input type="month" id="custom-start-month" class="hidden">
-                                        </div>
-                                        <span class="text-gray-400 hidden sm:inline">-</span>
-                                        <div class="relative w-full sm:w-auto">
-                                            <button id="custom-end-btn"
-                                                class="flex justify-between items-center w-full min-w-[130px] rounded-xl border border-white/10 bg-white/5 text-white shadow-sm hover:bg-white/10 transition-colors text-sm py-2 px-3">
-                                                <span class="text-gray-400 mr-2">Do:</span>
-                                                <span id="custom-end-label">mar 2026</span>
-                                            </button>
-                                            <div id="custom-end-popup"
-                                                class="hidden absolute z-50 mt-1 max-h-64 overflow-y-auto w-full min-w-[130px] rounded-xl bg-gray-800 border border-white/10 shadow-xl p-1 left-0">
-                                            </div>
-                                            <input type="month" id="custom-end-month" class="hidden">
-                                        </div>
-                                    </div>
+                    <div id="no-data-bar-chart" class="hidden text-center py-8">
+                        <p class="text-gray-400">Brak historii wydatków do porównania.</p>
+                    </div>
 
-                                    <button id="refresh-long-term-btn"
-                                        class="w-full sm:w-auto px-4 py-2 btn-primary rounded-xl text-sm whitespace-nowrap ml-auto">
-                                        Odśwież
-                                    </button>
-                                </div>
-                            </div>
-
-
-                            <!-- Podsumowanie długoterminowe -->
-                            <div id="long-term-summary" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                                <div class="text-center p-4 bg-blue-50 dark:bg-blue-900 rounded-lg">
-                                    <p class="text-sm text-blue-600 dark:text-blue-400">Średnie wydatki miesięczne</p>
-                                    <p id="avg-monthly-spending"
-                                        class="text-2xl font-bold text-blue-700 dark:text-blue-300">
-                                        0.00 zł</p>
-                                </div>
-                                <div class="text-center p-4 bg-green-50 dark:bg-green-900 rounded-lg">
-                                    <p class="text-sm text-green-600 dark:text-green-400">Średni budżet miesięczny</p>
-                                    <p id="avg-monthly-budget"
-                                        class="text-2xl font-bold text-green-700 dark:text-green-300">
-                                        0.00 zł</p>
-                                </div>
-                                <div class="text-center p-4 bg-purple-50 dark:bg-purple-900 rounded-lg">
-                                    <p class="text-sm text-purple-600 dark:text-purple-400">Skuteczność budżetu</p>
-                                    <p id="budget-effectiveness"
-                                        class="text-2xl font-bold text-purple-700 dark:text-purple-300">0%</p>
-                                </div>
-                            </div>
-
-                            <!-- Wykres trendów budżetowych -->
-                            <div id="long-term-chart-container" class="h-64 mb-4">
-                                <canvas id="long-term-budget-chart"></canvas>
-                            </div>
-                            <div id="no-long-term-data" class="hidden text-center py-12">
-                                <p class="text-gray-500 dark:text-gray-400">Brak danych budżetowych dla wybranego
-                                    okresu.</p>
-                            </div>
-
-                            <!-- Analiza po kategoriach -->
-                            <div id="category-analysis-container" class="hidden mb-6">
-                                <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Analiza po
-                                    kategoriach</h4>
-                                <div id="category-progress-bars" class="space-y-3">
-                                    <!-- Paski postępu kategorii będą wstawione tutaj -->
-                                </div>
-                            </div>
-
-                            <!-- Tabela szczegółów miesięcznych -->
-                            <div id="monthly-details-container" class="hidden">
-                                <button id="toggle-monthly-details"
-                                    class="mb-3 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300">
-                                    <span id="toggle-monthly-text">Pokaż szczegóły miesięczne</span>
-                                    <svg id="toggle-monthly-icon" xmlns="http://www.w3.org/2000/svg"
-                                        class="h-4 w-4 inline ml-1 transform transition-transform" fill="none"
-                                        viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M19 9l-7 7-7-7" />
-                                    </svg>
-                                </button>
-                                <div id="monthly-details-table" class="hidden overflow-x-auto">
-                                    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                                        <thead class="bg-gray-50 dark:bg-gray-800">
-                                            <tr>
-                                                <th
-                                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                                    Miesiąc</th>
-                                                <th
-                                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                                    Budżet</th>
-                                                <th
-                                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                                    Wydano</th>
-                                                <th
-                                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                                    Różnica</th>
-                                                <th
-                                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                                    Skuteczność</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="monthly-details-tbody"
-                                            class="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
-                                            <!-- Dane będą wstawione dynamicznie -->
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
+                    <!-- Chipsy kategorii -->
+                    <div id="comparison-category-filters" class="mt-2.5 border-t border-white/8 pt-2.5 space-y-2 overflow-visible">
+                        <!-- Generowane przez JS -->
                     </div>
                 </div>
 
@@ -1097,7 +863,6 @@
                         <p class="text-sm text-gray-400">Brak danych o sklepach.</p>
                     </div>
                 </div>
-
             </div>
 
             <!-- Zakładka Budżety Specjalne -->
