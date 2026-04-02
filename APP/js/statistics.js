@@ -134,6 +134,7 @@ function buildHomeMonthPickerPopup() {
                     homeDashboardMonth = ms;
                     document.getElementById('home-month-picker-popup').classList.add('hidden');
                     updateHomeMonthLabel();
+                    buildHomeMonthPickerPopup(); // Rebuild to update active state
                     renderHomeSummary();
                     renderHomeRecentTransactions();
                 });

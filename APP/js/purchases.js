@@ -266,14 +266,13 @@ function openProductDrawer(index = null) {
     drawerOverlay.classList.remove('hidden');
     drawer.classList.remove('hidden');
 
-    // Uruchomienie animacji CSS
     setTimeout(() => {
-        drawerOverlay.classList.remove('opacity-0');
-        drawer.classList.remove('translate-y-full');
+        drawerOverlay.classList.add('active');
+        drawer.classList.add('active');
     }, 10);
 
     setTimeout(() => {
-        nameInput.focus(); // Ułatwienie natychmiastowego pisania nazwy
+        nameInput.focus();
     }, 300);
 }
 
@@ -281,8 +280,10 @@ function closeProductDrawer() {
     const drawerOverlay = document.getElementById('product-drawer-overlay');
     const drawer = document.getElementById('product-drawer');
 
-    drawerOverlay.classList.add('opacity-0');
-    drawer.classList.add('translate-y-full');
+    if (!drawerOverlay || !drawer) return;
+
+    drawerOverlay.classList.remove('active');
+    drawer.classList.remove('active');
 
     setTimeout(() => {
         drawerOverlay.classList.add('hidden');

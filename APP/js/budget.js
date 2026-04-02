@@ -8,7 +8,8 @@ let budgetMonthValue = '';
 function populateBudgetMonthSelector() {
     const today = new Date();
     budgetMonthValue = today.toISOString().substring(0, 7);
-    const label = new Date(today.getFullYear(), today.getMonth()).toLocaleString('pl-PL', { month: 'long', year: 'numeric' });
+    let label = new Date(today.getFullYear(), today.getMonth()).toLocaleString('pl-PL', { month: 'long', year: 'numeric' });
+    label = label.charAt(0).toUpperCase() + label.slice(1);
 
     const labelEl = document.getElementById('budget-month-label');
     if (labelEl) labelEl.textContent = label;

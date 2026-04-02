@@ -68,7 +68,7 @@ const authErrorDiv = document.getElementById('auth-error');
 const bottomNavBtns = document.querySelectorAll('.bottom-nav-btn');
 
 const purchaseForm = document.getElementById('purchase-form');
-const purchaseFormTitle = document.getElementById('purchase-form-title');
+const purchaseFormTitle = null; // Usunięte z HTML, dynamicznie ustawiaj nav-title zamiast
 const purchaseFormSubmitBtn = purchaseForm.querySelector('button[type="submit"]');
 const addItemBtn = document.getElementById('add-item-btn');
 const purchasesList = document.getElementById('purchases-list');
@@ -318,6 +318,7 @@ function openTagsDrawer(currentTags, onConfirm, isFilter = false) {
     };
 
     overlay.classList.remove('hidden');
+    drawer.classList.remove('hidden');
     setTimeout(() => {
         overlay.classList.add('active');
         drawer.classList.add('active');
@@ -389,32 +390,15 @@ function updateCustomDropdownValue(selectId, labelId) {
 // --- Category Drawer Logic ---
 // --- Category Drawer Logic (v2 uses hierarchical drawer) ---
 
-function closeSelectionDrawer(isFromPopState = false) {
-    const overlay = document.getElementById('category-drawer-overlay');
-    const drawer = document.getElementById('category-drawer');
-
-    if (!overlay || !drawer) return;
-
-    // If closed manually (not via back button), trigger back to sync history
-    if (!isFromPopState) {
-        history.back();
-        return;
-    }
-
-    overlay.classList.remove('active');
-    drawer.classList.remove('active');
-    setTimeout(() => {
-        overlay.classList.add('hidden');
-        drawer.classList.add('hidden');
-        document.body.style.overflow = '';
-    }, 300);
-}
-
 
 
 // Global listeners for drawer overlay
 document.addEventListener('click', (e) => {
-    if (e.target.id === 'close-category-drawer' || e.target.id === 'category-drawer-overlay') {
+    const overlay = document.getElementById('category-drawer-overlay');
+    const closeBtn = document.getElementById('close-category-drawer');
+    
+    // Zamknij na klikniecie przycisku zamknięcia lub bezpośrednio na overlay (nie na elementy dziecka)
+    if ((closeBtn && e.target === closeBtn) || (overlay && e.target === overlay)) {
         closeSelectionDrawer();
     }
 });
@@ -538,11 +522,9 @@ function setupAppEventListeners() {
         moreSpecialBudgetsBtn.addEventListener('click', () => {
             switchTab('special-budgets');
         });
-    }
-    // Initialize swipe container
-    initSwipeContainer();
+        }
 
-    // Browser back button support (obsługuje też natywny systemowy gest swipe wtecz: iOS / Android)
+        // Browser back button support (obsługuje też natywny systemowy gest swipe wtecz: iOS / Android)
     window.addEventListener('popstate', (event) => {
         const state = event.state;
 
@@ -611,9 +593,6 @@ function setupAppEventListeners() {
             switchTab('home', false);
         }
     });
-
-    // Initialize swipe container
-    initSwipeContainer();
 
     // FAB scroll handling - attach to ALL potential scroll containers
     window.addEventListener('scroll', handleFABScroll, { passive: true });

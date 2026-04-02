@@ -87,9 +87,6 @@ function switchTab(tabName, pushToHistory = true) {
     }
 
     if (tabName === 'analysis') {
-        const container = document.getElementById('analysis-swipe-container');
-        if (container) container.scrollTo({ left: 0, behavior: 'instant' });
-
         if (typeof initializeLongTermBudget === 'function') {
             initializeLongTermBudget().catch(console.error);
         }
@@ -131,7 +128,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // --- Dynamic Navbar ---
 const NAV_TITLES = {
-    'home': 'Kokpit',
+    'home': 'Przegląd',
     'list': 'Lista zakupów',
     'add': 'Dodaj zakup',
     'analysis': 'Analiza',
@@ -466,8 +463,8 @@ function openFilterDrawer(title, type, onApply) {
     }
 
     const closeFilterDrawer = () => {
-        overlay.classList.add('opacity-0');
-        drawer.classList.add('translate-y-full');
+        overlay.classList.remove('active');
+        drawer.classList.remove('active');
         setTimeout(() => {
             overlay.classList.add('hidden');
             drawer.classList.add('hidden');
@@ -495,8 +492,8 @@ function openFilterDrawer(title, type, onApply) {
     document.body.style.overflow = 'hidden';
 
     setTimeout(() => {
-        overlay.classList.remove('opacity-0');
-        drawer.classList.remove('translate-y-full');
+        overlay.classList.add('active');
+        drawer.classList.add('active');
     }, 10);
 }
 
@@ -510,13 +507,15 @@ function openSelectionDrawer(title, options, onSelect, selectedValue = null, lay
     const addForm = document.getElementById('new-category-drawer-form');
     const backBtn = document.getElementById('category-drawer-back-btn');
 
+    if (!overlay || !drawer) return;
+
     // Store the callback globally for auto-selection
     window.currentOnSelect = (...args) => {
         onSelect(...args);
         if (autoClose) closeSelectionDrawer();
     };
 
-    // Push state to history for back button support only if we want to auto-close or if it's a new drawer
+    // Push state to history for back button support only if it's not already active
     if (!overlay.classList.contains('active')) {
         history.pushState({ type: 'drawer', id: 'category-drawer' }, "", "");
     }
@@ -548,33 +547,19 @@ function openSelectionDrawer(title, options, onSelect, selectedValue = null, lay
         }
     }
 
-    // Hide/Show Add Category button based on showAddBtn parameter
-    // ONLY if it's explicitly allowed
+    // Hide/Show Add Category button
     if (addBtn) {
-        if (showAddBtn) {
-            addBtn.classList.remove('hidden');
-        } else {
-            addBtn.classList.add('hidden');
-        }
+        addBtn.classList.toggle('hidden', !showAddBtn);
     }
+
+    if (titleEl) titleEl.textContent = title;
 
     const grid = document.getElementById('category-drawer-grid');
-
-    if (!overlay || !drawer || !titleEl || !grid) return;
-
-    titleEl.textContent = title;
+    if (!grid) return;
 
     // Apply layout classes
-    grid.classList.remove('drawer-grid-layout', 'drawer-list-layout', 'space-y-1');
-    if (layoutType === 'grid') {
-        grid.classList.add('drawer-grid-layout');
-    } else {
-        grid.classList.add('drawer-list-layout');
-    }
-
-    if (searchInput) {
-        searchInput.value = '';
-    }
+    grid.classList.remove('drawer-grid-layout', 'drawer-list-layout');
+    grid.classList.add(layoutType === 'grid' ? 'drawer-grid-layout' : 'drawer-list-layout');
 
     const renderOptions = (filterText = '') => {
         grid.innerHTML = '';
@@ -582,7 +567,6 @@ function openSelectionDrawer(title, options, onSelect, selectedValue = null, lay
             opt.label.toLowerCase().includes(filterText.toLowerCase())
         );
 
-        // Hide "Add" button and form when searching
         if (addBtn) {
             if (filterText.length > 0) {
                 addBtn.classList.add('hidden');
@@ -595,9 +579,7 @@ function openSelectionDrawer(title, options, onSelect, selectedValue = null, lay
         filtered.forEach(opt => {
             const item = document.createElement('div');
             item.className = 'category-drawer-item';
-            if (selectedValue === opt.value) {
-                item.classList.add('active');
-            }
+            if (selectedValue === opt.value) item.classList.add('active');
 
             if (layoutType === 'grid') {
                 const iconWrapper = document.createElement('div');
@@ -631,12 +613,41 @@ function openSelectionDrawer(title, options, onSelect, selectedValue = null, lay
 
     renderOptions();
 
-    overlay.classList.add('active');
+    // Show drawer
     overlay.classList.remove('hidden');
-    drawer.classList.add('active');
     drawer.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
+
+    // Animation trigger
+    setTimeout(() => {
+        overlay.classList.add('active');
+        drawer.classList.add('active');
+    }, 10);
 }
+
+function closeSelectionDrawer(isFromPopState = false) {
+    const overlay = document.getElementById('category-drawer-overlay');
+    const drawer = document.getElementById('category-drawer');
+
+    if (!overlay || !drawer) return;
+
+    // Zawsze zamknij szufladę
+    overlay.classList.remove('active');
+    drawer.classList.remove('active');
+    
+    setTimeout(() => {
+        overlay.classList.add('hidden');
+        drawer.classList.add('hidden');
+        document.body.style.overflow = '';
+        
+        // Po zamknięciu, jeśli nie pochodzi z popstate, cofnij się w historii
+        if (!isFromPopState) {
+            history.back();
+        }
+    }, 300);
+}
+
+window.closeSelectionDrawer = closeSelectionDrawer;
 
 
 // --- Custom Dropdown Helper ---
@@ -681,48 +692,6 @@ document.addEventListener('click', (e) => {
         }
     });
 });
-
-
-
-// --- Swipe Container ---
-function setupSwipeTracking(containerId, dotsSelector) {
-    const container = document.getElementById(containerId);
-    const dots = document.querySelectorAll(dotsSelector);
-    if (!container || dots.length === 0) return;
-
-    let lastIndex = 0;
-    container.addEventListener('scroll', () => {
-        const scrollLeft = container.scrollLeft;
-        const slideWidth = container.offsetWidth;
-        if (slideWidth === 0) return;
-        const activeIndex = Math.round(scrollLeft / slideWidth);
-
-        if (activeIndex !== lastIndex) {
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-            lastIndex = activeIndex;
-        }
-
-        dots.forEach((dot, i) => dot.classList.toggle('active', i === activeIndex));
-    }, { passive: true });
-
-    dots.forEach(dot => {
-        dot.addEventListener('click', () => {
-            const index = parseInt(dot.dataset.index);
-            const slideWidth = container.offsetWidth;
-            container.scrollTo({
-                left: index * slideWidth,
-                behavior: 'smooth'
-            });
-        });
-    });
-}
-
-function initSwipeContainer() {
-    // Statystyki
-    setupSwipeTracking('stats-swipe-container', '#swipe-dots .swipe-dot');
-    // Analiza
-    setupSwipeTracking('analysis-swipe-container', '#analysis-swipe-dots .swipe-dot');
-}
 
 
 // --- Tryb edycji ---
@@ -773,7 +742,8 @@ function enterEditMode(purchaseId) {
         budgetLabel.textContent = budgetTypeSelectValue === 'monthly' ? 'Miesięczny' : 'Specjalny'; // Or find full name from allSpecialBudgets
     }
 
-    purchaseFormTitle.textContent = 'Edytuj istniejący zakup';
+    const navTitle = document.getElementById('nav-title');
+    if (navTitle) navTitle.textContent = 'Edytuj istniejący zakup';
     purchaseFormSubmitBtn.textContent = 'Zaktualizuj zakup';
     purchaseFormSubmitBtn.classList.replace('bg-blue-600', 'bg-green-600');
     purchaseFormSubmitBtn.classList.replace('hover:bg-blue-700', 'hover:bg-green-700');
@@ -797,7 +767,8 @@ function exitEditMode() {
     document.getElementById('budget-type-icon').innerHTML = '<span>📅</span>';
     // addItemRow(); // USUNIĘTE - nie chcemy pustego wiersza na starcie
 
-    purchaseFormTitle.textContent = 'Dodaj nowy zakup ręcznie';
+    const navTitle = document.getElementById('nav-title');
+    if (navTitle) navTitle.textContent = 'Dodaj zakup';
     purchaseFormSubmitBtn.textContent = 'Zapisz cały zakup';
     purchaseFormSubmitBtn.classList.replace('bg-green-600', 'bg-blue-600');
     purchaseFormSubmitBtn.classList.replace('hover:bg-green-700', 'hover:bg-blue-700');
@@ -812,32 +783,46 @@ function exitEditMode() {
 // --- Zarządzanie Nakładkami (Modale, Popup-y) ---
 function openOverlay(elementId) {
     const el = document.getElementById(elementId);
+    const overlay = document.getElementById(elementId + '-overlay');
     if (!el) return;
 
     // Push state to history so "back" closes only this overlay
     history.pushState({ type: 'overlay', id: elementId }, "", "");
     
     el.classList.remove('hidden');
-    if (elementId.includes('modal')) {
-        document.body.style.overflow = 'hidden';
-    }
+    if (overlay) overlay.classList.remove('hidden');
+
+    document.body.style.overflow = 'hidden';
+
+    setTimeout(() => {
+        el.classList.add('active');
+        if (overlay) overlay.classList.add('active');
+    }, 10);
 }
 
 function closeOverlay(elementId, isFromPopState = false) {
     const el = document.getElementById(elementId);
+    const overlay = document.getElementById(elementId + '-overlay');
     if (!el) return;
 
-    if (!isFromPopState) {
-        history.back();
-        return;
-    }
+    // Zawsze zamknij overlay
+    el.classList.remove('active');
+    if (overlay) overlay.classList.remove('active');
 
-    el.classList.add('hidden');
-    // Check if any other modal is still open before restoring scroll
-    const otherOpenModals = document.querySelectorAll('.modal:not(.hidden)');
-    if (otherOpenModals.length === 0) {
-        document.body.style.overflow = '';
-    }
+    setTimeout(() => {
+        el.classList.add('hidden');
+        if (overlay) overlay.classList.add('hidden');
+        
+        const otherOpenModals = document.querySelectorAll('.active[id*="drawer"], .active[id*="modal"]');
+        if (otherOpenModals.length === 0) {
+            document.body.style.overflow = '';
+        }
+        
+        // Po zamknięciu, jeśli nie pochodzi z popstate, cofnij się w historii
+        if (!isFromPopState) {
+            history.back();
+        }
+    }, 300);
 }
 
 // --- Modale / Drawers ---
@@ -926,16 +911,14 @@ function renderCategoryDetailsModal(category, items, isSubCategoryView = false) 
         drawer.classList.remove('hidden');
         overlay.classList.remove('hidden');
         
-        // Push state dla przycisku wstecz (opcjonalne, ale dobre dla UX)
-        history.pushState({ type: 'drawer', id: 'category-details-drawer' }, "", "");
-        
-        // Zablokuj przewijanie tła
+        if (!overlay.classList.contains('active')) {
+            history.pushState({ type: 'drawer', id: 'category-details-drawer' }, "", "");
+        }
         document.body.style.overflow = 'hidden';
 
-        // Krótkie opóźnienie dla animacji wjazdu
         setTimeout(() => {
-            drawer.classList.remove('translate-y-full');
-            overlay.classList.remove('opacity-0');
+            drawer.classList.add('active');
+            overlay.classList.add('active');
         }, 10);
     }
 }
@@ -944,15 +927,14 @@ function closeCategoryDetailsDrawer() {
     const drawer = document.getElementById('category-details-drawer');
     const overlay = document.getElementById('category-details-drawer-overlay');
     if (drawer && overlay) {
-        drawer.classList.add('translate-y-full');
-        overlay.classList.add('opacity-0');
+        drawer.classList.remove('active');
+        overlay.classList.remove('active');
         
-        // Odblokuj przewijanie tła po zakończeniu animacji
         setTimeout(() => {
             drawer.classList.add('hidden');
             overlay.classList.add('hidden');
             document.body.style.overflow = '';
-        }, 300); // Czas trwania animacji z Tailwind (duration-300)
+        }, 300);
     }
 }
 
@@ -964,7 +946,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeBtn = document.getElementById('close-category-details-drawer');
     const overlayBtn = document.getElementById('category-details-drawer-overlay');
     if (closeBtn) closeBtn.addEventListener('click', closeCategoryDetailsDrawer);
-    if (overlayBtn) overlayBtn.addEventListener('click', closeCategoryDetailsDrawer);
+    if (overlayBtn) overlayBtn.addEventListener('click', (e) => {
+        // Zamknij na klikniecie bezpośrednio na overlay (nie na elementy dziecka)
+        if (e.target === overlayBtn) {
+            closeCategoryDetailsDrawer();
+        }
+    });
 });
 
 // --- Obsługa aparatu ---

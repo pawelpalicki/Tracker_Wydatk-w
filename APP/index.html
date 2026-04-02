@@ -290,46 +290,45 @@
                 </div>
 
                 <div class="glass-card rounded-2xl px-3 py-4">
-                    <h3 id="purchase-form-title" class="text-lg font-semibold mb-3 text-white">Dodaj
-                        nowy zakup ręcznie</h3>
                     <form id="purchase-form">
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
-                            <div class="md:col-span-2">
+                        <div class="space-y-3 mb-3">
+                            <div>
                                 <label for="shop"
                                     class="block text-sm font-medium text-gray-700 dark:text-gray-300">Sklep</label>
                                 <div class="relative">
                                     <input type="text" id="shop" required
-                                        class="mt-1 block w-full rounded-xl border-white/10 bg-white/5 text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2">
+                                        class="mt-1 block w-full rounded-xl border-white/10 bg-white/5 text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2.5">
                                     <div id="shop-autocomplete-list"
                                         class="absolute z-10 w-full bg-white dark:bg-gray-600 rounded-md shadow-lg mt-1 hidden max-h-60 overflow-auto">
                                     </div>
                                 </div>
                             </div>
-                            <div class="relative w-full" id="budget-type-wrapper">
-                                <label for="budget-type-btn"
-                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Budżet</label>
-                                <button id="budget-type-btn" type="button" class="category-trigger-card">
-                                    <div class="flex items-center">
-                                        <div id="budget-type-icon"
-                                            class="category-trigger-icon bg-brand-500/10 text-brand-400 mr-2">
-                                            <span>💰</span>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div class="relative w-full" id="budget-type-wrapper">
+                                    <label for="budget-type-btn"
+                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Budżet</label>
+                                    <button id="budget-type-btn" type="button" class="category-trigger-card py-2.5">
+                                        <div class="flex items-center truncate">
+                                            <div id="budget-type-icon"
+                                                class="category-trigger-icon bg-brand-500/10 text-brand-400 mr-2 shrink-0">
+                                                <span>💰</span>
+                                            </div>
+                                            <span id="budget-type-label" class="truncate text-sm">Wybierz...</span>
                                         </div>
-                                        <span id="budget-type-label">Wybierz budżet...</span>
+                                        <svg class="ml-1 w-4 h-4 text-gray-400 shrink-0" fill="none"
+                                            stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M19 9l-7 7-7-7"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                                <div>
+                                    <label for="date"
+                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Data</label>
+                                    <div class="relative mt-1">
+                                        <input type="date" id="date" required
+                                            class="block w-full rounded-xl border-white/10 bg-white/5 text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2">
                                     </div>
-                                    <svg class="ml-2 w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor"
-                                        viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M19 9l-7 7-7-7"></path>
-                                    </svg>
-                                </button>
-
-                            </div>
-                            <div>
-                                <label for="date"
-                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">Data</label>
-                                <div class="relative mt-1">
-                                    <input type="date" id="date" required
-                                        class="mt-1 block w-full rounded-xl border-white/10 bg-white/5 text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2">
                                 </div>
                             </div>
                             <div id="total-amount-container" class="hidden md:col-span-3">
@@ -432,15 +431,6 @@
             <!-- Ustawienia: Główne -->
             <div id="settings-tab" class="tab-content">
                 <div class="glass-card rounded-2xl p-6 mb-6">
-                    <div class="flex items-center mb-6">
-                        <button onclick="switchTab('more')"
-                            class="mr-4 p-2 text-gray-400 hover:text-white transition-colors">
-                            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
-                            </svg>
-                        </button>
-                        <h2 class="text-xl font-bold text-white">Ustawienia</h2>
-                    </div>
                     <div class="space-y-4">
                         <button onclick="switchTab('settings-categories')"
                             class="w-full flex justify-between p-4 bg-white/5 hover:bg-white/10 rounded-xl text-white font-medium transition-all group">
@@ -481,14 +471,7 @@
             <!-- Ustawienia: Kategorie (hierarchiczne v2) -->
             <div id="settings-categories-tab" class="tab-content">
                 <div class="glass-card rounded-2xl p-4 mb-4">
-                    <div class="flex items-center mb-4">
-                        <button onclick="switchTab('settings')"
-                            class="mr-3 p-2 text-gray-400 hover:text-white transition-colors">
-                            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
-                            </svg>
-                        </button>
-                        <h3 class="text-xl font-bold text-white flex-1">Kategorie</h3>
+                    <div class="flex items-center justify-end mb-4">
                         <button id="add-parent-category-btn"
                             class="flex items-center gap-1 px-3 py-1.5 btn-primary rounded-xl text-sm font-medium">
                             <i class="fas fa-plus text-xs"></i> Dodaj kategorię
@@ -498,65 +481,6 @@
                     <!-- Lista hierarchicznych kategorii v2 -->
                     <div id="categories-v2-list" class="space-y-2 mb-4 max-h-[60vh] overflow-y-auto pr-1">
                         <!-- renderowane przez JS -->
-                    </div>
-
-                    <!-- Formularz dodawania / edycji kategorii głównej -->
-                    <div id="cat-v2-parent-form"
-                        class="hidden mt-4 bg-white/5 border border-white/10 rounded-2xl p-4 space-y-3">
-                        <h4 id="cat-v2-parent-form-title"
-                            class="text-sm font-semibold text-white/70 uppercase tracking-wide">Nowa kategoria główna
-                        </h4>
-                        <input type="hidden" id="cat-v2-edit-id">
-                        <input type="text" id="cat-v2-name-input" placeholder="Nazwa kategorii (np. Spożywcze)"
-                            class="block w-full rounded-xl border-white/10 bg-white/5 text-white py-2.5 px-4 focus:bg-white/10 transition-all text-sm">
-                        <!-- Wybór ikony -->
-                        <div>
-                            <p class="text-xs text-gray-400 mb-2">Ikona</p>
-                            <div id="cat-v2-icon-picker" class="flex flex-wrap gap-2">
-                                <!-- generowane przez JS -->
-                            </div>
-                            <input type="hidden" id="cat-v2-icon-value" value="fa-tag">
-                        </div>
-                        <!-- Wybór koloru -->
-                        <div>
-                            <p class="text-xs text-gray-400 mb-2">Kolor</p>
-                            <div id="cat-v2-color-picker" class="flex flex-wrap gap-2">
-                                <!-- generowane przez JS -->
-                            </div>
-                            <input type="hidden" id="cat-v2-color-value" value="#3b82f6">
-                        </div>
-                        <div class="flex gap-2 pt-1">
-                            <button id="cat-v2-save-btn"
-                                class="flex-1 py-2.5 btn-primary rounded-xl text-sm font-semibold">Zapisz</button>
-                            <button id="cat-v2-cancel-btn"
-                                class="flex-1 py-2.5 bg-white/5 hover:bg-white/10 text-white rounded-xl text-sm">Anuluj</button>
-                        </div>
-                    </div>
-
-                    <!-- Formularz dodawania podkategorii -->
-                    <div id="cat-v2-sub-form"
-                        class="hidden mt-4 bg-white/5 border border-white/10 rounded-2xl p-4 space-y-3">
-                        <h4 id="cat-v2-sub-form-title"
-                            class="text-sm font-semibold text-white/70 uppercase tracking-wide">Nowa podkategoria</h4>
-                        <input type="hidden" id="cat-v2-sub-parent-id">
-                        <input type="hidden" id="cat-v2-sub-edit-id">
-                        <input type="text" id="cat-v2-sub-name-input" placeholder="Nazwa podkategorii (np. Nabiał)"
-                            class="block w-full rounded-xl border-white/10 bg-white/5 text-white py-2.5 px-4 focus:bg-white/10 transition-all text-sm">
-
-                        <!-- Wybór ikony dla podkategorii -->
-                        <div>
-                            <p class="text-xs text-gray-400 mb-2">Ikona (opcjonalnie)</p>
-                            <div id="cat-v2-sub-icon-picker" class="flex flex-wrap gap-2">
-                                <!-- generowane przez JS -->
-                            </div>
-                            <input type="hidden" id="cat-v2-sub-icon-value" value="">
-                        </div>
-                        <div class="flex gap-2 pt-1">
-                            <button id="cat-v2-sub-save-btn"
-                                class="flex-1 py-2.5 btn-primary rounded-xl text-sm font-semibold">Zapisz</button>
-                            <button id="cat-v2-sub-cancel-btn"
-                                class="flex-1 py-2.5 bg-white/5 hover:bg-white/10 text-white rounded-xl text-sm">Anuluj</button>
-                        </div>
                     </div>
                 </div>
 
@@ -581,15 +505,6 @@
             <!-- Ustawienia: Budżet -->
             <div id="settings-budget-tab" class="tab-content">
                 <div class="glass-card rounded-2xl p-6 mb-6">
-                    <div class="flex items-center mb-6">
-                        <button onclick="switchTab('settings')"
-                            class="mr-4 p-2 text-gray-400 hover:text-white transition-colors">
-                            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
-                            </svg>
-                        </button>
-                        <h3 class="text-xl font-bold text-white">Zarządzaj Budżetem</h3>
-                    </div>
                     <div class="flex items-center justify-between mb-4 bg-white/5 p-3 rounded-xl border border-white/5">
                         <label for="budget-month-btn" class="text-sm font-medium text-gray-300">Miesiąc:</label>
                         <button id="budget-month-btn" type="button"
@@ -618,15 +533,6 @@
             <!-- Ustawienia: Budżety Specjalne -->
             <div id="settings-special-tab" class="tab-content">
                 <div class="glass-card rounded-2xl p-6 mb-6">
-                    <div class="flex items-center mb-6">
-                        <button onclick="switchTab('settings')"
-                            class="mr-4 p-2 text-gray-400 hover:text-white transition-colors">
-                            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
-                            </svg>
-                        </button>
-                        <h3 class="text-xl font-bold text-white">Budżety Specjalne</h3>
-                    </div>
                     <div id="special-budgets-list" class="space-y-2 mb-6 max-h-[300px] overflow-y-auto pr-2"></div>
                     <form id="add-special-budget-form"
                         class="space-y-3 bg-white/5 p-4 rounded-xl border border-white/5">
@@ -646,15 +552,6 @@
             <!-- Ustawienia: Wydatki Cykliczne -->
             <div id="settings-recurring-tab" class="tab-content">
                 <div class="glass-card rounded-2xl p-6 mb-6">
-                    <div class="flex items-center mb-6">
-                        <button onclick="switchTab('settings')"
-                            class="mr-4 p-2 text-gray-400 hover:text-white transition-colors">
-                            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
-                            </svg>
-                        </button>
-                        <h3 class="text-xl font-bold text-white">Subskrypcje</h3>
-                    </div>
                     <div id="recurring-expenses-list" class="space-y-3 mb-6 max-h-[400px] overflow-y-auto pr-2"></div>
                     <form id="add-recurring-expense-form"
                         class="bg-white/5 p-5 rounded-2xl space-y-4 border border-white/10">
@@ -873,7 +770,6 @@
             <!-- Zakładka Więcej -->
             <div id="more-tab" class="tab-content">
                 <div class="glass-card rounded-2xl p-6 mb-6">
-                    <h2 class="text-xl font-bold text-white mb-6">Więcej</h2>
                     <div class="space-y-4">
                         <button id="more-settings-btn"
                             class="w-full flex items-center justify-between p-4 bg-white/5 hover:bg-white/10 rounded-xl transition-all">
@@ -1290,6 +1186,71 @@
         <div class="p-4 overflow-y-auto flex-grow bg-[#0f0f23]">
             <div id="category-details-list" class="space-y-2 pb-safe">
                 <!-- Rendered by JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Category Editor Drawer (Add/Edit Parents and Subs) -->
+    <div id="category-editor-drawer-overlay"
+        class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[110] transition-opacity duration-300 opacity-0">
+    </div>
+    <div id="category-editor-drawer"
+        class="hidden fixed bottom-0 left-0 right-0 z-[120] bg-[#1a1a2e] border-t border-white/10 rounded-t-3xl shadow-2xl transform translate-y-full transition-transform duration-300 ease-out flex flex-col max-h-[90vh]">
+        <div
+            class="p-5 border-b border-white/5 flex justify-between items-center bg-[#1a1a2e] rounded-t-3xl sticky top-0 z-10 shrink-0">
+            <div>
+                <h3 id="category-editor-drawer-title" class="text-lg font-bold text-white">Edytuj kategorię</h3>
+            </div>
+            <button id="close-category-editor-drawer"
+                class="w-10 h-10 flex items-center justify-center bg-white/5 rounded-full text-gray-400 hover:text-white transition-colors">&times;</button>
+        </div>
+        <div class="p-5 overflow-y-auto flex-grow bg-[#0f0f23]">
+            <!-- Formularz dodawania / edycji kategorii głównej -->
+            <div id="cat-v2-parent-form" class="hidden space-y-4">
+                <input type="hidden" id="cat-v2-edit-id">
+                <input type="text" id="cat-v2-name-input" placeholder="Nazwa kategorii (np. Spożywcze)"
+                    class="block w-full rounded-xl border-white/10 bg-white/5 text-white py-3 px-4 focus:bg-white/10 transition-all text-sm font-medium">
+                <!-- Wybór ikony -->
+                <div>
+                    <p class="text-xs text-gray-400 mb-2 font-semibold uppercase tracking-wider">Wybierz ikonę</p>
+                    <div id="cat-v2-icon-picker" class="flex flex-wrap gap-2 max-h-[200px] overflow-y-auto p-1 scrollbar-hide">
+                        <!-- generowane przez JS -->
+                    </div>
+                    <input type="hidden" id="cat-v2-icon-value" value="fa-tag">
+                </div>
+                <!-- Wybór koloru -->
+                <div>
+                    <p class="text-xs text-gray-400 mb-2 font-semibold uppercase tracking-wider">Wybierz kolor</p>
+                    <div id="cat-v2-color-picker" class="flex flex-wrap gap-3 p-1">
+                        <!-- generowane przez JS -->
+                    </div>
+                    <input type="hidden" id="cat-v2-color-value" value="#3b82f6">
+                </div>
+                <div class="flex gap-3 pt-4">
+                    <button id="cat-v2-save-btn"
+                        class="flex-1 py-3.5 btn-primary rounded-xl text-sm font-bold shadow-lg shadow-brand-500/20">Zapisz kategorię</button>
+                </div>
+            </div>
+
+            <!-- Formularz dodawania podkategorii -->
+            <div id="cat-v2-sub-form" class="hidden space-y-4">
+                <input type="hidden" id="cat-v2-sub-parent-id">
+                <input type="hidden" id="cat-v2-sub-edit-id">
+                <input type="text" id="cat-v2-sub-name-input" placeholder="Nazwa podkategorii (np. Nabiał)"
+                    class="block w-full rounded-xl border-white/10 bg-white/5 text-white py-3 px-4 focus:bg-white/10 transition-all text-sm font-medium">
+
+                <!-- Wybór ikony dla podkategorii -->
+                <div>
+                    <p class="text-xs text-gray-400 mb-2 font-semibold uppercase tracking-wider">Ikona (opcjonalnie)</p>
+                    <div id="cat-v2-sub-icon-picker" class="flex flex-wrap gap-2 max-h-[200px] overflow-y-auto p-1 scrollbar-hide">
+                        <!-- generowane przez JS -->
+                    </div>
+                    <input type="hidden" id="cat-v2-sub-icon-value" value="">
+                </div>
+                <div class="flex gap-3 pt-4">
+                    <button id="cat-v2-sub-save-btn"
+                        class="flex-1 py-3.5 btn-primary rounded-xl text-sm font-bold shadow-lg shadow-brand-500/20">Zapisz podkategorię</button>
+                </div>
             </div>
         </div>
     </div>

@@ -259,20 +259,60 @@ function renderColorPicker(selectedColor = '#3b82f6') {
 }
 
 // =====================================================================
-// SHOW FORMS
+// SHOW FORMS (Now in Drawers)
 // =====================================================================
+function openCategoryEditorDrawer(title) {
+    const titleEl = document.getElementById('category-editor-drawer-title');
+    if (titleEl) titleEl.textContent = title;
+    
+    if (typeof openOverlay === 'function') {
+        openOverlay('category-editor-drawer');
+    } else {
+        const overlay = document.getElementById('category-editor-drawer-overlay');
+        const drawer = document.getElementById('category-editor-drawer');
+        if (!overlay || !drawer) return;
+        
+        overlay.classList.remove('hidden');
+        drawer.classList.remove('hidden');
+        setTimeout(() => {
+            overlay.classList.add('active');
+            drawer.classList.add('active');
+        }, 10);
+    }
+}
+
+function closeCategoryEditorDrawer() {
+    if (typeof closeOverlay === 'function') {
+        closeOverlay('category-editor-drawer', true); 
+    } else {
+        const overlay = document.getElementById('category-editor-drawer-overlay');
+        const drawer = document.getElementById('category-editor-drawer');
+        if (!overlay || !drawer) return;
+        
+        overlay.classList.remove('active');
+        drawer.classList.remove('active');
+        setTimeout(() => {
+            overlay.classList.add('hidden');
+            drawer.classList.add('hidden');
+        }, 300);
+    }
+}
+
 function showParentCategoryForm(editId = null) {
-    const form = document.getElementById('cat-v2-parent-form');
-    const titleEl = document.getElementById('cat-v2-parent-form-title');
+    const parentForm = document.getElementById('cat-v2-parent-form');
+    const subForm = document.getElementById('cat-v2-sub-form');
     const nameInput = document.getElementById('cat-v2-name-input');
     const editIdInput = document.getElementById('cat-v2-edit-id');
 
-    document.getElementById('cat-v2-sub-form').classList.add('hidden');
+    if (!parentForm || !subForm || !nameInput) return;
+
+    parentForm.classList.remove('hidden');
+    subForm.classList.add('hidden');
 
     if (editId) {
         const cat = structuredCategories.find(c => c.id === editId);
         if (!cat) return;
-        titleEl.textContent = `Edytuj: ${cat.name}`;
+        openCategoryEditorDrawer(`Edytuj: ${cat.name}`);
         nameInput.value = cat.name;
         editIdInput.value = editId;
         renderIconPicker(cat.icon || 'fa-tag');
@@ -280,24 +320,25 @@ function showParentCategoryForm(editId = null) {
         document.getElementById('cat-v2-icon-value').value = cat.icon || 'fa-tag';
         document.getElementById('cat-v2-color-value').value = cat.color || '#3b82f6';
     } else {
-        titleEl.textContent = 'Nowa kategoria główna';
+        openCategoryEditorDrawer('Nowa kategoria główna');
         nameInput.value = '';
         editIdInput.value = '';
         renderIconPicker();
         renderColorPicker();
     }
 
-    form.classList.remove('hidden');
-    nameInput.focus();
-    form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    setTimeout(() => nameInput.focus(), 400);
 }
 
 function showSubCategoryForm(parentId, editId = null) {
-    const form = document.getElementById('cat-v2-sub-form');
-    const titleEl = document.getElementById('cat-v2-sub-form-title');
+    const parentForm = document.getElementById('cat-v2-parent-form');
+    const subForm = document.getElementById('cat-v2-sub-form');
     const nameInput = document.getElementById('cat-v2-sub-name-input');
 
-    document.getElementById('cat-v2-parent-form').classList.add('hidden');
+    if (!parentForm || !subForm || !nameInput) return;
+
+    parentForm.classList.add('hidden');
+    subForm.classList.remove('hidden');
     document.getElementById('cat-v2-sub-parent-id').value = parentId;
     document.getElementById('cat-v2-sub-edit-id').value = editId || '';
 
@@ -306,21 +347,19 @@ function showSubCategoryForm(parentId, editId = null) {
 
     if (editId) {
         const sub = structuredCategories.find(c => c.id === editId);
-        titleEl.textContent = `Edytuj podkategorię`;
+        openCategoryEditorDrawer(`Edytuj podkategorię`);
         nameInput.value = sub ? sub.name : '';
         const currentIcon = (sub && sub.icon) ? sub.icon : '';
         renderIconPicker(currentIcon, 'cat-v2-sub-icon-picker', 'cat-v2-sub-icon-value');
         document.getElementById('cat-v2-sub-icon-value').value = currentIcon;
     } else {
-        titleEl.textContent = `Nowa podkategoria → ${parentName}`;
+        openCategoryEditorDrawer(`Nowa podkategoria → ${parentName}`);
         nameInput.value = '';
         renderIconPicker('', 'cat-v2-sub-icon-picker', 'cat-v2-sub-icon-value');
         document.getElementById('cat-v2-sub-icon-value').value = '';
     }
 
-    form.classList.remove('hidden');
-    nameInput.focus();
-    form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    setTimeout(() => nameInput.focus(), 400);
 }
 
 function editParentCategory(id) { showParentCategoryForm(id); }
@@ -407,7 +446,7 @@ async function saveParentCategory() {
             structuredCategories.push(newCat);
             await apiCall('/api/categories/v2', 'POST', { structuredCategories });
         }
-        document.getElementById('cat-v2-parent-form').classList.add('hidden');
+        closeCategoryEditorDrawer();
         renderCategoriesListV2();
     } catch (err) {
         alert('Błąd: ' + err.message);
@@ -441,7 +480,7 @@ async function saveSubCategory() {
             structuredCategories.push(newSub);
             await apiCall('/api/categories/v2', 'POST', { structuredCategories });
         }
-        document.getElementById('cat-v2-sub-form').classList.add('hidden');
+        closeCategoryEditorDrawer();
         renderCategoriesListV2();
     } catch (err) {
         alert('Błąd: ' + err.message);
@@ -844,13 +883,24 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('add-parent-category-btn')?.addEventListener('click', () => showParentCategoryForm());
     document.getElementById('cat-v2-save-btn')?.addEventListener('click', saveParentCategory);
     document.getElementById('cat-v2-cancel-btn')?.addEventListener('click', () => {
-        document.getElementById('cat-v2-parent-form').classList.add('hidden');
+        closeCategoryEditorDrawer();
     });
 
     // Przyciski formularza podkategorii
     document.getElementById('cat-v2-sub-save-btn')?.addEventListener('click', saveSubCategory);
     document.getElementById('cat-v2-sub-cancel-btn')?.addEventListener('click', () => {
-        document.getElementById('cat-v2-sub-form').classList.add('hidden');
+        closeCategoryEditorDrawer();
+    });
+
+    // Event listenery dla zamknięcia szuflady edycji kategorii
+    document.getElementById('close-category-editor-drawer')?.addEventListener('click', () => {
+        closeCategoryEditorDrawer();
+    });
+    document.getElementById('category-editor-drawer-overlay')?.addEventListener('click', (e) => {
+        // Zamknij na klikniecie bezpośrednio na overlay (nie na elementy dziecka)
+        if (e.target.id === 'category-editor-drawer-overlay') {
+            closeCategoryEditorDrawer();
+        }
     });
 
     // Manager tagów
