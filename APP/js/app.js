@@ -48,8 +48,6 @@ let currentFile = null;
 let cameraStream = null;
 // (Charts references moved to statistics.js or removed)
 let fp_range; // For date range filter
-let lastScrollY = 0; // For FAB scroll detection
-
 // --- Elementy DOM ---
 const loadingSection = document.getElementById('loading-section');
 const authSection = document.getElementById('auth-section');
@@ -106,13 +104,10 @@ const closeCopyBudgetModal = document.getElementById('close-copy-budget-modal');
 const cancelCopyBudget = document.getElementById('cancel-copy-budget');
 const copyMonthsBtns = document.querySelectorAll('.copy-months-btn');
 
-// Floating Action Button (FAB) elements
-const fabContainer = document.getElementById('fab-container');
-const mainFabBtn = document.getElementById('main-fab-btn');
-const fabActions = document.getElementById('fab-actions');
+// Menu action buttons (wyświetlane w fab-actions)
 const fabAddManualBtn = document.getElementById('fab-add-manual-btn');
 const fabSelectFileBtn = document.getElementById('fab-select-file-btn');
-const fabScanReceiptBtn = document.getElementById('fab-scan-receipt-btn'); // New FAB scan button
+const fabScanReceiptBtn = document.getElementById('fab-scan-receipt-btn');
 
 // Elementy filtrów
 const filterKeyword = document.getElementById('filter-keyword');
@@ -450,53 +445,7 @@ async function resizeImage(file, maxSize = 1920, quality = 0.92) {
     });
 }
 
-// --- FAB Scroll Logic ---
-// --- FAB Scroll Logic (Multi-Container Support) ---
-const lastScrollPositions = new WeakMap();
 
-function handleFABScroll(e) {
-    // FAB is now part of the bottom nav, we don't want to hide it on scroll anymore
-    // as it would make the main "Add" button inaccessible.
-    return;
-}
-
-// Floating Action Button (FAB) logic
-let isFabExpanded = false;
-
-function toggleFab(isFromPopState = false) {
-    if (!isFromPopState && !isFabExpanded) {
-        // Opening FAB - push state
-        history.pushState({ type: 'fab' }, "", "");
-    } else if (!isFromPopState && isFabExpanded) {
-        // Closing manually - sync history
-        history.back();
-        return;
-    }
-
-    isFabExpanded = !isFabExpanded;
-    
-    const overlay = document.getElementById('fab-overlay');
-    
-    if (isFabExpanded) {
-        fabActions.classList.remove('hidden');
-        overlay.classList.remove('hidden');
-        mainFabBtn.classList.add('expanded');
-        setTimeout(() => {
-            overlay.classList.add('active');
-            fabActions.style.opacity = '1';
-            fabActions.style.transform = 'translateY(0)';
-        }, 10);
-    } else {
-        mainFabBtn.classList.remove('expanded');
-        overlay.classList.remove('active');
-        fabActions.style.opacity = '0';
-        fabActions.style.transform = 'translateY(16px)';
-        setTimeout(() => {
-            fabActions.classList.add('hidden');
-            overlay.classList.add('hidden');
-        }, 300);
-    }
-}
 
 // --- Główna Logika Aplikacji ---
 function setupAppEventListeners() {
@@ -530,21 +479,7 @@ function setupAppEventListeners() {
 
         // --- 1. OBSŁUGA WARSTW (OVERLAYS) ---
         
-        // A. Zamknij FAB
-        if (isFabExpanded) {
-            isFabExpanded = false;
-            fabActions.classList.add('hidden');
-            fabActions.classList.remove('expanded');
-            mainFabBtn.classList.remove('expanded');
-            const overlay = document.getElementById('fab-overlay');
-            if (overlay) {
-                overlay.classList.add('hidden');
-                overlay.classList.remove('active');
-            }
-            return; // Przechwycono wstecz
-        }
-
-        // B. Zamknij Overlay (Modal/Popup) jeśli stan to 'overlay'
+        // Zamknij Overlay (Modal/Popup) jeśli stan to 'overlay'
         if (state && state.type === 'overlay') {
             // Myślimy odwrotnie: jeśli w historii JEST stan overlay, to go pokazujemy
             // Ale tu jesteśmy w popstate, co oznacza że WŁAŚNIE WRÓCILIŚMY ze stanu overlay.
@@ -593,26 +528,6 @@ function setupAppEventListeners() {
             switchTab('home', false);
         }
     });
-
-    // FAB scroll handling - attach to ALL potential scroll containers
-    window.addEventListener('scroll', handleFABScroll, { passive: true });
-    document.body.addEventListener('scroll', handleFABScroll, { passive: true });
-
-    // Attach to specific scrollable elements (like legends and budget details)
-    const scrollableElements = document.querySelectorAll('.overflow-y-auto');
-    scrollableElements.forEach(el => {
-        el.addEventListener('scroll', handleFABScroll, { passive: true });
-    });
-
-    // Re-attach listeners when DOM might change (e.g. after rendering stats)
-    const observer = new MutationObserver(() => {
-        const newScrollables = document.querySelectorAll('.overflow-y-auto');
-        newScrollables.forEach(el => {
-            el.removeEventListener('scroll', handleFABScroll); // avoid duplicates
-            el.addEventListener('scroll', handleFABScroll, { passive: true });
-        });
-    });
-    observer.observe(document.body, { childList: true, subtree: true });
 
     // Handle Resize for Charts
     let resizeTimer;
@@ -881,33 +796,79 @@ function setupAppEventListeners() {
     document.getElementById('toggle-budget-details')?.addEventListener('click', toggleBudgetDetails);
     document.getElementById('toggle-legend-details')?.addEventListener('click', toggleChartLegend);
 
-    mainFabBtn.addEventListener('click', () => {
-        toggleFab();
+    // Main FAB button to show/hide action menu
+    const mainFabBtn = document.getElementById('main-fab-btn');
+    const fabActions = document.getElementById('fab-actions');
+    const fabOverlay = document.getElementById('fab-overlay');
+    
+    mainFabBtn?.addEventListener('click', () => {
+        const isHidden = fabActions.classList.contains('hidden');
+        if (isHidden) {
+            // Show the actions
+            fabActions.classList.remove('hidden', 'opacity-0', 'translate-y-4');
+            fabActions.classList.add('opacity-100', 'translate-y-0');
+            fabOverlay.classList.remove('hidden');
+            fabOverlay.classList.add('pointer-events-auto');
+            mainFabBtn.classList.add('expanded');
+        } else {
+            // Hide the actions
+            fabActions.classList.add('opacity-0', 'translate-y-4');
+            fabActions.classList.remove('opacity-100', 'translate-y-0');
+            fabOverlay.classList.add('hidden');
+            fabOverlay.classList.remove('pointer-events-auto');
+            mainFabBtn.classList.remove('expanded');
+            setTimeout(() => fabActions.classList.add('hidden'), 300); // Wait for transition
+        }
     });
 
-    const fabOverlay = document.getElementById('fab-overlay');
-    if (fabOverlay) {
-        fabOverlay.addEventListener('click', () => {
-            if (isFabExpanded) toggleFab();
-        });
-    }
+    // Hide actions when clicking overlay
+    fabOverlay?.addEventListener('click', () => {
+        fabActions.classList.add('opacity-0', 'translate-y-4');
+        fabActions.classList.remove('opacity-100', 'translate-y-0');
+        fabOverlay.classList.add('hidden');
+        fabOverlay.classList.remove('pointer-events-auto');
+        mainFabBtn.classList.remove('expanded');
+        setTimeout(() => fabActions.classList.add('hidden'), 300);
+    });
 
-    fabAddManualBtn.addEventListener('click', () => {
+    // Menu action buttons
+    fabAddManualBtn?.addEventListener('click', () => {
+        // Hide the actions menu
+        fabActions.classList.add('opacity-0', 'translate-y-4');
+        fabActions.classList.remove('opacity-100', 'translate-y-0');
+        fabOverlay.classList.add('hidden');
+        fabOverlay.classList.remove('pointer-events-auto');
+        mainFabBtn.classList.remove('expanded');
+        setTimeout(() => fabActions.classList.add('hidden'), 300);
+        
         if (typeof clearPurchaseItems === 'function') clearPurchaseItems();
         switchTab('add');
         setTimeout(() => shopInput.focus(), 100);
-        toggleFab();
     });
 
-    fabSelectFileBtn.addEventListener('click', () => {
+    fabSelectFileBtn?.addEventListener('click', () => {
+        // Hide the actions menu
+        fabActions.classList.add('opacity-0', 'translate-y-4');
+        fabActions.classList.remove('opacity-100', 'translate-y-0');
+        fabOverlay.classList.add('hidden');
+        fabOverlay.classList.remove('pointer-events-auto');
+        mainFabBtn.classList.remove('expanded');
+        setTimeout(() => fabActions.classList.add('hidden'), 300);
+        
         receiptFileInput.click(); // Trigger the hidden file input
-        toggleFab();
     });
 
-    fabScanReceiptBtn.addEventListener('click', () => {
+    fabScanReceiptBtn?.addEventListener('click', () => {
+        // Hide the actions menu
+        fabActions.classList.add('opacity-0', 'translate-y-4');
+        fabActions.classList.remove('opacity-100', 'translate-y-0');
+        fabOverlay.classList.add('hidden');
+        fabOverlay.classList.remove('pointer-events-auto');
+        mainFabBtn.classList.remove('expanded');
+        setTimeout(() => fabActions.classList.add('hidden'), 300);
+        
         switchTab('add');
         setTimeout(() => startCamera(), 100);
-        toggleFab();
     });
 
     // Infinite scroll
