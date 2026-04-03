@@ -324,6 +324,13 @@ async function renderHomeRecentTransactions() {
 
         recent.forEach(purchase => {
             const total = (purchase.items || []).reduce((s, i) => s + (i.price || 0), 0);
+            const specialBudgetName = purchase.specialBudgetId ? (allSpecialBudgets.find(b => b.id === purchase.specialBudgetId) || {}).name : null;
+            const specialBudgetIcon = specialBudgetName
+                ? `<p class="text-xs text-blue-500 mb-1 flex items-center gap-1">
+                     <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 inline-block" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a1 1 0 011-1h5a.997.997 0 01.707.293l7 7zM5 6a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" /></svg>
+                     <span>${specialBudgetName}</span>
+                   </p>`
+                : '';
             const date = new Date(purchase.date).toLocaleDateString('pl-PL', { day: 'numeric', month: 'short' });
             const firstCat = purchase.items?.[0]?.category || 'inne';
             const shopName = purchase.shop || 'Nieznany';
@@ -331,7 +338,7 @@ async function renderHomeRecentTransactions() {
             const firstLetter = shopName.charAt(0).toUpperCase();
 
             const el = document.createElement('div');
-            el.className = 'flex flex-col py-3 border-b border-white/5 last:border-0';
+            el.className = 'flex flex-col py-2 border-b border-white/5 last:border-0';
             
             // Jednorodne ikony z literą (identyfikator to tylko litera)
             const iconHtml = `
@@ -341,17 +348,32 @@ async function renderHomeRecentTransactions() {
             `;
 
             el.innerHTML = `
-                <div class="transaction-header flex items-center gap-3 cursor-pointer select-none transition-opacity active:opacity-60">
-                    <div class="w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center bg-white/5 overflow-hidden shadow-inner relative">
-                        ${iconHtml}
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <p class="text-sm font-semibold text-white truncate">${shopName}</p>
-                        <p class="text-[10px] text-gray-400 uppercase tracking-tight font-medium">${date}</p>
-                    </div>
-                    <div class="flex flex-col items-end">
-                        <p class="text-sm font-bold text-white">${formatAmount(total)}</p>
-                        <i class="fas fa-chevron-down text-[8px] text-gray-500 mt-1 transition-transform"></i>
+                <div class="transaction-header p-2 cursor-pointer select-none transition-opacity active:opacity-40">
+                    <!-- 1. Linia budżetu (Góra) -->
+                    ${specialBudgetIcon ? `<div class="mb-2 w-full">${specialBudgetIcon}</div>` : ''}
+
+                    <!-- 2. Sekcja główna wyrównana do dołu -->
+                    <div class="flex items-end w-full gap-3">
+                        <!-- Logo (Dół) -->
+                        <div class="w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center bg-white/5 overflow-hidden shadow-inner relative">
+                            ${iconHtml}
+                        </div>
+
+                        <!-- Blok tekstowy (Dół) -->
+                        <div class="flex-1 min-w-0">
+                            <!-- Wiersz 1: Sklep i Kwota -->
+                            <div class="flex justify-between items-end w-full mb-0.5">
+                                <span class="text-sm font-semibold text-white truncate pr-2 leading-none">${shopName}</span>
+                                <span class="text-sm font-bold text-white whitespace-nowrap leading-none">${formatAmount(total)}</span>
+                            </div>
+                            <!-- Wiersz 2: Data i Strzałka -->
+                            <div class="flex justify-between items-end w-full">
+                                <span class="text-[10px] text-gray-400 uppercase tracking-tight font-medium leading-none">${date}</span>
+                                <div class="shrink-0 leading-none pb-0.5">
+                                    <i class="fas fa-chevron-down text-[10px] text-gray-500 transition-transform"></i>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="transaction-details hidden mt-3 space-y-2 p-3 bg-white/5 rounded-xl border border-white/5 w-full">

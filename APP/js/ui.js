@@ -553,9 +553,13 @@ function openSelectionDrawer(title, options, onSelect, selectedValue = null, lay
         }
     }
 
-    // Hide/Show Add Category button
+    // Always show "Manage Categories" button in category drawers
     if (addBtn) {
-        addBtn.classList.toggle('hidden', !showAddBtn);
+        addBtn.classList.remove('hidden');
+        addBtn.onclick = () => {
+            closeSelectionDrawer();
+            switchTab('settings-categories');
+        };
     }
 
     if (titleEl) titleEl.textContent = title;
@@ -576,8 +580,7 @@ function openSelectionDrawer(title, options, onSelect, selectedValue = null, lay
         if (addBtn) {
             if (filterText.length > 0) {
                 addBtn.classList.add('hidden');
-                if (addForm) addForm.classList.add('hidden');
-            } else if (showAddBtn) {
+            } else {
                 addBtn.classList.remove('hidden');
             }
         }

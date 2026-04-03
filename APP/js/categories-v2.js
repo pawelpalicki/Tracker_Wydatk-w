@@ -17,7 +17,7 @@ const CAT_ICON_OPTIONS = [
     'fa-apple-alt',        // Jedzenie/Napoje
     'fa-candy-cane',       // Słodycze/Przekąski
     'fa-ice-cream',        // Słodycze
-    'fa-moped',            // Dania z dostawy
+    'fa-truck',            // Dania z dostawy
     'fa-coffee',           // Napoje
     'fa-wine-glass',       // Napoje
 

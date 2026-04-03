@@ -1,6 +1,5 @@
-// Tracker Wydatków - Budget Functions
+// --- Logika Budżetowania --- //
 
-// --- Logika Budżetowania ---
 let budgetMonthValue = '';
 
 function populateBudgetMonthSelector() {

@@ -340,26 +340,43 @@ function renderPurchasesList(purchasesToRender, append = false) {
     const newContent = purchasesToRender.map(p => {
         const specialBudgetName = p.specialBudgetId ? (allSpecialBudgets.find(b => b.id === p.specialBudgetId) || {}).name : null;
         const budgetIcon = specialBudgetName
-            ? `<span class="ml-2 text-xs text-blue-500" title="Budżet: ${specialBudgetName}">
+            ? `<p class="text-xs text-blue-500 mb-1 flex items-center gap-1">
                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline-block" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a1 1 0 011-1h5a.997.997 0 01.707.293l7 7zM5 6a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" /></svg>
-               </span>`
+                 <span>${specialBudgetName}</span>
+               </p>`
             : '';
 
         return `
         <div class="glass-card rounded-2xl mb-4" data-purchase-id="${p.id}">
-            <div class="purchase-header flex justify-between items-center p-4 cursor-pointer">
-                <div class="flex items-center">
-                    <div>
-                        <p class="font-bold text-lg text-white">${p.shop}</p>
-                        <p class="text-sm text-gray-400">${p.date}</p>
+            <div class="purchase-header p-4 cursor-pointer">
+                <!-- 1. Linia budżetu (Góra) -->
+                ${budgetIcon ? `<div class="mb-3 w-full border-b border-white/5 pb-1">${budgetIcon}</div>` : ''}
+
+                <!-- 2. Sekcja główna wyrównana do dołu -->
+                <div class="flex items-end w-full gap-4">
+                    <!-- Logo (Dół) -->
+                    <div class="w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white font-bold shrink-0 shadow-inner">
+                        ${(p.shop || ' ').charAt(0).toUpperCase()}
                     </div>
-                </div>
-                <div class="flex items-center space-x-4">
-                    <div class="text-right">
-                        <p class="font-bold text-xl text-gray-900 dark:text-white whitespace-nowrap">${formatAmount(p.totalAmount || 0)}${budgetIcon}</p>
-                        <p class="text-xs text-gray-500 dark:text-gray-400">${(p.items || []).length} poz.</p>
+
+                    <!-- Blok tekstowy (Dół) -->
+                    <div class="flex-1 min-w-0">
+                        <!-- Wiersz 1: Sklep i Kwota -->
+                        <div class="flex justify-between items-end w-full mb-1">
+                            <span class="font-bold text-lg text-white truncate pr-2 leading-none">${p.shop}</span>
+                            <span class="font-bold text-xl text-white whitespace-nowrap leading-none">${formatAmount(p.totalAmount || 0)}</span>
+                        </div>
+                        <!-- Wiersz 2: Data i (Liczba pozycji + Strzałka) -->
+                        <div class="flex justify-between items-end w-full">
+                            <span class="text-sm text-gray-400 leading-none">${p.date}</span>
+                            <div class="flex items-center gap-2 shrink-0 leading-none">
+                                <span class="text-[10px] text-gray-500 uppercase tracking-tighter">${(p.items || []).length} poz.</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 toggle-arrow text-gray-500 transition-transform transform" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                        </div>
                     </div>
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 toggle-arrow text-gray-500 dark:text-gray-400 transition-transform transform" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
                 </div>
             </div>
             <div class="purchase-items hidden p-4 space-y-4 bg-white/5 rounded-b-2xl border-t border-white/5">
