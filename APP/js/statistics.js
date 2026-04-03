@@ -420,7 +420,7 @@ function initHomeDashboardControls() {
             homeDashboardMonth = homeAvailableMonths[idx + 1];
             updateHomeMonthLabel();
             renderHomeSummary();
-            // Nie odświeżamy ostatnich transakcji przy zmianie miesiąca
+            buildHomeMonthPickerPopup(); // Odśwież popup z nowym active miesiącem
         }
     });
 
@@ -430,7 +430,7 @@ function initHomeDashboardControls() {
             homeDashboardMonth = homeAvailableMonths[idx - 1];
             updateHomeMonthLabel();
             renderHomeSummary();
-            // Nie odświeżamy ostatnich transakcji przy zmianie miesiąca
+            buildHomeMonthPickerPopup(); // Odśwież popup z nowym active miesiącem
         }
     });
 
@@ -544,6 +544,7 @@ function initHomeDashboardControls() {
                 // Update data while content is dimmed
                 updateHomeMonthLabel();
                 await renderHomeSummary();
+                buildHomeMonthPickerPopup(); // Odśwież popup z nowym active miesiącem
                 
                 // Content is re-rendered, so we might need to find it again if innerHTML was used 
                 // (but here renderHomeSummary updates specific elements, so content ref stays valid)

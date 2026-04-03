@@ -117,7 +117,10 @@ function switchTab(tabName, pushToHistory = true) {
     }
 
     // Dodaj aktualizację Navbaru przy każdej zmianie zakładki
-    updateNavbar(tabName);
+    // (ale nie gdy jesteśmy w trybie edycji na tab 'add')
+    if (!(tabName === 'add' && editMode.active)) {
+        updateNavbar(tabName);
+    }
 }
 
 // Ustaw początkowy tytuł po załadowaniu DOM
@@ -423,6 +426,11 @@ function openFilterDrawer(title, type, onApply) {
 
     if (!overlay || !drawer || !content) return;
 
+    // Push state to history for back button support only if it's not already active
+    if (!overlay.classList.contains('active')) {
+        history.pushState({ type: 'drawer', id: 'filter-drawer' }, "", "");
+    }
+
     titleEl.textContent = title;
     content.innerHTML = '';
 
@@ -462,16 +470,6 @@ function openFilterDrawer(title, type, onApply) {
         `;
     }
 
-    const closeFilterDrawer = () => {
-        overlay.classList.remove('active');
-        drawer.classList.remove('active');
-        setTimeout(() => {
-            overlay.classList.add('hidden');
-            drawer.classList.add('hidden');
-            document.body.style.overflow = '';
-        }, 300);
-    };
-
     applyBtn.onclick = () => {
         if (type === 'date') {
             document.getElementById('filter-date-start').value = document.getElementById('drawer-date-start').value;
@@ -484,17 +482,13 @@ function openFilterDrawer(title, type, onApply) {
         closeFilterDrawer();
     };
 
-    closeBtn.onclick = closeFilterDrawer;
-    overlay.onclick = closeFilterDrawer;
+    const handleClose = () => closeFilterDrawer();
+    closeBtn.onclick = handleClose;
+    overlay.onclick = (e) => {
+        if (e.target === overlay) handleClose();
+    };
 
-    overlay.classList.remove('hidden');
-    drawer.classList.remove('hidden');
-    document.body.style.overflow = 'hidden';
-
-    setTimeout(() => {
-        overlay.classList.add('active');
-        drawer.classList.add('active');
-    }, 10);
+    openDrawer('filter-drawer', 'filter-drawer-overlay');
 }
 
 function openSelectionDrawer(title, options, onSelect, selectedValue = null, layoutType = 'list', showAddBtn = false, autoClose = true, onBack = null) {
@@ -506,6 +500,7 @@ function openSelectionDrawer(title, options, onSelect, selectedValue = null, lay
     const addBtn = document.getElementById('add-category-drawer-btn');
     const addForm = document.getElementById('new-category-drawer-form');
     const backBtn = document.getElementById('category-drawer-back-btn');
+    const closeBtn = document.getElementById('close-category-drawer');
 
     if (!overlay || !drawer) return;
 
@@ -536,6 +531,22 @@ function openSelectionDrawer(title, options, onSelect, selectedValue = null, lay
         } else {
             backBtn.classList.add('hidden');
         }
+    }
+
+    // Obsługa przycisku zamknij/widok poza drawerem
+    const handleClose = () => closeSelectionDrawer();
+    if (closeBtn) {
+        closeBtn.onclick = (e) => {
+            e.stopPropagation();
+            handleClose();
+        };
+    }
+    if (overlay) {
+        overlay.onclick = (e) => {
+            if (e.target === overlay) {
+                handleClose();
+            }
+        };
     }
 
     // Show search container only if there are more than 5 options
@@ -614,37 +625,25 @@ function openSelectionDrawer(title, options, onSelect, selectedValue = null, lay
     renderOptions();
 
     // Show drawer
-    overlay.classList.remove('hidden');
-    drawer.classList.remove('hidden');
-    document.body.style.overflow = 'hidden';
+    openDrawer('category-drawer', 'category-drawer-overlay');
+}
 
-    // Animation trigger
-    setTimeout(() => {
-        overlay.classList.add('active');
-        drawer.classList.add('active');
-    }, 10);
+function closeFilterDrawer(isFromPopState = false) {
+    closeDrawer('filter-drawer', 'filter-drawer-overlay');
+    
+    // Po zamknięciu, jeśli nie pochodzi z popstate, cofnij się w historii
+    if (!isFromPopState) {
+        history.back();
+    }
 }
 
 function closeSelectionDrawer(isFromPopState = false) {
-    const overlay = document.getElementById('category-drawer-overlay');
-    const drawer = document.getElementById('category-drawer');
-
-    if (!overlay || !drawer) return;
-
-    // Zawsze zamknij szufladę
-    overlay.classList.remove('active');
-    drawer.classList.remove('active');
+    closeDrawer('category-drawer', 'category-drawer-overlay');
     
-    setTimeout(() => {
-        overlay.classList.add('hidden');
-        drawer.classList.add('hidden');
-        document.body.style.overflow = '';
-        
-        // Po zamknięciu, jeśli nie pochodzi z popstate, cofnij się w historii
-        if (!isFromPopState) {
-            history.back();
-        }
-    }, 300);
+    // Po zamknięciu, jeśli nie pochodzi z popstate, cofnij się w historii
+    if (!isFromPopState) {
+        history.back();
+    }
 }
 
 window.closeSelectionDrawer = closeSelectionDrawer;
@@ -767,8 +766,12 @@ function exitEditMode() {
     document.getElementById('budget-type-icon').innerHTML = '<span>📅</span>';
     // addItemRow(); // USUNIĘTE - nie chcemy pustego wiersza na starcie
 
-    const navTitle = document.getElementById('nav-title');
-    if (navTitle) navTitle.textContent = 'Dodaj zakup';
+    // Zmień navbar TYLKO jeśli tab 'add' jest aktualnie widoczny
+    const activeTab = document.querySelector('.tab-content.active')?.id.replace('-tab', '');
+    if (activeTab === 'add') {
+        const navTitle = document.getElementById('nav-title');
+        if (navTitle) navTitle.textContent = 'Dodaj zakup';
+    }
     purchaseFormSubmitBtn.textContent = 'Zapisz cały zakup';
     purchaseFormSubmitBtn.classList.replace('bg-green-600', 'bg-blue-600');
     purchaseFormSubmitBtn.classList.replace('hover:bg-green-700', 'hover:bg-blue-700');
@@ -780,7 +783,37 @@ function exitEditMode() {
     updatePurchaseSummary();
 }
 
-// --- Zarządzanie Nakładkami (Modale, Popup-y) ---
+// --- Wspólne funkcje dla drawer'ów ---
+function openDrawer(drawerId, overlayId) {
+    const drawer = document.getElementById(drawerId);
+    const overlay = document.getElementById(overlayId);
+    if (!drawer || !overlay) return;
+
+    drawer.classList.remove('hidden');
+    overlay.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+
+    setTimeout(() => {
+        drawer.classList.add('active');
+        overlay.classList.add('active');
+    }, 10);
+}
+
+function closeDrawer(drawerId, overlayId) {
+    const drawer = document.getElementById(drawerId);
+    const overlay = document.getElementById(overlayId);
+    if (!drawer || !overlay) return;
+
+    drawer.classList.remove('active');
+    overlay.classList.remove('active');
+
+    setTimeout(() => {
+        drawer.classList.add('hidden');
+        overlay.classList.add('hidden');
+        document.body.style.overflow = '';
+    }, 300);
+}
+
 function openOverlay(elementId) {
     const el = document.getElementById(elementId);
     const overlay = document.getElementById(elementId + '-overlay');
@@ -904,10 +937,27 @@ function renderCategoryDetailsModal(category, items, isSubCategoryView = false) 
     }
 
     // Otwórz drawer
+    const handleClose = () => closeCategoryDetailsDrawer();
     const drawer = document.getElementById('category-details-drawer');
     const overlay = document.getElementById('category-details-drawer-overlay');
+    const closeBtn = document.getElementById('close-category-details-drawer');
     
     if (drawer && overlay) {
+        // Ustawić handlery zamykania
+        if (closeBtn) {
+            closeBtn.onclick = (e) => {
+                e.stopPropagation();
+                handleClose();
+            };
+        }
+        if (overlay) {
+            overlay.onclick = (e) => {
+                if (e.target === overlay) {
+                    handleClose();
+                }
+            };
+        }
+
         drawer.classList.remove('hidden');
         overlay.classList.remove('hidden');
         
@@ -923,36 +973,14 @@ function renderCategoryDetailsModal(category, items, isSubCategoryView = false) 
     }
 }
 
-function closeCategoryDetailsDrawer() {
-    const drawer = document.getElementById('category-details-drawer');
-    const overlay = document.getElementById('category-details-drawer-overlay');
-    if (drawer && overlay) {
-        drawer.classList.remove('active');
-        overlay.classList.remove('active');
-        
-        setTimeout(() => {
-            drawer.classList.add('hidden');
-            overlay.classList.add('hidden');
-            document.body.style.overflow = '';
-        }, 300);
+function closeCategoryDetailsDrawer(isFromPopState = false) {
+    closeDrawer('category-details-drawer', 'category-details-drawer-overlay');
+    
+    // Po zamknięciu, jeśli nie pochodzi z popstate, cofnij się w historii
+    if (!isFromPopState) {
+        history.back();
     }
 }
-
-window.addEventListener('popstate', (e) => {
-    closeCategoryDetailsDrawer();
-});
-
-document.addEventListener('DOMContentLoaded', () => {
-    const closeBtn = document.getElementById('close-category-details-drawer');
-    const overlayBtn = document.getElementById('category-details-drawer-overlay');
-    if (closeBtn) closeBtn.addEventListener('click', closeCategoryDetailsDrawer);
-    if (overlayBtn) overlayBtn.addEventListener('click', (e) => {
-        // Zamknij na klikniecie bezpośrednio na overlay (nie na elementy dziecka)
-        if (e.target === overlayBtn) {
-            closeCategoryDetailsDrawer();
-        }
-    });
-});
 
 // --- Obsługa aparatu ---
 async function startCamera() {
@@ -1101,4 +1129,4 @@ function toggleChartLegend() {
     } else {
         text.textContent = 'Ukryj legendę';
     }
-}
+};
