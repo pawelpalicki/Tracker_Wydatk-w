@@ -168,16 +168,6 @@ function applyRecurringCategorySelection(parentName = '', subCategoryName = '') 
     }, recurringCategoryValue, recurringSubCategoryValue, 'Wybierz kategorię');
 }
 
-function updateCustomDropdownValue(selectId, labelId) {
-    const select = document.getElementById(selectId);
-    const label = document.getElementById(labelId);
-    if (!select || !label) return;
-    const selectedOption = select.options[select.selectedIndex];
-    if (selectedOption) {
-        label.textContent = selectedOption.textContent;
-    }
-}
-
 // --- Funkcja kompresji/optymalizacji obrazu ---
 async function resizeImage(file, maxSize = 1920, quality = 0.92) {
     return new Promise((resolve, reject) => {
@@ -529,10 +519,6 @@ function setupAppEventListeners() {
             document.getElementById('recurring-day-of-week-label').textContent = label;
         }, recurringDayOfWeekValue);
     });
-
-    // DODAJ TEN EVENT LISTENER TUTAJ:
-    document.getElementById('toggle-budget-details')?.addEventListener('click', toggleBudgetDetails);
-    document.getElementById('toggle-legend-details')?.addEventListener('click', toggleChartLegend);
 
     // Main FAB button to show/hide action menu
     const mainFabBtn = document.getElementById('main-fab-btn');

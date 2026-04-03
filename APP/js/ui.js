@@ -107,11 +107,6 @@ function switchTab(tabName, pushToHistory = true) {
         renderRecurringExpenses();
     }
 
-    // Initialize custom dropdowns IF we are on the 'add' tab
-    if (tabName === 'add') {
-        initCustomDropdown('budget-type-btn', 'budget-type-popup', 'budget-type-label', 'budget-type-select');
-    }
-
     if (tabName === 'list') {
         initFilterDrawers();
     }
@@ -649,48 +644,6 @@ function closeSelectionDrawer(isFromPopState = false) {
 window.closeSelectionDrawer = closeSelectionDrawer;
 
 
-// --- Custom Dropdown Helper ---
-function initCustomDropdown(btnId, popupId, labelId, selectId, onChange = null) {
-    const btn = typeof btnId === 'string' ? document.getElementById(btnId) : btnId;
-    const popup = typeof popupId === 'string' ? document.getElementById(popupId) : popupId;
-    const label = typeof labelId === 'string' ? document.getElementById(labelId) : labelId;
-    const select = typeof selectId === 'string' ? document.getElementById(selectId) : selectId;
-
-    if (!btn || !popup || !label || !select) return;
-
-    // Open/Close popup
-    btn.onclick = (e) => {
-        e.stopPropagation();
-        const isHidden = popup.classList.contains('hidden');
-        // Close all other popups first
-        document.querySelectorAll('[id$="-popup"]').forEach(p => p.classList.add('hidden'));
-        if (isHidden) popup.classList.remove('hidden');
-    };
-
-    // Global listener to close this specific popup is handled by a single document listener below
-}
-
-// Global click listener for custom dropdowns
-document.addEventListener('click', (e) => {
-    const popups = document.querySelectorAll('[id$="-popup"]');
-    popups.forEach(popup => {
-        // If the click is outside the popup and its corresponding button
-        const btnId = popup.id.replace('-popup', '-btn');
-        const btn = document.getElementById(btnId);
-        // Special case for dynamic item category dropdowns
-        const isDynamic = popup.classList.contains('item-category-popup');
-
-        if (!popup.contains(e.target) && (!btn || !btn.contains(e.target))) {
-            if (isDynamic) {
-                // For dynamic popups, we check if the click was on the specific button that belongs to this popup
-                const parentRow = popup.closest('.item-row');
-                const rowBtn = parentRow ? parentRow.querySelector('.item-category-btn') : null;
-                if (rowBtn && rowBtn.contains(e.target)) return;
-            }
-            popup.classList.add('hidden');
-        }
-    });
-});
 
 
 // --- Tryb edycji ---
@@ -1091,42 +1044,5 @@ function renderShopAutocomplete(query) {
     shopAutocompleteList.classList.remove('hidden');
 }
 // --- Przełączanie szczegółów budżetu ---
-function toggleBudgetDetails() {
-    // Funkcja działa tylko na urządzeniach mobilnych
-    if (window.innerWidth >= 1024) {
-        return;
-    }
 
-    const container = document.getElementById('budget-progress-container');
-    const text = document.getElementById('toggle-budget-text');
-    const icon = document.getElementById('toggle-budget-icon');
 
-    const isHidden = container.classList.contains('hidden');
-
-    if (isHidden) {
-        container.classList.remove('hidden');
-        text.textContent = 'Ukryj szczegóły budżetu';
-        icon.classList.add('rotate-180');
-    } else {
-        container.classList.add('hidden');
-        text.textContent = 'Pokaż szczegóły budżetu';
-        icon.classList.remove('rotate-180');
-    }
-}
-
-function toggleChartLegend() {
-    const legendContainer = document.getElementById('interactive-legend-container');
-    const icon = document.getElementById('toggle-legend-icon');
-    const text = document.getElementById('toggle-legend-text');
-
-    const isHidden = legendContainer.classList.contains('hidden');
-
-    legendContainer.classList.toggle('hidden');
-    icon.classList.toggle('rotate-180');
-
-    if (legendContainer.classList.contains('hidden')) {
-        text.textContent = 'Pokaż legendę';
-    } else {
-        text.textContent = 'Ukryj legendę';
-    }
-};
