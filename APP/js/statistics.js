@@ -263,26 +263,38 @@ function renderHomeCategoryTiles(purchases, budgets = {}) {
         const icon = (parentCat && parentCat.icon) || 'fa-tag';
         
         const budget = budgets[cat] || 0;
-        const pct = budget > 0 ? Math.round((amount / budget) * 100) : null;
+        const pct = budget > 0 ? Math.round((amount / budget) * 100) : 0;
         
+        // Progress ring logic with THICKER stroke and mask
+        const cappedPct = Math.min(pct, 100);
+        const ringBgStyle = budget > 0 
+            ? `background: conic-gradient(${color} ${cappedPct}%, rgba(255,255,255,0.08) ${cappedPct}%); -webkit-mask: radial-gradient(transparent 58%, black 61%); mask: radial-gradient(transparent 58%, black 61%);`
+            : `border: 3px solid rgba(255,255,255,0.1);`;
+
         const tile = document.createElement('div');
-        tile.className = 'flex-shrink-0 snap-start flex flex-col items-center justify-center gap-1.5 p-3 rounded-2xl bg-white/5 hover:bg-white/10 transition-colors cursor-pointer min-w-[130px] text-center active:scale-95';
+        // STRICTOR SQUARE dimensions using flex-basis and fixed width/height
+        tile.className = 'flex-none snap-start flex flex-col items-center justify-center gap-1.5 p-2 rounded-2xl bg-white/5 hover:bg-white/10 transition-all cursor-pointer w-28 h-28 text-center active:scale-95 border border-transparent box-border overflow-hidden';
+        tile.style.minWidth = '112px';
+        tile.style.maxWidth = '112px';
+        
         tile.innerHTML = `
-            <div class="w-9 h-9 rounded-full flex items-center justify-center mb-0.5" style="background-color:${color}22;color:${color}">
-                <i class="fas ${icon} text-sm"></i>
+            <div class="relative flex items-center justify-center w-12 h-12 mb-0.5">
+                <!-- The Ring (Thicker) -->
+                <div class="absolute inset-0 rounded-full" style="${ringBgStyle}"></div>
+                <!-- The Icon (Larger) -->
+                <i class="fas ${icon} text-lg relative z-10" style="color:${color}"></i>
             </div>
-            <p class="text-[11px] text-gray-300 font-medium leading-tight max-w-[110px] truncate">${cat}</p>
-            <div class="flex flex-col items-center w-full">
-                <p class="text-xs font-bold text-white whitespace-nowrap">
-                    ${formatAmount(amount).replace(' zł', '')} 
-                    <span class="text-[10px] font-normal text-gray-400">/ ${budget > 0 ? formatAmount(budget).replace(' zł', '') : '---'}</span>
-                </p>
-                ${budget > 0 ? `
-                    <div class="w-16 h-1 bg-white/10 rounded-full mt-1.5 overflow-hidden">
-                        <div class="h-full ${pct >= 100 ? 'bg-red-500' : pct >= 80 ? 'bg-yellow-400' : 'bg-brand-500'}" style="width: ${Math.min(pct, 100)}%"></div>
-                    </div>
-                    <p class="text-[9px] text-gray-500 mt-1">${pct}% wykorzystania</p>
-                ` : ''}
+            <div class="flex flex-col items-center w-full min-w-0">
+                <p class="text-[10px] text-gray-300 font-bold leading-tight w-full truncate px-1">${cat}</p>
+                <div class="flex items-center justify-center gap-1 mt-0.5">
+                    <p class="text-xs font-extrabold text-white whitespace-nowrap">
+                        ${formatAmount(amount).replace(' zł', '')} 
+                    </p>
+                    ${budget > 0 ? `
+                        <span class="text-[9px] font-bold ${pct >= 100 ? 'text-red-400' : pct >= 80 ? 'text-yellow-400' : 'text-brand-400'}">${pct}%</span>
+                    ` : ''}
+                </div>
+                <p class="text-[9px] text-gray-400 font-bold leading-none mt-0.5">z ${budget > 0 ? formatAmount(budget).replace(' zł', '') : '---'}</p>
             </div>
         `;
         
