@@ -162,12 +162,22 @@ async function renderHomeSummary() {
     const startDate = `${year}-${mon.padStart(2, '0')}-01`;
     const endDate = `${year}-${mon.padStart(2, '0')}-${String(daysInMonth).padStart(2, '0')}`;
 
+    // Poprzedni miesiąc dla porównania
+    const prevMonthDate = new Date(yrInt, monInt - 2, 1);
+    const prevMonthKey = `${prevMonthDate.getFullYear()}-${String(prevMonthDate.getMonth() + 1).padStart(2, '0')}`;
+
+    const now = new Date();
+    const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    const isCurrentMonth = month === currentMonthKey;
+    const mtdParam = isCurrentMonth ? 'true' : 'false';
+
     // Fetch accurate statistics and budget from API
     try {
-        const [stats, budgetData, purchaseData] = await Promise.all([
+        const [stats, budgetData, purchaseData, comparisonData] = await Promise.all([
             apiCall(`/api/statistics?year=${year}&month=${mon.padStart(2, '0')}`),
             apiCall(`/api/budgets/${year}/${mon.padStart(2, '0')}`),
-            apiCall(`/api/purchases?startDate=${startDate}&endDate=${endDate}`)
+            apiCall(`/api/purchases?startDate=${startDate}&endDate=${endDate}`),
+            apiCall(`/api/statistics/comparison?mode=6months&mtd=${mtdParam}`)
         ]);
 
         const purchases = purchaseData.purchases || [];
@@ -179,6 +189,12 @@ async function renderHomeSummary() {
         // Update total
         const totalEl = document.getElementById('home-total-spent');
         if (totalEl) totalEl.textContent = formatAmount(totalSpent);
+
+        // --- PRZYWRÓCONO: Aktualizacja plakietki porównania ---
+        updateHomeComparisonBadge(comparisonData.monthlyTotals, month, prevMonthKey, isCurrentMonth);
+
+        // --- AKTUALIZACJA SEKCJI MOBILIZACJI ---
+        renderHomeMobilizationInsights(purchases, totalBudget, isCurrentMonth);
 
         const infoEl = document.getElementById('home-budget-info');
         const barWrapper = document.getElementById('home-budget-bar-wrapper');
@@ -221,6 +237,55 @@ async function renderHomeSummary() {
         console.error('Błąd pobierania danych podsumowania:', err);
     }
 }
+
+function updateHomeComparisonBadge(monthlyTotals, currentKey, prevKey, isCurrentMonth) {
+    const badgeEl = document.getElementById('home-comparison-badge');
+    if (!badgeEl) return;
+    if (!monthlyTotals || !Array.isArray(monthlyTotals)) { badgeEl.classList.add('hidden'); return; }
+    const cur = monthlyTotals.find(m => m.month === currentKey);
+    const pre = monthlyTotals.find(m => m.month === prevKey);
+    if (!cur || !pre || pre.total <= 0) { badgeEl.classList.add('hidden'); return; }
+    const pct = Math.round(((cur.total - pre.total) / pre.total) * 100);
+    const up = pct > 0;
+    badgeEl.className = `flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-bold ${up ? 'bg-red-500/20 text-red-400' : 'bg-green-500/20 text-green-400'}`;
+    badgeEl.innerHTML = `<i class="fas fa-arrow-trend-${up ? 'up' : 'down'}"></i> <span>${up ? '+' : ''}${pct}%</span>`;
+    badgeEl.classList.remove('hidden');
+}
+
+function renderHomeMobilizationInsights(purchases, totalBudget, isCurrentMonth) {
+    const section = document.getElementById('home-mobilization-section');
+    if (!section || !isCurrentMonth || totalBudget <= 0) { if (section) section.classList.add('hidden'); return; }
+    const now = new Date(), day = now.getDate(), days = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate(), rem = days - day; 
+    let fxd = 0, flx = 0;
+    purchases.forEach(p => (p.items || []).forEach(i => {
+        if (i.tags?.nature === 'stały' || ['rachunki', 'czynsz', 'kaucje'].includes(i.category?.toLowerCase())) fxd += i.price || 0;
+        else flx += i.price || 0;
+    }));
+    let upc = 0;
+    if (Array.isArray(allRecurringExpenses)) {
+        allRecurringExpenses.forEach(r => { if (!purchases.some(p => p.date.substring(0, 7) === now.toISOString().substring(0, 7) && p.shop.toLowerCase().includes(r.name.toLowerCase()))) upc += r.amount || 0; });
+    }
+    const proj = fxd + upc + flx + (flx / day * rem);
+    const lim = Math.max(0, totalBudget - fxd - upc - flx) / (rem + 1);
+    if (document.getElementById('insight-daily-limit')) document.getElementById('insight-daily-limit').textContent = lim.toFixed(0) + ' zł';
+    if (document.getElementById('insight-projection')) document.getElementById('insight-projection').textContent = proj.toFixed(0) + ' zł';
+    const dEl = document.getElementById('insight-projection-diff');
+    if (dEl) {
+        const df = totalBudget - proj;
+        dEl.textContent = `${Math.abs(df).toFixed(0)} zł ${df >= 0 ? 'zapasu' : 'nadwyżki'}`;
+        dEl.className = `text-[8px] font-bold leading-none ${df >= 0 ? 'text-green-400' : 'text-red-400'}`;
+    }
+    const c = document.getElementById('insight-text-container');
+    c.innerHTML = '';
+    if (proj > totalBudget) {
+        const d = document.createElement('div');
+        d.className = 'text-[8px] text-red-300 font-bold flex items-center gap-1';
+        d.innerHTML = `<i class="fas fa-triangle-exclamation"></i> Przekroczysz o ~${formatAmount(proj - totalBudget)}`;
+        c.appendChild(d);
+    }
+    section.classList.remove('hidden');
+}
+/** KONIEC SEKCJI MOBILIZACJA */
 
 function renderHomeCategoryTiles(purchases, budgets = {}) {
     const container = document.getElementById('home-category-tiles');
