@@ -14,15 +14,15 @@ let homeDashboardPickerYear = null;
 
 async function renderDashboard() {
     try {
-        // Load available months if not yet loaded
-        if (homeAvailableMonths.length === 0) {
-            const stats = await apiCall('/api/statistics');
-            if (stats.availableMonths && stats.availableMonths.length > 0) {
-                homeAvailableMonths = [...stats.availableMonths].sort().reverse();
-            } else {
-                homeAvailableMonths = [new Date().toISOString().substring(0, 7)];
-            }
+        // Fetch stats to get current available months and potentially trigger background recalculation
+        const stats = await apiCall('/api/statistics');
+        
+        if (stats.availableMonths && stats.availableMonths.length > 0) {
+            homeAvailableMonths = [...stats.availableMonths].sort().reverse();
+        } else if (homeAvailableMonths.length === 0) {
+            homeAvailableMonths = [new Date().toISOString().substring(0, 7)];
         }
+
         if (!homeDashboardMonth) {
             const currentMonth = new Date().toISOString().substring(0, 7);
             homeDashboardMonth = homeAvailableMonths.includes(currentMonth)
@@ -256,10 +256,17 @@ function renderHomeMobilizationInsights(purchases, totalBudget, isCurrentMonth) 
     const section = document.getElementById('home-mobilization-section');
     if (!section || !isCurrentMonth || totalBudget <= 0) { if (section) section.classList.add('hidden'); return; }
     const now = new Date(), day = now.getDate(), days = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate(), rem = days - day; 
-    let fxd = 0, flx = 0;
+    let fxd = 0, flx = 0, wants = 0;
     purchases.forEach(p => (p.items || []).forEach(i => {
-        if (i.tags?.nature === 'stały' || ['rachunki', 'czynsz', 'kaucje'].includes(i.category?.toLowerCase())) fxd += i.price || 0;
-        else flx += i.price || 0;
+        const isFixed = i.tags?.nature === 'stały' || ['rachunki', 'czynsz', 'kaucje'].includes(i.category?.toLowerCase());
+        if (isFixed) {
+            fxd += i.price || 0;
+        } else {
+            flx += i.price || 0;
+            if (i.tags?.purpose === 'przyjemność') {
+                wants += i.price || 0;
+            }
+        }
     }));
     let upc = 0;
     if (Array.isArray(allRecurringExpenses)) {
@@ -277,12 +284,21 @@ function renderHomeMobilizationInsights(purchases, totalBudget, isCurrentMonth) 
     }
     const c = document.getElementById('insight-text-container');
     c.innerHTML = '';
+    
     if (proj > totalBudget) {
         const d = document.createElement('div');
         d.className = 'text-[8px] text-red-300 font-bold flex items-center gap-1';
         d.innerHTML = `<i class="fas fa-triangle-exclamation"></i> Przekroczysz o ~${formatAmount(proj - totalBudget)}`;
         c.appendChild(d);
     }
+    
+    if (wants > 0) {
+        const d = document.createElement('div');
+        d.className = 'text-[8px] text-yellow-400 flex items-center gap-1 mt-0.5';
+        d.innerHTML = `<i class="fas fa-ice-cream"></i> Przyjemności: ${formatAmount(wants)}`;
+        c.appendChild(d);
+    }
+    
     section.classList.remove('hidden');
 }
 /** KONIEC SEKCJI MOBILIZACJA */

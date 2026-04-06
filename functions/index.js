@@ -187,6 +187,26 @@ async function getUserMetadata(userId) {
 
     let needsProfileUpdate = false;
 
+    // Mapa ikon i kolorów dla migracji
+    const defaultIcons = {
+        'spożywcze': 'fa-shopping-basket', 'jedzenie/napoje': 'fa-apple-alt', 'słodycze/przekąski': 'fa-cookie-bite',
+        'dania gotowe/z dostawy': 'fa-moped', 'mieszkanie': 'fa-home', 'dom': 'fa-home', 'czynsz': 'fa-building',
+        'media(prąd/gaz/woda)': 'fa-bolt', 'wyposażenie': 'fa-couch', 'chemia': 'fa-jug-detergent',
+        'remonty/naprawy': 'fa-tools', 'artykuły gospodarcze': 'fa-recycle', 'zdrowie & uroda': 'fa-heartbeat',
+        'zdrowie': 'fa-heartbeat', 'lekarz': 'fa-stethoscope', 'apteka': 'fa-pills', 'usługi kosmetyczne': 'fa-cut',
+        'kosmetyki': 'fa-spa', 'higieniczne': 'fa-toilet-paper', 'suplementy': 'fa-capsules', 'transport': 'fa-car',
+        'samochód': 'fa-gas-pump', 'taxi': 'fa-taxi', 'komunikacja miejska': 'fa-bus', 'podróże': 'fa-suitcase-rolling',
+        'rozrywka': 'fa-film', 'gastronomia': 'fa-hamburger', 'kultura': 'fa-theater-masks',
+        'subskrypcje (vod)': 'fa-play-circle', 'hobby': 'fa-gamepad', 'sport': 'fa-football-ball',
+        'rachunki': 'fa-file-invoice-dollar', 'finanse': 'fa-file-invoice-dollar', 'spłata kredytów': 'fa-hand-holding-usd',
+        'oszczędności / inwestycje': 'fa-piggy-bank', 'odzież': 'fa-tshirt', 'ubrania': 'fa-tshirt',
+        'ubrania i biżuteria': 'fa-tshirt', 'buty': 'fa-shoe-prints', 'dodatki': 'fa-gem',
+        'edukacja': 'fa-graduation-cap', 'kursy/szkolenia': 'fa-chalkboard-teacher', 'książki': 'fa-book-open',
+        'alkohol/papierosy': 'fa-smoking', 'kaucje': 'fa-archive', 'internet/tv': 'fa-tv', 'telefon': 'fa-mobile-alt',
+        'elektronika': 'fa-microchip', 'prezenty': 'fa-gift', 'zwierzęta': 'fa-dog', 'inne': 'fa-tag'
+    };
+    const colorPalette = ['#3b82f6', '#10b981', '#ef4444', '#f97316', '#8b5cf6', '#ec4899', '#f59e0b', '#14b8a6', '#64748b', '#06b6d4', '#a855f7', '#eab308', '#0ea5e9', '#be185d', '#16a34a', '#f43f5e', '#84cc16', '#6366f1', '#d946ef', '#fb7185'];
+
     // 1. Migracja płaskich kategorii do struktury V2 (dla starych kont)
     if (structuredCategories.length === 0 && customCategories.length > 0) {
         console.log(`[Sync] Pierwsza migracja kategorii dla ${userId}`);
@@ -194,22 +214,22 @@ async function getUserMetadata(userId) {
             id: `migrated-${Date.now()}-${index}`,
             name: cat,
             parentId: null,
-            icon: 'fa-tag',
-            color: '#3b82f6'
+            icon: defaultIcons[cat.toLowerCase()] || 'fa-tag',
+            color: colorPalette[index % colorPalette.length]
         }));
         needsProfileUpdate = true;
     }
 
     // 2. Synchronizacja nowych kategorii płaskich do V2 (jeśli dodane starym kodem)
     const structuredNames = new Set(structuredCategories.map(c => c.name.toLowerCase()));
-    customCategories.forEach(cat => {
+    customCategories.forEach((cat, index) => {
         if (cat && !structuredNames.has(cat.toLowerCase())) {
             structuredCategories.push({
                 id: `sync-${Date.now()}-${Math.random().toString(36).slice(2, 5)}`,
                 name: cat,
                 parentId: null,
-                icon: 'fa-tag',
-                color: '#3b82f6'
+                icon: defaultIcons[cat.toLowerCase()] || 'fa-tag',
+                color: colorPalette[(structuredCategories.length + index) % colorPalette.length]
             });
             needsProfileUpdate = true;
         }
@@ -217,8 +237,28 @@ async function getUserMetadata(userId) {
 
     // 3. Sprawdź miesiące i shopsStale
     const currentMonth = new Date().toISOString().substring(0, 7);
-    const availableMonths = userData.availableMonths || [];
-    if (!availableMonths.includes(currentMonth)) {
+    let availableMonths = userData.availableMonths || [];
+    
+    // Auto-recalc if missing or fresh migration (only 0 or 1 month)
+    if (availableMonths.length <= 1) {
+        console.log(`[Sync] Przeliczam miesiące dla użytkownika: ${userId}`);
+        const snapshot = await purchasesCollection.where('userId', '==', userId).get();
+        const monthsSet = new Set(availableMonths);
+        monthsSet.add(currentMonth);
+        
+        snapshot.docs.forEach(doc => {
+            const d = doc.data().date;
+            if (d && d.length >= 7) {
+                monthsSet.add(d.substring(0, 7));
+            }
+        });
+        
+        const newAvailableMonths = Array.from(monthsSet).sort().reverse();
+        if (newAvailableMonths.length !== availableMonths.length) {
+            availableMonths = newAvailableMonths;
+            needsProfileUpdate = true;
+        }
+    } else if (!availableMonths.includes(currentMonth)) {
         availableMonths.push(currentMonth);
         availableMonths.sort().reverse();
         needsProfileUpdate = true;
