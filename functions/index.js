@@ -207,6 +207,40 @@ async function getUserMetadata(userId) {
     };
     const colorPalette = ['#3b82f6', '#10b981', '#ef4444', '#f97316', '#8b5cf6', '#ec4899', '#f59e0b', '#14b8a6', '#64748b', '#06b6d4', '#a855f7', '#eab308', '#0ea5e9', '#be185d', '#16a34a', '#f43f5e', '#84cc16', '#6366f1', '#d946ef', '#fb7185'];
 
+    // 0. Domyślne kategorie dla zupełnie nowych kont
+    if (structuredCategories.length === 0 && (!userData.customCategories || userData.customCategories.length === 0)) {
+        console.log(`[Init] Tworzę domyślne kategorie dla nowego użytkownika: ${userId}`);
+        const defaults = [
+            { id: 'def_1', name: 'Spożywcze', icon: 'fa-shopping-basket', color: '#10b981', children: ['Jedzenie', 'Napoje', 'Przekąski'] },
+            { id: 'def_2', name: 'Mieszkanie', icon: 'fa-home', color: '#3b82f6', children: ['Czynsz', 'Media', 'Chemia'] },
+            { id: 'def_3', name: 'Transport', icon: 'fa-car', color: '#f59e0b', children: ['Paliwo', 'Bilety', 'Taxi'] },
+            { id: 'def_4', name: 'Rozrywka', icon: 'fa-film', color: '#8b5cf6', children: ['Gastronomia', 'Kino/Kultura', 'Hobby'] },
+            { id: 'def_5', name: 'Zdrowie', icon: 'fa-heartbeat', color: '#ef4444', children: ['Lekarstwa', 'Lekarz', 'Higiena'] },
+            { id: 'def_6', name: 'Inne', icon: 'fa-ellipsis-h', color: '#64748b', children: ['Pozostałe', 'Prezenty', 'Elektronika'] }
+        ];
+
+        defaults.forEach((main, mIdx) => {
+            const mainId = `def_${mIdx + 1}`;
+            structuredCategories.push({
+                id: mainId,
+                name: main.name,
+                parentId: null,
+                icon: main.icon,
+                color: main.color
+            });
+            main.children.forEach((child, cIdx) => {
+                structuredCategories.push({
+                    id: `${mainId}_${cIdx + 1}`,
+                    name: child,
+                    parentId: mainId,
+                    icon: defaultIcons[child.toLowerCase()] || 'fa-tag',
+                    color: main.color
+                });
+            });
+        });
+        needsProfileUpdate = true;
+    }
+
     // 1. Migracja płaskich kategorii do struktury V2 (dla starych kont)
     if (structuredCategories.length === 0 && customCategories.length > 0) {
         console.log(`[Sync] Pierwsza migracja kategorii dla ${userId}`);
@@ -1045,17 +1079,14 @@ app.get('/api/categories', authMiddleware, async (req, res) => {
 // GET: Pobierz strukturę 2-poziomowych kategorii dla użytkownika (v2)
 app.get('/api/categories/v2', authMiddleware, async (req, res) => {
     try {
-        const userRef = usersCollection.doc(req.userId);
-        const userDoc = await userRef.get();
-        const userData = userDoc.exists ? userDoc.data() : {};
+        const categories = await getUserCategories(req.userId);
 
         // Domyślna struktura bazy:
         // structuredCategories: [
         //   { id: '1', name: 'Spożywcze', parentId: null, color: '#ff0000', icon: 'fa-apple-alt' },
         //   { id: '2', name: 'Jedzenie/Napoje', parentId: '1' }
         // ]
-        const structuredCategories = userData.structuredCategories || [];
-        res.json(structuredCategories);
+        res.json(categories.structured);
     } catch (error) {
         console.error("Błąd pobierania kategorii hierarchicznych:", error);
         res.status(500).json({ error: 'Błąd serwera podczas pobierania kategorii w wersji 2' });

@@ -46,6 +46,7 @@ let isLoadingPurchases = false;
 let editMode = { active: false, purchaseId: null };
 let currentFile = null;
 let cameraStream = null;
+let appEventListenersInitialized = false;
 // (Charts references moved to statistics.js or removed)
 let fp_range; // For date range filter
 // --- Elementy DOM ---
@@ -219,6 +220,11 @@ async function resizeImage(file, maxSize = 1920, quality = 0.92) {
 
 // --- Główna Logika Aplikacji ---
 function setupAppEventListeners() {
+    if (appEventListenersInitialized) {
+        return;
+    }
+    appEventListenersInitialized = true;
+
     // Bottom nav tabs
     bottomNavBtns.forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
     // More tab buttons
@@ -246,6 +252,13 @@ function setupAppEventListeners() {
         // Browser back button support (obsługuje też natywny systemowy gest swipe wtecz: iOS / Android)
     window.addEventListener('popstate', (event) => {
         const state = event.state;
+        const pendingManagedCategoriesNavigation = window.pendingManagedCategoriesNavigation;
+
+        if (pendingManagedCategoriesNavigation) {
+            window.pendingManagedCategoriesNavigation = null;
+            switchTab(pendingManagedCategoriesNavigation.targetTab);
+            return;
+        }
 
         // --- 1. OBSŁUGA WARSTW (OVERLAYS) ---
         
@@ -257,10 +270,45 @@ function setupAppEventListeners() {
         }
 
         // B. Zamknij Szuflady (Selection Drawer)
-        const drawerOverlay = document.getElementById('category-drawer-overlay');
-        if (drawerOverlay && drawerOverlay.classList.contains('active')) {
+        // B. Zamknij Szuflady (Selection Drawer)
+        const categoryDrawerOverlay = document.getElementById('category-drawer-overlay');
+        if (categoryDrawerOverlay && categoryDrawerOverlay.classList.contains('active')) {
+            // Check if there's a back button (nested subcategories)
+            const backBtn = document.getElementById('category-drawer-back-btn');
+            if (backBtn && !backBtn.classList.contains('hidden')) {
+                backBtn.click();
+                return;
+            }
             closeSelectionDrawer(true);
             return; // Przechwycono wstecz
+        }
+
+        // B2. Zamknij Filter Drawer (Date/Amount/Product)
+        const filterDrawerOverlay = document.getElementById('filter-drawer-overlay');
+        if (filterDrawerOverlay && filterDrawerOverlay.classList.contains('active')) {
+            if (typeof closeFilterDrawer === 'function') closeFilterDrawer(true);
+            return;
+        }
+
+        // B3. Zamknij Category Details Drawer
+        const categoryDetailsOverlay = document.getElementById('category-details-drawer-overlay');
+        if (categoryDetailsOverlay && categoryDetailsOverlay.classList.contains('active')) {
+            if (typeof closeCategoryDetailsDrawer === 'function') closeCategoryDetailsDrawer(true);
+            return;
+        }
+
+        // B4. Zamknij Tags Selection Drawer
+        const tagsSelectionOverlay = document.getElementById('tags-selection-overlay');
+        if (tagsSelectionOverlay && tagsSelectionOverlay.classList.contains('active')) {
+            if (typeof closeTagsDrawer === 'function') closeTagsDrawer();
+            return;
+        }
+
+        // B5. Zamknij Product Drawer
+        const productDrawerOverlay = document.getElementById('product-drawer-overlay');
+        if (productDrawerOverlay && productDrawerOverlay.classList.contains('active')) {
+            if (typeof closeProductDrawer === 'function') closeProductDrawer();
+            return;
         }
 
         // C. Zamknij Modale i Pop-upy
@@ -312,6 +360,10 @@ function setupAppEventListeners() {
     });
 
     purchaseForm.addEventListener('submit', handlePurchaseFormSubmit);
+    document.getElementById('cancel-edit-btn')?.addEventListener('click', () => {
+        if (typeof exitEditMode === 'function') exitEditMode();
+        switchTab('list'); // Go back to list after canceling
+    });
     addItemBtn.addEventListener('click', () => {
         if (typeof openProductDrawer === 'function') openProductDrawer();
     });
@@ -645,6 +697,12 @@ async function handleFilterChange() {
     if (!queryString) {
         window.addEventListener('scroll', handleInfiniteScroll);
         await loadInitialPurchases();
+        if (structuredCategories.length === 0 && allCategories.length > 0) {
+            const refetchedStructuredCategories = await apiCall('/api/categories/v2');
+            if (Array.isArray(refetchedStructuredCategories) && refetchedStructuredCategories.length > 0) {
+                structuredCategories = refetchedStructuredCategories;
+            }
+        }
         return;
     }
 
@@ -806,12 +864,37 @@ async function migrateToStructuredCategories() {
     }
 }
 
+function getFilterQueryParams() {
+    const params = new URLSearchParams();
+    
+    const keyword = document.getElementById('filter-keyword')?.value;
+    if (keyword) params.append('keyword', keyword);
+    
+    if (typeof filterCategoryValue !== 'undefined' && filterCategoryValue) params.append('category', filterCategoryValue);
+    if (typeof filterSubCategoryValue !== 'undefined' && filterSubCategoryValue) params.append('subCategory', filterSubCategoryValue);
+    if (typeof filterBudgetValue !== 'undefined' && filterBudgetValue) params.append('specialBudgetId', filterBudgetValue);
+    if (typeof filterShopValue !== 'undefined' && filterShopValue) params.append('shop', filterShopValue);
+    
+    const start = document.getElementById('filter-date-start')?.value;
+    const end = document.getElementById('filter-date-end')?.value;
+    if (start) params.append('startDate', start);
+    if (end) params.append('endDate', end);
+    
+    const min = document.getElementById('filter-min-amount')?.value;
+    const max = document.getElementById('filter-max-amount')?.value;
+    if (min) params.append('minAmount', min);
+    if (max) params.append('maxAmount', max);
+    
+    return params.toString();
+}
+
 async function loadInitialPurchases() {
     isLoadingPurchases = true;
     // Zawsze usuń listener, aby uniknąć duplikatów i zresetować stan
     window.removeEventListener('scroll', handleInfiniteScroll);
     try {
-        const { purchases, nextCursor } = await apiCall('/api/purchases');
+        const query = getFilterQueryParams();
+        const { purchases, nextCursor } = await apiCall(`/api/purchases?${query}`);
         allPurchases = purchases;
         nextPurchaseCursor = nextCursor;
         renderPurchasesList(allPurchases); // Renderuj tylko listę zakupów
@@ -831,10 +914,9 @@ async function fetchMorePurchases() {
     if (isLoadingPurchases || !nextPurchaseCursor) return;
 
     isLoadingPurchases = true;
-    // Opcjonalnie: pokaż spinner ładowania na dole listy
-
     try {
-        const { purchases, nextCursor } = await apiCall(`/api/purchases?lastVisible=${nextPurchaseCursor}`);
+        const query = getFilterQueryParams();
+        const { purchases, nextCursor } = await apiCall(`/api/purchases?lastVisible=${nextPurchaseCursor}&${query}`);
         if (purchases && purchases.length > 0) {
             allPurchases.push(...purchases);
             renderPurchasesList(purchases, true); // Renderuj tylko nowe zakupy
@@ -847,7 +929,6 @@ async function fetchMorePurchases() {
         console.error('Błąd doładowywania zakupów:', error);
     } finally {
         isLoadingPurchases = false;
-        // Ukryj spinner ładowania
     }
 }
 
@@ -921,6 +1002,13 @@ async function initializeApp() {
     // Dodaj małe opóźnienie, żeby token Firebase Auth był gotowy
     await new Promise(resolve => setTimeout(resolve, 100));
     await fetchInitialData();
+    
+    // Safety check for new users: if categories were initialized in backend, they might have been empty in the first fetch
+    if (structuredCategories.length === 0 && allCategories.length === 0) {
+        console.log("Re-fetching data for new user...");
+        await fetchInitialData(false);
+    }
+
     exitEditMode();
     handleScheduleTypeChange();
     if (typeof initHomeDashboardControls === 'function') initHomeDashboardControls();
@@ -928,8 +1016,21 @@ async function initializeApp() {
 }
 
 // Główny mechanizm obsługi stanu uwierzytelnienia
+function resetFabMenuState() {
+    const mainFabBtn = document.getElementById('main-fab-btn');
+    const fabActions = document.getElementById('fab-actions');
+    const fabOverlay = document.getElementById('fab-overlay');
+
+    fabActions?.classList.add('hidden', 'opacity-0', 'translate-y-4');
+    fabActions?.classList.remove('opacity-100', 'translate-y-0');
+    fabOverlay?.classList.add('hidden');
+    fabOverlay?.classList.remove('pointer-events-auto');
+    mainFabBtn?.classList.remove('expanded');
+}
+
 auth.onAuthStateChanged(user => {
     loadingSection.classList.add('hidden');
+    resetFabMenuState();
     if (user) {
         // Użytkownik jest zalogowany
         authSection.classList.add('hidden');

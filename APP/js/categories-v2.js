@@ -815,7 +815,7 @@ let hierarchicalDrawerStep = 1; // 1 = parent, 2 = sub
 let hierarchicalDrawerParent = null;
 let hierarchicalDrawerCallback = null;
 
-function openHierarchicalCategoryDrawer(row, currentCategory, currentSubCategory, onSelect) {
+function openHierarchicalCategoryDrawer(row, currentCategory, currentSubCategory, onSelect, showManageButton = true) {
     hierarchicalDrawerCallback = onSelect;
     hierarchicalDrawerStep = 1;
     hierarchicalDrawerParent = null;
@@ -839,7 +839,7 @@ function openHierarchicalCategoryDrawer(row, currentCategory, currentSubCategory
             color: (p.color || '#64748b') + '20'
         }));
 
-        openSelectionDrawer('Wybierz grupę', options, (parentId) => {
+        openSelectionDrawer('Wybierz kategorię', options, (parentId) => {
             const parent = structuredCategories.find(c => c.id === parentId);
             const subs = structuredCategories.filter(c => c.parentId === parentId);
 
@@ -857,7 +857,7 @@ function openHierarchicalCategoryDrawer(row, currentCategory, currentSubCategory
             }));
 
             openSelectionDrawer(
-                `${parent.name} → Podkategoria`,
+                `Kategorie: ${parent.name}`,
                 subOptions,
                 (subId) => {
                     const sub = structuredCategories.find(c => c.id === subId);
@@ -865,11 +865,11 @@ function openHierarchicalCategoryDrawer(row, currentCategory, currentSubCategory
                 },
                 currentSubCategory || '',
                 'grid',
-                false,
+                showManageButton,
                 true,
                 () => openStep1()
             );
-        }, currentParentId, 'grid', false, false);
+        }, currentParentId, 'grid', showManageButton, false);
     };
 
     openStep1();

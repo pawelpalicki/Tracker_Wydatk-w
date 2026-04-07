@@ -213,6 +213,9 @@ document.addEventListener('DOMContentLoaded', initProductDrawer);
 
 function openProductDrawer(index = null) {
     const drawerOverlay = document.getElementById('product-drawer-overlay');
+    if (drawerOverlay && !drawerOverlay.classList.contains('active')) {
+        history.pushState({ type: 'drawer', id: 'product-drawer' }, "", "");
+    }
     const drawer = document.getElementById('product-drawer');
     const title = document.getElementById('product-drawer-title');
     const form = document.getElementById('product-drawer-form');
@@ -353,12 +356,7 @@ function renderPurchasesList(purchasesToRender, append = false) {
                 ${budgetIcon ? `<div class="mb-3 w-full border-b border-white/5 pb-1">${budgetIcon}</div>` : ''}
 
                 <!-- 2. Sekcja główna wyrównana do dołu -->
-                <div class="flex items-end w-full gap-4">
-                    <!-- Logo (Dół) -->
-                    <div class="w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white font-bold shrink-0 shadow-inner">
-                        ${(p.shop || ' ').charAt(0).toUpperCase()}
-                    </div>
-
+                <div class="flex items-end w-full">
                     <!-- Blok tekstowy (Dół) -->
                     <div class="flex-1 min-w-0">
                         <!-- Wiersz 1: Sklep i Kwota -->

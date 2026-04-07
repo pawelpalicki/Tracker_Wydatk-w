@@ -82,6 +82,9 @@ let _tagsDrawerIsFilter = false;
 // Otwiera jeden, zbiorczy szufladę tagów dla wszystkich grup
 function openTagsDrawer(currentTags, onConfirm, isFilter = false) {
     const overlay = document.getElementById('tags-selection-overlay');
+    if (overlay && !overlay.classList.contains('active')) {
+        history.pushState({ type: 'drawer', id: 'tags-selection-drawer' }, "", "");
+    }
     const drawer = document.getElementById('tags-selection-drawer');
     const content = document.getElementById('tags-selection-content');
     if (!drawer || !content) {

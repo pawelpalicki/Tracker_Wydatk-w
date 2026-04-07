@@ -505,9 +505,12 @@ function openSelectionDrawer(title, options, onSelect, selectedValue = null, lay
         if (autoClose) closeSelectionDrawer();
     };
 
-    // Push state to history for back button support only if it's not already active
+    // Push state to history for back button support
     if (!overlay.classList.contains('active')) {
         history.pushState({ type: 'drawer', id: 'category-drawer' }, "", "");
+    } else if (onBack) {
+        // If drawer is already active but we are opening a sub-level, push another state
+        history.pushState({ type: 'drawer', id: 'category-drawer', sub: true }, "", "");
     }
 
     // Reset drawer state
@@ -553,13 +556,18 @@ function openSelectionDrawer(title, options, onSelect, selectedValue = null, lay
         }
     }
 
-    // Always show "Manage Categories" button in category drawers
+    // Show Manage button if requested
     if (addBtn) {
-        addBtn.classList.remove('hidden');
-        addBtn.onclick = () => {
-            closeSelectionDrawer();
-            switchTab('settings-categories');
-        };
+        if (showAddBtn) {
+            addBtn.classList.remove('hidden');
+            addBtn.onclick = (e) => {
+                e.stopPropagation();
+                navigateToCategoryManagementFromDrawer();
+            };
+        } else {
+            addBtn.classList.add('hidden');
+            addBtn.onclick = null;
+        }
     }
 
     if (titleEl) titleEl.textContent = title;
@@ -573,11 +581,27 @@ function openSelectionDrawer(title, options, onSelect, selectedValue = null, lay
 
     const renderOptions = (filterText = '') => {
         grid.innerHTML = '';
-        const filtered = options.filter(opt =>
-            opt.label.toLowerCase().includes(filterText.toLowerCase())
-        );
+        
+        // Point 11: Search includes subcategories if it's a category drawer
+        let filtered = options;
+        if (filterText.length > 0) {
+            const lowFilter = filterText.toLowerCase();
+            filtered = options.filter(opt => {
+                const matchesMain = opt.label.toLowerCase().includes(lowFilter);
+                if (matchesMain) return true;
+                
+                // If it's a category, check its subcategories in structuredCategories
+                if (title.toLowerCase().includes('kategori')) {
+                    const parent = structuredCategories.find(c => c.name === opt.label && !c.parentId);
+                    if (parent) {
+                        return structuredCategories.some(c => c.parentId === parent.id && c.name.toLowerCase().includes(lowFilter));
+                    }
+                }
+                return false;
+            });
+        }
 
-        if (addBtn) {
+        if (addBtn && title.toLowerCase().includes('kategori')) {
             if (filterText.length > 0) {
                 addBtn.classList.add('hidden');
             } else {
@@ -633,6 +657,38 @@ function closeFilterDrawer(isFromPopState = false) {
     if (!isFromPopState) {
         history.back();
     }
+}
+
+function navigateToCategoryManagementFromDrawer() {
+    let historyStepsToSkip = 1; // current category drawer state
+
+    const backBtn = document.getElementById('category-drawer-back-btn');
+    const isSubcategoryLevel = backBtn && !backBtn.classList.contains('hidden');
+    if (isSubcategoryLevel) {
+        historyStepsToSkip += 1;
+    }
+
+    const filterDrawerOverlay = document.getElementById('filter-drawer-overlay');
+    if (filterDrawerOverlay && filterDrawerOverlay.classList.contains('active')) {
+        historyStepsToSkip += 1;
+        closeFilterDrawer(true);
+    }
+
+    const productDrawerOverlay = document.getElementById('product-drawer-overlay');
+    if (productDrawerOverlay && productDrawerOverlay.classList.contains('active')) {
+        historyStepsToSkip += 1;
+        if (typeof closeProductDrawer === 'function') {
+            closeProductDrawer();
+        }
+    }
+
+    closeDrawer('category-drawer', 'category-drawer-overlay');
+
+    window.pendingManagedCategoriesNavigation = {
+        targetTab: 'settings-categories'
+    };
+
+    history.go(-historyStepsToSkip);
 }
 
 function closeSelectionDrawer(isFromPopState = false) {
@@ -1047,5 +1103,3 @@ function renderShopAutocomplete(query) {
     shopAutocompleteList.classList.remove('hidden');
 }
 // --- Przełączanie szczegółów budżetu ---
-
-
