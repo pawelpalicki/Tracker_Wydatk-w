@@ -213,9 +213,6 @@ document.addEventListener('DOMContentLoaded', initProductDrawer);
 
 function openProductDrawer(index = null) {
     const drawerOverlay = document.getElementById('product-drawer-overlay');
-    if (drawerOverlay && !drawerOverlay.classList.contains('active')) {
-        history.pushState({ type: 'drawer', id: 'product-drawer' }, "", "");
-    }
     const drawer = document.getElementById('product-drawer');
     const title = document.getElementById('product-drawer-title');
     const form = document.getElementById('product-drawer-form');
@@ -265,7 +262,10 @@ function openProductDrawer(index = null) {
         const tagsSummaryEl = document.getElementById('product-drawer-tags-summary');
         if (tagsSummaryEl) tagsSummaryEl.textContent = typeof buildTagsSummary === 'function' ? buildTagsSummary(_productDrawerTags) : 'Wybierz tagi...';
     }
-
+    const wasAlreadyOpen = drawerOverlay.classList.contains('active') || !drawerOverlay.classList.contains('hidden');
+    if (!wasAlreadyOpen && typeof acquireOverlayNavigationLock === 'function') {
+        acquireOverlayNavigationLock();
+    }
     drawerOverlay.classList.remove('hidden');
     drawer.classList.remove('hidden');
 
@@ -285,12 +285,18 @@ function closeProductDrawer() {
 
     if (!drawerOverlay || !drawer) return;
 
+    if (typeof releaseOverlayNavigationLock === 'function') {
+        releaseOverlayNavigationLock();
+    }
     drawerOverlay.classList.remove('active');
     drawer.classList.remove('active');
 
     setTimeout(() => {
         drawerOverlay.classList.add('hidden');
         drawer.classList.add('hidden');
+        if (typeof hasVisibleBlockingOverlay === 'function' && !hasVisibleBlockingOverlay()) {
+            document.body.style.overflow = '';
+        }
     }, 300);
 }
 

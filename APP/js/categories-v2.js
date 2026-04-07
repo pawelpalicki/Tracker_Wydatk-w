@@ -283,7 +283,7 @@ function openCategoryEditorDrawer(title) {
 
 function closeCategoryEditorDrawer() {
     if (typeof closeOverlay === 'function') {
-        closeOverlay('category-editor-drawer', true); 
+        closeOverlay('category-editor-drawer');
     } else {
         const overlay = document.getElementById('category-editor-drawer-overlay');
         const drawer = document.getElementById('category-editor-drawer');
@@ -628,7 +628,20 @@ function openTagFormModal(group, oldValue = null) {
     };
     labelInput.oninput = updatePreview;
 
+    const wasAlreadyOpen = !modal.classList.contains('hidden');
     modal.classList.remove('hidden');
+    if (!wasAlreadyOpen && typeof acquireOverlayNavigationLock === 'function') {
+        acquireOverlayNavigationLock();
+    }
+}
+
+function closeTagFormModal() {
+    const modal = document.getElementById('tag-form-modal');
+    if (!modal || modal.classList.contains('hidden')) return;
+    modal.classList.add('hidden');
+    if (typeof releaseOverlayNavigationLock === 'function') {
+        releaseOverlayNavigationLock();
+    }
 }
 
 async function saveTagFromModal() {
@@ -652,7 +665,7 @@ async function saveTagFromModal() {
         } else {
             await apiCall(`/api/tags/${group}`, 'POST', { value, label: labelRaw, icon });
         }
-        document.getElementById('tag-form-modal').classList.add('hidden');
+        closeTagFormModal();
         if (typeof fetchInitialData === 'function') await fetchInitialData(false);
         renderTagsManager();
     } catch (err) {
@@ -708,7 +721,20 @@ function openTagGroupModal(existingGroup = null) {
         keyPreview.textContent = raw || '—';
     };
     labelInput.oninput = updateKey;
+    const wasAlreadyOpen = !modal.classList.contains('hidden');
     modal.classList.remove('hidden');
+    if (!wasAlreadyOpen && typeof acquireOverlayNavigationLock === 'function') {
+        acquireOverlayNavigationLock();
+    }
+}
+
+function closeTagGroupModal() {
+    const modal = document.getElementById('tag-group-modal');
+    if (!modal || modal.classList.contains('hidden')) return;
+    modal.classList.add('hidden');
+    if (typeof releaseOverlayNavigationLock === 'function') {
+        releaseOverlayNavigationLock();
+    }
 }
 
 async function saveTagGroup() {
@@ -735,7 +761,7 @@ async function saveTagGroup() {
             if (groupKey === '—' || !groupKey) { alert('Błąd: Nieprawidłowy klucz grupy.'); return; }
             await apiCall('/api/tags/groups', 'POST', { group: groupKey, label, firstLabel, firstIcon });
         }
-        document.getElementById('tag-group-modal').classList.add('hidden');
+        closeTagGroupModal();
         if (typeof fetchInitialData === 'function') await fetchInitialData(false);
         renderTagsManager();
     } catch (err) {
@@ -761,19 +787,19 @@ function initTagsManagerEvents() {
 
     // Przyciski modalu tagu
     document.getElementById('tag-form-cancel-btn')?.addEventListener('click', () => {
-        document.getElementById('tag-form-modal').classList.add('hidden');
+        closeTagFormModal();
     });
     document.getElementById('tag-form-modal-backdrop')?.addEventListener('click', () => {
-        document.getElementById('tag-form-modal').classList.add('hidden');
+        closeTagFormModal();
     });
     document.getElementById('tag-form-save-btn')?.addEventListener('click', saveTagFromModal);
 
     // Przyciski modalu grupy
     document.getElementById('tag-group-cancel-btn')?.addEventListener('click', () => {
-        document.getElementById('tag-group-modal').classList.add('hidden');
+        closeTagGroupModal();
     });
     document.getElementById('tag-group-modal-backdrop')?.addEventListener('click', () => {
-        document.getElementById('tag-group-modal').classList.add('hidden');
+        closeTagGroupModal();
     });
     document.getElementById('tag-group-save-btn')?.addEventListener('click', saveTagGroup);
 

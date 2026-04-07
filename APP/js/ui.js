@@ -421,11 +421,6 @@ function openFilterDrawer(title, type, onApply) {
 
     if (!overlay || !drawer || !content) return;
 
-    // Push state to history for back button support only if it's not already active
-    if (!overlay.classList.contains('active')) {
-        history.pushState({ type: 'drawer', id: 'filter-drawer' }, "", "");
-    }
-
     titleEl.textContent = title;
     content.innerHTML = '';
 
@@ -504,14 +499,6 @@ function openSelectionDrawer(title, options, onSelect, selectedValue = null, lay
         onSelect(...args);
         if (autoClose) closeSelectionDrawer();
     };
-
-    // Push state to history for back button support
-    if (!overlay.classList.contains('active')) {
-        history.pushState({ type: 'drawer', id: 'category-drawer' }, "", "");
-    } else if (onBack) {
-        // If drawer is already active but we are opening a sub-level, push another state
-        history.pushState({ type: 'drawer', id: 'category-drawer', sub: true }, "", "");
-    }
 
     // Reset drawer state
     if (addBtn) addBtn.classList.remove('hidden');
@@ -650,54 +637,29 @@ function openSelectionDrawer(title, options, onSelect, selectedValue = null, lay
     openDrawer('category-drawer', 'category-drawer-overlay');
 }
 
-function closeFilterDrawer(isFromPopState = false) {
+function closeFilterDrawer() {
     closeDrawer('filter-drawer', 'filter-drawer-overlay');
-    
-    // Po zamknięciu, jeśli nie pochodzi z popstate, cofnij się w historii
-    if (!isFromPopState) {
-        history.back();
-    }
 }
 
 function navigateToCategoryManagementFromDrawer() {
-    let historyStepsToSkip = 1; // current category drawer state
-
-    const backBtn = document.getElementById('category-drawer-back-btn');
-    const isSubcategoryLevel = backBtn && !backBtn.classList.contains('hidden');
-    if (isSubcategoryLevel) {
-        historyStepsToSkip += 1;
-    }
-
     const filterDrawerOverlay = document.getElementById('filter-drawer-overlay');
     if (filterDrawerOverlay && filterDrawerOverlay.classList.contains('active')) {
-        historyStepsToSkip += 1;
-        closeFilterDrawer(true);
+        closeFilterDrawer();
     }
 
     const productDrawerOverlay = document.getElementById('product-drawer-overlay');
     if (productDrawerOverlay && productDrawerOverlay.classList.contains('active')) {
-        historyStepsToSkip += 1;
         if (typeof closeProductDrawer === 'function') {
             closeProductDrawer();
         }
     }
 
     closeDrawer('category-drawer', 'category-drawer-overlay');
-
-    window.pendingManagedCategoriesNavigation = {
-        targetTab: 'settings-categories'
-    };
-
-    history.go(-historyStepsToSkip);
+    switchTab('settings-categories');
 }
 
-function closeSelectionDrawer(isFromPopState = false) {
+function closeSelectionDrawer() {
     closeDrawer('category-drawer', 'category-drawer-overlay');
-    
-    // Po zamknięciu, jeśli nie pochodzi z popstate, cofnij się w historii
-    if (!isFromPopState) {
-        history.back();
-    }
 }
 
 window.closeSelectionDrawer = closeSelectionDrawer;
@@ -796,11 +758,86 @@ function exitEditMode() {
 }
 
 // --- Wspólne funkcje dla drawer'ów ---
+let overlayNavigationLockDepth = 0;
+let shouldIgnoreNextOverlayLockPopstate = false;
+
+function getCurrentTabHistoryState() {
+    const activeTab = document.querySelector('.tab-content.active');
+    const currentTabId = activeTab ? activeTab.id.replace('-tab', '') : 'home';
+    return { type: 'tab', id: currentTabId };
+}
+
+function hasVisibleBlockingOverlay() {
+    return !!document.querySelector(`
+        #filter-drawer-overlay.active,
+        #category-drawer-overlay.active,
+        #category-details-drawer-overlay.active,
+        #product-drawer-overlay.active,
+        #tags-selection-overlay.active,
+        #category-editor-drawer-overlay.active,
+        #copy-budget-modal:not(.hidden),
+        #edit-special-budget-modal:not(.hidden),
+        #tag-form-modal:not(.hidden),
+        #tag-group-modal:not(.hidden)
+    `);
+}
+
+function acquireOverlayNavigationLock() {
+    overlayNavigationLockDepth += 1;
+    if (overlayNavigationLockDepth > 1) return;
+
+    const currentState = history.state;
+    const baseState = currentState && currentState.type === 'tab'
+        ? { type: 'tab', id: currentState.id }
+        : getCurrentTabHistoryState();
+
+    history.pushState({ ...baseState, overlayLock: true }, "", "");
+}
+
+function releaseOverlayNavigationLock() {
+    if (overlayNavigationLockDepth === 0) return;
+
+    overlayNavigationLockDepth -= 1;
+    if (overlayNavigationLockDepth > 0) return;
+
+    if (history.state && history.state.overlayLock) {
+        shouldIgnoreNextOverlayLockPopstate = true;
+        history.back();
+    }
+}
+
+function reapplyOverlayNavigationLock() {
+    const baseState = getCurrentTabHistoryState();
+    history.pushState({ ...baseState, overlayLock: true }, "", "");
+}
+
+function consumeOverlayLockPopstateIgnore() {
+    if (!shouldIgnoreNextOverlayLockPopstate) return false;
+    shouldIgnoreNextOverlayLockPopstate = false;
+    return true;
+}
+
+function restoreBodyScrollIfNeeded() {
+    if (!hasVisibleBlockingOverlay()) {
+        document.body.style.overflow = '';
+    }
+}
+
+window.hasVisibleBlockingOverlay = hasVisibleBlockingOverlay;
+window.reapplyOverlayNavigationLock = reapplyOverlayNavigationLock;
+window.consumeOverlayLockPopstateIgnore = consumeOverlayLockPopstateIgnore;
+window.acquireOverlayNavigationLock = acquireOverlayNavigationLock;
+window.releaseOverlayNavigationLock = releaseOverlayNavigationLock;
+
 function openDrawer(drawerId, overlayId) {
     const drawer = document.getElementById(drawerId);
     const overlay = document.getElementById(overlayId);
     if (!drawer || !overlay) return;
 
+    const wasAlreadyOpen = overlay.classList.contains('active') || !overlay.classList.contains('hidden');
+    if (!wasAlreadyOpen) {
+        acquireOverlayNavigationLock();
+    }
     drawer.classList.remove('hidden');
     overlay.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
@@ -816,13 +853,14 @@ function closeDrawer(drawerId, overlayId) {
     const overlay = document.getElementById(overlayId);
     if (!drawer || !overlay) return;
 
+    releaseOverlayNavigationLock();
     drawer.classList.remove('active');
     overlay.classList.remove('active');
 
     setTimeout(() => {
         drawer.classList.add('hidden');
         overlay.classList.add('hidden');
-        document.body.style.overflow = '';
+        restoreBodyScrollIfNeeded();
     }, 300);
 }
 
@@ -831,9 +869,10 @@ function openOverlay(elementId) {
     const overlay = document.getElementById(elementId + '-overlay');
     if (!el) return;
 
-    // Push state to history so "back" closes only this overlay
-    history.pushState({ type: 'overlay', id: elementId }, "", "");
-    
+    const wasAlreadyOpen = el.classList.contains('active') || !el.classList.contains('hidden');
+    if (!wasAlreadyOpen) {
+        acquireOverlayNavigationLock();
+    }
     el.classList.remove('hidden');
     if (overlay) overlay.classList.remove('hidden');
 
@@ -845,28 +884,19 @@ function openOverlay(elementId) {
     }, 10);
 }
 
-function closeOverlay(elementId, isFromPopState = false) {
+function closeOverlay(elementId) {
     const el = document.getElementById(elementId);
     const overlay = document.getElementById(elementId + '-overlay');
     if (!el) return;
 
-    // Zawsze zamknij overlay
+    releaseOverlayNavigationLock();
     el.classList.remove('active');
     if (overlay) overlay.classList.remove('active');
 
     setTimeout(() => {
         el.classList.add('hidden');
         if (overlay) overlay.classList.add('hidden');
-        
-        const otherOpenModals = document.querySelectorAll('.active[id*="drawer"], .active[id*="modal"]');
-        if (otherOpenModals.length === 0) {
-            document.body.style.overflow = '';
-        }
-        
-        // Po zamknięciu, jeśli nie pochodzi z popstate, cofnij się w historii
-        if (!isFromPopState) {
-            history.back();
-        }
+        restoreBodyScrollIfNeeded();
     }, 300);
 }
 
@@ -955,6 +985,7 @@ function renderCategoryDetailsModal(category, items, isSubCategoryView = false) 
     const closeBtn = document.getElementById('close-category-details-drawer');
     
     if (drawer && overlay) {
+        const wasAlreadyOpen = overlay.classList.contains('active') || !overlay.classList.contains('hidden');
         // Ustawić handlery zamykania
         if (closeBtn) {
             closeBtn.onclick = (e) => {
@@ -973,8 +1004,8 @@ function renderCategoryDetailsModal(category, items, isSubCategoryView = false) 
         drawer.classList.remove('hidden');
         overlay.classList.remove('hidden');
         
-        if (!overlay.classList.contains('active')) {
-            history.pushState({ type: 'drawer', id: 'category-details-drawer' }, "", "");
+        if (!wasAlreadyOpen) {
+            acquireOverlayNavigationLock();
         }
         document.body.style.overflow = 'hidden';
 
@@ -985,13 +1016,8 @@ function renderCategoryDetailsModal(category, items, isSubCategoryView = false) 
     }
 }
 
-function closeCategoryDetailsDrawer(isFromPopState = false) {
+function closeCategoryDetailsDrawer() {
     closeDrawer('category-details-drawer', 'category-details-drawer-overlay');
-    
-    // Po zamknięciu, jeśli nie pochodzi z popstate, cofnij się w historii
-    if (!isFromPopState) {
-        history.back();
-    }
 }
 
 // --- Obsługa aparatu ---

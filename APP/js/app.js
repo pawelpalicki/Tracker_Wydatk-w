@@ -249,100 +249,24 @@ function setupAppEventListeners() {
         });
         }
 
-        // Browser back button support (obsługuje też natywny systemowy gest swipe wtecz: iOS / Android)
+        // Browser back button support (obsługuje też natywny systemowy gest swipe wstecz: iOS / Android)
     window.addEventListener('popstate', (event) => {
         const state = event.state;
-        const pendingManagedCategoriesNavigation = window.pendingManagedCategoriesNavigation;
-
-        if (pendingManagedCategoriesNavigation) {
-            window.pendingManagedCategoriesNavigation = null;
-            switchTab(pendingManagedCategoriesNavigation.targetTab);
+        
+        if (typeof consumeOverlayLockPopstateIgnore === 'function' && consumeOverlayLockPopstateIgnore()) {
             return;
         }
 
-        // --- 1. OBSŁUGA WARSTW (OVERLAYS) ---
-        
-        // Zamknij Overlay (Modal/Popup) jeśli stan to 'overlay'
-        if (state && state.type === 'overlay') {
-            // Myślimy odwrotnie: jeśli w historii JEST stan overlay, to go pokazujemy
-            // Ale tu jesteśmy w popstate, co oznacza że WŁAŚNIE WRÓCILIŚMY ze stanu overlay.
-            // Więc szukamy co jest aktualnie otwarte w DOM i to zamykamy.
-        }
-
-        // B. Zamknij Szuflady (Selection Drawer)
-        // B. Zamknij Szuflady (Selection Drawer)
-        const categoryDrawerOverlay = document.getElementById('category-drawer-overlay');
-        if (categoryDrawerOverlay && categoryDrawerOverlay.classList.contains('active')) {
-            // Check if there's a back button (nested subcategories)
-            const backBtn = document.getElementById('category-drawer-back-btn');
-            if (backBtn && !backBtn.classList.contains('hidden')) {
-                backBtn.click();
-                return;
+        if (typeof hasVisibleBlockingOverlay === 'function' && hasVisibleBlockingOverlay()) {
+            if (typeof reapplyOverlayNavigationLock === 'function') {
+                reapplyOverlayNavigationLock();
             }
-            closeSelectionDrawer(true);
-            return; // Przechwycono wstecz
-        }
-
-        // B2. Zamknij Filter Drawer (Date/Amount/Product)
-        const filterDrawerOverlay = document.getElementById('filter-drawer-overlay');
-        if (filterDrawerOverlay && filterDrawerOverlay.classList.contains('active')) {
-            if (typeof closeFilterDrawer === 'function') closeFilterDrawer(true);
             return;
         }
 
-        // B3. Zamknij Category Details Drawer
-        const categoryDetailsOverlay = document.getElementById('category-details-drawer-overlay');
-        if (categoryDetailsOverlay && categoryDetailsOverlay.classList.contains('active')) {
-            if (typeof closeCategoryDetailsDrawer === 'function') closeCategoryDetailsDrawer(true);
-            return;
-        }
-
-        // B4. Zamknij Tags Selection Drawer
-        const tagsSelectionOverlay = document.getElementById('tags-selection-overlay');
-        if (tagsSelectionOverlay && tagsSelectionOverlay.classList.contains('active')) {
-            if (typeof closeTagsDrawer === 'function') closeTagsDrawer();
-            return;
-        }
-
-        // B5. Zamknij Product Drawer
-        const productDrawerOverlay = document.getElementById('product-drawer-overlay');
-        if (productDrawerOverlay && productDrawerOverlay.classList.contains('active')) {
-            if (typeof closeProductDrawer === 'function') closeProductDrawer();
-            return;
-        }
-
-        // C. Zamknij Modale i Pop-upy
-        const activeModals = document.querySelectorAll(`
-            #category-details-modal:not(.hidden), 
-            #receipt-modal:not(.hidden), 
-            #receipt-modal-analysis:not(.hidden), 
-            #month-picker-popup:not(.hidden), 
-            #comparison-year-popup:not(.hidden), 
-            #period-type-popup:not(.hidden), 
-            #shop-autocomplete-list:not(.hidden),
-            #custom-start-popup:not(.hidden),
-            #custom-end-popup:not(.hidden),
-            #copy-budget-modal:not(.hidden),
-            #edit-special-budget-modal:not(.hidden)
-        `);
-
-        if (activeModals.length > 0) {
-            activeModals.forEach(m => {
-                if (typeof closeOverlay === 'function') {
-                    closeOverlay(m.id, true);
-                } else {
-                    m.classList.add('hidden');
-                }
-            });
-            return; // Przechwycono wstecz
-        }
-
-        // --- 2. NAWIGACJA MIĘDZY WIDOKAMI (TABS) ---
-        
         if (state && state.type === 'tab') {
             switchTab(state.id, false);
         } else if (!state) {
-            // Jeśli brak stanu (np. powrót do startu sesji), wymuś Kokpit
             switchTab('home', false);
         }
     });

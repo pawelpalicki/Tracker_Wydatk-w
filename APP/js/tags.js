@@ -82,9 +82,6 @@ let _tagsDrawerIsFilter = false;
 // Otwiera jeden, zbiorczy szufladę tagów dla wszystkich grup
 function openTagsDrawer(currentTags, onConfirm, isFilter = false) {
     const overlay = document.getElementById('tags-selection-overlay');
-    if (overlay && !overlay.classList.contains('active')) {
-        history.pushState({ type: 'drawer', id: 'tags-selection-drawer' }, "", "");
-    }
     const drawer = document.getElementById('tags-selection-drawer');
     const content = document.getElementById('tags-selection-content');
     if (!drawer || !content) {
@@ -147,7 +144,10 @@ function openTagsDrawer(currentTags, onConfirm, isFilter = false) {
 
         _tagsDrawerCurrentValues[group] = (val === 'all') ? null : val;
     };
-
+    const wasAlreadyOpen = overlay.classList.contains('active') || !overlay.classList.contains('hidden');
+    if (!wasAlreadyOpen && typeof acquireOverlayNavigationLock === 'function') {
+        acquireOverlayNavigationLock();
+    }
     overlay.classList.remove('hidden');
     drawer.classList.remove('hidden');
     setTimeout(() => {
@@ -162,11 +162,17 @@ function closeTagsDrawer() {
     const drawer = document.getElementById('tags-selection-drawer');
     if (!overlay || !drawer) return;
 
+    if (typeof releaseOverlayNavigationLock === 'function') {
+        releaseOverlayNavigationLock();
+    }
     overlay.classList.remove('active');
     drawer.classList.remove('active');
     setTimeout(() => {
         overlay.classList.add('hidden');
-        document.body.style.overflow = '';
+        drawer.classList.add('hidden');
+        if (typeof hasVisibleBlockingOverlay === 'function' && !hasVisibleBlockingOverlay()) {
+            document.body.style.overflow = '';
+        }
     }, 300);
 }
 
@@ -188,7 +194,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function initTagsSelectionDrawer() {
     document.getElementById('close-tags-selection-drawer')?.addEventListener('click', closeTagsDrawer);
-    document.getElementById('tags-selection-overlay')?.addEventListener('click', closeTagsDrawer);
+    document.getElementById('tags-selection-overlay')?.addEventListener('click', (e) => {
+        if (e.target.id === 'tags-selection-overlay') closeTagsDrawer();
+    });
     document.getElementById('tags-selection-confirm-btn')?.addEventListener('click', () => {
         if (typeof _tagsDrawerCallback === 'function') {
             _tagsDrawerCallback(Object.assign({}, _tagsDrawerCurrentValues));
