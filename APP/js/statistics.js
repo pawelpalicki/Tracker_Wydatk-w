@@ -188,7 +188,16 @@ async function renderHomeSummary() {
 
         // Update total
         const totalEl = document.getElementById('home-total-spent');
-        if (totalEl) totalEl.textContent = formatAmount(totalSpent);
+        const infoEl = document.getElementById('home-budget-info');
+        if (totalEl) {
+            totalEl.innerHTML = totalBudget > 0
+                ? `${formatAmount(totalSpent)} <span class="text-lg font-bold text-indigo-200/55 align-baseline mx-1">/</span><span class="text-lg font-bold text-indigo-200/75 align-baseline">${formatAmount(totalBudget)}</span>`
+                : formatAmount(totalSpent);
+        }
+        if (infoEl) {
+            infoEl.textContent = 'Brak budżetu';
+            infoEl.classList.toggle('hidden', totalBudget > 0);
+        }
 
         // --- PRZYWRÓCONO: Aktualizacja plakietki porównania ---
         updateHomeComparisonBadge(comparisonData.monthlyTotals, month, prevMonthKey, isCurrentMonth);
@@ -196,25 +205,12 @@ async function renderHomeSummary() {
         // --- AKTUALIZACJA SEKCJI MOBILIZACJI ---
         renderHomeMobilizationInsights(purchases, totalBudget, isCurrentMonth);
 
-        const infoEl = document.getElementById('home-budget-info');
         const barWrapper = document.getElementById('home-budget-bar-wrapper');
         const progressEl = document.getElementById('home-budget-progress');
         const pctEl = document.getElementById('home-budget-pct');
-        const maxEl = document.getElementById('home-budget-max');
-
         if (totalBudget > 0) {
             const pct = Math.round((totalSpent / totalBudget) * 100);
             const isOver = totalSpent > totalBudget;
-            
-            if (infoEl) {
-                if (isOver) {
-                    const over = totalSpent - totalBudget;
-                    infoEl.innerHTML = `<span class="text-red-400 font-semibold">Przekroczono o: ${formatAmount(over)}</span> <span class="text-gray-400 text-xs">z ${formatAmount(totalBudget)}</span>`;
-                } else {
-                    const remaining = totalBudget - totalSpent;
-                    infoEl.textContent = `Pozostało: ${formatAmount(remaining)} z ${formatAmount(totalBudget)}`;
-                }
-            }
 
             if (barWrapper) barWrapper.classList.remove('hidden');
             if (progressEl) {
@@ -223,9 +219,7 @@ async function renderHomeSummary() {
                 progressEl.className = `h-2 rounded-full transition-all duration-500 ${isOver ? 'bg-red-500' : pct >= 80 ? 'bg-yellow-400' : 'bg-brand-500'}`;
             }
             if (pctEl) pctEl.textContent = pct + '%';
-            if (maxEl) maxEl.textContent = formatAmount(totalBudget);
         } else {
-            if (infoEl) infoEl.textContent = 'Brak ustawionego budżetu';
             if (barWrapper) barWrapper.classList.add('hidden');
         }
 
@@ -255,8 +249,9 @@ function updateHomeComparisonBadge(monthlyTotals, currentKey, prevKey, isCurrent
 function renderHomeMobilizationInsights(purchases, totalBudget, isCurrentMonth) {
     const section = document.getElementById('home-mobilization-section');
     if (!section || !isCurrentMonth || totalBudget <= 0) { if (section) section.classList.add('hidden'); return; }
-    const now = new Date(), day = now.getDate(), days = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate(), rem = days - day; 
+    const now = new Date(), day = now.getDate(), days = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate(), rem = days - day;
     let fxd = 0, flx = 0, wants = 0;
+
     purchases.forEach(p => (p.items || []).forEach(i => {
         const isFixed = i.tags?.nature === 'stały' || ['rachunki', 'czynsz', 'kaucje'].includes(i.category?.toLowerCase());
         if (isFixed) {
@@ -268,37 +263,43 @@ function renderHomeMobilizationInsights(purchases, totalBudget, isCurrentMonth) 
             }
         }
     }));
+
     let upc = 0;
     if (Array.isArray(allRecurringExpenses)) {
-        allRecurringExpenses.forEach(r => { if (!purchases.some(p => p.date.substring(0, 7) === now.toISOString().substring(0, 7) && p.shop.toLowerCase().includes(r.name.toLowerCase()))) upc += r.amount || 0; });
+        allRecurringExpenses.forEach(r => {
+            if (!purchases.some(p => p.date.substring(0, 7) === now.toISOString().substring(0, 7) && p.shop.toLowerCase().includes(r.name.toLowerCase()))) {
+                upc += r.amount || 0;
+            }
+        });
     }
+
     const proj = fxd + upc + flx + (flx / day * rem);
     const lim = Math.max(0, totalBudget - fxd - upc - flx) / (rem + 1);
-    if (document.getElementById('insight-daily-limit')) document.getElementById('insight-daily-limit').textContent = lim.toFixed(0) + ' zł';
-    if (document.getElementById('insight-projection')) document.getElementById('insight-projection').textContent = proj.toFixed(0) + ' zł';
+    const dailyLimitEl = document.getElementById('insight-daily-limit');
+    const projectionEl = document.getElementById('insight-projection');
+    const wantsEl = document.getElementById('insight-wants');
+
+    if (dailyLimitEl) dailyLimitEl.textContent = formatAmount(lim);
+    if (projectionEl) projectionEl.textContent = formatAmount(proj);
+    if (wantsEl) wantsEl.textContent = formatAmount(wants);
+
     const dEl = document.getElementById('insight-projection-diff');
     if (dEl) {
         const df = totalBudget - proj;
-        dEl.textContent = `${Math.abs(df).toFixed(0)} zł ${df >= 0 ? 'zapasu' : 'nadwyżki'}`;
-        dEl.className = `text-[8px] font-bold leading-none ${df >= 0 ? 'text-green-400' : 'text-red-400'}`;
+        dEl.textContent = `${formatAmount(Math.abs(df))} ${df >= 0 ? 'zapasu' : 'przekroczenia'}`;
+        dEl.className = `text-[9px] font-bold leading-tight mt-0.5 break-words ${df >= 0 ? 'text-green-400' : 'text-red-400'}`;
     }
+
     const c = document.getElementById('insight-text-container');
     c.innerHTML = '';
-    
+
     if (proj > totalBudget) {
         const d = document.createElement('div');
         d.className = 'text-[8px] text-red-300 font-bold flex items-center gap-1';
         d.innerHTML = `<i class="fas fa-triangle-exclamation"></i> Przekroczysz o ~${formatAmount(proj - totalBudget)}`;
         c.appendChild(d);
     }
-    
-    if (wants > 0) {
-        const d = document.createElement('div');
-        d.className = 'text-[8px] text-yellow-400 flex items-center gap-1 mt-0.5';
-        d.innerHTML = `<i class="fas fa-ice-cream"></i> Przyjemności: ${formatAmount(wants)}`;
-        c.appendChild(d);
-    }
-    
+
     section.classList.remove('hidden');
 }
 /** KONIEC SEKCJI MOBILIZACJA */
