@@ -132,10 +132,10 @@
             </div>
         </header>
 
-        <main class="max-w-screen-xl mx-auto pt-4 pb-24 px-2 sm:px-6 lg:px-8">
+        <main class="max-w-screen-xl mx-auto pb-24 px-2 sm:px-6 lg:px-8">
 
             <!-- Home / Start -->
-            <div id="home-tab" class="tab-content active">
+            <div id="home-tab" class="tab-content active pt-1">
 
                 <!-- Month Summary Card -->
                 <div class="glass-card rounded-2xl p-4 sm:p-5 mb-4" style="touch-action: pan-y">
@@ -179,9 +179,25 @@
                                     <div class="flex items-baseline gap-2 mb-1">
                                         <p id="home-total-spent" class="text-3xl font-extrabold text-white tracking-tight">0.00 zł</p>
                                         <div id="home-comparison-badge" class="hidden px-2 py-0.5 rounded-lg text-[10px] font-bold flex items-center gap-1 transition-all duration-300"></div>
+                                        <span id="home-comparison-label" class="hidden text-[8px] text-indigo-300/60 uppercase font-bold tracking-tighter">vs poprz. m-c</span>
                                     </div>
                                     <div class="flex items-center justify-start gap-2 mt-2">
                                         <span id="home-budget-info" class="text-xs text-indigo-200/60 font-medium italic hidden">Brak budżetu</span>
+                                    </div>
+                                </div>
+
+                                <!-- Budget progress bar -->
+                                <div id="home-budget-bar-wrapper" class="hidden mb-5">
+                                    <div class="flex justify-between text-[10px] text-indigo-300/70 mb-2 uppercase tracking-wider font-bold">
+                                        <span>Postęp budżetu</span>
+                                        <span id="home-budget-pct">0%</span>
+                                    </div>
+                                    <div class="w-full bg-white/10 rounded-full h-2 overflow-hidden backdrop-blur-sm border border-white/5">
+                                        <div id="home-budget-progress" class="h-full rounded-full transition-all duration-700 shadow-[0_0_15px_rgba(99,102,241,0.4)]"
+                                            style="width:0%"></div>
+                                    </div>
+                                    <div class="flex justify-end mt-1.5">
+                                        <p class="text-[10px] text-indigo-300/50 font-bold uppercase tracking-tight">Budżet: <span id="home-budget-total" class="text-indigo-200/80 ml-1">0.00 zł</span></p>
                                     </div>
                                 </div>
 
@@ -205,18 +221,6 @@
                                     <div id="insight-text-container" class="mt-1.5 space-y-0.5 empty:hidden"></div>
                                 </div>
                                 <!-- SEKCJA MOBILIZACJA (Koniec) -->
-
-                                <!-- Budget progress bar -->
-                                <div id="home-budget-bar-wrapper" class="hidden">
-                                    <div class="flex justify-between text-[10px] text-indigo-300/70 mb-2 uppercase tracking-wider font-bold">
-                                        <span>Postęp budżetu</span>
-                                        <span id="home-budget-pct">0%</span>
-                                    </div>
-                                    <div class="w-full bg-white/10 rounded-full h-2 overflow-hidden backdrop-blur-sm border border-white/5">
-                                        <div id="home-budget-progress" class="h-full rounded-full transition-all duration-700 shadow-[0_0_15px_rgba(99,102,241,0.4)]"
-                                            style="width:0%"></div>
-                                    </div>
-                                </div>
                             </div>
                         </div>
 
@@ -250,17 +254,16 @@
                 </div>
 
                 <!-- Recent Transactions -->
-                <div class="glass-card rounded-2xl p-4 sm:p-5">
-                    <div class="flex justify-between items-center mb-3">
-                        <h3 class="text-sm font-semibold text-white">Ostatnie transakcje</h3>
+                <div class="px-1 mt-6">
+                    <div class="flex justify-between items-center mb-3 ml-1">
+                        <h3 class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Ostatnie transakcje</h3>
                         <button onclick="switchTab('list')"
-                            class="text-xs text-brand-400 hover:text-brand-300 transition-colors">Zobacz wszystkie
-                            &rarr;</button>
+                            class="text-[10px] font-bold text-brand-400 hover:text-brand-300 transition-colors uppercase tracking-widest">Zobacz wszystkie &rarr;</button>
                     </div>
-                    <div id="home-recent-transactions" class="">
+                    <div id="home-recent-transactions" class="space-y-2">
                         <!-- Rendered by JS -->
                     </div>
-                    <div id="home-no-transactions" class="hidden text-center py-6">
+                    <div id="home-no-transactions" class="hidden text-center py-6 glass-card rounded-2xl">
                         <p class="text-sm text-gray-400">Brak transakcji w tym miesiącu</p>
                     </div>
                 </div>
@@ -268,7 +271,7 @@
             </div>
             <!-- END home-tab -->
 
-            <div id="add-tab" class="tab-content">
+            <div id="add-tab" class="tab-content pt-1">
                 <div id="scanner-container" class="glass-card rounded-2xl p-6 mb-6 hidden relative overflow-hidden">
                     <h3 class="text-lg font-semibold mb-4 text-white">Skanowanie paragonu</h3>
                     
@@ -316,7 +319,7 @@
                     </div>
                 </div>
 
-                <div class="glass-card rounded-2xl px-3 py-4">
+                <div class="px-1 py-2">
                     <form id="purchase-form">
                         <div class="space-y-3 mb-3">
                             <div>
@@ -389,7 +392,7 @@
                 </div>
             </div>
 
-            <div id="list-tab" class="tab-content">
+            <div id="list-tab" class="tab-content pt-1">
                 <!-- New Filter UI -->
                 <div class="mb-4">
                     <!-- Search Bar -->
@@ -455,62 +458,96 @@
             </div>
 
             <!-- Ustawienia: Główne -->
-            <div id="settings-tab" class="tab-content">
-                <div class="glass-card rounded-2xl p-6 mb-6">
-                    <div class="space-y-4">
-                        <button onclick="switchTab('settings-categories')"
-                            class="w-full flex justify-between p-4 bg-white/5 hover:bg-white/10 rounded-xl text-white font-medium transition-all group">
-                            <span>Zarządzaj Kategoriami</span>
-                            <span
-                                class="text-gray-500 group-hover:text-white transform group-hover:translate-x-1 transition-all">></span>
-                        </button>
-                        <button onclick="switchTab('settings-budget')"
-                            class="w-full flex justify-between p-4 bg-white/5 hover:bg-white/10 rounded-xl text-white font-medium transition-all group">
-                            <span>Zarządzaj Budżetem</span>
-                            <span
-                                class="text-gray-500 group-hover:text-white transform group-hover:translate-x-1 transition-all">></span>
-                        </button>
-                        <button onclick="switchTab('settings-special')"
-                            class="w-full flex justify-between p-4 bg-white/5 hover:bg-white/10 rounded-xl text-white font-medium transition-all group">
-                            <span>Budżety Specjalne</span>
-                            <span
-                                class="text-gray-500 group-hover:text-white transform group-hover:translate-x-1 transition-all">></span>
-                        </button>
-                        <button onclick="switchTab('settings-recurring')"
-                            class="w-full flex justify-between p-4 bg-white/5 hover:bg-white/10 rounded-xl text-white font-medium transition-all group">
-                            <span>Subskrypcje (Cykliczne)</span>
-                            <span
-                                class="text-gray-500 group-hover:text-white transform group-hover:translate-x-1 transition-all">></span>
-                        </button>
-                        <button id="refresh-shops-btn"
-                            class="hidden w-full flex justify-between p-4 bg-white/5 hover:bg-white/10 rounded-xl text-brand-400 font-medium transition-all group border border-brand-500/20">
-                            <span>Odśwież listę sklepów</span>
-                            <svg class="w-5 h-5 text-brand-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            <div id="settings-tab" class="tab-content px-2 pt-1">
+                <div class="space-y-1">
+                    
+                    <!-- Sekcja: Organizacja -->
+                    <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 ml-1">Organizacja</p>
+                    <button onclick="switchTab('settings-categories')"
+                        class="w-full flex items-center justify-between p-3 bg-white/5 hover:bg-white/10 rounded-xl border border-white/5 transition-all group">
+                        <div class="flex items-center space-x-3 text-white">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 opacity-70 group-hover:opacity-100 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
                             </svg>
-                        </button>
+                            <span class="font-medium text-sm">Zarządzaj kategoriami</span>
+                        </div>
+                        <i class="fas fa-chevron-right text-gray-600 group-hover:text-white transition-colors text-[10px]"></i>
+                    </button>
+
+                    <button id="refresh-shops-btn"
+                        class="hidden w-full flex items-center justify-between p-3 bg-white/5 hover:bg-white/10 rounded-xl border border-white/5 transition-all group">
+                        <div class="flex items-center space-x-3 text-white">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 opacity-70 group-hover:opacity-100 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                            </svg>
+                            <span class="font-medium text-sm">Lista sklepów</span>
+                        </div>
+                        <i class="fas fa-sync text-gray-600 group-hover:text-white transition-colors text-[10px]"></i>
+                    </button>
+
+                    <!-- Separator -->
+                    <div class="py-2">
+                        <div class="h-px bg-white/5 mx-2"></div>
                     </div>
+
+                    <!-- Sekcja: Finanse -->
+                    <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 ml-1">Finanse</p>
+                    <button onclick="switchTab('settings-budget')"
+                        class="w-full flex items-center justify-between p-3 bg-white/5 hover:bg-white/10 rounded-xl border border-white/5 transition-all group">
+                        <div class="flex items-center space-x-3 text-white">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 opacity-70 group-hover:opacity-100 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            <span class="font-medium text-sm">Miesięczny budżet</span>
+                        </div>
+                        <i class="fas fa-chevron-right text-gray-600 group-hover:text-white transition-colors text-[10px]"></i>
+                    </button>
+
+                    <button onclick="switchTab('settings-special')"
+                        class="w-full flex items-center justify-between p-3 bg-white/5 hover:bg-white/10 rounded-xl border border-white/5 transition-all group">
+                        <div class="flex items-center space-x-3 text-white">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 opacity-70 group-hover:opacity-100 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span class="font-medium text-sm">Budżety specjalne</span>
+                        </div>
+                        <i class="fas fa-chevron-right text-gray-600 group-hover:text-white transition-colors text-[10px]"></i>
+                    </button>
+
+                    <button onclick="switchTab('settings-recurring')"
+                        class="w-full flex items-center justify-between p-3 bg-white/5 hover:bg-white/10 rounded-xl border border-white/5 transition-all group">
+                        <div class="flex items-center space-x-3 text-white">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 opacity-70 group-hover:opacity-100 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                            <span class="font-medium text-sm">Stałe opłaty</span>
+                        </div>
+                        <i class="fas fa-chevron-right text-gray-600 group-hover:text-white transition-colors text-[10px]"></i>
+                    </button>
                 </div>
             </div>
 
             <!-- Ustawienia: Kategorie (hierarchiczne v2) -->
-            <div id="settings-categories-tab" class="tab-content">
-                <div class="glass-card rounded-2xl p-4 mb-4">
-                    <div class="flex items-center justify-end mb-4">
-                        <button id="add-parent-category-btn"
-                            class="flex items-center gap-1 px-3 py-1.5 btn-primary rounded-xl text-sm font-medium">
-                            <i class="fas fa-plus text-xs"></i> Dodaj kategorię
-                        </button>
+            <div id="settings-categories-tab" class="tab-content px-2 pt-1">
+                <div class="glass-card rounded-2xl p-4 sm:p-5 mb-4">
+                    <div class="flex items-center justify-between gap-3 mb-4">
+                        <div>
+                            <h3 class="text-base font-bold text-white">Kategorie</h3>
+                            <p class="text-xs text-gray-500 mt-1">Hierarchia kategorii i podkategorii wydatkow.</p>
+                        </div>
+                    <button id="add-parent-category-btn"
+                        class="shrink-0 flex items-center gap-1 px-3 py-1.5 btn-primary rounded-xl text-sm font-medium">
+                        <i class="fas fa-plus text-xs"></i> Dodaj kategorię
+                    </button>
                     </div>
 
-                    <!-- Lista hierarchicznych kategorii v2 -->
-                    <div id="categories-v2-list" class="space-y-2 mb-4 max-h-[60vh] overflow-y-auto pr-1">
-                        <!-- renderowane przez JS -->
-                    </div>
+                <!-- Lista hierarchicznych kategorii v2 -->
+                <div id="categories-v2-list" class="space-y-2 max-h-[60vh] overflow-y-auto pr-1">
+                    <!-- renderowane przez JS -->
+                </div>
                 </div>
 
-                <div id="tags-manager-card" class="glass-card rounded-2xl p-4 mb-4">
+                <div id="tags-manager-card" class="glass-card rounded-2xl p-4 sm:p-5 mb-4">
                     <div class="flex items-center justify-between mb-1">
                         <h3 class="text-base font-bold text-white">Tagi produktów</h3>
                         <button id="add-tag-group-btn"
@@ -524,109 +561,106 @@
                     <div id="tags-groups-container" class="space-y-4">
                     </div>
                 </div>
-
-
             </div>
 
             <!-- Ustawienia: Budżet -->
-            <div id="settings-budget-tab" class="tab-content">
-                <div class="glass-card rounded-2xl p-6 mb-6">
-                    <div class="flex items-center justify-between mb-4 bg-white/5 p-3 rounded-xl border border-white/5">
-                        <label for="budget-month-btn" class="text-sm font-medium text-gray-300">Miesiąc:</label>
-                        <button id="budget-month-btn" type="button"
-                            class="flex items-center bg-gray-800 text-white rounded-lg px-3 py-2 text-sm border border-white/10">
-                            <span id="budget-month-label">Wybierz miesiąc...</span>
-                            <svg class="ml-2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor"
-                                viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M19 9l-7 7-7-7"></path>
-                            </svg>
-                        </button>
+            <div id="settings-budget-tab" class="tab-content px-2 pt-1">
+                <div class="flex flex-col min-h-[calc(100vh-15rem)]">
+                <div class="flex items-center justify-between gap-3 mb-5">
+                    <label for="budget-month-btn" class="text-sm font-medium text-gray-300">Miesiąc:</label>
+                    <button id="budget-month-btn" type="button"
+                        class="flex items-center bg-gray-800 text-white rounded-lg px-3 py-2 text-sm border border-white/10">
+                        <span id="budget-month-label">Wybierz miesiąc...</span>
+                        <svg class="ml-2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
 
-                    </div>
-                    <div id="budgets-list" class="space-y-2 mb-6 max-h-[300px] overflow-y-auto pr-2"></div>
-                    <div class="grid grid-cols-1 gap-3">
-                        <button id="save-budget-btn"
-                            class="w-full py-3 px-4 btn-secondary rounded-xl font-medium shadow-md transition-all active:scale-95">Zapisz
-                            budżet</button>
-                        <button id="copy-budget-btn"
-                            class="w-full py-3 px-4 btn-primary rounded-xl font-medium shadow-md transition-all active:scale-95">Kopiuj
-                            na następne miesiące</button>
-                    </div>
+                </div>
+                <div class="border-t border-white/5 pt-4 mb-6">
+                <div id="budgets-list" class="space-y-2 flex-1 min-h-[26rem] max-h-[30rem] overflow-y-auto pr-2"></div>
+                </div>
+                <div class="grid grid-cols-1 gap-3 mt-auto">
+                    <button id="save-budget-btn"
+                        class="w-full py-3 px-4 btn-secondary rounded-xl font-medium shadow-md transition-all active:scale-95">Zapisz
+                        budżet</button>
+                    <button id="copy-budget-btn"
+                        class="w-full py-3 px-4 btn-primary rounded-xl font-medium shadow-md transition-all active:scale-95">Kopiuj
+                        na następne miesiące</button>
+                </div>
                 </div>
             </div>
 
             <!-- Ustawienia: Budżety Specjalne -->
-            <div id="settings-special-tab" class="tab-content">
-                <div class="glass-card rounded-2xl p-6 mb-6">
-                    <div id="special-budgets-list" class="space-y-2 mb-6 max-h-[300px] overflow-y-auto pr-2"></div>
-                    <form id="add-special-budget-form"
-                        class="space-y-3 bg-white/5 p-4 rounded-xl border border-white/5">
-                        <input type="text" id="new-special-budget-name" placeholder="Nazwa (np. Wakacje)"
+            <div id="settings-special-tab" class="tab-content px-2 pt-1">
+                <div id="special-budgets-list" class="space-y-2 mb-6 max-h-[400px] overflow-y-auto pr-2"></div>
+                <form id="add-special-budget-form"
+                    class="space-y-3 bg-white/5 p-4 rounded-xl border border-white/5">
+                    <input type="text" id="new-special-budget-name" placeholder="Nazwa (np. Wakacje)"
+                        class="block w-full rounded-xl border-white/10 bg-white/5 text-white shadow-sm focus:border-blue-500 py-3 px-4"
+                        required>
+                    <div class="flex items-center space-x-2">
+                        <input type="number" id="new-special-budget-amount" placeholder="Kwota"
                             class="block w-full rounded-xl border-white/10 bg-white/5 text-white shadow-sm focus:border-blue-500 py-3 px-4"
-                            required>
-                        <div class="flex items-center space-x-2">
-                            <input type="number" id="new-special-budget-amount" placeholder="Kwota"
-                                class="block w-full rounded-xl border-white/10 bg-white/5 text-white shadow-sm focus:border-blue-500 py-3 px-4"
-                                required step="0.01">
-                            <button type="submit" class="py-3 px-6 btn-primary rounded-xl shadow-lg">Dodaj</button>
-                        </div>
-                    </form>
-                </div>
+                            required step="0.01">
+                        <button type="submit" class="py-3 px-6 btn-primary rounded-xl shadow-lg">Dodaj</button>
+                    </div>
+                </form>
             </div>
 
             <!-- Ustawienia: Wydatki Cykliczne -->
-            <div id="settings-recurring-tab" class="tab-content">
-                <div class="glass-card rounded-2xl p-6 mb-6">
-                    <div id="recurring-expenses-list" class="space-y-3 mb-6 max-h-[400px] overflow-y-auto pr-2"></div>
-                    <form id="add-recurring-expense-form"
-                        class="bg-white/5 p-5 rounded-2xl space-y-4 border border-white/10">
-                        <h4 class="font-semibold text-white text-xs uppercase tracking-wider opacity-60">Nowa
-                            subskrypcja</h4>
-                        <div class="grid grid-cols-1 gap-3">
-                            <input type="text" id="recurring-name" placeholder="Nazwa (np. Netflix)" required
-                                class="block w-full rounded-xl border-white/10 bg-white/5 text-white py-3 px-4 focus:bg-white/10 transition-all">
-                            <input type="number" id="recurring-amount" placeholder="Kwota" required step="0.01"
-                                class="block w-full rounded-xl border-white/10 bg-white/5 text-white py-3 px-4 focus:bg-white/10 transition-all">
-                            <button id="recurring-category-btn" type="button" class="category-trigger-card py-3">
-                                <div class="flex items-center">
-                                    <div id="recurring-category-icon"
-                                        class="category-trigger-icon bg-white/5 text-white mr-2">
-                                        <span>📂</span>
-                                    </div>
-                                    <span id="recurring-category-label">Wybierz kategorię...</span>
+            <div id="settings-recurring-tab" class="tab-content px-2 pt-1">
+                <div id="recurring-expenses-list" class="space-y-3 mb-6 max-h-[400px] overflow-y-auto pr-2"></div>
+                <form id="add-recurring-expense-form"
+                    class="bg-white/5 p-5 rounded-2xl space-y-4 border border-white/10">
+                    <h4 class="font-semibold text-white text-xs uppercase tracking-wider opacity-60">Nowa
+                        subskrypcja</h4>
+                    <div class="grid grid-cols-1 gap-3">
+                        <input type="text" id="recurring-name" placeholder="Nazwa (np. Netflix)" required
+                            class="block w-full rounded-xl border-white/10 bg-white/5 text-white py-3 px-4 focus:bg-white/10 transition-all">
+                        <input type="number" id="recurring-amount" placeholder="Kwota" required step="0.01"
+                            class="block w-full rounded-xl border-white/10 bg-white/5 text-white py-3 px-4 focus:bg-white/10 transition-all">
+                        <button id="recurring-category-btn" type="button" class="category-trigger-card py-3">
+                            <div class="flex items-center">
+                                <div id="recurring-category-icon"
+                                    class="category-trigger-icon bg-white/5 text-white mr-2">
+                                    <span>📂</span>
                                 </div>
-                                <svg class="ml-2 w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor"
-                                    viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M19 9l-7 7-7-7">
-                                    </path>
-                                </svg>
-                            </button>
+                                <span id="recurring-category-label">Wybierz kategorię...</span>
+                            </div>
+                            <svg class="ml-2 w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 9l-7 7-7-7">
+                                </path>
+                            </svg>
+                        </button>
 
 
-                            <button id="recurring-schedule-btn" type="button" class="category-trigger-card py-3">
-                                <div class="flex items-center">
-                                    <div class="category-trigger-icon bg-white/5 text-white mr-2">
-                                        <span>📅</span>
-                                    </div>
-                                    <span id="recurring-schedule-label">Co miesiąc</span>
+                        <button id="recurring-schedule-btn" type="button" class="category-trigger-card py-3">
+                            <div class="flex items-center">
+                                <div class="category-trigger-icon bg-white/5 text-white mr-2">
+                                    <span>📅</span>
                                 </div>
-                                <svg class="ml-2 w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor"
-                                    viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M19 9l-7 7-7-7">
-                                    </path>
-                                </svg>
-                            </button>
+                                <span id="recurring-schedule-label">Co miesiąc</span>
+                            </div>
+                            <svg class="ml-2 w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 9l-7 7-7-7">
+                                </path>
+                            </svg>
+                        </button>
 
-                        </div>
-                        <div id="recurring-monthly-settings" class="mt-1">
-                            <input type="number" id="recurring-day-of-month" placeholder="Dzień (1-31)" min="1" max="31"
-                                class="block w-full rounded-xl border-white/10 bg-white/5 text-white py-3 px-4">
-                        </div>
-                        <div id="recurring-weekly-settings" class="hidden mt-1">
-                            <button id="recurring-day-of-week-btn" type="button" class="category-trigger-card py-3">
+                    </div>
+                    <div id="recurring-monthly-settings" class="mt-1">
+                        <input type="number" id="recurring-day-of-month" placeholder="Dzień (1-31)" min="1" max="31"
+                            class="block w-full rounded-xl border-white/10 bg-white/5 text-white py-3 px-4">
+                    </div>
+                    <div id="recurring-weekly-settings" class="hidden mt-1">
+                        <button id="recurring-day-of-week-btn" type="button" class="category-trigger-card py-3">
                                 <div class="flex items-center">
                                     <span id="recurring-day-of-week-label">Poniedziałek</span>
                                 </div>
@@ -668,10 +702,9 @@
                             subskrypcję</button>
                     </form>
                 </div>
-            </div>
 
             <!-- Zakładka Analiza Budżetu -->
-            <div id="analysis-tab" class="tab-content">
+            <div id="analysis-tab" class="tab-content px-2 pt-1">
                 <div class="glass-card rounded-[24px] p-3 sm:p-4 flex flex-col border border-white/10 bg-white/[0.04] shadow-[0_20px_60px_rgba(0,0,0,0.24)]">
                     
                     <!-- Podsumowanie -->
@@ -768,7 +801,7 @@
                     </div>
 
                     <!-- Chipsy kategorii -->
-                    <div id="comparison-category-filters" class="mt-2.5 border-t border-white/8 pt-2.5 space-y-2 overflow-visible">
+                    <div id="comparison-category-filters" class="mt-2.5 border-t border-white/8 pt-1.5 space-y-2 overflow-visible">
                         <!-- Generowane przez JS -->
                     </div>
                 </div>
@@ -789,68 +822,59 @@
             </div>
 
             <!-- Zakładka Budżety Specjalne -->
-            <div id="special-budgets-tab" class="tab-content">
+            <div id="special-budgets-tab" class="tab-content pt-1">
                 <!-- Treść zostanie wyrenderowana przez special-budgets.js -->
             </div>
 
             <!-- Zakładka Więcej -->
-            <div id="more-tab" class="tab-content">
-                <div class="glass-card rounded-2xl p-6 mb-6">
-                    <div class="space-y-4">
-                        <button id="more-settings-btn"
-                            class="w-full flex items-center justify-between p-4 bg-white/5 hover:bg-white/10 rounded-xl transition-all">
-                            <div class="flex items-center space-x-3 text-white">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-400" fill="none"
-                                    viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                        d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                </svg>
-                                <span class="font-medium">Ustawienia</span>
-                            </div>
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500" viewBox="0 0 20 20"
-                                fill="currentColor">
-                                <path fill-rule="evenodd"
-                                    d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
-                                    clip-rule="evenodd" />
+            <div id="more-tab" class="tab-content px-2 pt-1">
+                <div class="space-y-1">
+                    
+                    <!-- Sekcja: Pozostałe -->
+                    <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 ml-1">Pozostałe</p>
+                    <button id="more-special-budgets-btn"
+                        class="w-full flex items-center justify-between p-3 bg-white/5 hover:bg-white/10 rounded-xl border border-white/5 transition-all group">
+                        <div class="flex items-center space-x-3 text-white">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 opacity-70 group-hover:opacity-100 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
-                        </button>
+                            <span class="font-medium text-sm">Budżety specjalne</span>
+                        </div>
+                        <i class="fas fa-chevron-right text-gray-600 group-hover:text-white transition-colors text-[10px]"></i>
+                    </button>
 
-                        <!-- Dodany przycisk Budżety Specjalne -->
-                        <button id="more-special-budgets-btn"
-                            class="w-full flex items-center justify-between p-4 bg-white/5 hover:bg-white/10 rounded-xl transition-all">
-                            <div class="flex items-center space-x-3 text-white">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-400"
-                                    viewBox="0 0 20 20" fill="currentColor">
-                                    <path d="M2 6a2 2 0 012-2h12a2 2 0 012 2v2a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
-                                    <path fill-rule="evenodd"
-                                        d="M2 11a2 2 0 012-2h12a2 2 0 012 2v5a2 2 0 01-2 2H4a2 2 0 01-2-2v-5zm3.5 2a.5.5 0 00-.5.5v1a.5.5 0 00.5.5h1a.5.5 0 00.5-.5v-1a.5.5 0 00-.5-.5h-1z"
-                                        clip-rule="evenodd" />
-                                </svg>
-                                <span class="font-medium">Budżety specjalne</span>
-                            </div>
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500" viewBox="0 0 20 20"
-                                fill="currentColor">
-                                <path fill-rule="evenodd"
-                                    d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
-                                    clip-rule="evenodd" />
-                            </svg>
-                        </button>
-
-                        <button id="more-logout-btn"
-                            class="w-full flex items-center justify-between p-4 bg-white/5 hover:bg-white/10 rounded-xl transition-all">
-                            <div class="flex items-center space-x-3 text-red-400">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
-                                    stroke="currentColor" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                                </svg>
-                                <span class="font-medium">Wyloguj się</span>
-                            </div>
-                        </button>
+                    <!-- Symboliczny Separator -->
+                    <div class="py-2">
+                        <div class="h-px bg-white/5 mx-2"></div>
                     </div>
+
+                    <!-- Ustawienia -->
+                    <button id="more-settings-btn"
+                        class="w-full flex items-center justify-between p-3 bg-white/5 hover:bg-white/10 rounded-xl border border-white/5 transition-all group">
+                        <div class="flex items-center space-x-3 text-white">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 opacity-70 group-hover:opacity-100 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                            <span class="font-medium text-sm">Ustawienia</span>
+                        </div>
+                        <i class="fas fa-chevron-right text-gray-600 group-hover:text-white transition-colors text-[10px]"></i>
+                    </button>
+
+                    <!-- Wyloguj -->
+                    <button id="more-logout-btn"
+                        class="w-full flex items-center justify-between p-3 bg-white/5 hover:bg-white/10 rounded-xl border border-white/5 transition-all group">
+                        <div class="flex items-center space-x-3 text-white">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 opacity-70 group-hover:opacity-100 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                            </svg>
+                            <span class="font-medium text-sm">Wyloguj się</span>
+                        </div>
+                        <i class="fas fa-chevron-right text-gray-600 group-hover:text-white transition-colors text-[10px]"></i>
+                    </button>
+
                 </div>
+            </div>
             </div>
 
             <!-- Modal kopiowania budżetu -->
@@ -1063,7 +1087,7 @@
                 <div id="category-drawer-grid" class="p-2 space-y-1 overflow-y-auto flex-grow">
                     <!-- Categories rendered as a list by JS -->
                 </div>
-                <div class="p-6 pt-2 border-t border-white/5 bg-[#1a1a2e] pb-safe shrink-0">
+                <div class="p-6 pt-1 border-t border-white/5 bg-[#1a1a2e] pb-safe shrink-0">
                     <button id="add-category-drawer-btn"
                         class="w-full py-4 px-4 bg-white/5 border border-dashed border-white/20 rounded-2xl text-gray-400 hover:text-white hover:bg-white/10 transition-all flex items-center justify-center space-x-2">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
@@ -1260,9 +1284,6 @@
         </div>
     </div>
 
-    </main>
-    </div>
-
     <!-- Modal: Formularz tagu (dodaj/edytuj) -->
     <div id="tag-form-modal" class="hidden fixed inset-0 z-[200] flex items-end sm:items-center justify-center">
         <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" id="tag-form-modal-backdrop"></div>
@@ -1369,6 +1390,9 @@
         </div>
     </div>
 
+    </main>
+    </div>
+
     <!-- All JavaScript functionality moved to separate modules -->
     <script src="js/api.js?v=12"></script>
     <script src="js/auth.js?v=12"></script>
@@ -1388,4 +1412,3 @@
 </body>
 
 </html>
-

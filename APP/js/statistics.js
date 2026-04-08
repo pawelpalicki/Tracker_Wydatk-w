@@ -188,11 +188,14 @@ async function renderHomeSummary() {
 
         // Update total
         const totalEl = document.getElementById('home-total-spent');
+        const budgetTotalEl = document.getElementById('home-budget-total');
         const infoEl = document.getElementById('home-budget-info');
+        
         if (totalEl) {
-            totalEl.innerHTML = totalBudget > 0
-                ? `${formatAmount(totalSpent)} <span class="text-lg font-bold text-indigo-200/55 align-baseline mx-1">/</span><span class="text-lg font-bold text-indigo-200/75 align-baseline">${formatAmount(totalBudget)}</span>`
-                : formatAmount(totalSpent);
+            totalEl.textContent = formatAmount(totalSpent);
+        }
+        if (budgetTotalEl) {
+            budgetTotalEl.textContent = formatAmount(totalBudget);
         }
         if (infoEl) {
             infoEl.textContent = 'Brak budżetu';
@@ -234,16 +237,26 @@ async function renderHomeSummary() {
 
 function updateHomeComparisonBadge(monthlyTotals, currentKey, prevKey, isCurrentMonth) {
     const badgeEl = document.getElementById('home-comparison-badge');
+    const labelEl = document.getElementById('home-comparison-label');
     if (!badgeEl) return;
-    if (!monthlyTotals || !Array.isArray(monthlyTotals)) { badgeEl.classList.add('hidden'); return; }
+    if (!monthlyTotals || !Array.isArray(monthlyTotals)) { 
+        badgeEl.classList.add('hidden'); 
+        if (labelEl) labelEl.classList.add('hidden');
+        return; 
+    }
     const cur = monthlyTotals.find(m => m.month === currentKey);
     const pre = monthlyTotals.find(m => m.month === prevKey);
-    if (!cur || !pre || pre.total <= 0) { badgeEl.classList.add('hidden'); return; }
+    if (!cur || !pre || pre.total <= 0) { 
+        badgeEl.classList.add('hidden'); 
+        if (labelEl) labelEl.classList.add('hidden');
+        return; 
+    }
     const pct = Math.round(((cur.total - pre.total) / pre.total) * 100);
     const up = pct > 0;
     badgeEl.className = `flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-bold ${up ? 'bg-red-500/20 text-red-400' : 'bg-green-500/20 text-green-400'}`;
     badgeEl.innerHTML = `<i class="fas fa-arrow-trend-${up ? 'up' : 'down'}"></i> <span>${up ? '+' : ''}${pct}%</span>`;
     badgeEl.classList.remove('hidden');
+    if (labelEl) labelEl.classList.remove('hidden');
 }
 
 function renderHomeMobilizationInsights(purchases, totalBudget, isCurrentMonth) {
@@ -420,58 +433,49 @@ async function renderHomeRecentTransactions() {
             const total = (purchase.items || []).reduce((s, i) => s + (i.price || 0), 0);
             const specialBudgetName = purchase.specialBudgetId ? (allSpecialBudgets.find(b => b.id === purchase.specialBudgetId) || {}).name : null;
             const specialBudgetIcon = specialBudgetName
-                ? `<p class="text-xs text-blue-500 mb-1 flex items-center gap-1">
-                     <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 inline-block" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a1 1 0 011-1h5a.997.997 0 01.707.293l7 7zM5 6a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" /></svg>
+                ? `<p class="text-[9px] text-blue-400 font-bold uppercase tracking-wider flex items-center gap-1 mb-1">
+                     <i class="fas fa-piggy-bank text-[8px]"></i>
                      <span>${specialBudgetName}</span>
                    </p>`
                 : '';
             const date = new Date(purchase.date).toLocaleDateString('pl-PL', { day: 'numeric', month: 'short' });
-            const firstCat = purchase.items?.[0]?.category || 'inne';
             const shopName = purchase.shop || 'Nieznany';
-            const shopLower = shopName.toLowerCase();
             const firstLetter = shopName.charAt(0).toUpperCase();
 
             const el = document.createElement('div');
-            el.className = 'flex flex-col py-2 border-b border-white/5 last:border-0';
+            el.className = 'bg-white/5 hover:bg-white/10 rounded-2xl border border-white/5 transition-all overflow-hidden';
             
-            // Jednorodne ikony z literą (identyfikator to tylko litera)
             const iconHtml = `
-                <div class="w-8 h-8 rounded-full flex items-center justify-center bg-white/10 border border-white/10 shadow-lg">
-                    <span class="text-white font-bold text-sm select-none">${firstLetter}</span>
+                <div class="w-10 h-10 rounded-xl flex items-center justify-center bg-white/5 border border-white/5 text-white font-bold text-lg select-none">
+                    ${firstLetter}
                 </div>
             `;
 
             el.innerHTML = `
-                <div class="transaction-header p-2 cursor-pointer select-none transition-opacity active:opacity-40">
-                    <!-- 1. Linia budżetu (Góra) -->
-                    ${specialBudgetIcon ? `<div class="mb-2 w-full">${specialBudgetIcon}</div>` : ''}
-
-                    <!-- 2. Sekcja główna wyrównana do dołu -->
-                    <div class="flex items-end w-full gap-3">
-                        <!-- Logo (Dół) -->
-                        <div class="w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center bg-white/5 overflow-hidden shadow-inner relative">
+                <div class="transaction-header p-3 cursor-pointer select-none group">
+                    <div class="flex items-center gap-3">
+                        <!-- Logo -->
+                        <div class="shrink-0">
                             ${iconHtml}
                         </div>
 
-                        <!-- Blok tekstowy (Dół) -->
+                        <!-- Info -->
                         <div class="flex-1 min-w-0">
-                            <!-- Wiersz 1: Sklep i Kwota -->
-                            <div class="flex justify-between items-end w-full mb-0.5">
-                                <span class="text-sm font-semibold text-white truncate pr-2 leading-none">${shopName}</span>
-                                <span class="text-sm font-bold text-white whitespace-nowrap leading-none">${formatAmount(total)}</span>
+                            ${specialBudgetIcon}
+                            <div class="flex justify-between items-center w-full">
+                                <span class="text-sm font-semibold text-white truncate pr-2">${shopName}</span>
+                                <span class="text-sm font-bold text-white whitespace-nowrap">${formatAmount(total)}</span>
                             </div>
-                            <!-- Wiersz 2: Data i Strzałka -->
-                            <div class="flex justify-between items-end w-full">
-                                <span class="text-[10px] text-gray-400 uppercase tracking-tight font-medium leading-none">${date}</span>
-                                <div class="shrink-0 leading-none pb-0.5">
-                                    <i class="fas fa-chevron-down text-[10px] text-gray-500 transition-transform"></i>
-                                </div>
+                            <div class="flex justify-between items-center w-full mt-0.5">
+                                <span class="text-[10px] text-gray-500 uppercase tracking-tight font-medium">${date}</span>
+                                <i class="fas fa-chevron-down text-[10px] text-gray-600 group-hover:text-white transition-all transform duration-300"></i>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="transaction-details hidden mt-3 space-y-2 p-3 bg-white/5 rounded-xl border border-white/5 w-full">
-                    ${(purchase.items || []).map(item => {
+                <div class="transaction-details hidden p-3 pt-0 border-t border-white/5 bg-black/10">
+                    <div class="space-y-1.5 pt-3">
+                        ${(purchase.items || []).map(item => {
                         const itemCat = item.category || 'inne';
                         const itemSub = item.subCategory || '';
                         const parentCat = (typeof structuredCategories !== 'undefined')
