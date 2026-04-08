@@ -2239,5 +2239,3 @@ exports.api = functions.https.onRequest({
     secrets: ['GEMINI_API_KEY', 'MIGRATION_SECRET_KEY']
 }, app);
 
-// WERSJA TESTOWA (Side-by-side) dla linku preview
-exports.api_v2 = exports.api;
