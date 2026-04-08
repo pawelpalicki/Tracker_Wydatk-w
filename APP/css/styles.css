@@ -140,18 +140,6 @@ h1, h2, h3, h4, h5, h6 {
 
 /* ===== FAB & Actions ===== */
 
-#main-fab-btn {
-    background: #16a34a;
-    border: 4px solid var(--bg-nav);
-    position: relative;
-    z-index: 80;
-    transition: background-color 0.2s;
-}
-
-#main-fab-btn:hover {
-    background: #15803d;
-}
-
 #main-fab-btn.expanded svg {
     transform: rotate(45deg);
 }
