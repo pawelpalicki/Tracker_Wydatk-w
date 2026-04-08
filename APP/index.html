@@ -61,7 +61,7 @@
                 </div>
                 <div>
                     <button type="submit"
-                        class="group relative w-full flex justify-center py-2 px-4 text-sm font-medium rounded-xl btn-primary disabled:opacity-50">
+                        class="group relative w-full flex justify-center text-sm font-medium rounded-xl btn-primary disabled:opacity-50">
                         <span class="button-text">Zaloguj się</span>
                         <span class="button-spinner hidden absolute right-4 top-1/2 -translate-y-1/2">
                             <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none"
@@ -87,11 +87,12 @@
                             placeholder="Hasło"></div>
                 </div>
                 <div><button type="submit"
-                        class="group relative w-full flex justify-center py-2 px-4 text-sm font-medium rounded-xl btn-primary">Zarejestruj
+                        class="group relative w-full flex justify-center text-sm font-medium rounded-xl btn-primary">Zarejestruj
                         się</button></div>
             </form>
             <div class="text-center">
-                <a href="#" id="switch-auth-link" class="font-medium text-brand-400 hover:text-brand-300">Nie masz konta?
+                <a href="#" id="switch-auth-link" class="font-medium text-brand-400 hover:text-brand-300">Nie masz
+                    konta?
                     Zarejestruj się</a>
             </div>
             <div id="auth-error" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative"
@@ -169,53 +170,81 @@
                         </div>
 
                         <!-- Total spending + budget progress -->
-                        <div class="bg-gradient-to-br from-white/10 via-white/5 to-transparent border border-white/10 rounded-2xl p-4 mb-4 shadow-[0_8px_32px_rgba(0,0,0,0.4)] backdrop-blur-sm relative overflow-hidden">
+                        <div
+                            class="bg-gradient-to-br from-white/10 via-white/5 to-transparent border border-white/10 rounded-2xl p-4 mb-4 shadow-[0_8px_32px_rgba(0,0,0,0.4)] backdrop-blur-sm relative overflow-hidden">
                             <!-- Subtle accent glow -->
                             <div class="absolute -top-10 -right-10 w-32 h-32 bg-white/5 rounded-full blur-3xl"></div>
-                            
+
                             <div class="relative z-10">
                                 <div class="text-left mb-4">
-                                    <p class="text-[10px] text-brand-300/80 mb-1 leading-none font-bold uppercase tracking-widest">Wydano w miesiącu</p>
+                                    <p
+                                        class="text-[10px] text-brand-300/80 mb-1 leading-none font-bold uppercase tracking-widest">
+                                        Wydano w miesiącu</p>
                                     <div class="flex items-baseline gap-2 mb-1">
-                                        <p id="home-total-spent" class="text-3xl font-extrabold text-white tracking-tight">0.00 zł</p>
-                                        <div id="home-comparison-badge" class="hidden px-2 py-0.5 rounded-lg text-[10px] font-bold flex items-center gap-1 transition-all duration-300"></div>
-                                        <span id="home-comparison-label" class="hidden text-[8px] text-brand-300/60 uppercase font-bold tracking-tighter">vs poprz. m-c</span>
+                                        <p id="home-total-spent"
+                                            class="text-3xl font-extrabold text-white tracking-tight">0.00 zł</p>
+                                        <div id="home-comparison-badge"
+                                            class="hidden px-2 py-0.5 rounded-lg text-[10px] font-bold flex items-center gap-1 transition-all duration-300">
+                                        </div>
+                                        <span id="home-comparison-label"
+                                            class="hidden text-[8px] text-brand-300/60 uppercase font-bold tracking-tighter">vs
+                                            poprz. m-c</span>
                                     </div>
                                     <div class="flex items-center justify-start gap-2 mt-2">
-                                        <span id="home-budget-info" class="text-xs text-brand-200/60 font-medium italic hidden">Brak budżetu</span>
+                                        <span id="home-budget-info"
+                                            class="text-xs text-brand-200/60 font-medium italic hidden">Brak
+                                            budżetu</span>
                                     </div>
                                 </div>
 
                                 <!-- Budget progress bar -->
                                 <div id="home-budget-bar-wrapper" class="hidden mb-5">
-                                    <div class="flex justify-between text-[10px] text-brand-300/70 mb-2 uppercase tracking-wider font-bold">
+                                    <div
+                                        class="flex justify-between text-[10px] text-brand-300/70 mb-2 uppercase tracking-wider font-bold">
                                         <span>Postęp budżetu</span>
                                         <span id="home-budget-pct">0%</span>
                                     </div>
-                                    <div class="w-full bg-white/10 rounded-full h-2 overflow-hidden backdrop-blur-sm border border-white/5">
-                                        <div id="home-budget-progress" class="h-full rounded-full transition-all duration-700 shadow-[0_0_15px_rgba(56,189,248,0.35)]"
+                                    <div
+                                        class="w-full bg-white/10 rounded-full h-2 overflow-hidden backdrop-blur-sm border border-white/5">
+                                        <div id="home-budget-progress"
+                                            class="h-full rounded-full transition-all duration-700 shadow-[0_0_15px_rgba(56,189,248,0.35)]"
                                             style="width:0%"></div>
                                     </div>
                                     <div class="flex justify-end mt-1.5">
-                                        <p class="text-[10px] text-brand-300/50 font-bold uppercase tracking-tight">Budżet: <span id="home-budget-total" class="text-brand-200/80 ml-1">0.00 zł</span></p>
+                                        <p class="text-[10px] text-brand-300/50 font-bold uppercase tracking-tight">
+                                            Budżet: <span id="home-budget-total" class="text-brand-200/80 ml-1">0.00
+                                                zł</span></p>
                                     </div>
                                 </div>
 
                                 <!-- SEKCJA MOBILIZACJA (Start - Ultra Compact) -->
-                                <div id="home-mobilization-section" class="hidden mb-3 px-3 py-2 bg-white/[0.04] rounded-lg border border-white/10">
+                                <div id="home-mobilization-section"
+                                    class="hidden mb-3 px-3 py-2 bg-white/[0.04] rounded-lg border border-white/10">
                                     <div class="grid grid-cols-3 gap-3">
                                         <div class="flex flex-col min-w-0">
-                                            <span class="text-[8px] text-brand-200 uppercase font-black tracking-tight leading-none mb-1">Dzienny Limit</span>
-                                            <span id="insight-daily-limit" class="text-[13px] font-black text-white leading-tight break-words">0 zł</span>
+                                            <span
+                                                class="text-[8px] text-brand-200 uppercase font-black tracking-tight leading-none mb-1">Dzienny
+                                                Limit</span>
+                                            <span id="insight-daily-limit"
+                                                class="text-[13px] font-black text-white leading-tight break-words">0
+                                                zł</span>
                                         </div>
                                         <div class="flex flex-col min-w-0">
-                                            <span class="text-[8px] text-brand-200 uppercase font-black tracking-tight leading-none mb-1">Prognoza m-ca</span>
-                                            <span id="insight-projection" class="text-[13px] font-black text-white leading-tight break-words">0 zł</span>
-                                            <span id="insight-projection-diff" class="text-[10px] font-bold leading-tight mt-0.5 break-words"></span>
+                                            <span
+                                                class="text-[8px] text-brand-200 uppercase font-black tracking-tight leading-none mb-1">Prognoza
+                                                m-ca</span>
+                                            <span id="insight-projection"
+                                                class="text-[13px] font-black text-white leading-tight break-words">0
+                                                zł</span>
+                                            <span id="insight-projection-diff"
+                                                class="text-[10px] font-bold leading-tight mt-0.5 break-words"></span>
                                         </div>
                                         <div class="flex flex-col min-w-0">
-                                            <span class="text-[8px] text-brand-200 uppercase font-black tracking-tight leading-none mb-1">Przyjemności</span>
-                                            <span id="insight-wants" class="text-[13px] font-black text-white leading-tight break-words">0 zł</span>
+                                            <span
+                                                class="text-[8px] text-brand-200 uppercase font-black tracking-tight leading-none mb-1">Przyjemności</span>
+                                            <span id="insight-wants"
+                                                class="text-[13px] font-black text-white leading-tight break-words">0
+                                                zł</span>
                                         </div>
                                     </div>
                                     <div id="insight-text-container" class="mt-1.5 space-y-0.5 empty:hidden"></div>
@@ -256,9 +285,11 @@
                 <!-- Recent Transactions -->
                 <div class="px-1 mt-6">
                     <div class="flex justify-between items-center mb-3 ml-1">
-                        <h3 class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Ostatnie transakcje</h3>
+                        <h3 class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Ostatnie transakcje
+                        </h3>
                         <button onclick="switchTab('list')"
-                            class="text-[10px] font-bold text-brand-400 hover:text-brand-300 transition-colors uppercase tracking-widest">Zobacz wszystkie &rarr;</button>
+                            class="text-[10px] font-bold text-brand-400 hover:text-brand-300 transition-colors uppercase tracking-widest">Zobacz
+                            wszystkie &rarr;</button>
                     </div>
                     <div id="home-recent-transactions" class="space-y-2">
                         <!-- Rendered by JS -->
@@ -274,12 +305,13 @@
             <div id="add-tab" class="tab-content pt-1">
                 <div id="scanner-container" class="glass-card rounded-2xl p-6 mb-6 hidden relative overflow-hidden">
                     <h3 class="text-lg font-semibold mb-4 text-white">Skanowanie paragonu</h3>
-                    
+
                     <!-- Animation Container within the card -->
                     <div id="analysis-animation-container"
                         style="display: none; height: 350px; min-height: 350px; width: 100%; width: -webkit-fill-available; background: #0a0a0a;"
                         class="relative flex flex-col items-center justify-center rounded-xl backdrop-blur-sm mb-4">
-                        <div id="wrap" class="mx-auto flex flex-col items-center justify-center gap-3 w-full max-w-md px-1 sm:px-2">
+                        <div id="wrap"
+                            class="mx-auto flex flex-col items-center justify-center gap-3 w-full max-w-md px-1 sm:px-2">
                             <canvas id="analysis-scan-canvas"></canvas>
                             <div id="label" class="text-xs text-brand-400/80 tracking-widest uppercase font-medium">
                                 analizuje paragon<span id="dots" class="text-brand-400"></span>
@@ -294,10 +326,9 @@
                         </div>
                         <div class="flex items-center space-x-2">
                             <button id="analyze-receipt-btn"
-                                class="w-full py-2 px-4 btn-primary rounded-xl whitespace-nowrap">Analizuj
+                                class="w-full btn-primary rounded-xl whitespace-nowrap">Analizuj
                                 paragon</button>
-                            <button id="start-camera-btn"
-                                class="w-full py-2 px-4 btn-secondary rounded-xl whitespace-nowrap">Użyj
+                            <button id="start-camera-btn" class="w-full btn-secondary rounded-xl whitespace-nowrap">Użyj
                                 aparatu</button>
                         </div>
                     </div>
@@ -311,7 +342,7 @@
                     <div id="camera-view" class="hidden mt-4">
                         <video id="camera-stream" class="w-full rounded-lg" autoplay></video>
                         <div class="flex items-center space-x-2 mt-2">
-                            <button id="capture-photo-btn" class="w-full py-2 px-4 btn-secondary rounded-xl">Zrób
+                            <button id="capture-photo-btn" class="w-full btn-secondary rounded-xl">Zrób
                                 zdjęcie</button>
                             <button id="cancel-camera-btn"
                                 class="w-full py-2 px-4 bg-gray-500 text-white rounded-md hover:bg-gray-600">Anuluj</button>
@@ -367,7 +398,7 @@
                                     0.00 zł</p>
                             </div>
                         </div>
-                        
+
                         <div class="border border-white/10 rounded-lg p-2 px-3">
                             <h4 class="text-sm font-medium text-gray-400 mb-2">Pozycje na paragonie
                             </h4>
@@ -376,7 +407,7 @@
                                 class="border-t border-gray-200 dark:border-gray-700 mt-3 pt-3 flex justify-between items-center flex-wrap">
                                 <div id="purchase-summary" class="text-lg font-bold text-gray-800 dark:text-gray-200">
                                     Suma: 0.00 zł</div>
-                                <button type="button" id="add-item-btn" class="py-2 px-4 btn-primary rounded-xl">+
+                                <button type="button" id="add-item-btn" class="btn-secondary rounded-xl">+
                                     Dodaj</button>
                             </div>
                         </div>
@@ -384,7 +415,7 @@
                             <div class="flex items-center space-x-2">
                                 <button type="button" id="cancel-edit-btn"
                                     class="py-2 px-4 bg-gray-500 text-white rounded-md hover:bg-gray-600 hidden">Anuluj</button>
-                                <button type="submit" class="py-2 px-4 btn-primary rounded-xl">Zapisz cały
+                                <button type="submit" class="btn-primary rounded-xl">Zapisz cały
                                     zakup</button>
                             </div>
                         </div>
@@ -460,25 +491,32 @@
             <!-- Ustawienia: Główne -->
             <div id="settings-tab" class="tab-content px-2 pt-1">
                 <div class="space-y-1">
-                    
+
                     <!-- Sekcja: Organizacja -->
                     <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 ml-1">Organizacja</p>
                     <button onclick="switchTab('settings-categories')"
                         class="w-full flex items-center justify-between p-3 bg-white/5 hover:bg-white/10 rounded-xl border border-white/5 transition-all group">
                         <div class="flex items-center space-x-3 text-white">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 opacity-70 group-hover:opacity-100 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                            <svg xmlns="http://www.w3.org/2000/svg"
+                                class="h-5 w-5 opacity-70 group-hover:opacity-100 transition-opacity" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
                             </svg>
                             <span class="font-medium text-sm">Zarządzaj kategoriami</span>
                         </div>
-                        <i class="fas fa-chevron-right text-gray-600 group-hover:text-white transition-colors text-[10px]"></i>
+                        <i
+                            class="fas fa-chevron-right text-gray-600 group-hover:text-white transition-colors text-[10px]"></i>
                     </button>
 
                     <button id="refresh-shops-btn"
                         class="hidden w-full flex items-center justify-between p-3 bg-white/5 hover:bg-white/10 rounded-xl border border-white/5 transition-all group">
                         <div class="flex items-center space-x-3 text-white">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 opacity-70 group-hover:opacity-100 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                            <svg xmlns="http://www.w3.org/2000/svg"
+                                class="h-5 w-5 opacity-70 group-hover:opacity-100 transition-opacity" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                             </svg>
                             <span class="font-medium text-sm">Lista sklepów</span>
                         </div>
@@ -495,34 +533,46 @@
                     <button onclick="switchTab('settings-budget')"
                         class="w-full flex items-center justify-between p-3 bg-white/5 hover:bg-white/10 rounded-xl border border-white/5 transition-all group">
                         <div class="flex items-center space-x-3 text-white">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 opacity-70 group-hover:opacity-100 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            <svg xmlns="http://www.w3.org/2000/svg"
+                                class="h-5 w-5 opacity-70 group-hover:opacity-100 transition-opacity" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M3 10h18M7 15h1m4 0h1m-7 4h12a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                             </svg>
                             <span class="font-medium text-sm">Miesięczny budżet</span>
                         </div>
-                        <i class="fas fa-chevron-right text-gray-600 group-hover:text-white transition-colors text-[10px]"></i>
+                        <i
+                            class="fas fa-chevron-right text-gray-600 group-hover:text-white transition-colors text-[10px]"></i>
                     </button>
 
                     <button onclick="switchTab('settings-special')"
                         class="w-full flex items-center justify-between p-3 bg-white/5 hover:bg-white/10 rounded-xl border border-white/5 transition-all group">
                         <div class="flex items-center space-x-3 text-white">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 opacity-70 group-hover:opacity-100 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            <svg xmlns="http://www.w3.org/2000/svg"
+                                class="h-5 w-5 opacity-70 group-hover:opacity-100 transition-opacity" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                             <span class="font-medium text-sm">Budżety specjalne</span>
                         </div>
-                        <i class="fas fa-chevron-right text-gray-600 group-hover:text-white transition-colors text-[10px]"></i>
+                        <i
+                            class="fas fa-chevron-right text-gray-600 group-hover:text-white transition-colors text-[10px]"></i>
                     </button>
 
                     <button onclick="switchTab('settings-recurring')"
                         class="w-full flex items-center justify-between p-3 bg-white/5 hover:bg-white/10 rounded-xl border border-white/5 transition-all group">
                         <div class="flex items-center space-x-3 text-white">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 opacity-70 group-hover:opacity-100 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            <svg xmlns="http://www.w3.org/2000/svg"
+                                class="h-5 w-5 opacity-70 group-hover:opacity-100 transition-opacity" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                             </svg>
                             <span class="font-medium text-sm">Stałe opłaty</span>
                         </div>
-                        <i class="fas fa-chevron-right text-gray-600 group-hover:text-white transition-colors text-[10px]"></i>
+                        <i
+                            class="fas fa-chevron-right text-gray-600 group-hover:text-white transition-colors text-[10px]"></i>
                     </button>
                 </div>
             </div>
@@ -535,16 +585,16 @@
                             <h3 class="text-base font-bold text-white">Kategorie</h3>
                             <p class="text-xs text-gray-500 mt-1">Hierarchia kategorii i podkategorii wydatkow.</p>
                         </div>
-                    <button id="add-parent-category-btn"
-                        class="shrink-0 flex items-center gap-1 px-3 py-1.5 btn-primary rounded-xl text-sm font-medium">
-                        <i class="fas fa-plus text-xs"></i> Dodaj kategorię
-                    </button>
+                        <button id="add-parent-category-btn"
+                            class="shrink-0 flex items-center gap-1 px-3 py-1.5 btn-primary rounded-xl text-sm font-medium">
+                            <i class="fas fa-plus text-xs"></i> Dodaj kategorię
+                        </button>
                     </div>
 
-                <!-- Lista hierarchicznych kategorii v2 -->
-                <div id="categories-v2-list" class="space-y-2 max-h-[60vh] overflow-y-auto pr-1">
-                    <!-- renderowane przez JS -->
-                </div>
+                    <!-- Lista hierarchicznych kategorii v2 -->
+                    <div id="categories-v2-list" class="space-y-2 max-h-[60vh] overflow-y-auto pr-1">
+                        <!-- renderowane przez JS -->
+                    </div>
                 </div>
 
                 <div id="tags-manager-card" class="glass-card rounded-2xl p-4 sm:p-5 mb-4">
@@ -566,38 +616,38 @@
             <!-- Ustawienia: Budżet -->
             <div id="settings-budget-tab" class="tab-content px-2 pt-1">
                 <div class="flex flex-col min-h-[calc(100vh-15rem)]">
-                <div class="flex items-center justify-between gap-3 mb-5">
-                    <label for="budget-month-btn" class="text-sm font-medium text-gray-300">Miesiąc:</label>
-                    <button id="budget-month-btn" type="button"
-                        class="flex items-center bg-white/5 hover:bg-white/10 text-white rounded-lg px-3 py-2 text-sm border border-white/10 transition-colors">
-                        <span id="budget-month-label">Wybierz miesiąc...</span>
-                        <svg class="ml-2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor"
-                            viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M19 9l-7 7-7-7"></path>
-                        </svg>
-                    </button>
+                    <div class="flex items-center justify-between gap-3 mb-5">
+                        <label for="budget-month-btn" class="text-sm font-medium text-gray-300">Miesiąc:</label>
+                        <button id="budget-month-btn" type="button"
+                            class="flex items-center bg-white/5 hover:bg-white/10 text-white rounded-lg px-3 py-2 text-sm border border-white/10 transition-colors">
+                            <span id="budget-month-label">Wybierz miesiąc...</span>
+                            <svg class="ml-2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
 
-                </div>
-                <div class="border-t border-white/5 pt-4 mb-6">
-                <div id="budgets-list" class="space-y-2 flex-1 min-h-[26rem] max-h-[30rem] overflow-y-auto pr-2"></div>
-                </div>
-                <div class="grid grid-cols-1 gap-3 mt-auto">
-                    <button id="save-budget-btn"
-                        class="w-full py-3 px-4 btn-secondary rounded-xl font-medium shadow-md transition-all active:scale-95">Zapisz
-                        budżet</button>
-                    <button id="copy-budget-btn"
-                        class="w-full py-3 px-4 btn-primary rounded-xl font-medium shadow-md transition-all active:scale-95">Kopiuj
-                        na następne miesiące</button>
-                </div>
+                    </div>
+                    <div class="border-t border-white/5 pt-4 mb-6">
+                        <div id="budgets-list"
+                            class="space-y-2 flex-1 min-h-[26rem] max-h-[30rem] overflow-y-auto pr-2"></div>
+                    </div>
+                    <div class="grid grid-cols-1 gap-3 mt-auto">
+                        <button id="save-budget-btn"
+                            class="w-full btn-secondary rounded-xl font-medium transition-all active:scale-95">Zapisz
+                            budżet</button>
+                        <button id="copy-budget-btn"
+                            class="w-full btn-primary rounded-xl font-medium transition-all active:scale-95">Kopiuj
+                            na następne miesiące</button>
+                    </div>
                 </div>
             </div>
 
             <!-- Ustawienia: Budżety Specjalne -->
             <div id="settings-special-tab" class="tab-content px-2 pt-1">
                 <div id="special-budgets-list" class="space-y-2 mb-6 max-h-[400px] overflow-y-auto pr-2"></div>
-                <form id="add-special-budget-form"
-                    class="space-y-3 bg-white/5 p-4 rounded-xl border border-white/5">
+                <form id="add-special-budget-form" class="space-y-3 bg-white/5 p-4 rounded-xl border border-white/5">
                     <input type="text" id="new-special-budget-name" placeholder="Nazwa (np. Wakacje)"
                         class="block w-full rounded-xl border-white/10 bg-white/5 text-white shadow-sm focus:border-brand-400 focus:ring-1 focus:ring-brand-400 py-3 px-4"
                         required>
@@ -605,7 +655,7 @@
                         <input type="number" id="new-special-budget-amount" placeholder="Kwota"
                             class="block w-full rounded-xl border-white/10 bg-white/5 text-white shadow-sm focus:border-brand-400 focus:ring-1 focus:ring-brand-400 py-3 px-4"
                             required step="0.01">
-                        <button type="submit" class="py-3 px-6 btn-primary rounded-xl shadow-lg">Dodaj</button>
+                        <button type="submit" class="btn-primary rounded-xl shadow-sm">Dodaj</button>
                     </div>
                 </form>
             </div>
@@ -661,73 +711,79 @@
                     </div>
                     <div id="recurring-weekly-settings" class="hidden mt-1">
                         <button id="recurring-day-of-week-btn" type="button" class="category-trigger-card py-3">
-                                <div class="flex items-center">
-                                    <span id="recurring-day-of-week-label">Poniedziałek</span>
+                            <div class="flex items-center">
+                                <span id="recurring-day-of-week-label">Poniedziałek</span>
+                            </div>
+                            <svg class="ml-2 w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 9l-7 7-7-7">
+                                </path>
+                            </svg>
+                        </button>
+
+                    </div>
+                    <div id="recurring-interval-settings" class="hidden grid grid-cols-2 gap-2 mt-1">
+                        <input type="number" id="recurring-interval" placeholder="Dni" min="1"
+                            class="block w-full rounded-xl border-white/10 bg-white/5 text-white py-3 px-4">
+                        <input type="date" id="recurring-start-date"
+                            class="block w-full rounded-xl border-white/10 bg-white/5 text-white py-3 px-4">
+                    </div>
+
+                    <!-- Tagi dla cyklicznego -->
+                    <div class="pt-1 pb-1">
+                        <button type="button" id="recurring-tags-btn"
+                            class="w-full flex items-center justify-between gap-3 px-3 py-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all text-sm text-left">
+                            <div class="flex items-center gap-2">
+                                <span class="text-base">🏷️</span>
+                                <div class="flex flex-col min-w-0">
+                                    <span class="text-[10px] text-gray-500 leading-none">Tagi wydatku</span>
+                                    <span id="recurring-tags-summary"
+                                        class="text-white font-medium text-xs truncate mt-0.5">Wybierz
+                                        tagi...</span>
                                 </div>
-                                <svg class="ml-2 w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor"
-                                    viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M19 9l-7 7-7-7">
-                                    </path>
-                                </svg>
-                            </button>
+                            </div>
+                            <i class="fas fa-chevron-right text-gray-500 text-xs shrink-0"></i>
+                        </button>
+                    </div>
 
-                        </div>
-                        <div id="recurring-interval-settings" class="hidden grid grid-cols-2 gap-2 mt-1">
-                            <input type="number" id="recurring-interval" placeholder="Dni" min="1"
-                                class="block w-full rounded-xl border-white/10 bg-white/5 text-white py-3 px-4">
-                            <input type="date" id="recurring-start-date"
-                                class="block w-full rounded-xl border-white/10 bg-white/5 text-white py-3 px-4">
-                        </div>
-
-                        <!-- Tagi dla cyklicznego -->
-                        <div class="pt-1 pb-1">
-                            <button type="button" id="recurring-tags-btn"
-                                class="w-full flex items-center justify-between gap-3 px-3 py-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all text-sm text-left">
-                                <div class="flex items-center gap-2">
-                                    <span class="text-base">🏷️</span>
-                                    <div class="flex flex-col min-w-0">
-                                        <span class="text-[10px] text-gray-500 leading-none">Tagi wydatku</span>
-                                        <span id="recurring-tags-summary"
-                                            class="text-white font-medium text-xs truncate mt-0.5">Wybierz
-                                            tagi...</span>
-                                    </div>
-                                </div>
-                                <i class="fas fa-chevron-right text-gray-500 text-xs shrink-0"></i>
-                            </button>
-                        </div>
-
-                        <button type="submit"
-                            class="w-full py-3 px-4 btn-primary rounded-xl font-bold shadow-lg transition-all active:scale-95">Dodaj
-                            subskrypcję</button>
-                    </form>
-                </div>
+                    <button type="submit"
+                        class="w-full btn-primary rounded-xl font-bold transition-all active:scale-95">Dodaj
+                        subskrypcję</button>
+                </form>
+            </div>
 
             <!-- Zakładka Analiza Budżetu -->
             <div id="analysis-tab" class="tab-content px-2 pt-1">
-                <div class="glass-card rounded-[24px] p-3 sm:p-4 flex flex-col border border-white/10 bg-white/[0.04] shadow-[0_20px_60px_rgba(0,0,0,0.24)]">
-                    
+                <div
+                    class="glass-card rounded-[24px] p-3 sm:p-4 flex flex-col border border-white/10 bg-white/[0.04] shadow-[0_20px_60px_rgba(0,0,0,0.24)]">
+
                     <!-- Podsumowanie -->
-                    <div id="comparison-summary" class="mb-2.5 rounded-2xl border border-white/10 bg-gradient-to-r from-white/10 to-white/5 px-3 py-2.5">
+                    <div id="comparison-summary"
+                        class="mb-2.5 rounded-2xl border border-white/10 bg-gradient-to-r from-white/10 to-white/5 px-3 py-2.5">
                         <div class="grid grid-cols-3 gap-2">
                             <div class="min-w-0 border-r border-white/8 pr-2">
                                 <p class="text-[10px] uppercase tracking-[0.18em] text-gray-500">Wydatki</p>
-                                <p id="comparison-total-spending" class="mt-1 truncate text-sm sm:text-base font-semibold text-white">0,00 zł</p>
+                                <p id="comparison-total-spending"
+                                    class="mt-1 truncate text-sm sm:text-base font-semibold text-white">0,00 zł</p>
                             </div>
                             <div class="min-w-0 border-r border-white/8 pr-2">
                                 <p class="text-[10px] uppercase tracking-[0.18em] text-gray-500">Budżet</p>
-                                <p id="comparison-total-budget" class="mt-1 truncate text-sm sm:text-base font-semibold text-white">0,00 zł</p>
+                                <p id="comparison-total-budget"
+                                    class="mt-1 truncate text-sm sm:text-base font-semibold text-white">0,00 zł</p>
                             </div>
                             <div class="min-w-0">
                                 <p class="text-[10px] uppercase tracking-[0.18em] text-gray-500">Różnica</p>
-                                <p id="comparison-total-difference" class="mt-1 truncate text-sm sm:text-base font-semibold text-white">0,00 zł</p>
+                                <p id="comparison-total-difference"
+                                    class="mt-1 truncate text-sm sm:text-base font-semibold text-white">0,00 zł</p>
                             </div>
                         </div>
                     </div>
 
                     <!-- Sterowanie okreseem -->
                     <div class="mb-2 overflow-hidden">
-                        <div id="comparison-segment-control" class="grid w-full grid-cols-4 items-center rounded-2xl border border-white/10 bg-white/[0.04] p-1 gap-1">
+                        <div id="comparison-segment-control"
+                            class="grid w-full grid-cols-4 items-center rounded-2xl border border-white/10 bg-white/[0.04] p-1 gap-1">
                             <button class="segment-btn" data-value="week">Tydzień</button>
                             <button class="segment-btn" data-value="month">Miesiąc</button>
                             <button class="segment-btn active" data-value="6months">6 mies.</button>
@@ -737,26 +793,38 @@
 
                     <!-- Meta informacje i nawigacja -->
                     <div id="comparison-chart-meta" class="mb-2 flex items-center gap-2">
-                        <button id="comparison-nav-prev" class="flex w-7 h-7 items-center justify-center rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors" aria-label="Poprzedni okres">
+                        <button id="comparison-nav-prev"
+                            class="flex w-7 h-7 items-center justify-center rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+                            aria-label="Poprzedni okres">
                             <i class="fas fa-chevron-left text-xs"></i>
                         </button>
-                        <div id="comparison-selected-range" class="flex-1 text-center text-[11px] sm:text-xs font-medium text-gray-400"></div>
+                        <div id="comparison-selected-range"
+                            class="flex-1 text-center text-[11px] sm:text-xs font-medium text-gray-400"></div>
                         <div class="ml-auto flex items-center gap-3 shrink-0">
                             <!-- Toggle "Tylko do dziś" -->
-                            <div id="comparison-mode-toggle-wrapper" class="hidden items-center gap-2 px-0 py-0 self-center">
-                                <span class="text-[11px] font-medium text-gray-400 leading-none whitespace-nowrap">Do dziś</span>
+                            <div id="comparison-mode-toggle-wrapper"
+                                class="hidden items-center gap-2 px-0 py-0 self-center">
+                                <span class="text-[11px] font-medium text-gray-400 leading-none whitespace-nowrap">Do
+                                    dziś</span>
                                 <label class="relative inline-flex items-center cursor-pointer align-middle">
                                     <input type="checkbox" id="comparison-mode-toggle" class="sr-only peer">
-                                    <div class="w-9 h-5 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-brand-600"></div>
+                                    <div
+                                        class="w-9 h-5 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-brand-600">
+                                    </div>
                                 </label>
                             </div>
                             <!-- Filtr tagów -->
-                            <button id="analysis-filter-tags-btn" type="button" class="relative inline-flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-gray-300 shadow-sm hover:bg-white/10 hover:text-white transition-colors" title="Filtr tagów" aria-label="Filtr tagów">
+                            <button id="analysis-filter-tags-btn" type="button"
+                                class="relative inline-flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-gray-300 shadow-sm hover:bg-white/10 hover:text-white transition-colors"
+                                title="Filtr tagów" aria-label="Filtr tagów">
                                 <i class="fas fa-tags text-sm"></i>
-                                <span id="analysis-filter-tags-indicator" class="hidden absolute -right-1 -top-1 h-3 w-3 rounded-full bg-brand-400 ring-2 ring-[#0a0a0a]"></span>
+                                <span id="analysis-filter-tags-indicator"
+                                    class="hidden absolute -right-1 -top-1 h-3 w-3 rounded-full bg-brand-400 ring-2 ring-[#0a0a0a]"></span>
                                 <span id="analysis-filter-tags-label" class="hidden">Wszystkie tagi</span>
                             </button>
-                            <button id="comparison-nav-next" class="flex w-7 h-7 items-center justify-center rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors" aria-label="Następny okres">
+                            <button id="comparison-nav-next"
+                                class="flex w-7 h-7 items-center justify-center rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+                                aria-label="Następny okres">
                                 <i class="fas fa-chevron-right text-xs"></i>
                             </button>
                         </div>
@@ -764,13 +832,18 @@
 
                     <!-- Selektor roku (ukryty domyślnie) -->
                     <div class="relative w-full mb-2 hidden" id="comparison-year-wrapper">
-                        <button id="comparison-year-dropdown-btn" class="flex justify-between items-center w-full rounded-xl border border-white/10 bg-white/5 text-white shadow-sm hover:bg-white/10 transition-colors text-sm py-2 px-4 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                        <button id="comparison-year-dropdown-btn"
+                            class="flex justify-between items-center w-full rounded-xl border border-white/10 bg-white/5 text-white shadow-sm hover:bg-white/10 transition-colors text-sm py-2 px-4 focus:outline-none focus:ring-2 focus:ring-brand-500">
                             <span id="comparison-year-label">2026</span>
-                            <svg class="ml-2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            <svg class="ml-2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 9l-7 7-7-7"></path>
                             </svg>
                         </button>
-                        <div id="comparison-year-popup" class="hidden absolute z-50 mt-1 w-full rounded-xl bg-[#141414] border border-white/10 shadow-xl p-1 left-0"></div>
+                        <div id="comparison-year-popup"
+                            class="hidden absolute z-50 mt-1 w-full rounded-xl bg-[#141414] border border-white/10 shadow-xl p-1 left-0">
+                        </div>
                         <select id="comparison-year-select" class="hidden" aria-hidden="true"></select>
                     </div>
 
@@ -801,13 +874,15 @@
                     </div>
 
                     <!-- Chipsy kategorii -->
-                    <div id="comparison-category-filters" class="mt-2.5 border-t border-white/8 pt-1.5 space-y-2 overflow-visible">
+                    <div id="comparison-category-filters"
+                        class="mt-2.5 border-t border-white/8 pt-1.5 space-y-2 overflow-visible">
                         <!-- Generowane przez JS -->
                     </div>
                 </div>
 
                 <!-- Wykres wydatków w sklepach -->
-                <div id="shop-chart-card" class="glass-card rounded-[24px] p-3 sm:p-4 w-full flex flex-col border border-white/10 bg-white/[0.04] shadow-[0_20px_60px_rgba(0,0,0,0.24)] mt-4">
+                <div id="shop-chart-card"
+                    class="glass-card rounded-[24px] p-3 sm:p-4 w-full flex flex-col border border-white/10 bg-white/[0.04] shadow-[0_20px_60px_rgba(0,0,0,0.24)] mt-4">
                     <div class="flex items-center justify-between mb-2.5">
                         <p class="text-[10px] uppercase tracking-[0.18em] text-gray-500">Top sklepy</p>
                         <p id="shop-chart-range" class="text-[11px] text-gray-400"></p>
@@ -829,18 +904,22 @@
             <!-- Zakładka Więcej -->
             <div id="more-tab" class="tab-content px-2 pt-1">
                 <div class="space-y-1">
-                    
+
                     <!-- Sekcja: Pozostałe -->
                     <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 ml-1">Pozostałe</p>
                     <button id="more-special-budgets-btn"
                         class="w-full flex items-center justify-between p-3 bg-white/5 hover:bg-white/10 rounded-xl border border-white/5 transition-all group">
                         <div class="flex items-center space-x-3 text-white">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 opacity-70 group-hover:opacity-100 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            <svg xmlns="http://www.w3.org/2000/svg"
+                                class="h-5 w-5 opacity-70 group-hover:opacity-100 transition-opacity" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                             <span class="font-medium text-sm">Budżety specjalne</span>
                         </div>
-                        <i class="fas fa-chevron-right text-gray-600 group-hover:text-white transition-colors text-[10px]"></i>
+                        <i
+                            class="fas fa-chevron-right text-gray-600 group-hover:text-white transition-colors text-[10px]"></i>
                     </button>
 
                     <!-- Symboliczny Separator -->
@@ -852,246 +931,264 @@
                     <button id="more-settings-btn"
                         class="w-full flex items-center justify-between p-3 bg-white/5 hover:bg-white/10 rounded-xl border border-white/5 transition-all group">
                         <div class="flex items-center space-x-3 text-white">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 opacity-70 group-hover:opacity-100 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <svg xmlns="http://www.w3.org/2000/svg"
+                                class="h-5 w-5 opacity-70 group-hover:opacity-100 transition-opacity" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                             </svg>
                             <span class="font-medium text-sm">Ustawienia</span>
                         </div>
-                        <i class="fas fa-chevron-right text-gray-600 group-hover:text-white transition-colors text-[10px]"></i>
+                        <i
+                            class="fas fa-chevron-right text-gray-600 group-hover:text-white transition-colors text-[10px]"></i>
                     </button>
 
                     <!-- Wyloguj -->
                     <button id="more-logout-btn"
                         class="w-full flex items-center justify-between p-3 bg-white/5 hover:bg-white/10 rounded-xl border border-white/5 transition-all group">
                         <div class="flex items-center space-x-3 text-white">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 opacity-70 group-hover:opacity-100 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                            <svg xmlns="http://www.w3.org/2000/svg"
+                                class="h-5 w-5 opacity-70 group-hover:opacity-100 transition-opacity" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                             </svg>
                             <span class="font-medium text-sm">Wyloguj się</span>
                         </div>
-                        <i class="fas fa-chevron-right text-gray-600 group-hover:text-white transition-colors text-[10px]"></i>
+                        <i
+                            class="fas fa-chevron-right text-gray-600 group-hover:text-white transition-colors text-[10px]"></i>
                     </button>
 
                 </div>
             </div>
-            </div>
+    </div>
 
-            <!-- Modal kopiowania budżetu -->
-            <div id="copy-budget-modal"
-                class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
-                <div class="bg-[#141414] border border-white/10 rounded-2xl shadow-2xl p-6 w-full max-w-md">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Kopiuj budżet na następne
-                            miesiące</h3>
-                        <button id="close-copy-budget-modal"
-                            class="p-2 text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white">&times;</button>
+    <!-- Modal kopiowania budżetu -->
+    <div id="copy-budget-modal"
+        class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+        <div class="bg-[#141414] border border-white/10 rounded-2xl shadow-2xl p-6 w-full max-w-md">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Kopiuj budżet na następne
+                    miesiące</h3>
+                <button id="close-copy-budget-modal"
+                    class="p-2 text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white">&times;</button>
+            </div>
+            <div class="space-y-4">
+                <p class="text-gray-600 dark:text-gray-300">Na ile miesięcy do przodu chcesz skopiować obecny
+                    budżet?
+                </p>
+                <div class="grid grid-cols-2 gap-3">
+                    <button class="copy-months-btn btn-secondary rounded-xl font-medium" data-months="1">1
+                        miesiąc</button>
+                    <button class="copy-months-btn btn-secondary rounded-xl font-medium" data-months="3">3
+                        miesiące</button>
+                    <button class="copy-months-btn btn-secondary rounded-xl font-medium" data-months="6">6
+                        miesięcy</button>
+                    <button class="copy-months-btn btn-secondary rounded-xl font-medium" data-months="12">12
+                        miesięcy</button>
+                </div>
+                <div class="flex justify-end space-x-2 pt-4">
+                    <button id="cancel-copy-budget"
+                        class="py-2 px-4 bg-gray-500 text-white rounded-md hover:bg-gray-600">Anuluj</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal edycji budżetu specjalnego -->
+    <div id="edit-special-budget-modal"
+        class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+        <div class="bg-[#141414] border border-white/10 rounded-2xl shadow-2xl p-6 w-full max-w-md">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Edytuj budżet specjalny</h3>
+                <button id="close-edit-special-budget-modal"
+                    class="p-2 text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white">&times;</button>
+            </div>
+            <form id="edit-special-budget-form">
+                <div class="space-y-4">
+                    <div>
+                        <label for="edit-special-budget-name"
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">Nazwa</label>
+                        <input type="text" id="edit-special-budget-name"
+                            class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2"
+                            required>
                     </div>
-                    <div class="space-y-4">
-                        <p class="text-gray-600 dark:text-gray-300">Na ile miesięcy do przodu chcesz skopiować obecny
-                            budżet?
-                        </p>
-                        <div class="grid grid-cols-2 gap-3">
-                            <button class="copy-months-btn py-3 px-4 btn-secondary rounded-xl font-medium"
-                                data-months="1">1
-                                miesiąc</button>
-                            <button class="copy-months-btn py-3 px-4 bg-blue-100 dark:bg-blue-900 text-blue-8
-                        00 dark:text-blue-200 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-800 font-medium"
-                                data-months="3">3 miesiące</button>
-                            <button class="copy-months-btn py-3 px-4 btn-secondary rounded-xl font-medium"
-                                data-months="6">6
-                                miesięcy</button>
-                            <button class="copy-months-btn py-3 px-4 btn-secondary rounded-xl font-medium"
-                                data-months="12">12
-                                miesięcy</button>
-                        </div>
-                        <div class="flex justify-end space-x-2 pt-4">
-                            <button id="cancel-copy-budget"
-                                class="py-2 px-4 bg-gray-500 text-white rounded-md hover:bg-gray-600">Anuluj</button>
-                        </div>
+                    <div>
+                        <label for="edit-special-budget-amount"
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">Kwota</label>
+                        <input type="number" id="edit-special-budget-amount"
+                            class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2"
+                            required step="0.01">
                     </div>
                 </div>
-            </div>
-
-            <!-- Modal edycji budżetu specjalnego -->
-            <div id="edit-special-budget-modal"
-                class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
-                <div class="bg-[#141414] border border-white/10 rounded-2xl shadow-2xl p-6 w-full max-w-md">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Edytuj budżet specjalny</h3>
-                        <button id="close-edit-special-budget-modal"
-                            class="p-2 text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white">&times;</button>
-                    </div>
-                    <form id="edit-special-budget-form">
-                        <div class="space-y-4">
-                            <div>
-                                <label for="edit-special-budget-name"
-                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">Nazwa</label>
-                                <input type="text" id="edit-special-budget-name"
-                                    class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2"
-                                    required>
-                            </div>
-                            <div>
-                                <label for="edit-special-budget-amount"
-                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300">Kwota</label>
-                                <input type="number" id="edit-special-budget-amount"
-                                    class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2"
-                                    required step="0.01">
-                            </div>
-                        </div>
-                        <div class="flex justify-end space-x-2 pt-6">
-                            <button type="button" id="cancel-edit-special-budget"
-                                class="py-2 px-4 bg-gray-500 text-white rounded-md hover:bg-gray-600">Anuluj</button>
-                            <button type="submit" class="py-2 px-4 btn-secondary rounded-xl">Zapisz
-                                zmiany</button>
-                        </div>
-                    </form>
+                <div class="flex justify-end space-x-2 pt-6">
+                    <button type="button" id="cancel-edit-special-budget"
+                        class="py-2 px-4 bg-gray-500 text-white rounded-md hover:bg-gray-600">Anuluj</button>
+                    <button type="submit" class="btn-secondary rounded-xl">Zapisz
+                        zmiany</button>
                 </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation Bar -->
+    <nav id="bottom-nav" class="fixed bottom-0 left-0 right-0 z-[60] glass-card border-t border-white/10">
+        <div class="max-w-lg mx-auto flex justify-around items-center h-16 px-2 relative">
+            <button data-tab="home"
+                class="bottom-nav-btn active flex flex-col items-center justify-center py-2 px-3 rounded-xl transition-all"
+                title="Start">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                </svg>
+                <span class="text-[10px] mt-0.5 font-medium">Start</span>
+            </button>
+            <button data-tab="list"
+                class="bottom-nav-btn flex flex-col items-center justify-center py-2 px-3 rounded-xl transition-all"
+                title="Lista">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                </svg>
+                <span class="text-[10px] mt-0.5 font-medium">Lista</span>
+            </button>
+
+            <!-- Przycisk DODAJ wewnątrz paska -->
+            <div class="flex items-center justify-center">
+                <button id="main-fab-btn"
+                    class="w-14 h-12 flex flex-col items-center justify-center rounded-xl bg-transparent border border-brand-700 text-brand-50 transition-all duration-300 hover:bg-brand-400/10 active:scale-95 group">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 opacity-90 group-hover:opacity-100"
+                        fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                    </svg>
+                    <span
+                        class="text-[9px] mt-0.5 font-bold opacity-90 group-hover:opacity-100 uppercase tracking-tighter">Dodaj</span>
+                </button>
             </div>
 
-            <!-- Bottom Navigation Bar -->
-            <nav id="bottom-nav" class="fixed bottom-0 left-0 right-0 z-[60] glass-card border-t border-white/10">
-                <div class="max-w-lg mx-auto flex justify-around items-center h-16 px-2 relative">
-                    <button data-tab="home"
-                        class="bottom-nav-btn active flex flex-col items-center justify-center py-2 px-3 rounded-xl transition-all"
-                        title="Start">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                        </svg>
-                        <span class="text-[10px] mt-0.5 font-medium">Start</span>
-                    </button>
-                    <button data-tab="list"
-                        class="bottom-nav-btn flex flex-col items-center justify-center py-2 px-3 rounded-xl transition-all"
-                        title="Lista">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-                        </svg>
-                        <span class="text-[10px] mt-0.5 font-medium">Lista</span>
-                    </button>
+            <button data-tab="analysis"
+                class="bottom-nav-btn flex flex-col items-center justify-center py-2 px-3 rounded-xl transition-all"
+                title="Analiza">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
+                </svg>
+                <span class="text-[10px] mt-0.5 font-medium">Analiza</span>
+            </button>
+            <button data-tab="more"
+                class="bottom-nav-btn flex flex-col items-center justify-center py-2 px-3 rounded-xl transition-all"
+                title="Więcej">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+                <span class="text-[10px] mt-0.5 font-medium">Więcej</span>
+            </button>
+        </div>
+    </nav>
 
-                    <!-- Przycisk DODAJ wewnątrz paska -->
-                    <div class="flex items-center justify-center">
-                        <button id="main-fab-btn"
-                            class="w-12 h-12 flex flex-col items-center justify-center rounded-xl bg-transparent border border-brand-400 text-brand-400 transition-all duration-300 hover:bg-brand-400/10 active:scale-95 group">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 opacity-90 group-hover:opacity-100" fill="none" viewBox="0 0 24 24"
-                                stroke="currentColor" stroke-width="2.5">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
-                            </svg>
-                            <span class="text-[9px] mt-0.5 font-bold opacity-90 group-hover:opacity-100 uppercase tracking-tighter">Dodaj</span>
-                        </button>
-                    </div>
+    <!-- Transparent overlay to catch clicks outside -->
+    <div id="fab-overlay" class="hidden fixed inset-0 bg-transparent z-[65] pointer-events-none">
+    </div>
 
-                    <button data-tab="analysis"
-                        class="bottom-nav-btn flex flex-col items-center justify-center py-2 px-3 rounded-xl transition-all"
-                        title="Analiza">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
-                        </svg>
-                        <span class="text-[10px] mt-0.5 font-medium">Analiza</span>
-                    </button>
-                    <button data-tab="more"
-                        class="bottom-nav-btn flex flex-col items-center justify-center py-2 px-3 rounded-xl transition-all"
-                        title="Więcej">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-                        </svg>
-                        <span class="text-[10px] mt-0.5 font-medium">Więcej</span>
-                    </button>
-                </div>
-            </nav>
+    <div id="fab-container"
+        class="fixed left-1/2 -translate-x-1/2 bottom-20 z-[70] pointer-events-none transition-all duration-300">
+        <div id="fab-actions"
+            class="hidden flex flex-row items-center justify-center gap-6 p-2 px-6 bg-[#141414] border border-white/10 rounded-2xl shadow-2xl pointer-events-auto transform translate-y-4 opacity-0 transition-all duration-300">
 
-            <!-- Transparent overlay to catch clicks outside -->
-            <div id="fab-overlay" class="hidden fixed inset-0 bg-transparent z-[65] pointer-events-none">
-            </div>
-
-            <div id="fab-container"
-                class="fixed left-1/2 -translate-x-1/2 bottom-20 z-[70] pointer-events-none transition-all duration-300">
-                <div id="fab-actions"
-                    class="hidden flex flex-row items-center justify-center gap-6 p-2 px-6 bg-[#141414] border border-white/10 rounded-2xl shadow-2xl pointer-events-auto transform translate-y-4 opacity-0 transition-all duration-300">
-                    
-                    <!-- Dodaj Ręcznie -->
-                    <button id="fab-add-manual-btn" class="flex flex-col items-center group py-1">
-                        <div class="w-10 h-10 flex items-center justify-center text-white opacity-70 group-hover:opacity-100 transition-all group-active:scale-90">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                            </svg>
-                        </div>
-                        <span class="text-[9px] text-gray-400 font-medium group-hover:text-white transition-colors -mt-1">Ręcznie</span>
-                    </button>
-
-                    <!-- Wybierz Plik -->
-                    <button id="fab-select-file-btn" class="flex flex-col items-center group py-1">
-                        <div class="w-10 h-10 flex items-center justify-center text-white opacity-70 group-hover:opacity-100 transition-all group-active:scale-90">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                            </svg>
-                        </div>
-                        <span class="text-[9px] text-gray-400 font-medium group-hover:text-white transition-colors -mt-1">Plik</span>
-                    </button>
-
-                    <!-- Aparat -->
-                    <button id="fab-scan-receipt-btn" class="flex flex-col items-center group py-1">
-                        <div class="w-10 h-10 flex items-center justify-center text-white opacity-70 group-hover:opacity-100 transition-all group-active:scale-90">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                            </svg>
-                        </div>
-                        <span class="text-[9px] text-gray-400 font-medium group-hover:text-white transition-colors -mt-1">Skanuj</span>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Category Selection Drawer -->
-            <div id="category-drawer-overlay"
-                class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[90] transition-opacity duration-300 opacity-0">
-            </div>
-            <div id="category-drawer"
-                class="hidden fixed bottom-0 left-0 right-0 z-[100] bg-[#141414] border-t border-white/10 rounded-t-3xl shadow-2xl transform translate-y-full transition-transform duration-300 ease-out h-[85vh] flex flex-col">
+            <!-- Dodaj Ręcznie -->
+            <button id="fab-add-manual-btn" class="flex flex-col items-center group py-1">
                 <div
-                    class="p-5 border-b border-white/5 flex flex-col space-y-4 bg-[#141414] rounded-t-3xl sticky top-0 z-10">
-                    <div class="flex justify-between items-center">
-                        <div class="flex items-center">
-                            <button id="category-drawer-back-btn"
-                                class="hidden w-10 h-10 -ml-2 flex items-center justify-center rounded-full text-gray-400 hover:text-white hover:bg-white/5 transition-colors mr-1">
-                                <i class="fas fa-arrow-left text-base"></i>
-                            </button>
-                            <div>
-                                <h3 id="category-drawer-title" class="text-lg font-bold text-white">Wybierz kategorię
-                                </h3>
-                                <p class="text-xs text-gray-400 mt-0.5" id="drawer-item-context"></p>
-                            </div>
-                        </div>
-                        <button id="close-category-drawer"
-                            class="w-10 h-10 flex items-center justify-center bg-white/5 rounded-full text-gray-400 hover:text-white transition-colors">&times;</button>
-                    </div>
-                    <!-- Search Input -->
-                    <div class="relative" id="drawer-search-container">
-                        <input type="text" id="drawer-search-input" placeholder="Wyszukaj..."
-                            class="w-full bg-white/5 border border-white/10 rounded-xl py-2.5 px-4 text-sm text-white focus:border-brand-500 focus:bg-white/10 transition-all outline-none">
-                    </div>
+                    class="w-10 h-10 flex items-center justify-center text-white opacity-70 group-hover:opacity-100 transition-all group-active:scale-90">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
                 </div>
-                <div id="category-drawer-grid" class="p-2 space-y-1 overflow-y-auto flex-grow">
-                    <!-- Categories rendered as a list by JS -->
+                <span
+                    class="text-[9px] text-gray-400 font-medium group-hover:text-white transition-colors -mt-1">Ręcznie</span>
+            </button>
+
+            <!-- Wybierz Plik -->
+            <button id="fab-select-file-btn" class="flex flex-col items-center group py-1">
+                <div
+                    class="w-10 h-10 flex items-center justify-center text-white opacity-70 group-hover:opacity-100 transition-all group-active:scale-90">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
                 </div>
-                <div class="p-6 pt-1 border-t border-white/5 bg-[#141414] pb-safe shrink-0">
-                    <button id="add-category-drawer-btn"
-                        class="w-full py-4 px-4 bg-white/5 border border-dashed border-white/20 rounded-2xl text-gray-400 hover:text-white hover:bg-white/10 transition-all flex items-center justify-center space-x-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-                            <circle cx="12" cy="12" r="3"/>
-                        </svg>
-                        <span>Zarządzaj kategoriami</span>
+                <span
+                    class="text-[9px] text-gray-400 font-medium group-hover:text-white transition-colors -mt-1">Plik</span>
+            </button>
+
+            <!-- Aparat -->
+            <button id="fab-scan-receipt-btn" class="flex flex-col items-center group py-1">
+                <div
+                    class="w-10 h-10 flex items-center justify-center text-white opacity-70 group-hover:opacity-100 transition-all group-active:scale-90">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                </div>
+                <span
+                    class="text-[9px] text-gray-400 font-medium group-hover:text-white transition-colors -mt-1">Skanuj</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Category Selection Drawer -->
+    <div id="category-drawer-overlay"
+        class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[90] transition-opacity duration-300 opacity-0">
+    </div>
+    <div id="category-drawer"
+        class="hidden fixed bottom-0 left-0 right-0 z-[100] bg-[#141414] border-t border-white/10 rounded-t-3xl shadow-2xl transform translate-y-full transition-transform duration-300 ease-out h-[85vh] flex flex-col">
+        <div class="p-5 border-b border-white/5 flex flex-col space-y-4 bg-[#141414] rounded-t-3xl sticky top-0 z-10">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center">
+                    <button id="category-drawer-back-btn"
+                        class="hidden w-10 h-10 -ml-2 flex items-center justify-center rounded-full text-gray-400 hover:text-white hover:bg-white/5 transition-colors mr-1">
+                        <i class="fas fa-arrow-left text-base"></i>
                     </button>
+                    <div>
+                        <h3 id="category-drawer-title" class="text-lg font-bold text-white">Wybierz kategorię
+                        </h3>
+                        <p class="text-xs text-gray-400 mt-0.5" id="drawer-item-context"></p>
+                    </div>
                 </div>
+                <button id="close-category-drawer"
+                    class="w-10 h-10 flex items-center justify-center bg-white/5 rounded-full text-gray-400 hover:text-white transition-colors">&times;</button>
             </div>
+            <!-- Search Input -->
+            <div class="relative" id="drawer-search-container">
+                <input type="text" id="drawer-search-input" placeholder="Wyszukaj..."
+                    class="w-full bg-white/5 border border-white/10 rounded-xl py-2.5 px-4 text-sm text-white focus:border-brand-500 focus:bg-white/10 transition-all outline-none">
+            </div>
+        </div>
+        <div id="category-drawer-grid" class="p-2 space-y-1 overflow-y-auto flex-grow">
+            <!-- Categories rendered as a list by JS -->
+        </div>
+        <div class="p-6 pt-1 border-t border-white/5 bg-[#141414] pb-safe shrink-0">
+            <button id="add-category-drawer-btn"
+                class="w-full py-4 px-4 bg-white/5 border border-dashed border-white/20 rounded-2xl text-gray-400 hover:text-white hover:bg-white/10 transition-all flex items-center justify-center space-x-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <circle cx="12" cy="12" r="3" />
+                </svg>
+                <span>Zarządzaj kategoriami</span>
+            </button>
+        </div>
+    </div>
     </div>
 
     <!-- Product Drawer -->
@@ -1160,8 +1257,7 @@
                     </button>
                 </div>
 
-                <button type="submit"
-                    class="w-full py-4 px-4 bg-brand-600 text-white rounded-xl hover:bg-brand-700 transition-all font-semibold mt-4 shadow-lg shadow-brand-500/20 active:scale-95">
+                <button type="submit" class="w-full btn-primary rounded-xl font-semibold mt-4 active:scale-95">
                     Zapisz produkt
                 </button>
             </form>
@@ -1183,8 +1279,7 @@
             <!-- Dynamic content for Date or Amount -->
         </div>
         <div class="p-4 bg-[#141414] border-t border-white/5 pb-safe">
-            <button id="filter-drawer-apply-btn"
-                class="w-full py-4 px-4 bg-brand-600 text-white rounded-xl hover:bg-brand-700 transition-all font-semibold shadow-lg shadow-brand-500/20 active:scale-95">
+            <button id="filter-drawer-apply-btn" class="w-full btn-primary rounded-xl font-semibold active:scale-95">
                 Zastosuj
             </button>
         </div>
@@ -1235,7 +1330,8 @@
                 <!-- Wybór ikony -->
                 <div>
                     <p class="text-xs text-gray-400 mb-2 font-semibold uppercase tracking-wider">Wybierz ikonę</p>
-                    <div id="cat-v2-icon-picker" class="flex flex-wrap gap-2 max-h-[200px] overflow-y-auto p-1 scrollbar-hide">
+                    <div id="cat-v2-icon-picker"
+                        class="flex flex-wrap gap-2 max-h-[200px] overflow-y-auto p-1 scrollbar-hide">
                         <!-- generowane przez JS -->
                     </div>
                     <input type="hidden" id="cat-v2-icon-value" value="fa-tag">
@@ -1249,8 +1345,8 @@
                     <input type="hidden" id="cat-v2-color-value" value="#3b82f6">
                 </div>
                 <div class="flex gap-3 pt-4">
-                    <button id="cat-v2-save-btn"
-                        class="flex-1 py-3.5 btn-primary rounded-xl text-sm font-bold shadow-lg shadow-brand-500/20">Zapisz kategorię</button>
+                    <button id="cat-v2-save-btn" class="flex-1 btn-primary rounded-xl font-bold">Zapisz
+                        kategorię</button>
                 </div>
             </div>
 
@@ -1264,14 +1360,15 @@
                 <!-- Wybór ikony dla podkategorii -->
                 <div>
                     <p class="text-xs text-gray-400 mb-2 font-semibold uppercase tracking-wider">Ikona (opcjonalnie)</p>
-                    <div id="cat-v2-sub-icon-picker" class="flex flex-wrap gap-2 max-h-[200px] overflow-y-auto p-1 scrollbar-hide">
+                    <div id="cat-v2-sub-icon-picker"
+                        class="flex flex-wrap gap-2 max-h-[200px] overflow-y-auto p-1 scrollbar-hide">
                         <!-- generowane przez JS -->
                     </div>
                     <input type="hidden" id="cat-v2-sub-icon-value" value="">
                 </div>
                 <div class="flex gap-3 pt-4">
-                    <button id="cat-v2-sub-save-btn"
-                        class="flex-1 py-3.5 btn-primary rounded-xl text-sm font-bold shadow-lg shadow-brand-500/20">Zapisz podkategorię</button>
+                    <button id="cat-v2-sub-save-btn" class="flex-1 btn-primary rounded-xl font-bold">Zapisz
+                        podkategorię</button>
                 </div>
             </div>
         </div>
@@ -1309,8 +1406,7 @@
             <div class="flex gap-3 mt-6">
                 <button id="tag-form-cancel-btn"
                     class="flex-1 py-3 bg-white/5 hover:bg-white/10 text-white rounded-xl text-sm transition-colors">Anuluj</button>
-                <button id="tag-form-save-btn"
-                    class="flex-1 py-3 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-sm font-semibold transition-colors shadow-lg shadow-brand-500/20">Zapisz</button>
+                <button id="tag-form-save-btn" class="flex-1 btn-primary rounded-xl font-semibold">Zapisz</button>
             </div>
         </div>
     </div>
@@ -1351,8 +1447,7 @@
             <div class="flex gap-3 mt-6">
                 <button id="tag-group-cancel-btn"
                     class="flex-1 py-3 bg-white/5 hover:bg-white/10 text-white rounded-xl text-sm transition-colors">Anuluj</button>
-                <button id="tag-group-save-btn"
-                    class="flex-1 py-3 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-sm font-semibold transition-colors shadow-lg shadow-brand-500/20">Zapisz</button>
+                <button id="tag-group-save-btn" class="flex-1 btn-primary rounded-xl font-semibold">Zapisz</button>
             </div>
         </div>
     </div>
@@ -1376,8 +1471,7 @@
             <!-- Grupy tagów renderowane przez JS -->
         </div>
         <div class="p-4 bg-[#141414] border-t border-white/5 pb-safe shrink-0">
-            <button id="tags-selection-confirm-btn"
-                class="w-full py-4 px-4 btn-primary rounded-xl active:scale-95">
+            <button id="tags-selection-confirm-btn" class="w-full btn-primary rounded-xl active:scale-95">
                 Zatwierdź tagi
             </button>
         </div>

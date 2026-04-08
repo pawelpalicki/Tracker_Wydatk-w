@@ -4,9 +4,9 @@
     --bg-main: #0a0a0a;
     --bg-card: #141414;
     --bg-nav: #0f0f0f;
-    --accent: #38bdf8;
+    --accent: #0369a1;
     --accent-hover: #7dd3fc;
-    --primary: #38bdf8;
+    --primary: #0369a1;
     --primary-hover: #7dd3fc;
     --brand-500: #38bdf8;
     --brand-600: #0ea5e9;
@@ -31,7 +31,12 @@ body {
 }
 
 /* ===== Typography ===== */
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
     font-weight: 600;
     letter-spacing: -0.01em;
 }
@@ -95,6 +100,7 @@ h1, h2, h3, h4, h5, h6 {
         opacity: 0;
         transform: translateY(8px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -172,8 +178,13 @@ h1, h2, h3, h4, h5, h6 {
 /* ===== Buttons & Forms ===== */
 
 .btn-primary {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0.5rem 0.75rem;
+    min-height: 36px;
     background: var(--accent);
-    box-shadow: 0 4px 15px rgba(56, 189, 248, 0.25);
+    box-shadow: 0 2px 5px rgba(56, 189, 248, 0.25);
     color: #0a0a0a !important;
     border: 1px solid var(--accent);
     font-weight: 600;
@@ -188,6 +199,11 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .btn-secondary {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0.5rem 0.75rem;
+    min-height: 36px;
     background: transparent;
     border: 1px solid var(--accent);
     color: var(--accent) !important;
@@ -202,7 +218,9 @@ h1, h2, h3, h4, h5, h6 {
     transform: translateY(-2px);
 }
 
-input, textarea, select {
+input,
+textarea,
+select {
     background-color: rgba(255, 255, 255, 0.05) !important;
     border: 1px solid rgba(255, 255, 255, 0.1) !important;
     border-radius: 12px !important;
@@ -237,21 +255,41 @@ input:-webkit-autofill {
 
 /* ===== Drawer & Bottom Sheet ===== */
 
-#category-drawer-overlay, #filter-drawer-overlay, #tags-selection-overlay, #product-drawer-overlay, #category-details-drawer-overlay, #category-editor-drawer-overlay {
+#category-drawer-overlay,
+#filter-drawer-overlay,
+#tags-selection-overlay,
+#product-drawer-overlay,
+#category-details-drawer-overlay,
+#category-editor-drawer-overlay {
     background: rgba(0, 0, 0, 0.6);
     backdrop-filter: blur(4px);
     transition: opacity 0.3s ease;
 }
 
-#category-drawer-overlay.active, #filter-drawer-overlay.active, #tags-selection-overlay.active, #product-drawer-overlay.active, #category-details-drawer-overlay.active, #category-editor-drawer-overlay.active {
+#category-drawer-overlay.active,
+#filter-drawer-overlay.active,
+#tags-selection-overlay.active,
+#product-drawer-overlay.active,
+#category-details-drawer-overlay.active,
+#category-editor-drawer-overlay.active {
     opacity: 1 !important;
 }
 
-#category-drawer, #filter-drawer, #tags-selection-drawer, #product-drawer, #category-details-drawer, #category-editor-drawer {
+#category-drawer,
+#filter-drawer,
+#tags-selection-drawer,
+#product-drawer,
+#category-details-drawer,
+#category-editor-drawer {
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-#category-drawer.active, #filter-drawer.active, #tags-selection-drawer.active, #product-drawer.active, #category-details-drawer.active, #category-editor-drawer.active {
+#category-drawer.active,
+#filter-drawer.active,
+#tags-selection-drawer.active,
+#product-drawer.active,
+#category-details-drawer.active,
+#category-editor-drawer.active {
     transform: translateY(0) !important;
 }
 
@@ -358,7 +396,8 @@ input:-webkit-autofill {
 /* ===== View-Specific Styles ===== */
 
 /* Home Tab (Kokpit) */
-#home-category-tiles, #home-subcategory-tiles {
+#home-category-tiles,
+#home-subcategory-tiles {
     scrollbar-width: none;
 }
 
@@ -437,8 +476,15 @@ input:-webkit-autofill {
 }
 
 @keyframes popupFadeIn {
-    from { opacity: 0; transform: translate(-50%, -6px) scale(0.97); }
-    to { opacity: 1; transform: translate(-50%, 0) scale(1); }
+    from {
+        opacity: 0;
+        transform: translate(-50%, -6px) scale(0.97);
+    }
+
+    to {
+        opacity: 1;
+        transform: translate(-50%, 0) scale(1);
+    }
 }
 
 /* Specific fix for popup centering when using Tailwind utility classes */
