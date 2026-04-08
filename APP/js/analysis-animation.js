@@ -25,7 +25,7 @@ const analysisAnimation = (() => {
     ];
 
     const COL = {
-        bg: '#0d1321',
+        bg: '#0a0a0a',
         panel: '#141c2b',
         panelSoft: '#1a2436',
         border: 'rgba(148, 163, 184, 0.18)',
@@ -36,8 +36,8 @@ const analysisAnimation = (() => {
         receiptGlow: 'rgba(96, 165, 250, 0.14)',
         cyan: '#67e8f9',
         cyanSoft: 'rgba(103, 232, 249, 0.28)',
-        blue: '#93c5fd',
-        blueSoft: 'rgba(147, 197, 253, 0.18)',
+        blue: '#38bdf8',
+        blueSoft: 'rgba(56, 189, 248, 0.18)',
         amber: '#fbbf24',
         pink: '#f9a8d4',
         shadow: 'rgba(15, 23, 42, 0.45)',
@@ -315,10 +315,7 @@ const analysisAnimation = (() => {
         drawParticles();
         drawRobot();
 
-        // V12 TEST BORDER
-        ctx.strokeStyle = '#7c3aed';
-        ctx.lineWidth = 4;
-        ctx.strokeRect(0, 0, W, H);
+
     }
 
     function loop() {

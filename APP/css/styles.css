@@ -1,15 +1,17 @@
 /* Tracker Wydatków - Unified Clean Stylesheet */
 
 :root {
-    --bg-main: #0f0f23;
-    --bg-card: #1e1e38;
-    --bg-nav: #16162d;
-    --primary: #4f46e5;
-    --primary-hover: #4338ca;
-    --brand-500: #6366f1;
-    --brand-600: #4f46e5;
+    --bg-main: #0a0a0a;
+    --bg-card: #141414;
+    --bg-nav: #0f0f0f;
+    --accent: #38bdf8;
+    --accent-hover: #7dd3fc;
+    --primary: #38bdf8;
+    --primary-hover: #7dd3fc;
+    --brand-500: #38bdf8;
+    --brand-600: #0ea5e9;
     --border-subtle: rgba(255, 255, 255, 0.08);
-    --border-active: rgba(255, 255, 255, 0.15);
+    --border-active: rgba(255, 255, 255, 0.18);
     --text-muted: #94a3b8;
 }
 
@@ -17,7 +19,7 @@
 * {
     box-sizing: border-box;
     scrollbar-width: thin;
-    scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+    scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
 }
 
 body {
@@ -36,8 +38,8 @@ h1, h2, h3, h4, h5, h6 {
 
 /* ===== Custom Scrollbar (WebKit) ===== */
 ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+    width: 4px;
+    height: 4px;
 }
 
 ::-webkit-scrollbar-track {
@@ -45,12 +47,12 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 ::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.12);
     border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.25);
 }
 
 .scrollbar-hide::-webkit-scrollbar {
@@ -102,7 +104,7 @@ h1, h2, h3, h4, h5, h6 {
 /* ===== Navigation ===== */
 
 #app-header {
-    background: rgba(15, 15, 35, 0.8);
+    background: rgba(10, 10, 10, 0.8);
     backdrop-filter: blur(10px);
 }
 
@@ -123,7 +125,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .bottom-nav-btn.active {
-    color: #a5b4fc;
+    color: var(--accent);
 }
 
 .bottom-nav-btn.active::after {
@@ -134,7 +136,7 @@ h1, h2, h3, h4, h5, h6 {
     transform: translateX(-50%);
     width: 20px;
     height: 3px;
-    background: var(--primary);
+    background: var(--accent);
     border-radius: 0 0 4px 4px;
 }
 
@@ -149,8 +151,10 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 #fab-actions {
-    background: #1e1e38;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.1);
+    background: rgba(10, 10, 10, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--border-active);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.1);
     z-index: 70;
 }
 
@@ -168,28 +172,33 @@ h1, h2, h3, h4, h5, h6 {
 /* ===== Buttons & Forms ===== */
 
 .btn-primary {
-    background: var(--primary);
-    box-shadow: 0 4px 15px rgba(79, 70, 229, 0.3);
-    color: white !important;
-    border: none;
+    background: var(--accent);
+    box-shadow: 0 4px 15px rgba(56, 189, 248, 0.25);
+    color: #0a0a0a !important;
+    border: 1px solid var(--accent);
+    font-weight: 600;
     transition: all 0.3s ease;
 }
 
 .btn-primary:hover {
-    background: var(--primary-hover);
-    box-shadow: 0 6px 20px rgba(79, 70, 229, 0.4);
+    background: var(--accent-hover);
+    border-color: var(--accent-hover);
+    box-shadow: 0 6px 20px rgba(56, 189, 248, 0.35);
     transform: translateY(-2px);
 }
 
 .btn-secondary {
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid var(--border-subtle);
-    color: white !important;
+    background: transparent;
+    border: 1px solid var(--accent);
+    color: var(--accent) !important;
+    font-weight: 500;
     transition: all 0.3s ease;
 }
 
 .btn-secondary:hover {
-    background: rgba(255, 255, 255, 0.12);
+    background: rgba(56, 189, 248, 0.08);
+    border-color: var(--accent-hover);
+    color: var(--accent-hover) !important;
     transform: translateY(-2px);
 }
 
@@ -217,12 +226,12 @@ input[type="date"] {
 }
 
 select option {
-    background-color: #1f2937;
+    background-color: #141414;
     color: white;
 }
 
 input:-webkit-autofill {
-    -webkit-box-shadow: 0 0 0 30px #1a1a2e inset !important;
+    -webkit-box-shadow: 0 0 0 30px #141414 inset !important;
     -webkit-text-fill-color: #fff !important;
 }
 
@@ -303,9 +312,8 @@ input:-webkit-autofill {
 }
 
 .category-drawer-item.active {
-    background: rgba(79, 70, 229, 0.2);
-    border-color: rgba(79, 70, 229, 0.4);
-    box-shadow: 0 0 15px rgba(79, 70, 229, 0.2);
+    background: rgba(255, 255, 255, 0.1);
+    border-color: var(--accent);
 }
 
 .category-icon-wrapper {
@@ -392,9 +400,10 @@ input:-webkit-autofill {
 }
 
 .segment-btn.active {
-    background: linear-gradient(135deg, #4f46e5, #3b82f6);
-    color: white;
-    box-shadow: 0 10px 30px rgba(79, 70, 229, 0.28);
+    background: var(--accent);
+    color: #0a0a0a;
+    font-weight: 700;
+    box-shadow: 0 4px 16px rgba(56, 189, 248, 0.25);
 }
 
 #comparison-chart-container canvas {
@@ -404,7 +413,7 @@ input:-webkit-autofill {
 
 /* Scanner (Analysis Animation) */
 #analysis-animation-container {
-    background: rgba(15, 23, 42, 0.94) !important;
+    background: rgba(10, 10, 10, 0.96) !important;
     backdrop-filter: blur(10px);
     z-index: 10;
 }
@@ -418,11 +427,11 @@ input:-webkit-autofill {
 /* Month Picker */
 .month-picker-popup {
     position: absolute;
-    background: #1a1a35;
+    background: #141414;
     border: 1px solid var(--border-active);
     border-radius: 16px;
     padding: 12px;
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
     animation: popupFadeIn 0.15s ease-out;
     z-index: 100;
 }
@@ -463,10 +472,10 @@ input:-webkit-autofill {
 }
 
 .month-picker-item.active {
-    background: var(--primary);
-    color: white;
+    background: var(--accent);
+    color: #0a0a0a;
     font-weight: 700;
-    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+    box-shadow: 0 4px 12px rgba(56, 189, 248, 0.3);
 }
 
 .month-picker-item:disabled {

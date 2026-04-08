@@ -91,7 +91,7 @@ function renderPurchaseItems() {
                             ${tagsHtml}
                         </div>
                         <div class="flex gap-1 ml-2">
-                            <button type="button" class="edit-item-btn text-blue-400 hover:text-white hover:bg-blue-500/20 w-8 h-8 flex items-center justify-center rounded-lg transition-all" data-index="${index}">
+                            <button type="button" class="edit-item-btn text-white/60 hover:text-white hover:bg-white/10 w-8 h-8 flex items-center justify-center rounded-lg transition-all" data-index="${index}">
                                 <i class="fas fa-edit text-xs"></i>
                             </button>
                             <button type="button" class="remove-item-btn text-red-500 hover:text-white hover:bg-red-500/20 w-8 h-8 flex items-center justify-center rounded-lg transition-all" data-index="${index}">
@@ -349,7 +349,7 @@ function renderPurchasesList(purchasesToRender, append = false) {
     const newContent = purchasesToRender.map(p => {
         const specialBudgetName = p.specialBudgetId ? (allSpecialBudgets.find(b => b.id === p.specialBudgetId) || {}).name : null;
         const budgetIcon = specialBudgetName
-            ? `<p class="text-xs text-blue-500 mb-1 flex items-center gap-1">
+            ? `<p class="text-xs text-brand-400 mb-1 flex items-center gap-1">
                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline-block" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a1 1 0 011-1h5a.997.997 0 01.707.293l7 7zM5 6a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" /></svg>
                  <span>${specialBudgetName}</span>
                </p>`
@@ -446,7 +446,7 @@ function renderPurchasesList(purchasesToRender, append = false) {
                 
                 <!-- Expanded view actions -->
                 <div class="flex gap-3 pt-2 mt-2 border-t border-white/5">
-                    <button class="edit-purchase-btn flex-1 py-2.5 px-5 bg-white/5 hover:bg-white/10 text-blue-400 rounded-2xl transition-all flex items-center justify-center gap-2 text-sm font-medium">
+                    <button class="edit-purchase-btn flex-1 py-2.5 px-5 bg-white/5 hover:bg-white/10 text-brand-400 rounded-2xl transition-all flex items-center justify-center gap-2 text-sm font-medium">
                         <i class="fas fa-edit"></i>
                         <span>Edytuj</span>
                     </button>

@@ -9,7 +9,7 @@ function renderRecurringExpenses() {
 
     allRecurringExpenses.forEach(expense => {
         const expenseEl = document.createElement('div');
-        expenseEl.className = 'flex items-center justify-between p-3 bg-gray-100 dark:bg-gray-800 rounded-lg';
+        expenseEl.className = 'w-full flex items-center justify-between p-3 bg-white/5 hover:bg-white/10 rounded-xl border border-white/5 transition-all group';
         expenseEl.dataset.id = expense.id;
 
         const scheduleText = getScheduleText(expense.schedule);

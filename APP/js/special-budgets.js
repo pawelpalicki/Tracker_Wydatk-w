@@ -46,7 +46,7 @@ function renderSpecialBudgetsTab() {
     const budgetCards = budgetsWithData.map(budget => {
         const hasSpending = Object.keys(budget.spendingByCategory).length > 0;
         return `
-            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 flex flex-col justify-between">
+            <div class="bg-[#141414] border border-white/5 rounded-2xl shadow-xl p-6 flex flex-col justify-between">
                 <div>
                     <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">${budget.name}</h3>
                     <div class="mb-2">
@@ -55,7 +55,7 @@ function renderSpecialBudgetsTab() {
                             <span class="text-sm font-medium text-gray-700 dark:text-gray-300">${budget.progress.toFixed(0)}%</span>
                         </div>
                         <div class="w-full bg-gray-200 rounded-full h-4 dark:bg-gray-700">
-                            <div class="bg-blue-600 h-4 rounded-full" style="width: ${budget.progress}%"></div>
+                            <div class="bg-brand-400 h-4 rounded-full" style="width: ${budget.progress}%"></div>
                         </div>
                     </div>
                     <div class="mt-4 grid grid-cols-3 gap-4 text-center">
@@ -65,7 +65,7 @@ function renderSpecialBudgetsTab() {
                         </div>
                         <div>
                             <p class="text-sm text-gray-600 dark:text-gray-400">Wydano</p>
-                            <p class="text-lg font-bold text-blue-600 dark:text-blue-400">${formatAmount(budget.spent)}</p>
+                            <p class="text-lg font-bold text-brand-500 dark:text-brand-400">${formatAmount(budget.spent)}</p>
                         </div>
                         <div>
                             <p class="text-sm text-gray-600 dark:text-gray-400">Pozostało</p>
@@ -84,7 +84,7 @@ function renderSpecialBudgetsTab() {
     const header = `
         <div class="flex justify-between items-center mb-6 max-w-4xl mx-auto px-4">
             <h2 class="text-2xl font-bold text-white">Budżety Specjalne</h2>
-            <button onclick="switchTab('settings-special')" class="flex items-center space-x-2 px-3 py-1.5 bg-white/10 hover:bg-white/20 border border-white/10 rounded-lg text-blue-400 transition-all text-xs font-medium">
+            <button onclick="switchTab('settings-special')" class="flex items-center space-x-2 px-3 py-1.5 bg-white/10 hover:bg-white/20 border border-white/10 rounded-lg text-brand-400 transition-all text-xs font-medium">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
                     <circle cx="12" cy="12" r="3"/>
@@ -161,14 +161,14 @@ function renderSpecialBudgetsList() {
 
     allSpecialBudgets.forEach(budget => {
         const budgetEl = document.createElement('div');
-        budgetEl.className = 'flex items-center justify-between p-2 border-b border-gray-200 dark:border-gray-700';
+        budgetEl.className = 'w-full flex items-center justify-between p-3 bg-white/5 hover:bg-white/10 rounded-xl border border-white/5 transition-all group';
         budgetEl.innerHTML = `
             <div>
-                <span class="font-medium text-gray-800 dark:text-gray-200">${budget.name}</span>
-                <span class="text-sm text-gray-500 dark:text-gray-400 ml-2">${formatAmount(budget.amount)}</span>
+                <span class="font-medium text-white">${budget.name}</span>
+                <span class="text-sm text-gray-400 ml-2">${formatAmount(budget.amount)}</span>
             </div>
             <div class="flex items-center space-x-2">
-                <button class="edit-special-budget-btn p-1 text-blue-500 hover:text-blue-700" data-id="${budget.id}" title="Edytuj">
+                <button class="edit-special-budget-btn p-1 text-brand-400 hover:text-brand-300" data-id="${budget.id}" title="Edytuj">
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L15.232 5.232z"></path></svg>
                 </button>
                 <button class="delete-special-budget-btn p-1 text-red-500 hover:text-red-700" data-id="${budget.id}" title="Usuń">

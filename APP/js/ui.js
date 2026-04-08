@@ -133,10 +133,10 @@ const NAV_TITLES = {
     'special-budgets': 'Budżety specjalne',
     'more': 'Więcej',
     'settings': 'Ustawienia',
-    'settings-categories': 'Kategorie',
-    'settings-budget': 'Budżet',
+    'settings-categories': 'Zarządzaj kategoriami',
+    'settings-budget': 'Miesięczny Budżet',
     'settings-special': 'Budżety specjalne',
-    'settings-recurring': 'Subskrypcje',
+    'settings-recurring': 'Stałe Opłaty',
 };
 
 const TABS_WITH_BACK = ['special-budgets', 'settings', 'settings-categories', 'settings-budget', 'settings-special', 'settings-recurring'];
@@ -718,8 +718,8 @@ function enterEditMode(purchaseId) {
     const navTitle = document.getElementById('nav-title');
     if (navTitle) navTitle.textContent = 'Edytuj istniejący zakup';
     purchaseFormSubmitBtn.textContent = 'Zaktualizuj zakup';
-    purchaseFormSubmitBtn.classList.replace('bg-blue-600', 'bg-green-600');
-    purchaseFormSubmitBtn.classList.replace('hover:bg-blue-700', 'hover:bg-green-700');
+    purchaseFormSubmitBtn.classList.remove('btn-primary');
+    purchaseFormSubmitBtn.classList.add('bg-green-500', 'text-white', 'border', 'border-green-500', 'hover:bg-green-400');
     document.getElementById('cancel-edit-btn').classList.remove('hidden');
 
     updatePurchaseSummary();
@@ -747,8 +747,8 @@ function exitEditMode() {
         if (navTitle) navTitle.textContent = 'Dodaj zakup';
     }
     purchaseFormSubmitBtn.textContent = 'Zapisz cały zakup';
-    purchaseFormSubmitBtn.classList.replace('bg-green-600', 'bg-blue-600');
-    purchaseFormSubmitBtn.classList.replace('hover:bg-green-700', 'hover:bg-blue-700');
+    purchaseFormSubmitBtn.classList.remove('bg-green-500', 'text-white', 'border', 'border-green-500', 'hover:bg-green-400');
+    purchaseFormSubmitBtn.classList.add('btn-primary');
     document.getElementById('cancel-edit-btn').classList.add('hidden');
 
     // Ensure scanner is hidden when resetting form
