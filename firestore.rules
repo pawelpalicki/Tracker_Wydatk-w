@@ -39,6 +39,12 @@ service cloud.firestore {
       allow create: if request.auth != null;
     }
 
+    // Notifications
+    match /notifications/{notificationId} {
+      allow read, update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null;
+    }
+
     // Categories - jeśli używasz osobnej kolekcji
     match /categories/{categoryId} {
       allow read, update, delete: if request.auth != null && request.auth.uid == resource.data.userId;

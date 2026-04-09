@@ -170,7 +170,7 @@ function applyRecurringCategorySelection(parentName = '', subCategoryName = '') 
 }
 
 // --- Funkcja kompresji/optymalizacji obrazu ---
-async function resizeImage(file, maxSize = 1920, quality = 0.92) {
+async function resizeImage(file, maxSize = 1400, quality = 0.75) {
     return new Promise((resolve, reject) => {
         const image = new Image();
         image.onload = () => {
@@ -563,8 +563,11 @@ function setupAppEventListeners() {
     });
 
     document.getElementById('nav-notifications-btn')?.addEventListener('click', () => {
-        alert('Powiadomienia będą dostępne wkrótce! (Etap 4)');
+        if (typeof openNotificationsDrawer === 'function') openNotificationsDrawer();
     });
+
+    // Inicjalizuj powiadomienia
+    if (typeof initNotifications === 'function') initNotifications();
 
 }
 
@@ -681,6 +684,9 @@ async function fetchInitialData(shouldSwitchToDefault = true) {
         if (shouldSwitchToDefault) {
             switchTab('home');
         }
+
+        // Załaduj powiadomienia po starcie
+        if (typeof loadNotifications === 'function') loadNotifications();
     } catch (error) {
         alert(error.message);
     }

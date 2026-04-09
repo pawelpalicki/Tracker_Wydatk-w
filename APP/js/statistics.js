@@ -226,9 +226,24 @@ async function renderHomeSummary() {
             if (barWrapper) barWrapper.classList.add('hidden');
         }
 
-        // Render category tiles using the purchases we just fetched for this specific month
         renderHomeCategoryTiles(purchases, budgets);
         renderHomeSubCategoryTiles(purchases);
+
+        // --- SPRAWDZANIE POWIADOMIEŃ ---
+        if (isCurrentMonth && typeof checkAndGenerateNotifications === 'function') {
+            const categoryTotals = {};
+            purchases.forEach(p => p.items.forEach(i => {
+                const cat = i.category || 'inne';
+                categoryTotals[cat] = (categoryTotals[cat] || 0) + (i.price || 0);
+            }));
+            
+            checkAndGenerateNotifications({
+                totalSpent,
+                totalBudget,
+                budgets,
+                categoryTotals
+            });
+        }
 
     } catch (err) {
         console.error('Błąd pobierania danych podsumowania:', err);

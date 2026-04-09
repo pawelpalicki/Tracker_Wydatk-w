@@ -120,9 +120,11 @@
                 <!-- Right slot: notification bell -->
                 <div class="flex items-center w-10 justify-end">
                     <button id="nav-notifications-btn"
-                        class="w-9 h-9 flex items-center justify-center rounded-full text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+                        class="relative w-9 h-9 flex items-center justify-center rounded-full text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
                         aria-label="Powiadomienia">
                         <i class="fas fa-bell text-sm"></i>
+                        <!-- Badge powiadomień -->
+                        <span id="notification-badge" class="hidden absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border border-[#0a0a0a]"></span>
                     </button>
                     <button id="nav-user-btn"
                         class="w-9 h-9 ml-1 flex items-center justify-center rounded-full text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
@@ -195,6 +197,14 @@
                                             class="text-xs text-brand-200/60 font-medium italic hidden">Brak
                                             budżetu</span>
                                     </div>
+                                </div>
+
+                                <!-- AI Insight Button -->
+                                <div class="mb-5 flex justify-start">
+                                    <button id="ai-insight-btn" class="flex items-center gap-2 px-3 py-1.5 bg-brand-500/10 hover:bg-brand-500/20 text-brand-400 text-[10px] font-bold uppercase tracking-wider rounded-lg border border-brand-500/20 transition-all active:scale-95 group">
+                                        <i class="fas fa-wand-magic-sparkles animate-pulse"></i>
+                                        Analiza AI (Gemini)
+                                    </button>
                                 </div>
 
                                 <!-- Budget progress bar -->
@@ -1433,6 +1443,30 @@
         </div>
     </div>
 
+    <!-- Notifications Drawer -->
+    <div id="notifications-overlay"
+        class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[110] transition-opacity duration-300 opacity-0">
+    </div>
+    <div id="notifications-drawer"
+        class="hidden fixed bottom-0 left-0 right-0 z-[120] bg-[#141414] border-t border-white/10 rounded-t-3xl shadow-2xl transform translate-y-full transition-transform duration-300 ease-out flex flex-col max-h-[85vh]">
+        <div
+            class="p-5 border-b border-white/5 flex justify-between items-center bg-[#141414] rounded-t-3xl sticky top-0 z-10 shrink-0">
+            <div>
+                <h3 class="text-lg font-bold text-white">Powiadomienia</h3>
+                <p class="text-xs text-gray-400 mt-0.5">Twoje alerty i wskazówki</p>
+            </div>
+            <button id="close-notifications-drawer"
+                class="w-10 h-10 flex items-center justify-center bg-white/5 rounded-full text-gray-400 hover:text-white transition-colors">&times;</button>
+        </div>
+        <div id="notifications-content" class="p-4 overflow-y-auto flex-grow bg-[#0a0a0a] space-y-3">
+            <!-- Powiadomienia renderowane przez JS -->
+            <div class="text-center py-10 opacity-50">
+                <i class="fas fa-bell-slash text-3xl mb-3 block"></i>
+                <p class="text-sm">Brak nowych powiadomień</p>
+            </div>
+        </div>
+    </div>
+
     </main>
     </div>
 
@@ -1449,6 +1483,7 @@
     <script src="js/recurring-expenses.js?v=12"></script>
     <script src="js/categories-v2.js?v=12"></script>
     <script src="js/tags.js?v=12"></script>
+    <script src="js/notifications.js?v=12"></script>
     <script src="js/app.js?v=12"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/pl.js"></script>

@@ -29,6 +29,7 @@ const db = getFirestore();
 const usersCollection = db.collection('users');
 const purchasesCollection = db.collection('expenses');
 const recurringExpensesCollection = db.collection('recurringExpenses');
+const notificationsCollection = db.collection('notifications');
 
 // --- Inicjalizacja Gemini AI ---
 const gemini = new GoogleGenerativeAI(GEMINI_API_KEY);
@@ -1285,6 +1286,155 @@ app.post('/api/tags/:group', authMiddleware, async (req, res) => {
     } catch (error) {
         console.error("Błąd dodawania tagu:", error);
         res.status(500).json({ error: 'Błąd serwera podczas dodawania tagu.' });
+    }
+});
+
+// --- API Powiadomień ---
+
+// Pobieranie powiadomień
+app.get('/api/notifications', authMiddleware, async (req, res) => {
+    try {
+        const userId = req.userId;
+        const snapshot = await notificationsCollection
+            .where('userId', '==', userId)
+            // Usunięto orderBy z powodu potencjalnego braku indeksu kompozytowego
+            .limit(50)
+            .get();
+
+        const now = Date.now();
+        const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
+        const notifications = [];
+
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            // Ukryj powiadomienia przeczytane dawniej niż 7 dni temu
+            if (data.isRead && data.readAt && (now - data.readAt > sevenDaysMs)) {
+                return;
+            }
+            notifications.push({ id: doc.id, ...data });
+        });
+
+        res.json(notifications);
+    } catch (error) {
+        console.error('Błąd pobierania powiadomień:', error);
+        res.status(500).json({ error: 'Błąd pobierania powiadomień' });
+    }
+});
+
+// Dodawanie powiadomienia (wywoływane przez frontend po wykryciu alertu)
+app.post('/api/notifications', authMiddleware, async (req, res) => {
+    try {
+        const userId = req.userId;
+        const { type, message, monthKey } = req.body;
+
+        // Zapobiegaj dublowaniu powiadomień tego samego typu w tym samym miesiącu
+        const existing = await notificationsCollection
+            .where('userId', '==', userId)
+            .where('type', '==', type)
+            .where('monthKey', '==', monthKey)
+            .limit(1)
+            .get();
+
+        if (!existing.empty) {
+            return res.json({ success: true, message: 'Notification already exists' });
+        }
+
+        const newNotif = {
+            userId,
+            type,
+            message,
+            monthKey,
+            date: new Date().toISOString(),
+            isRead: false,
+            readAt: null
+        };
+
+        const docRef = await notificationsCollection.add(newNotif);
+        res.json({ id: docRef.id, ...newNotif });
+    } catch (error) {
+        console.error('Błąd dodawania powiadomienia:', error);
+        res.status(500).json({ error: 'Błąd dodawania powiadomienia' });
+    }
+});
+
+// Oznaczanie jako przeczytane
+app.post('/api/notifications/read', authMiddleware, async (req, res) => {
+    try {
+        const userId = req.userId;
+        const { notificationIds } = req.body;
+
+        if (!Array.isArray(notificationIds)) {
+            return res.status(400).json({ error: 'Invalid notificationIds' });
+        }
+
+        const batch = db.batch();
+        const now = Date.now();
+
+        for (const id of notificationIds) {
+            const docRef = notificationsCollection.doc(id);
+            batch.update(docRef, { isRead: true, readAt: now });
+        }
+
+        await batch.commit();
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Błąd oznaczania powiadomień:', error);
+        res.status(500).json({ error: 'Błąd oznaczania powiadomień' });
+    }
+});
+
+// --- API Analizy AI (Insights) ---
+
+app.post('/api/analysis/insights', authMiddleware, async (req, res) => {
+    try {
+        const userId = req.userId;
+        const { currentMonthData, previousMonthData, categories } = req.body;
+
+        // Limity: 1 zapytanie AI na dzień
+        const todayKey = new Date().toISOString().substring(0, 10);
+        const existing = await notificationsCollection
+            .where('userId', '==', userId)
+            .where('type', '==', 'ai_insight')
+            .where('monthKey', '==', todayKey)
+            .limit(1)
+            .get();
+
+        if (!existing.empty) {
+            return res.status(429).json({ error: 'Dzisiejsza analiza została już wygenerowana.' });
+        }
+
+        const prompt = `
+            Jesteś inteligentnym asystentem finansowym. Przeanalizuj poniższe dane o wydatkach użytkownika i sformułuj 3 krótkie, konkretne wnioski/rady (insights).
+            Używaj bezpośredniego, zachęcającego tonu. Każdy wniosek powinien być krótki (max 150 znaków).
+
+            DANE:
+            - Bieżący miesiąc total: ${currentMonthData.total} zł
+            - Poprzedni miesiąc total: ${previousMonthData.total} zł
+            - Kategorie z największymi wydatkami: ${JSON.stringify(currentMonthData.topCategories)}
+            - Dostępne kategorie: ${categories.join(', ')}
+
+            Zwróć odpowiedź WYŁĄCZNIE w formacie JSON:
+            {
+              "insights": [
+                { "icon": "fa-icon-name", "text": "Treść wniosku..." },
+                ...
+              ]
+            }
+        `;
+
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        const text = response.text();
+        
+        // Wyodrębnij JSON z odpowiedzi
+        const jsonMatch = text.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) throw new Error('Nieprawidłowy format odpowiedzi AI');
+        
+        const insights = JSON.parse(jsonMatch[0]);
+        res.json(insights);
+    } catch (error) {
+        console.error('Błąd generowania wniosków AI:', error);
+        res.status(500).json({ error: 'Błąd generowania wniosków AI' });
     }
 });
 
