@@ -220,31 +220,24 @@
                                 <!-- SEKCJA MOBILIZACJA (Start - Ultra Compact) -->
                                 <div id="home-mobilization-section"
                                     class="hidden mb-3 px-3 py-2 bg-white/[0.04] rounded-lg border border-white/10">
-                                    <div class="grid grid-cols-3 gap-3">
-                                        <div class="flex flex-col min-w-0">
-                                            <span
-                                                class="text-[8px] text-brand-200 uppercase font-black tracking-tight leading-none mb-1">Dzienny
-                                                Limit</span>
-                                            <span id="insight-daily-limit"
-                                                class="text-[13px] font-black text-white leading-tight break-words">0
-                                                zł</span>
+                                    <div class="flex items-start justify-between gap-1 uppercase tracking-tight">
+                                        <!-- Dzienny Limit -->
+                                        <div class="flex flex-col min-w-0 flex-[0.9] border-r border-white/10 pr-2">
+                                            <span class="text-[8px] text-brand-200 font-black leading-none mb-1">Dzienny Limit</span>
+                                            <span id="insight-daily-limit" class="text-[13px] font-black text-white leading-tight truncate">0 zł</span>
                                         </div>
-                                        <div class="flex flex-col min-w-0">
-                                            <span
-                                                class="text-[8px] text-brand-200 uppercase font-black tracking-tight leading-none mb-1">Prognoza
-                                                m-ca</span>
-                                            <span id="insight-projection"
-                                                class="text-[13px] font-black text-white leading-tight break-words">0
-                                                zł</span>
-                                            <span id="insight-projection-diff"
-                                                class="text-[10px] font-bold leading-tight mt-0.5 break-words"></span>
+
+                                        <!-- Prognoza -->
+                                        <div class="flex flex-col min-w-0 flex-[1.4] border-r border-white/10 px-2 text-center">
+                                            <span class="text-[8px] text-brand-200 font-black leading-none mb-1">Prognoza m-ca</span>
+                                            <span id="insight-projection" class="text-[13px] font-black text-white leading-tight truncate">0 zł</span>
+                                            <span id="insight-projection-diff" class="text-[9px] font-bold leading-tight mt-0.5 whitespace-nowrap"></span>
                                         </div>
-                                        <div class="flex flex-col min-w-0">
-                                            <span
-                                                class="text-[8px] text-brand-200 uppercase font-black tracking-tight leading-none mb-1">Przyjemności</span>
-                                            <span id="insight-wants"
-                                                class="text-[13px] font-black text-white leading-tight break-words">0
-                                                zł</span>
+
+                                        <!-- Przyjemności -->
+                                        <div class="flex flex-col min-w-0 flex-[0.9] pl-2 text-right">
+                                            <span class="text-[8px] text-brand-200 font-black leading-none mb-1">Przyjemności</span>
+                                            <span id="insight-wants" class="text-[13px] font-black text-white leading-tight truncate">0 zł</span>
                                         </div>
                                     </div>
                                     <div id="insight-text-container" class="mt-1.5 space-y-0.5 empty:hidden"></div>
@@ -912,9 +905,9 @@
                         <div class="h-px bg-white/5 mb-6 mx-2"></div>
                         <button id="more-logout-btn"
                             class="w-full flex items-center justify-between p-4 bg-white/5 hover:bg-white/10 rounded-xl border border-white/5 transition-all group">
-                            <div class="flex items-center space-x-3 text-white">
+                            <div class="flex items-center space-x-3 text-red-400">
                                 <svg xmlns="http://www.w3.org/2000/svg"
-                                    class="h-5 w-5 opacity-70 group-hover:opacity-100 transition-opacity" fill="none"
+                                    class="h-5 w-5 opacity-90 group-hover:opacity-100 transition-opacity" fill="none"
                                     viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round"
                                         d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
