@@ -718,8 +718,6 @@ function enterEditMode(purchaseId) {
     const navTitle = document.getElementById('nav-title');
     if (navTitle) navTitle.textContent = 'Edytuj istniejący zakup';
     purchaseFormSubmitBtn.textContent = 'Zaktualizuj zakup';
-    purchaseFormSubmitBtn.classList.remove('btn-primary');
-    purchaseFormSubmitBtn.classList.add('bg-green-500', 'text-white', 'border', 'border-green-500', 'hover:bg-green-400');
     document.getElementById('cancel-edit-btn').classList.remove('hidden');
 
     updatePurchaseSummary();
@@ -747,8 +745,6 @@ function exitEditMode() {
         if (navTitle) navTitle.textContent = 'Dodaj zakup';
     }
     purchaseFormSubmitBtn.textContent = 'Zapisz cały zakup';
-    purchaseFormSubmitBtn.classList.remove('bg-green-500', 'text-white', 'border', 'border-green-500', 'hover:bg-green-400');
-    purchaseFormSubmitBtn.classList.add('btn-primary');
     document.getElementById('cancel-edit-btn').classList.add('hidden');
 
     // Ensure scanner is hidden when resetting form
