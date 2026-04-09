@@ -263,12 +263,16 @@ function renderHomeMobilizationInsights(purchases, totalBudget, isCurrentMonth) 
     const section = document.getElementById('home-mobilization-section');
     if (!section || !isCurrentMonth || totalBudget <= 0) { if (section) section.classList.add('hidden'); return; }
     const now = new Date(), day = now.getDate(), days = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate(), rem = days - day;
-    let fxd = 0, flx = 0, wants = 0;
+    let fxd = 0, flx = 0, wants = 0, otm = 0;
 
     purchases.forEach(p => (p.items || []).forEach(i => {
         const isFixed = i.tags?.nature === 'stały' || ['rachunki', 'czynsz', 'kaucje'].includes(i.category?.toLowerCase());
+        const isOneTime = i.tags?.nature === 'jednorazowy';
+
         if (isFixed) {
             fxd += i.price || 0;
+        } else if (isOneTime) {
+            otm += i.price || 0;
         } else {
             flx += i.price || 0;
             if (i.tags?.purpose === 'przyjemność') {
@@ -286,8 +290,8 @@ function renderHomeMobilizationInsights(purchases, totalBudget, isCurrentMonth) 
         });
     }
 
-    const proj = fxd + upc + flx + (flx / day * rem);
-    const lim = Math.max(0, totalBudget - fxd - upc - flx) / (rem + 1);
+    const proj = fxd + upc + otm + flx + (flx / day * rem);
+    const lim = Math.max(0, totalBudget - fxd - upc - otm - flx) / (rem + 1);
     const dailyLimitEl = document.getElementById('insight-daily-limit');
     const projectionEl = document.getElementById('insight-projection');
     const wantsEl = document.getElementById('insight-wants');
