@@ -84,6 +84,8 @@ h6 {
         border-color: rgba(255, 255, 255, 0.15);
     }
 }
+.bg-drawer-main { background-color: var(--bg-main); }
+.bg-drawer-card { background-color: var(--bg-card); }
 
 /* Tab Content Visibility */
 .tab-content {
@@ -317,11 +319,12 @@ input:-webkit-autofill {
     align-items: center;
     justify-content: center;
     border-radius: 1.25rem;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    background: var(--bg-card);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     cursor: pointer;
     overflow: hidden;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 .drawer-grid-layout .category-drawer-item {
@@ -358,7 +361,7 @@ input:-webkit-autofill {
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 0.6rem;
+    border-radius: 9999px;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
     flex-shrink: 0;
 }

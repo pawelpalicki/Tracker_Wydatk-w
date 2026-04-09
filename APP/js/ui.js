@@ -604,7 +604,10 @@ function openSelectionDrawer(title, options, onSelect, selectedValue = null, lay
             if (layoutType === 'grid') {
                 const iconWrapper = document.createElement('div');
                 iconWrapper.className = 'category-icon-wrapper';
-                iconWrapper.style.backgroundColor = opt.color || 'rgba(255, 255, 255, 0.1)';
+                iconWrapper.style.backgroundColor = opt.color ? (opt.color + '44') : 'rgba(255, 255, 255, 0.1)';
+                iconWrapper.style.color = opt.color || 'white';
+                iconWrapper.style.filter = opt.color ? `drop-shadow(0 0 5px ${opt.color}88)` : 'none';
+                iconWrapper.style.border = `1px solid ${opt.color ? opt.color + '66' : 'rgba(255,255,255,0.2)'}`;
                 iconWrapper.innerHTML = opt.icon || '<span>?</span>';
                 item.appendChild(iconWrapper);
             }

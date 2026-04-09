@@ -747,7 +747,7 @@ async function saveTagGroup() {
     const label = labelInput ? labelInput.value.trim() : '';
     const firstLabel = firstLabelInput ? firstLabelInput.value.trim() : '';
     const firstIcon = firstIconInput ? firstIconInput.value.trim() : '';
-    const groupKey = keyPreview ? keyPreview.textContent.trim() : '';
+    const groupKey = groupKey ? keyPreview.textContent.trim() : '';
 
     if (!label) { alert('Podaj nazwę grupy.'); return; }
     
@@ -862,7 +862,7 @@ function openHierarchicalCategoryDrawer(row, currentCategory, currentSubCategory
             value: p.id,
             label: p.name,
             icon: `<i class="fas ${p.icon || 'fa-tag'}"></i>`,
-            color: (p.color || '#64748b') + '20'
+            color: p.color || '#64748b'
         }));
 
         openSelectionDrawer('Wybierz kategorię', options, (parentId) => {
@@ -879,7 +879,7 @@ function openHierarchicalCategoryDrawer(row, currentCategory, currentSubCategory
                 value: s.id,
                 label: s.name,
                 icon: s.icon ? `<i class="fas ${s.icon}"></i>` : `<i class="fas ${parent.icon || 'fa-tag'}"></i>`,
-                color: (parent.color || '#64748b') + '20'
+                color: parent.color || '#64748b'
             }));
 
             openSelectionDrawer(
