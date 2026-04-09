@@ -228,13 +228,6 @@ function setupAppEventListeners() {
     // Bottom nav tabs
     bottomNavBtns.forEach(btn => btn.addEventListener('click', () => switchTab(btn.dataset.tab)));
     // More tab buttons
-    const moreSettingsBtn = document.getElementById('more-settings-btn');
-    if (moreSettingsBtn) {
-        moreSettingsBtn.addEventListener('click', () => {
-            switchTab('settings');
-        });
-    }
-
     const moreLogoutBtn = document.getElementById('more-logout-btn');
     if (moreLogoutBtn) {
         moreLogoutBtn.addEventListener('click', () => {
@@ -247,7 +240,7 @@ function setupAppEventListeners() {
         moreSpecialBudgetsBtn.addEventListener('click', () => {
             switchTab('special-budgets');
         });
-        }
+    }
 
         // Browser back button support (obsługuje też natywny systemowy gest swipe wstecz: iOS / Android)
     window.addEventListener('popstate', (event) => {
@@ -452,20 +445,6 @@ function setupAppEventListeners() {
     // Initializuj szufladę tagów
     initTagsSelectionDrawer();
 
-    // Refresh Shops Logic
-    document.getElementById('refresh-shops-btn')?.addEventListener('click', async () => {
-        if (confirm('Czy na pewno chcesz odświeżyć listę sklepów? Spowoduje to usunięcie z filtrów i autouzupełniania sklepów, które nie mają przypisanych żadnych zakupów.')) {
-            try {
-                // Set flag on backend
-                await apiCall('/api/user/metadata', 'PATCH', { shopsStale: true });
-                // Force data refresh
-                await fetchInitialData(true);
-                alert('Lista sklepów została zaktualizowana.');
-            } catch (error) {
-                alert('Błąd podczas odświeżania listy sklepów: ' + error.message);
-            }
-        }
-    });
 
     document.getElementById('recurring-schedule-btn')?.addEventListener('click', () => {
         const options = [
@@ -580,7 +559,7 @@ function setupAppEventListeners() {
     });
 
     document.getElementById('nav-user-btn')?.addEventListener('click', () => {
-        switchTab('settings');
+        switchTab('more');
     });
 
     document.getElementById('nav-notifications-btn')?.addEventListener('click', () => {

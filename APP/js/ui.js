@@ -135,7 +135,7 @@ const NAV_TITLES = {
     'settings': 'Ustawienia',
     'settings-categories': 'Zarządzaj kategoriami',
     'settings-budget': 'Miesięczny Budżet',
-    'settings-special': 'Budżety specjalne',
+    'settings-special': 'Zarządzaj budżetami',
     'settings-recurring': 'Stałe Opłaty',
 };
 

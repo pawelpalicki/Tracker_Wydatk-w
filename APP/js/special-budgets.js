@@ -12,15 +12,17 @@ function renderSpecialBudgetsTab() {
 
     if (!allSpecialBudgets || allSpecialBudgets.length === 0) {
         tabContent.innerHTML = `
-            <div class="text-center py-12">
-                <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
+            <div class="text-center py-12 px-4">
+                <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-16 w-16 text-gray-500 mb-4 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                 </svg>
-                <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">Brak budżetów specjalnych</h3>
-                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Możesz dodać budżet specjalny w ustawieniach.</p>
-                <button onclick="switchTab('settings-special')" class="mt-4 px-6 py-2.5 btn-primary rounded-xl text-sm font-medium transition-all active:scale-95 shadow-lg">
-                    Dodaj budżet specjalny
-                </button>
+                <h3 class="text-lg font-bold text-white mb-2">Brak budżetów specjalnych</h3>
+                <p class="text-sm text-gray-400 mb-8 max-w-xs mx-auto">Zdefiniuj cele oszczędnościowe lub limity na konkretne okazje w ustawieniach.</p>
+                <div class="flex justify-center">
+                    <button onclick="switchTab('settings-special')" class="px-8 py-3.5 btn-primary rounded-xl text-sm font-bold transition-all active:scale-95 shadow-xl">
+                        Dodaj budżet specjalny
+                    </button>
+                </div>
             </div>
         `;
         return;

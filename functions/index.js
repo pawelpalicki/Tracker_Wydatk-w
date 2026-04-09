@@ -1054,8 +1054,6 @@ app.delete('/api/purchases/:id', authMiddleware, async (req, res) => {
         if (doc.data().userId !== req.userId) return res.status(403).json({ error: 'Brak uprawnień' });
 
         await purchaseRef.delete();
-        // Oznacz listę sklepów jako nieaktualną, aby została odświeżona przy następnym pobieraniu metadanych
-        await usersCollection.doc(req.userId).update({ shopsStale: true });
         res.status(204).send();
     } catch (error) {
         console.error("Błąd usuwania zakupu:", error);
