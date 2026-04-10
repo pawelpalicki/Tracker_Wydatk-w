@@ -13,7 +13,7 @@ A Firebase-based expense tracking application consisting of a web frontend and C
     - `ui.js`: DOM manipulation and UI component management.
     - Specialized modules: `budget.js`, `purchases.js`, `statistics.js`, `special-budgets.js`, `long-term-budget.js`.
   - **css/**: Stylesheets, primarily managed via Tailwind CSS.
-- **functions/**: Firebase Cloud Functions (Node.js 20).
+- **functions/**: Firebase Cloud Functions (Node.js 22).
   - `index.js`: Express-based API handling Firestore operations and external integrations.
   - `prompt.js`: AI prompt definitions for Gemini AI integration.
 - **Root**: Configuration files for Firebase (`firebase.json`, `.firebaserc`), Firestore (`firestore.rules`, `firestore.indexes.json`), and project-wide settings.
@@ -33,7 +33,7 @@ A Firebase-based expense tracking application consisting of a web frontend and C
 ## Coding Style & Naming Conventions
 
 - **Frontend**: Uses standard ES6+ JavaScript. Styling is strictly managed through Tailwind CSS classes.
-- **Backend**: Node.js 20 environment using CommonJS (`require`).
+- **Backend**: Node.js 22 environment using CommonJS (`require`).
 - **CSS**: Custom styles should be added to `APP/src/input.css` (if exists) or managed via Tailwind.
 
 ## Architecture Overview
