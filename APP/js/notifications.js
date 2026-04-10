@@ -140,17 +140,89 @@ function renderNotifications() {
         }
 
         return `
-            <div class="flex gap-3 p-3 rounded-xl border border-white/5 ${n.isRead ? 'bg-white/[0.02] opacity-70' : 'bg-white/5 border-l-2 border-l-brand-500'}">
-                <div class="w-10 h-10 shrink-0 flex items-center justify-center rounded-lg ${bgColor} ${color}">
-                    <i class="fas ${icon} text-lg"></i>
+            <div class="notif-swipe-wrapper" data-id="${n.id}">
+                <div class="notif-action-layer" onclick="deleteNotification('${n.id}')">
+                    <i class="fas fa-trash-can mb-1"></i>
+                    <span>Usuń</span>
                 </div>
-                <div class="flex-1 min-w-0">
-                    <p class="text-xs font-bold text-white mb-0.5 leading-snug">${n.message}</p>
-                    <p class="text-[10px] text-gray-500">${date}</p>
+                <div class="notif-content-layer flex gap-3 p-3 rounded-xl border border-white/5 ${n.isRead ? 'notif-bg-solid-read' : 'notif-bg-solid border-l-2 border-l-brand-500'}">
+                    <div class="w-10 h-10 shrink-0 flex items-center justify-center rounded-lg ${bgColor} ${color}">
+                        <i class="fas ${icon} text-lg"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-xs font-bold text-white mb-0.5 leading-snug">${n.message}</p>
+                        <p class="text-[10px] text-gray-500">${date}</p>
+                    </div>
                 </div>
             </div>
         `;
     }).join('');
+
+    setupNotificationSwipes();
+}
+
+/**
+ * Obsługa gestów swipe
+ */
+function setupNotificationSwipes() {
+    const wrappers = document.querySelectorAll('.notif-swipe-wrapper');
+    wrappers.forEach(wrapper => {
+        const content = wrapper.querySelector('.notif-content-layer');
+        let startX = 0;
+        let diffX = 0;
+        const maxSwipe = -80; 
+
+        wrapper.addEventListener('touchstart', e => {
+            startX = e.touches[0].clientX;
+            content.classList.add('swiping');
+        }, { passive: true });
+
+        wrapper.addEventListener('touchmove', e => {
+            const currentX = e.touches[0].clientX;
+            diffX = currentX - startX;
+            
+            // Tylko w lewo i z ograniczeniem
+            if (diffX < 0) {
+                const move = Math.max(diffX, maxSwipe - 20);
+                content.style.transform = `translateX(${move}px)`;
+            } else {
+                content.style.transform = `translateX(0px)`;
+            }
+        }, { passive: true });
+
+        wrapper.addEventListener('touchend', () => {
+            content.classList.remove('swiping');
+            if (diffX < maxSwipe / 2) {
+                content.style.transform = `translateX(${maxSwipe}px)`;
+            } else {
+                content.style.transform = `translateX(0px)`;
+            }
+            diffX = 0;
+        });
+    });
+}
+
+/**
+ * Usuwanie powiadomienia
+ */
+async function deleteNotification(id) {
+    if (!confirm('Czy na pewno chcesz usunąć to powiadomienie?')) {
+        // Zresetuj pozycję swipe po rezygnacji
+        renderNotifications();
+        return;
+    }
+
+    try {
+        await apiCall(`/api/notifications/${id}`, 'DELETE');
+        
+        // Usuń lokalnie i odśwież widok
+        currentNotifications = currentNotifications.filter(n => n.id !== id);
+        updateNotificationBadge();
+        renderNotifications();
+    } catch (err) {
+        console.error('Błąd deleteNotification:', err);
+        alert('Nie udało się usunąć powiadomienia.');
+    }
 }
 
 /**

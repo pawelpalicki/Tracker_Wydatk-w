@@ -556,6 +556,56 @@ input:-webkit-autofill {
     background-color: #000;
 }
 
+/* Notification Swipe Styles */
+.notif-swipe-wrapper {
+    position: relative;
+    overflow: hidden;
+    touch-action: pan-y;
+    border-radius: 0.75rem;
+    margin-bottom: 0.5rem;
+    background-color: var(--bg-card); /* Kontener musi mieć tło */
+}
+
+.notif-action-layer {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 80px;
+    background-color: #ef4444;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    z-index: 1; /* Warstwa akcji nisko */
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    border-radius: 0 0.75rem 0.75rem 0;
+}
+
+.notif-content-layer {
+    position: relative;
+    z-index: 2; /* Treść wyżej */
+    width: 100%;
+    min-width: 100%;
+    background-color: inherit; /* Dziedziczy solidne tło z kontenera */
+    transition: transform 0.25s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.notif-bg-solid {
+    background-color: var(--bg-card) !important;
+}
+
+.notif-bg-solid-read {
+    background-color: var(--bg-main) !important;
+}
+
+.notif-content-layer.swiping {
+    transition: none;
+}
+
 /* Generic Popup utility */
 .hidden {
     display: none !important;

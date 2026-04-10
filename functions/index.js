@@ -1383,6 +1383,31 @@ app.post('/api/notifications/read', authMiddleware, async (req, res) => {
     }
 });
 
+// Usuwanie powiadomienia
+app.delete('/api/notifications/:id', authMiddleware, async (req, res) => {
+    try {
+        const userId = req.userId;
+        const notificationId = req.params.id;
+        
+        const docRef = notificationsCollection.doc(notificationId);
+        const doc = await docRef.get();
+        
+        if (!doc.exists) {
+            return res.status(404).json({ error: 'Notification not found' });
+        }
+        
+        if (doc.data().userId !== userId) {
+            return res.status(403).json({ error: 'Unauthorized' });
+        }
+        
+        await docRef.delete();
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Błąd usuwania powiadomienia:', error);
+        res.status(500).json({ error: 'Błąd usuwania powiadomienia' });
+    }
+});
+
 // --- API Analizy AI (Insights) ---
 
 app.post('/api/analysis/insights', authMiddleware, async (req, res) => {
