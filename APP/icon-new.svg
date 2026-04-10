@@ -1,7 +1,27 @@
-<!-- Nowa ikona pasująca do ciemnego motywu -->
+<!-- Finalna statyczna ikona aplikacji (Smart Chart + AI Magic) -->
 <svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
-<rect width="512" height="512" rx="96" fill="#1F2937"/>
-<path d="M160 128H352C369.673 128 384 142.327 384 160V224C384 241.673 369.673 256 352 256H160C142.327 256 128 241.673 128 224V160C128 142.327 142.327 128 160 128Z" fill="#4F46E5"/>
-<path d="M128 288H384V352C384 369.673 369.673 384 352 384H160C142.327 384 128 369.673 128 352V288Z" fill="#3730A3"/>
-<circle cx="328" cy="192" r="24" fill="#E5E7EB"/>
+  <!-- Ciemne tło -->
+  <rect width="512" height="512" rx="128" fill="#0A0A0A"/>
+  
+  <!-- Słupki wydatków -->
+  <rect x="140" y="270" width="45" height="90" rx="12" fill="#38BDF8" fill-opacity="0.3"/>
+  <rect x="215" y="210" width="45" height="150" rx="12" fill="#38BDF8" fill-opacity="0.6"/>
+  <rect x="290" y="150" width="45" height="210" rx="12" fill="url(#paint0_linear)"/>
+  
+  <!-- Linia Limitowa -->
+  <rect x="120" y="195" width="280" height="7" rx="3.5" fill="white" fill-opacity="0.9"/>
+  
+  <!-- Iskry AI (Styl "Magic") -->
+  <!-- Główna Iskra -->
+  <path d="M380 130C380 130 380 155 405 155C380 155 380 180 380 180C380 180 380 155 355 155C380 155 380 130 380 130Z" fill="white"/>
+  
+  <!-- Mała Iskra -->
+  <path d="M415 105C415 105 415 120 430 120C415 120 415 135 415 135C415 135 415 120 400 120C415 120 415 105 415 105Z" fill="#38BDF8"/>
+
+  <defs>
+    <linearGradient id="paint0_linear" x1="290" y1="150" x2="335" y2="360" gradientUnits="userSpaceOnUse">
+      <stop stop-color="white"/>
+      <stop offset="1" stop-color="#38BDF8"/>
+    </linearGradient>
+  </defs>
 </svg>

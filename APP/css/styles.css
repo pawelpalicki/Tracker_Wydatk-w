@@ -4,9 +4,9 @@
     --bg-main: #0a0a0a;
     --bg-card: #141414;
     --bg-nav: #0f0f0f;
-    --accent: #0284c7;
+    --accent: #38bdf8;
     --accent-hover: #7dd3fc;
-    --primary: #0284c7;
+    --primary: #38bdf8;
     --primary-hover: #7dd3fc;
     --brand-500: #38bdf8;
     --brand-600: #0ea5e9;
@@ -84,8 +84,14 @@ h6 {
         border-color: rgba(255, 255, 255, 0.15);
     }
 }
-.bg-drawer-main { background-color: var(--bg-main); }
-.bg-drawer-card { background-color: var(--bg-card); }
+
+.bg-drawer-main {
+    background-color: var(--bg-main);
+}
+
+.bg-drawer-card {
+    background-color: var(--bg-card);
+}
 
 /* Tab Content Visibility */
 .tab-content {

@@ -31,13 +31,13 @@
 <body class="dark bg-[#0a0a0a] font-sans text-white">
 
     <div id="global-analysis-loader"
-        class="hidden fixed top-0 left-0 right-0 h-1 z-[100] bg-brand-400/20 overflow-hidden">
-        <div class="h-full bg-brand-400 animate-loading-bar shadow-[0_0_10px_rgba(56,189,248,0.4)]">
+        class="hidden fixed top-0 left-0 right-0 h-[2px] z-[100] bg-transparent overflow-hidden">
+        <div class="h-full bg-brand-500 animate-loading-bar shadow-[0_0_8px_rgba(56,189,248,0.6)]">
         </div>
     </div>
 
     <div id="loading-section" class="min-h-screen flex flex-col items-center justify-center bg-[#0a0a0a]">
-        <div class="animate-spin rounded-full h-16 w-16 border-b-4 border-brand-400"></div>
+        <div class="animate-spin rounded-full h-16 w-16 border-b-4 border-brand-500"></div>
         <p class="mt-4 text-lg text-gray-300">Wczytuję aplikację...</p>
     </div>
 
@@ -52,11 +52,11 @@
                 <input type="hidden" name="remember" value="true">
                 <div class="rounded-md shadow-sm -space-y-px">
                     <div><input id="login-email" name="email" type="email" autocomplete="email" required
-                            class="appearance-none rounded-none relative block w-full px-3 py-2 border border-white/10 placeholder-gray-500 text-white bg-white/5 rounded-t-xl focus:outline-none focus:ring-1 focus:ring-brand-400 focus:border-brand-400 focus:z-10 sm:text-sm"
+                            class="appearance-none rounded-none relative block w-full px-3 py-2 border border-white/10 placeholder-gray-500 text-white bg-white/5 rounded-t-xl focus:outline-none focus:ring-1 focus:ring-brand-500 focus:border-brand-500 focus:z-10 sm:text-sm"
                             placeholder="Adres email"></div>
                     <div><input id="login-password" name="password" type="password" autocomplete="current-password"
                             required
-                            class="appearance-none rounded-none relative block w-full px-3 py-2 border border-white/10 placeholder-gray-500 text-white bg-white/5 rounded-b-xl focus:outline-none focus:ring-1 focus:ring-brand-400 focus:border-brand-400 focus:z-10 sm:text-sm"
+                            class="appearance-none rounded-none relative block w-full px-3 py-2 border border-white/10 placeholder-gray-500 text-white bg-white/5 rounded-b-xl focus:outline-none focus:ring-1 focus:ring-brand-500 focus:border-brand-500 focus:z-10 sm:text-sm"
                             placeholder="Hasło"></div>
                 </div>
                 <div>
@@ -79,11 +79,11 @@
             <form id="register-form" class="mt-8 space-y-6 hidden" action="#" method="POST">
                 <div class="rounded-md shadow-sm -space-y-px">
                     <div><input id="register-email" name="email" type="email" autocomplete="email" required
-                            class="appearance-none rounded-none relative block w-full px-3 py-2 border border-white/10 placeholder-gray-500 text-white bg-white/5 rounded-t-xl focus:outline-none focus:ring-1 focus:ring-brand-400 focus:border-brand-400 focus:z-10 sm:text-sm"
+                            class="appearance-none rounded-none relative block w-full px-3 py-2 border border-white/10 placeholder-gray-500 text-white bg-white/5 rounded-t-xl focus:outline-none focus:ring-1 focus:ring-brand-500 focus:border-brand-500 focus:z-10 sm:text-sm"
                             placeholder="Adres email"></div>
                     <div><input id="register-password" name="password" type="password" autocomplete="new-password"
                             required
-                            class="appearance-none rounded-none relative block w-full px-3 py-2 border border-white/10 placeholder-gray-500 text-white bg-white/5 rounded-b-xl focus:outline-none focus:ring-1 focus:ring-brand-400 focus:border-brand-400 focus:z-10 sm:text-sm"
+                            class="appearance-none rounded-none relative block w-full px-3 py-2 border border-white/10 placeholder-gray-500 text-white bg-white/5 rounded-b-xl focus:outline-none focus:ring-1 focus:ring-brand-500 focus:border-brand-500 focus:z-10 sm:text-sm"
                             placeholder="Hasło"></div>
                 </div>
                 <div><button type="submit"
@@ -91,7 +91,7 @@
                         się</button></div>
             </form>
             <div class="text-center">
-                <a href="#" id="switch-auth-link" class="font-medium text-brand-400 hover:text-brand-300">Nie masz
+                <a href="#" id="switch-auth-link" class="font-medium text-brand-500 hover:text-brand-300">Nie masz
                     konta?
                     Zarejestruj się</a>
             </div>
@@ -124,7 +124,8 @@
                         aria-label="Powiadomienia">
                         <i class="fas fa-bell text-sm"></i>
                         <!-- Badge powiadomień -->
-                        <span id="notification-badge" class="hidden absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border border-[#0a0a0a]"></span>
+                        <span id="notification-badge"
+                            class="hidden absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border border-[#0a0a0a]"></span>
                     </button>
                     <button id="nav-user-btn"
                         class="w-9 h-9 ml-1 flex items-center justify-center rounded-full text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
@@ -201,7 +202,8 @@
 
                                 <!-- AI Insight Button -->
                                 <div class="mb-5 flex justify-start">
-                                    <button id="ai-insight-btn" class="flex items-center gap-2 px-3 py-1.5 bg-brand-500/10 hover:bg-brand-500/20 text-brand-400 text-[10px] font-bold uppercase tracking-wider rounded-lg border border-brand-500/20 transition-all active:scale-95 group">
+                                    <button id="ai-insight-btn"
+                                        class="flex items-center gap-2 px-3 py-1.5 bg-brand-500/10 hover:bg-brand-500/20 text-brand-500 text-[10px] font-bold uppercase tracking-wider rounded-lg border border-brand-500/20 transition-all active:scale-95 group">
                                         <i class="fas fa-wand-magic-sparkles animate-pulse"></i>
                                         Analiza AI (Gemini)
                                     </button>
@@ -233,21 +235,33 @@
                                     <div class="flex items-start justify-between gap-1 uppercase tracking-tight">
                                         <!-- Dzienny Limit -->
                                         <div class="flex flex-col min-w-0 flex-[0.9] border-r border-white/10 pr-2">
-                                            <span class="text-[8px] text-brand-200 font-black leading-none mb-1">Dzienny Limit</span>
-                                            <span id="insight-daily-limit" class="text-[13px] font-black text-white leading-tight truncate">0 zł</span>
+                                            <span class="text-[8px] text-brand-200 font-black leading-none mb-1">Dzienny
+                                                Limit</span>
+                                            <span id="insight-daily-limit"
+                                                class="text-[13px] font-black text-white leading-tight truncate">0
+                                                zł</span>
                                         </div>
 
                                         <!-- Prognoza -->
-                                        <div class="flex flex-col min-w-0 flex-[1.4] border-r border-white/10 px-2 text-center">
-                                            <span class="text-[8px] text-brand-200 font-black leading-none mb-1">Prognoza m-ca</span>
-                                            <span id="insight-projection" class="text-[13px] font-black text-white leading-tight truncate">0 zł</span>
-                                            <span id="insight-projection-diff" class="text-[9px] font-bold leading-tight mt-0.5 whitespace-nowrap"></span>
+                                        <div
+                                            class="flex flex-col min-w-0 flex-[1.4] border-r border-white/10 px-2 text-center">
+                                            <span
+                                                class="text-[8px] text-brand-200 font-black leading-none mb-1">Prognoza
+                                                m-ca</span>
+                                            <span id="insight-projection"
+                                                class="text-[13px] font-black text-white leading-tight truncate">0
+                                                zł</span>
+                                            <span id="insight-projection-diff"
+                                                class="text-[9px] font-bold leading-tight mt-0.5 whitespace-nowrap"></span>
                                         </div>
 
                                         <!-- Przyjemności -->
                                         <div class="flex flex-col min-w-0 flex-[0.9] pl-2 text-right">
-                                            <span class="text-[8px] text-brand-200 font-black leading-none mb-1">Przyjemności</span>
-                                            <span id="insight-wants" class="text-[13px] font-black text-white leading-tight truncate">0 zł</span>
+                                            <span
+                                                class="text-[8px] text-brand-200 font-black leading-none mb-1">Przyjemności</span>
+                                            <span id="insight-wants"
+                                                class="text-[13px] font-black text-white leading-tight truncate">0
+                                                zł</span>
                                         </div>
                                     </div>
                                     <div id="insight-text-container" class="mt-1.5 space-y-0.5 empty:hidden"></div>
@@ -277,7 +291,7 @@
                         <!-- Analysis Link -->
                         <div class="mt-2 text-center">
                             <button onclick="switchTab('analysis')"
-                                class="text-xs font-semibold text-brand-400 hover:text-brand-300 transition-colors flex items-center justify-center mx-auto space-x-1">
+                                class="text-xs font-semibold text-brand-500 hover:text-brand-300 transition-colors flex items-center justify-center mx-auto space-x-1">
                                 <span>Szczegółowa analiza</span>
                                 <i class="fas fa-chart-pie"></i>
                             </button>
@@ -291,7 +305,7 @@
                         <h3 class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Ostatnie transakcje
                         </h3>
                         <button onclick="switchTab('list')"
-                            class="text-[10px] font-bold text-brand-400 hover:text-brand-300 transition-colors uppercase tracking-widest">Zobacz
+                            class="text-[10px] font-bold text-brand-500 hover:text-brand-300 transition-colors uppercase tracking-widest">Zobacz
                             wszystkie &rarr;</button>
                     </div>
                     <div id="home-recent-transactions" class="space-y-2">
@@ -316,8 +330,8 @@
                         <div id="wrap"
                             class="mx-auto flex flex-col items-center justify-center gap-3 w-full max-w-md px-1 sm:px-2">
                             <canvas id="analysis-scan-canvas"></canvas>
-                            <div id="label" class="text-xs text-brand-400/80 tracking-widest uppercase font-medium">
-                                analizuje paragon<span id="dots" class="text-brand-400"></span>
+                            <div id="label" class="text-xs text-brand-500/80 tracking-widest uppercase font-medium">
+                                analizuje paragon<span id="dots" class="text-brand-500"></span>
                             </div>
                         </div>
                     </div>
@@ -325,7 +339,7 @@
                     <div id="scanner-controls" class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
                         <div>
                             <input type="file" id="receipt-file-input" accept="image/*,application/pdf"
-                                class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-brand-400/10 file:text-brand-400 hover:file:bg-brand-400/20">
+                                class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-brand-500/10 file:text-brand-500 hover:file:bg-brand-500/20">
                         </div>
                         <div class="flex items-center space-x-2">
                             <button id="analyze-receipt-btn"
@@ -339,7 +353,7 @@
                         <img id="image-preview" class="max-h-48 mx-auto rounded-lg" alt="Podgląd paragonu" />
                     </div>
                     <div id="analysis-spinner" class="hidden text-center mt-4">
-                        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-brand-400"></div>
+                        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-brand-500"></div>
                         <p class="text-gray-600 dark:text-gray-300">Analizuję dane z paragonu, proszę czekać...</p>
                     </div>
                     <div id="camera-view" class="hidden mt-4">
@@ -347,8 +361,7 @@
                         <div class="flex items-center space-x-2 mt-2">
                             <button id="capture-photo-btn" class="w-full btn-secondary rounded-xl">Zrób
                                 zdjęcie</button>
-                            <button id="cancel-camera-btn"
-                                class="w-full btn-secondary rounded-xl">Anuluj</button>
+                            <button id="cancel-camera-btn" class="w-full btn-secondary rounded-xl">Anuluj</button>
                         </div>
                     </div>
                 </div>
@@ -361,7 +374,7 @@
                                     class="block text-sm font-medium text-gray-700 dark:text-gray-300">Sklep</label>
                                 <div class="relative">
                                     <input type="text" id="shop" required
-                                        class="mt-1 block w-full rounded-xl border-white/10 bg-white/5 text-white shadow-sm focus:border-brand-400 focus:ring-1 focus:ring-brand-400 sm:text-sm py-2.5">
+                                        class="mt-1 block w-full rounded-xl border-white/10 bg-white/5 text-white shadow-sm focus:border-brand-500 focus:ring-1 focus:ring-brand-500 sm:text-sm py-2.5">
                                     <div id="shop-autocomplete-list"
                                         class="absolute z-10 w-full bg-white dark:bg-gray-600 rounded-md shadow-lg mt-1 hidden max-h-60 overflow-auto">
                                     </div>
@@ -374,7 +387,7 @@
                                     <button id="budget-type-btn" type="button" class="category-trigger-card py-2.5">
                                         <div class="flex items-center truncate">
                                             <div id="budget-type-icon"
-                                                class="category-trigger-icon bg-brand-400/10 text-brand-400 mr-2 shrink-0">
+                                                class="category-trigger-icon bg-brand-500/10 text-brand-500 mr-2 shrink-0">
                                                 <span>💰</span>
                                             </div>
                                             <span id="budget-type-label" class="truncate text-sm">Wybierz...</span>
@@ -391,7 +404,7 @@
                                         class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Data</label>
                                     <div class="relative mt-1">
                                         <input type="date" id="date" required
-                                            class="block w-full rounded-xl border-white/10 bg-white/5 text-white shadow-sm focus:border-brand-400 focus:ring-1 focus:ring-brand-400 sm:text-sm py-2">
+                                            class="block w-full rounded-xl border-white/10 bg-white/5 text-white shadow-sm focus:border-brand-500 focus:ring-1 focus:ring-brand-500 sm:text-sm py-2">
                                     </div>
                                 </div>
                             </div>
@@ -517,7 +530,7 @@
                     <div class="flex items-center justify-between mb-1">
                         <h3 class="text-base font-bold text-white">Tagi produktów</h3>
                         <button id="add-tag-group-btn"
-                            class="flex items-center gap-1 px-3 py-1.5 text-xs rounded-lg border border-brand-400/30 hover:bg-brand-400/10 text-brand-400 transition-colors">
+                            class="flex items-center gap-1 px-3 py-1.5 text-xs rounded-lg border border-brand-500/30 hover:bg-brand-500/10 text-brand-500 transition-colors">
                             <i class="fas fa-plus text-xs"></i> Dodaj grupę
                         </button>
                     </div>
@@ -563,19 +576,22 @@
             <!-- Ustawienia: Budżety Specjalne -->
             <div id="settings-special-tab" class="tab-content px-2 pt-1">
                 <div id="special-budgets-list" class="space-y-2 mb-6 max-h-[400px] overflow-y-auto pr-2"></div>
-                <form id="add-special-budget-form" class="space-y-4 bg-white/5 p-5 rounded-2xl border border-white/10 shadow-sm">
+                <form id="add-special-budget-form"
+                    class="space-y-4 bg-white/5 p-5 rounded-2xl border border-white/10 shadow-sm">
                     <div>
                         <input type="text" id="new-special-budget-name" placeholder="Nazwa (np. Wakacje)"
-                            class="block w-full rounded-xl border-white/10 bg-white/5 text-white shadow-sm focus:border-brand-400 focus:ring-2 focus:ring-brand-400/20 py-3.5 px-4 transition-all"
+                            class="block w-full rounded-xl border-white/10 bg-white/5 text-white shadow-sm focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 py-3.5 px-4 transition-all"
                             required>
                     </div>
                     <div>
                         <input type="number" id="new-special-budget-amount" placeholder="Kwota"
-                            class="block w-full rounded-xl border-white/10 bg-white/5 text-white shadow-sm focus:border-brand-400 focus:ring-2 focus:ring-brand-400/20 py-3.5 px-4 transition-all"
+                            class="block w-full rounded-xl border-white/10 bg-white/5 text-white shadow-sm focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 py-3.5 px-4 transition-all"
                             required step="0.01">
                     </div>
                     <div class="pt-2 flex justify-center">
-                        <button type="submit" class="btn-primary rounded-xl py-3 px-8 text-sm font-bold shadow-lg transition-transform active:scale-95">Dodaj budżet</button>
+                        <button type="submit"
+                            class="btn-primary rounded-xl py-3 px-8 text-sm font-bold shadow-lg transition-transform active:scale-95">Dodaj
+                            budżet</button>
                     </div>
                 </form>
             </div>
@@ -739,7 +755,7 @@
                                 title="Filtr tagów" aria-label="Filtr tagów">
                                 <i class="fas fa-tags text-sm"></i>
                                 <span id="analysis-filter-tags-indicator"
-                                    class="hidden absolute -right-1 -top-1 h-3 w-3 rounded-full bg-brand-400 ring-2 ring-[#0a0a0a]"></span>
+                                    class="hidden absolute -right-1 -top-1 h-3 w-3 rounded-full bg-brand-500 ring-2 ring-[#0a0a0a]"></span>
                                 <span id="analysis-filter-tags-label" class="hidden">Wszystkie tagi</span>
                             </button>
                             <button id="comparison-nav-next"
@@ -846,8 +862,9 @@
 
                     <!-- Sekcja: Ustawienia -->
                     <div class="space-y-2">
-                        <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 ml-1">Ustawienia</p>
-                        
+                        <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 ml-1">Ustawienia
+                        </p>
+
                         <!-- Zarządzaj kategoriami -->
                         <button onclick="switchTab('settings-categories')"
                             class="w-full flex items-center justify-between p-4 bg-white/5 hover:bg-white/10 rounded-xl border border-white/5 transition-all group">
@@ -860,7 +877,8 @@
                                 </svg>
                                 <span class="font-medium text-sm">Zarządzaj kategoriami</span>
                             </div>
-                            <i class="fas fa-chevron-right text-gray-600 group-hover:text-white transition-colors text-[10px]"></i>
+                            <i
+                                class="fas fa-chevron-right text-gray-600 group-hover:text-white transition-colors text-[10px]"></i>
                         </button>
 
                         <!-- Miesięczny budżet -->
@@ -875,7 +893,8 @@
                                 </svg>
                                 <span class="font-medium text-sm">Miesięczny budżet</span>
                             </div>
-                            <i class="fas fa-chevron-right text-gray-600 group-hover:text-white transition-colors text-[10px]"></i>
+                            <i
+                                class="fas fa-chevron-right text-gray-600 group-hover:text-white transition-colors text-[10px]"></i>
                         </button>
 
                         <!-- Zarządzanie budżetami specjalnymi -->
@@ -890,7 +909,8 @@
                                 </svg>
                                 <span class="font-medium text-sm">Zarządzanie budżetami specjalnymi</span>
                             </div>
-                            <i class="fas fa-chevron-right text-gray-600 group-hover:text-white transition-colors text-[10px]"></i>
+                            <i
+                                class="fas fa-chevron-right text-gray-600 group-hover:text-white transition-colors text-[10px]"></i>
                         </button>
 
                         <!-- Stałe opłaty -->
@@ -905,7 +925,8 @@
                                 </svg>
                                 <span class="font-medium text-sm">Stałe opłaty</span>
                             </div>
-                            <i class="fas fa-chevron-right text-gray-600 group-hover:text-white transition-colors text-[10px]"></i>
+                            <i
+                                class="fas fa-chevron-right text-gray-600 group-hover:text-white transition-colors text-[10px]"></i>
                         </button>
 
                     </div>
@@ -991,7 +1012,8 @@
                     </div>
                 </div>
                 <div class="flex justify-end space-x-2">
-                    <button type="button" id="cancel-edit-special-budget" class="btn-secondary rounded-xl">Anuluj</button>
+                    <button type="button" id="cancel-edit-special-budget"
+                        class="btn-secondary rounded-xl">Anuluj</button>
                     <button type="submit" class="btn-secondary rounded-xl">Zapisz
                         zmiany</button>
                 </div>
@@ -1025,7 +1047,7 @@
             <!-- Przycisk DODAJ wewnątrz paska -->
             <div class="flex items-center justify-center">
                 <button id="main-fab-btn"
-                    class="w-14 h-12 flex flex-col items-center justify-center rounded-xl bg-transparent border border-brand-700 text-brand-50 transition-all duration-300 hover:bg-brand-400/10 active:scale-95 group">
+                    class="w-14 h-12 flex flex-col items-center justify-center rounded-xl bg-transparent border border-brand-700 text-brand-50 transition-all duration-300 hover:bg-brand-500/10 active:scale-95 group">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 opacity-90 group-hover:opacity-100"
                         fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
@@ -1357,7 +1379,7 @@
                     <label class="block text-xs text-gray-400 mb-1">Podgląd wartości (auto)</label>
                     <div class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/5 border border-white/10">
                         <span class="text-xs text-gray-500">value:</span>
-                        <span id="tag-form-value-preview" class="text-brand-400 font-mono text-sm">—</span>
+                        <span id="tag-form-value-preview" class="text-brand-500 font-mono text-sm">—</span>
                     </div>
                 </div>
                 <div>
@@ -1395,7 +1417,7 @@
                     <label class="block text-xs text-gray-400 mb-1">Klucz grupy (auto)</label>
                     <div class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/5 border border-white/10">
                         <span class="text-xs text-gray-500">key:</span>
-                        <span id="tag-group-key-preview" class="text-brand-400 font-mono text-sm">\u2014</span>
+                        <span id="tag-group-key-preview" class="text-brand-500 font-mono text-sm">\u2014</span>
                     </div>
                 </div>
                 <div id="tag-group-initial-tag-container" class="border-t border-white/10 pt-4">
