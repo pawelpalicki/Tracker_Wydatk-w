@@ -192,10 +192,16 @@ function setupNotificationSwipes() {
 
         wrapper.addEventListener('touchend', () => {
             content.classList.remove('swiping');
-            if (diffX < maxSwipe / 2) {
-                content.style.transform = `translateX(${maxSwipe}px)`;
+            const id = wrapper.getAttribute('data-id');
+            
+            // Jeśli przesunięto znacząco (np. więcej niż 100px) - usuwamy
+            if (diffX < -100) {
+                content.style.transform = 'translateX(-100%)';
+                content.style.opacity = '0';
+                setTimeout(() => deleteNotification(id), 200);
             } else {
-                content.style.transform = `translateX(0px)`;
+                // Za mały swipe - wracamy do zera
+                content.style.transform = 'translateX(0px)';
             }
             diffX = 0;
         });
@@ -208,7 +214,14 @@ function setupNotificationSwipes() {
 async function deleteNotification(id) {
     if (!confirm('Czy na pewno chcesz usunąć to powiadomienie?')) {
         // Zresetuj pozycję swipe po rezygnacji
-        renderNotifications();
+        const wrapper = document.querySelector(`.notif-swipe-wrapper[data-id="${id}"]`);
+        if (wrapper) {
+            const content = wrapper.querySelector('.notif-content-layer');
+            if (content) {
+                content.style.transform = 'translateX(0px)';
+                content.style.opacity = '1';
+            }
+        }
         return;
     }
 

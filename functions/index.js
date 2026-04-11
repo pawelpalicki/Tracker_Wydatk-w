@@ -611,17 +611,33 @@ app.delete('/api/special-budgets/:id', authMiddleware, async (req, res) => {
 
 app.get('/api/notifications', authMiddleware, async (req, res) => {
     try {
-        const snapshot = await notificationsCollection.where('userId', '==', req.userId).limit(50).get();
+        const snapshot = await notificationsCollection
+            .where('userId', '==', req.userId)
+            .limit(100)
+            .get();
+            
         const now = Date.now();
         const sevenDays = 7 * 24 * 60 * 60 * 1000;
         const notifications = [];
+        
         snapshot.forEach(doc => {
             const data = doc.data();
+            
+            // Filtrujemy usunięte (obsługujemy brak pola isDeleted jako false)
+            if (data.isDeleted === true) return;
+            
+            // Ukrywamy stare, przeczytane powiadomienia (powyżej 7 dni)
             if (data.isRead && data.readAt && (now - data.readAt > sevenDays)) return;
+            
             notifications.push({ id: doc.id, ...data });
         });
-        res.json(notifications);
+        
+        // Sortowanie po dacie (najnowsze na górze)
+        notifications.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+        
+        res.json(notifications.slice(0, 50));
     } catch (error) {
+        console.error('Błąd pobierania powiadomień:', error);
         res.status(500).json({ error: 'Błąd serwera' });
     }
 });
@@ -629,9 +645,30 @@ app.get('/api/notifications', authMiddleware, async (req, res) => {
 app.post('/api/notifications', authMiddleware, async (req, res) => {
     try {
         const { type, message, monthKey } = req.body;
-        const existing = await notificationsCollection.where('userId', '==', req.userId).where('type', '==', type).where('monthKey', '==', monthKey).limit(1).get();
-        if (!existing.empty) return res.json({ success: true, message: 'Notification already exists' });
-        const newNotif = { userId: req.userId, type, message, monthKey, date: new Date().toISOString(), isRead: false, readAt: null };
+        
+        // Sprawdzamy czy powiadomienie o tym typie już istnieje (nawet jeśli zostało usunięte/isDeleted: true)
+        const existing = await notificationsCollection
+            .where('userId', '==', req.userId)
+            .where('type', '==', type)
+            .where('monthKey', '==', monthKey)
+            .limit(1)
+            .get();
+            
+        if (!existing.empty) {
+            return res.json({ success: true, message: 'Notification already exists (could be deleted by user)' });
+        }
+        
+        const newNotif = { 
+            userId: req.userId, 
+            type, 
+            message, 
+            monthKey, 
+            date: new Date().toISOString(), 
+            isRead: false, 
+            readAt: null,
+            isDeleted: false 
+        };
+        
         const docRef = await notificationsCollection.add(newNotif);
         res.json({ id: docRef.id, ...newNotif });
     } catch (error) {
@@ -642,7 +679,9 @@ app.post('/api/notifications', authMiddleware, async (req, res) => {
 app.post('/api/notifications/read', authMiddleware, async (req, res) => {
     try {
         const batch = db.batch();
-        req.body.notificationIds.forEach(id => batch.update(notificationsCollection.doc(id), { isRead: true, readAt: Date.now() }));
+        req.body.notificationIds.forEach(id => {
+            batch.update(notificationsCollection.doc(id), { isRead: true, readAt: Date.now() });
+        });
         await batch.commit();
         res.json({ success: true });
     } catch (error) {
@@ -654,8 +693,12 @@ app.delete('/api/notifications/:id', authMiddleware, async (req, res) => {
     try {
         const ref = notificationsCollection.doc(req.params.id);
         const doc = await ref.get();
-        if (!doc.exists || doc.data().userId !== req.userId) return res.status(403).json({ error: 'Brak uprawnień.' });
-        await ref.delete();
+        if (!doc.exists || doc.data().userId !== req.userId) {
+            return res.status(403).json({ error: 'Brak uprawnień.' });
+        }
+        
+        // Zamiast usuwać fizycznie, oznaczamy jako usunięte
+        await ref.update({ isDeleted: true });
         res.json({ success: true });
     } catch (error) {
         res.status(500).json({ error: 'Błąd serwera' });
@@ -838,49 +881,76 @@ exports.addRecurringExpensesScheduled = onSchedule({
     schedule: '0 3 * * *',
     timeZone: 'Europe/Warsaw'
 }, async (event) => {
-    console.log('Uruchomiono zaplanowane dodawanie wydatków cyklicznych (03:00 Warsaw).');
-    const today = new Date();
-    const snapshot = await recurringExpensesCollection.get();
-    if (snapshot.empty) return null;
+    console.log('--- START: addRecurringExpensesScheduled (03:00 Warsaw) ---');
+    try {
+        const today = new Date();
+        const snapshot = await recurringExpensesCollection.get();
+        
+        if (snapshot.empty) {
+            console.log('Brak zdefiniowanych wydatków cyklicznych.');
+            return null;
+        }
 
-    const expensesByUser = {};
-    snapshot.forEach(doc => {
-        const exp = doc.data();
-        if (!expensesByUser[exp.userId]) expensesByUser[exp.userId] = [];
-        expensesByUser[exp.userId].push({ id: doc.id, ...exp });
-    });
+        console.log(`Znaleziono ${snapshot.size} dokumentów wydatków cyklicznych.`);
 
-    for (const userId in expensesByUser) {
-        const batch = db.batch();
-        let anyNew = false;
-        for (const exp of expensesByUser[userId]) {
-            if (shouldAddExpenseToday(exp, today)) {
-                const date = today.toISOString().split('T')[0];
-                const newPurchase = {
-                    userId, 
-                    shop: "Wydatek cykliczny", 
-                    date, 
-                    totalAmount: exp.amount, 
-                    isRecurring: true, 
-                    createdAt: new Date(),
-                    items: [{ 
-                        name: exp.name, 
-                        price: exp.amount, 
-                        category: exp.category, 
-                        subCategory: exp.subCategory || '', 
-                        tags: exp.tags || {} 
-                    }]
-                };
-                batch.set(purchasesCollection.doc(), newPurchase);
-                batch.update(recurringExpensesCollection.doc(exp.id), { lastAdded: date });
-                anyNew = true;
+        const expensesByUser = {};
+        snapshot.forEach(doc => {
+            try {
+                const exp = doc.data();
+                if (!expensesByUser[exp.userId]) expensesByUser[exp.userId] = [];
+                expensesByUser[exp.userId].push({ id: doc.id, ...exp });
+            } catch (err) {
+                console.error(`Błąd podczas odczytu dokumentu ${doc.id}:`, err);
+            }
+        });
+
+        for (const userId in expensesByUser) {
+            const batch = db.batch();
+            let anyNew = false;
+            
+            for (const exp of expensesByUser[userId]) {
+                try {
+                    if (shouldAddExpenseToday(exp, today)) {
+                        const date = today.toISOString().split('T')[0];
+                        console.log(`DODAJĘ: Wydatek "${exp.name}" (ID: ${exp.id}) dla użytkownika ${userId}`);
+                        
+                        const newPurchase = {
+                            userId, 
+                            shop: "Wydatek cykliczny", 
+                            date, 
+                            totalAmount: exp.amount, 
+                            isRecurring: true, 
+                            createdAt: new Date(),
+                            items: [{ 
+                                name: exp.name, 
+                                price: exp.amount, 
+                                category: exp.category, 
+                                subCategory: exp.subCategory || '', 
+                                tags: exp.tags || {} 
+                            }]
+                        };
+                        batch.set(purchasesCollection.doc(), newPurchase);
+                        batch.update(recurringExpensesCollection.doc(exp.id), { lastAdded: date });
+                        anyNew = true;
+                    }
+                } catch (err) {
+                    console.error(`Błąd przetwarzania wydatku ${exp.id} dla użytkownika ${userId}:`, err);
+                }
+            }
+            
+            if (anyNew) {
+                await batch.commit();
+                await usersCollection.doc(userId).set({ 
+                    availableMonths: FieldValue.arrayUnion(today.toISOString().substring(0, 7)) 
+                }, { merge: true });
+                console.log(`Zapisano batche dla użytkownika ${userId}`);
             }
         }
-        if (anyNew) {
-            await batch.commit();
-            await usersCollection.doc(userId).set({ availableMonths: FieldValue.arrayUnion(today.toISOString().substring(0, 7)) }, { merge: true });
-        }
+    } catch (globalErr) {
+        console.error('KRYTYCZNY BŁĄD funkcji addRecurringExpensesScheduled:', globalErr);
     }
+    
+    console.log('--- KONIEC: addRecurringExpensesScheduled ---');
     return null;
 });
 

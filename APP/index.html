@@ -183,30 +183,29 @@
                                     <p
                                         class="text-[10px] text-brand-300/80 mb-1 leading-none font-bold uppercase tracking-widest">
                                         Wydano w miesiącu</p>
-                                    <div class="flex items-baseline gap-2 mb-1">
-                                        <p id="home-total-spent"
-                                            class="text-3xl font-extrabold text-white tracking-tight">0.00 zł</p>
-                                        <div id="home-comparison-badge"
-                                            class="hidden px-2 py-0.5 rounded-lg text-[10px] font-bold flex items-center gap-1 transition-all duration-300">
+                                    <div class="flex items-center justify-between gap-2 mb-1">
+                                        <div class="flex items-center gap-2">
+                                            <p id="home-total-spent"
+                                                class="text-3xl font-extrabold text-white tracking-tight">0.00 zł</p>
+                                            <div id="home-comparison-badge"
+                                                class="hidden px-2 py-0.5 rounded-lg text-[10px] font-bold flex items-center gap-1 transition-all duration-300">
+                                            </div>
+                                            <span id="home-comparison-label"
+                                                class="hidden text-[8px] text-brand-300/60 uppercase font-bold tracking-tighter"></span>
                                         </div>
-                                        <span id="home-comparison-label"
-                                            class="hidden text-[8px] text-brand-300/60 uppercase font-bold tracking-tighter">vs
-                                            poprz. m-c</span>
+
+                                        <!-- AI Insight Button (Relocated and Enlarged Icon-only) -->
+                                        <button id="ai-insight-btn"
+                                            class="w-8 h-8 flex items-center justify-center bg-brand-500/10 hover:bg-brand-500/20 text-brand-500 rounded-xl border border-brand-500/20 transition-all active:scale-95 group shrink-0"
+                                            title="Analiza AI (Gemini)">
+                                            <i class="fas fa-wand-magic-sparkles text-lg animate-pulse"></i>
+                                        </button>
                                     </div>
-                                    <div class="flex items-center justify-start gap-2 mt-2">
+                                    <div class="flex items-center justify-start gap-2 mt-1">
                                         <span id="home-budget-info"
                                             class="text-xs text-brand-200/60 font-medium italic hidden">Brak
                                             budżetu</span>
                                     </div>
-                                </div>
-
-                                <!-- AI Insight Button -->
-                                <div class="mb-5 flex justify-start">
-                                    <button id="ai-insight-btn"
-                                        class="flex items-center gap-2 px-3 py-1.5 bg-brand-500/10 hover:bg-brand-500/20 text-brand-500 text-[10px] font-bold uppercase tracking-wider rounded-lg border border-brand-500/20 transition-all active:scale-95 group">
-                                        <i class="fas fa-wand-magic-sparkles animate-pulse"></i>
-                                        Analiza AI (Gemini)
-                                    </button>
                                 </div>
 
                                 <!-- Budget progress bar -->
@@ -231,7 +230,7 @@
 
                                 <!-- SEKCJA MOBILIZACJA (Start - Ultra Compact) -->
                                 <div id="home-mobilization-section"
-                                    class="hidden mb-3 px-3 py-2 bg-white/[0.04] rounded-lg border border-white/10">
+                                    class="hidden px-3 py-2 bg-white/[0.04] rounded-lg border border-white/10">
                                     <div class="flex items-start justify-between gap-1 uppercase tracking-tight">
                                         <!-- Dzienny Limit -->
                                         <div class="flex flex-col min-w-0 flex-[0.9] border-r border-white/10 pr-2">

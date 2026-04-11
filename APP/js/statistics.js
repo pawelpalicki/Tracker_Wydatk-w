@@ -281,14 +281,27 @@ function renderHomeMobilizationInsights(purchases, totalBudget, isCurrentMonth) 
     let fxd = 0, flx = 0, wants = 0, otm = 0;
 
     purchases.forEach(p => (p.items || []).forEach(i => {
-        const isFixed = i.tags?.nature === 'stały' || ['rachunki', 'czynsz', 'kaucje'].includes(i.category?.toLowerCase());
-        const isOneTime = i.tags?.nature === 'jednorazowy';
+        const nature = (i.tags?.nature || '').toLowerCase().trim();
+        const cat = (i.category || 'inne').toLowerCase().trim();
+
+        // 1. nature: stały
+        // 2. nature: jednorazowy
+        // 3. flaga wydatek cykliczny (isRecurring)
+        // 4. kategoria: Media(prąd/gaz/woda) + inne stałe jak czynsz/finanse
+        
+        const isFixed = p.isRecurring === true || 
+                        nature === 'stały' || 
+                        nature === 'stałe' ||
+                        ['media(prąd/gaz/woda)', 'czynsz', 'finanse', 'rachunki', 'opłaty'].includes(cat);
+        
+        const isOneTime = nature === 'jednorazowy';
 
         if (isFixed) {
             fxd += i.price || 0;
         } else if (isOneTime) {
             otm += i.price || 0;
         } else {
+            // Tylko wydatki ZMIENNE (flexible) budują średnią dzienną
             flx += i.price || 0;
             if (i.tags?.purpose === 'przyjemność') {
                 wants += i.price || 0;
@@ -298,8 +311,15 @@ function renderHomeMobilizationInsights(purchases, totalBudget, isCurrentMonth) 
 
     let upc = 0;
     if (Array.isArray(allRecurringExpenses)) {
+        const currentMonthStr = now.toISOString().substring(0, 7);
         allRecurringExpenses.forEach(r => {
-            if (!purchases.some(p => p.date.substring(0, 7) === now.toISOString().substring(0, 7) && p.shop.toLowerCase().includes(r.name.toLowerCase()))) {
+            // Sprawdzamy czy w zakupach z tego miesiąca jest już wydatek o tej nazwie
+            const alreadyPaid = purchases.some(p => 
+                p.date.substring(0, 7) === currentMonthStr && 
+                (p.items || []).some(item => item.name.toLowerCase().includes(r.name.toLowerCase()))
+            );
+
+            if (!alreadyPaid) {
                 upc += r.amount || 0;
             }
         });
