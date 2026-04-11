@@ -747,7 +747,7 @@ async function saveTagGroup() {
     const label = labelInput ? labelInput.value.trim() : '';
     const firstLabel = firstLabelInput ? firstLabelInput.value.trim() : '';
     const firstIcon = firstIconInput ? firstIconInput.value.trim() : '';
-    const groupKey = groupKey ? keyPreview.textContent.trim() : '';
+    const groupKey = keyPreview ? keyPreview.textContent.trim() : '';
 
     if (!label) { alert('Podaj nazwę grupy.'); return; }
     
