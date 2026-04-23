@@ -292,6 +292,20 @@ input:-webkit-autofill {
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Performance tweak: keep category drawer on compositor layer for smoother opening animation. */
+#category-drawer {
+    will-change: transform;
+    backface-visibility: hidden;
+    transform: translate3d(0, 100%, 0);
+    height: 85vh;
+}
+
+@supports (height: 100dvh) {
+    #category-drawer {
+        height: 85dvh;
+    }
+}
+
 #category-drawer.active,
 #filter-drawer.active,
 #tags-selection-drawer.active,
