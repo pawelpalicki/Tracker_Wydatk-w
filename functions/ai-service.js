@@ -1,16 +1,83 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
+const { GoogleAuth } = require('google-auth-library');
 const { retryWithBackoff } = require('./utils');
-const { getPrompt } = require('./prompt.js');
+const { getPrompt, getVoiceExpensePrompt } = require('./prompt.js');
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const gemini = new GoogleGenerativeAI(GEMINI_API_KEY);
-const model = gemini.getGenerativeModel({ model: "gemini-2.5-flash" });
+const model = gemini.getGenerativeModel({ model: 'gemini-2.5-flash' });
+
+const speechAuth = new GoogleAuth({
+    scopes: ['https://www.googleapis.com/auth/cloud-platform']
+});
+
+// Gemini czasem zwraca JSON w bloku ```json ... ```, więc czyścimy odpowiedź do samego payloadu.
+function extractJsonFromText(rawText) {
+    let jsonString = rawText;
+    const jsonFenceMatch = rawText.match(/```json\s*([\s\S]*?)\s*```/i);
+
+    if (jsonFenceMatch && jsonFenceMatch[1]) {
+        jsonString = jsonFenceMatch[1];
+    }
+
+    try {
+        return JSON.parse(jsonString);
+    } catch (parseError) {
+        console.error('Błąd parsowania JSON z odpowiedzi AI:', parseError);
+        console.error('Tekst, który zawiódł:', jsonString);
+        throw new Error('AI zwróciło odpowiedź w nieprawidłowym formacie JSON.');
+    }
+}
+
+// Front wysyła krótkie nagrania z MediaRecorder, więc mapujemy MIME typu przeglądarki
+// na kodowanie rozumiane przez Google Speech-to-Text.
+function normalizeSpeechEncoding(mimeType = '') {
+    const normalizedMimeType = mimeType.toLowerCase();
+
+    if (normalizedMimeType.includes('webm')) {
+        return { encoding: 'WEBM_OPUS', sampleRateHertz: 48000 };
+    }
+
+    if (normalizedMimeType.includes('ogg')) {
+        return { encoding: 'OGG_OPUS', sampleRateHertz: 48000 };
+    }
+
+    if (normalizedMimeType.includes('wav')) {
+        return { encoding: 'LINEAR16' };
+    }
+
+    throw new Error('Nieobsługiwany format audio. Użyj nagrania WEBM/Opus, OGG/Opus lub WAV.');
+}
+
+// Speech-to-Text używa konta usługi Firebase Functions, więc pobieramy token OAuth runtime.
+async function getSpeechAccessToken() {
+    const client = await speechAuth.getClient();
+    const accessTokenResponse = await client.getAccessToken();
+    const token = typeof accessTokenResponse === 'string'
+        ? accessTokenResponse
+        : accessTokenResponse?.token;
+
+    if (!token) {
+        throw new Error('Nie udało się pobrać tokenu dostępu do Google Speech-to-Text.');
+    }
+
+    return token;
+}
+
+// Łączymy częściowe wyniki STT w jeden tekst do dalszej, ręcznie edytowalnej transkrypcji.
+function extractTranscriptFromSpeechResponse(payload = {}) {
+    const transcripts = (payload.results || [])
+        .map(result => result?.alternatives?.[0]?.transcript || '')
+        .filter(Boolean);
+
+    return transcripts.join(' ').replace(/\s+/g, ' ').trim();
+}
 
 /**
  * Wyodrębnianie danych z paragonu i kategoryzacja przy użyciu AI
  */
 async function extractAndCategorizePurchase(file, categories) {
-    const imagePart = { inlineData: { data: file.buffer.toString("base64"), mimeType: file.mimetype } };
+    const imagePart = { inlineData: { data: file.buffer.toString('base64'), mimeType: file.mimetype } };
     const prompt = getPrompt(categories, categories.tags || {});
 
     try {
@@ -18,32 +85,85 @@ async function extractAndCategorizePurchase(file, categories) {
         const result = await retryWithBackoff(generationFn);
 
         const rawText = result.response.text();
-        console.log("Surowa odpowiedź od AI:", rawText);
+        console.log('Surowa odpowiedź od AI:', rawText);
 
-        let jsonString = rawText;
-        const jsonMatch = rawText.match(/```json\s*([\s\S]*?)\s*```/);
-        if (jsonMatch && jsonMatch[1]) {
-            jsonString = jsonMatch[1];
-        }
-
-        let data;
-        try {
-            data = JSON.parse(jsonString);
-        } catch (parseError) {
-            console.error("Błąd parsowania JSON z odpowiedzi AI:", parseError);
-            console.error("Tekst, który zawiódł:", jsonString);
-            throw new Error('AI zwróciło odpowiedź w nieprawidłowym formacie JSON.');
-        }
-
+        const data = extractJsonFromText(rawText);
         if (data.error) {
             throw new Error(data.error);
         }
 
         return data;
-
     } catch (error) {
         throw error;
     }
+}
+
+async function transcribeAudio(file, options = {}) {
+    const { encoding, sampleRateHertz } = normalizeSpeechEncoding(file.mimetype);
+    const accessToken = await getSpeechAccessToken();
+
+    // Dla krótkich nagrań z popupu wystarcza synchroniczne recognize z inline base64.
+    const requestPayload = {
+        config: {
+            encoding,
+            languageCode: options.languageCode || 'pl-PL',
+            enableAutomaticPunctuation: true,
+            model: options.model || 'latest_long'
+        },
+        audio: {
+            content: file.buffer.toString('base64')
+        }
+    };
+
+    if (sampleRateHertz) {
+        requestPayload.config.sampleRateHertz = sampleRateHertz;
+    }
+
+    const response = await fetch('https://speech.googleapis.com/v1/speech:recognize', {
+        method: 'POST',
+        headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(requestPayload)
+    });
+
+    const payload = await response.json();
+
+    if (!response.ok) {
+        console.error('Błąd Speech-to-Text:', payload);
+        throw new Error(payload.error?.message || 'Nie udało się przetworzyć nagrania.');
+    }
+
+    const transcript = extractTranscriptFromSpeechResponse(payload);
+    if (!transcript) {
+        throw new Error('Nie udało się rozpoznać tekstu w nagraniu. Spróbuj nagrać jeszcze raz.');
+    }
+
+    return {
+        transcript,
+        results: payload.results || []
+    };
+}
+
+// Drugi etap dla wydatku głosowego:
+// Gemini zamienia transkrypcję na ten sam schemat JSON, którego używa analiza paragonu.
+async function analyzeVoiceExpenseText(transcript, categories, context = {}) {
+    const prompt = getVoiceExpensePrompt(categories, categories.tags || {}, context);
+    const fullPrompt = `${prompt}\n\nTRANSKRYPCJA UŻYTKOWNIKA:\n${transcript}`;
+
+    const generationFn = () => model.generateContent(fullPrompt);
+    const result = await retryWithBackoff(generationFn);
+    const rawText = result.response.text();
+
+    console.log('Surowa odpowiedź AI dla wydatku głosowego:', rawText);
+
+    const data = extractJsonFromText(rawText);
+    if (data.error) {
+        throw new Error(data.error);
+    }
+
+    return data;
 }
 
 /**
@@ -73,10 +193,12 @@ async function generateInsights(userId, currentMonthData, previousMonthData, cat
         const result = await model.generateContent(prompt);
         const response = await result.response;
         const text = response.text();
-        
+
         const jsonMatch = text.match(/\{[\s\S]*\}/);
-        if (!jsonMatch) throw new Error('Nieprawidłowy format odpowiedzi AI');
-        
+        if (!jsonMatch) {
+            throw new Error('Nieprawidłowy format odpowiedzi AI');
+        }
+
         return JSON.parse(jsonMatch[0]);
     } catch (error) {
         console.error('Błąd generowania wniosków AI:', error);
@@ -85,6 +207,8 @@ async function generateInsights(userId, currentMonthData, previousMonthData, cat
 }
 
 module.exports = {
+    analyzeVoiceExpenseText,
     extractAndCategorizePurchase,
-    generateInsights
+    generateInsights,
+    transcribeAudio
 };

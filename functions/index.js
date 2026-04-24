@@ -41,7 +41,12 @@ const {
     mergeUniqueNamesCI,
     convertCurrencyToPLN
 } = require('./utils');
-const { extractAndCategorizePurchase, generateInsights } = require('./ai-service');
+const {
+    analyzeVoiceExpenseText,
+    extractAndCategorizePurchase,
+    generateInsights,
+    transcribeAudio
+} = require('./ai-service');
 const { shouldAddExpenseToday } = require('./recurring-service');
 
 // --- Konfiguracja Express ---
@@ -742,6 +747,63 @@ app.post('/api/analyze-receipt', authMiddleware, async (req, res) => {
         console.error("Błąd analizy paragonu:", error);
         const status = (error.message && (error.message.includes('503') || error.message.includes('overloaded'))) ? 503 : 400;
         res.status(status).json({ success: false, error: error.message || 'Błąd analizy.' });
+    }
+});
+
+app.post('/api/transcribe-audio', authMiddleware, async (req, res) => {
+    try {
+        const { audio, mimetype, filename, size, languageCode } = req.body;
+
+        if (!audio) {
+            return res.status(400).json({ error: 'Brak nagrania audio.' });
+        }
+
+        const fileObject = {
+            buffer: Buffer.from(audio, 'base64'),
+            mimetype,
+            originalname: filename,
+            size
+        };
+
+        const transcription = await transcribeAudio(fileObject, { languageCode });
+        res.json({ success: true, transcript: transcription.transcript, results: transcription.results });
+    } catch (error) {
+        console.error('Błąd transkrypcji audio:', error);
+        res.status(400).json({ success: false, error: error.message || 'Błąd transkrypcji audio.' });
+    }
+});
+
+app.post('/api/analyze-voice-expense', authMiddleware, async (req, res) => {
+    try {
+        const { transcript, context = {} } = req.body;
+
+        if (!transcript || !transcript.trim()) {
+            return res.status(400).json({ error: 'Brak tekstu do analizy.' });
+        }
+
+        const categories = await getUserCategories(req.userId);
+        const validatedLocalDate = validateDate(context.localDate) || new Date().toISOString().split('T')[0];
+        const analysisResult = await analyzeVoiceExpenseText(transcript.trim(), categories, {
+            localDate: validatedLocalDate,
+            timezone: context.timezone || 'Europe/Warsaw'
+        });
+
+        const conversion = await convertCurrencyToPLN(analysisResult.items || [], analysisResult.currency || 'PLN');
+        const finalAnalysis = {
+            shop: analysisResult.shop || 'Zakup głosowy',
+            date: validateDate(analysisResult.date) || validatedLocalDate,
+            currency: 'PLN',
+            originalCurrency: conversion.originalCurrency,
+            exchangeRate: conversion.exchangeRate,
+            rateSuccess: conversion.rateSuccess,
+            items: conversion.items
+        };
+
+        res.json({ success: true, analysis: finalAnalysis });
+    } catch (error) {
+        console.error('Błąd analizy wydatku głosowego:', error);
+        const status = (error.message && (error.message.includes('503') || error.message.includes('overloaded'))) ? 503 : 400;
+        res.status(status).json({ success: false, error: error.message || 'Błąd analizy wydatku głosowego.' });
     }
 });
 

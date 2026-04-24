@@ -108,6 +108,7 @@ const copyMonthsBtns = document.querySelectorAll('.copy-months-btn');
 // Menu action buttons (wyświetlane w fab-actions)
 const fabAddManualBtn = document.getElementById('fab-add-manual-btn');
 const fabSelectFileBtn = document.getElementById('fab-select-file-btn');
+const fabVoiceExpenseBtn = document.getElementById('fab-voice-expense-btn');
 const fabScanReceiptBtn = document.getElementById('fab-scan-receipt-btn');
 
 // Elementy filtrów
@@ -480,6 +481,16 @@ function setupAppEventListeners() {
     const fabActions = document.getElementById('fab-actions');
     const fabOverlay = document.getElementById('fab-overlay');
     
+    // Wspólne zamknięcie menu FAB, żeby wszystkie akcje korzystały z tego samego zachowania i animacji.
+    const closeFabActionsMenu = () => {
+        fabActions.classList.add('opacity-0', 'translate-y-4');
+        fabActions.classList.remove('opacity-100', 'translate-y-0');
+        fabOverlay.classList.add('hidden');
+        fabOverlay.classList.remove('pointer-events-auto');
+        mainFabBtn.classList.remove('expanded');
+        setTimeout(() => fabActions.classList.add('hidden'), 300);
+    };
+
     mainFabBtn?.addEventListener('click', () => {
         const isHidden = fabActions.classList.contains('hidden');
         if (isHidden) {
@@ -491,34 +502,18 @@ function setupAppEventListeners() {
             mainFabBtn.classList.add('expanded');
         } else {
             // Hide the actions
-            fabActions.classList.add('opacity-0', 'translate-y-4');
-            fabActions.classList.remove('opacity-100', 'translate-y-0');
-            fabOverlay.classList.add('hidden');
-            fabOverlay.classList.remove('pointer-events-auto');
-            mainFabBtn.classList.remove('expanded');
-            setTimeout(() => fabActions.classList.add('hidden'), 300); // Wait for transition
+            closeFabActionsMenu();
         }
     });
 
     // Hide actions when clicking overlay
     fabOverlay?.addEventListener('click', () => {
-        fabActions.classList.add('opacity-0', 'translate-y-4');
-        fabActions.classList.remove('opacity-100', 'translate-y-0');
-        fabOverlay.classList.add('hidden');
-        fabOverlay.classList.remove('pointer-events-auto');
-        mainFabBtn.classList.remove('expanded');
-        setTimeout(() => fabActions.classList.add('hidden'), 300);
+        closeFabActionsMenu();
     });
 
     // Menu action buttons
     fabAddManualBtn?.addEventListener('click', () => {
-        // Hide the actions menu
-        fabActions.classList.add('opacity-0', 'translate-y-4');
-        fabActions.classList.remove('opacity-100', 'translate-y-0');
-        fabOverlay.classList.add('hidden');
-        fabOverlay.classList.remove('pointer-events-auto');
-        mainFabBtn.classList.remove('expanded');
-        setTimeout(() => fabActions.classList.add('hidden'), 300);
+        closeFabActionsMenu();
         
         if (typeof clearPurchaseItems === 'function') clearPurchaseItems();
         switchTab('add');
@@ -526,25 +521,22 @@ function setupAppEventListeners() {
     });
 
     fabSelectFileBtn?.addEventListener('click', () => {
-        // Hide the actions menu
-        fabActions.classList.add('opacity-0', 'translate-y-4');
-        fabActions.classList.remove('opacity-100', 'translate-y-0');
-        fabOverlay.classList.add('hidden');
-        fabOverlay.classList.remove('pointer-events-auto');
-        mainFabBtn.classList.remove('expanded');
-        setTimeout(() => fabActions.classList.add('hidden'), 300);
+        closeFabActionsMenu();
         
         receiptFileInput.click(); // Trigger the hidden file input
     });
 
+    fabVoiceExpenseBtn?.addEventListener('click', () => {
+        closeFabActionsMenu();
+
+        // Modal głosowy ma własny, wieloetapowy flow, więc tylko go otwieramy.
+        if (typeof openVoiceExpenseModal === 'function') {
+            openVoiceExpenseModal();
+        }
+    });
+
     fabScanReceiptBtn?.addEventListener('click', () => {
-        // Hide the actions menu
-        fabActions.classList.add('opacity-0', 'translate-y-4');
-        fabActions.classList.remove('opacity-100', 'translate-y-0');
-        fabOverlay.classList.add('hidden');
-        fabOverlay.classList.remove('pointer-events-auto');
-        mainFabBtn.classList.remove('expanded');
-        setTimeout(() => fabActions.classList.add('hidden'), 300);
+        closeFabActionsMenu();
         
         switchTab('add');
         setTimeout(() => startCamera(), 100);
