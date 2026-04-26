@@ -224,6 +224,19 @@ function initFilterDrawers() {
     }
 
     const amountBtn = document.getElementById('filter-amount-btn');
+    if (amountBtn) {
+        amountBtn.onclick = () => {
+            openFilterDrawer('Wybierz zakres kwot', 'amount', () => {
+                const min = document.getElementById('filter-min-amount').value;
+                const max = document.getElementById('filter-max-amount').value;
+                const active = !!(min || max);
+                document.getElementById('filter-amount-label').textContent = active ? 'Kwota (ustawiona)' : 'Kwota';
+                setFilterButtonState(amountBtn, amountClear, active);
+                if (typeof handleFilterChange === 'function') handleFilterChange();
+            });
+        };
+    }
+    
     const categoryClear = categoryBtn?.querySelector('.filter-clear');
     const budgetClear = budgetBtn?.querySelector('.filter-clear');
     const shopClear = shopBtn?.querySelector('.filter-clear');
@@ -278,18 +291,6 @@ function initFilterDrawers() {
     addClearHandler(dateClear, 'date');
     addClearHandler(amountClear, 'amount');
 
-    if (amountBtn) {
-        amountBtn.onclick = () => {
-            openFilterDrawer('Wybierz zakres kwot', 'amount', () => {
-                const min = document.getElementById('filter-min-amount').value;
-                const max = document.getElementById('filter-max-amount').value;
-                const active = !!(min || max);
-                document.getElementById('filter-amount-label').textContent = active ? 'Kwota (ustawiona)' : 'Kwota';
-                setFilterButtonState(amountBtn, amountClear, active);
-                if (typeof handleFilterChange === 'function') handleFilterChange();
-            });
-        };
-    }
 
     const keywordInput = document.getElementById('filter-keyword');
     if (keywordInput) {

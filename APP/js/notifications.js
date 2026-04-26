@@ -330,7 +330,7 @@ async function generateAIInsights() {
 
         btn.disabled = true;
         btn.classList.add('opacity-50', 'cursor-not-allowed');
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analiza Gemini...';
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
         
         // Przygotuj dane
         const stats = calculateCurrentMonthStats();

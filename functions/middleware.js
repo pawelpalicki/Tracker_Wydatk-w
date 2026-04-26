@@ -22,6 +22,31 @@ const authMiddleware = async (req, res, next) => {
     }
 };
 
+/**
+ * Wrapper dla asynchronicznych funkcji tras, automatycznie przekazujący błędy do next()
+ */
+const asyncHandler = (fn) => (req, res, next) => {
+    Promise.resolve(fn(req, res, next)).catch(next);
+};
+
+/**
+ * Globalny handler błędów
+ */
+const errorHandler = (err, req, res, next) => {
+    console.error('[Global Error Handler]:', err);
+    
+    const statusCode = err.statusCode || 500;
+    const message = err.message || 'Wystąpił nieoczekiwany błąd serwera.';
+    
+    res.status(statusCode).json({
+        success: false,
+        error: message,
+        stack: process.env.NODE_ENV === 'production' ? null : err.stack
+    });
+};
+
 module.exports = {
-    authMiddleware
+    authMiddleware,
+    asyncHandler,
+    errorHandler
 };
