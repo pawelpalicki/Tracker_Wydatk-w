@@ -9,6 +9,12 @@ import state from './core/state.js';
 import { apiCall, apiCallWithFile } from './core/api.js';
 import { setupAuthEventListeners, logout } from './core/auth.js';
 
+// Import warstwy współdzielonej
+import * as format from './shared/format.js';
+import * as ui from './shared/ui.js';
+import * as categories from './shared/categories.js';
+import * as tags from './shared/tags.js';
+
 // =====================================================================
 // EKSPOZYCJA GLOBALI DLA STARYCH SKRYPTÓW
 // =====================================================================
@@ -23,6 +29,45 @@ window.API_BASE_URL = API_BASE_URL;
 window.apiCall = apiCall;
 window.apiCallWithFile = apiCallWithFile;
 window.logout = logout;
+
+// Eksport formatowania
+window.formatAmount = format.formatAmount;
+
+// Eksport UI
+window.switchTab = ui.switchTab;
+window.updateNavbar = ui.updateNavbar;
+window.openSelectionDrawer = ui.openSelectionDrawer;
+window.closeSelectionDrawer = ui.closeSelectionDrawer;
+window.openDrawer = ui.openDrawer;
+window.closeDrawer = ui.closeDrawer;
+window.openOverlay = ui.openOverlay;
+window.closeOverlay = ui.closeOverlay;
+window.hasVisibleBlockingOverlay = ui.hasVisibleBlockingOverlay;
+window.acquireOverlayNavigationLock = ui.acquireOverlayNavigationLock;
+window.releaseOverlayNavigationLock = ui.releaseOverlayNavigationLock;
+window.reapplyOverlayNavigationLock = ui.reapplyOverlayNavigationLock;
+window.consumeOverlayLockPopstateIgnore = ui.consumeOverlayLockPopstateIgnore;
+
+// Eksport Kategorii
+window.openHierarchicalCategoryDrawer = categories.openHierarchicalCategoryDrawer;
+window.applyCategorySelectionState = categories.applyCategorySelectionState;
+window.getParentCategoryByName = categories.getParentCategoryByName;
+window.getSubCategoryByName = categories.getSubCategoryByName;
+window.getCategorySelectionState = categories.getCategorySelectionState;
+
+// Eksport Tagów
+window.getTagOptions = tags.getTagOptions;
+window.getTagDefaultValue = tags.getTagDefaultValue;
+window.getTagLabel = tags.getTagLabel;
+window.openDynamicTagSelection = tags.openDynamicTagSelection;
+window.getTagGroupLabel = tags.getTagGroupLabel;
+window.buildTagsSummary = tags.buildTagsSummary;
+window.getTagGroups = tags.getTagGroups;
+window.getDefaultTagValues = tags.getDefaultTagValues;
+window.openTagsDrawer = tags.openTagsDrawer;
+window.closeTagsDrawer = tags.closeTagsDrawer;
+window.confirmTagsSelection = tags.confirmTagsSelection;
+window.initTagsSelectionDrawer = tags.initTagsSelectionDrawer;
 
 // Stan aplikacji — proxy na window, żeby stare skrypty mogły czytać/pisać
 // zmienne jak allPurchases, structuredCategories itp.

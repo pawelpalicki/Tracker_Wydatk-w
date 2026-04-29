@@ -834,73 +834,7 @@ function initTagsManagerEvents() {
     });
 }
 
-// =====================================================================
-// HIERARCHICZNY DRAWER WYBORU KATEGORII
-// =====================================================================
-let hierarchicalDrawerStep = 1; // 1 = parent, 2 = sub
-let hierarchicalDrawerParent = null;
-let hierarchicalDrawerCallback = null;
-
-function openHierarchicalCategoryDrawer(row, currentCategory, currentSubCategory, onSelect, showManageButton = true) {
-    hierarchicalDrawerCallback = onSelect;
-    hierarchicalDrawerStep = 1;
-    hierarchicalDrawerParent = null;
-
-    const parents = structuredCategories.filter(c => !c.parentId);
-
-    if (parents.length === 0) {
-        // Fallback: otwórz stary płaski drawer
-        openCategoryDrawer(row, currentCategory, onSelect);
-        return;
-    }
-
-    const openStep1 = () => {
-        const currentParentDoc = parents.find(p => p.name === currentCategory);
-        const currentParentId = currentParentDoc ? currentParentDoc.id : null;
-
-        const options = parents.map(p => ({
-            value: p.id,
-            label: p.name,
-            icon: `<i class="fas ${p.icon || 'fa-tag'}"></i>`,
-            color: p.color || '#64748b'
-        }));
-
-        openSelectionDrawer('Wybierz kategorię', options, (parentId) => {
-            const parent = structuredCategories.find(c => c.id === parentId);
-            const subs = structuredCategories.filter(c => c.parentId === parentId);
-
-            if (subs.length === 0) {
-                if (onSelect) onSelect(parent.name, '');
-                if (typeof closeSelectionDrawer === 'function') closeSelectionDrawer();
-                return;
-            }
-
-            const subOptions = subs.map(s => ({
-                value: s.id,
-                label: s.name,
-                icon: s.icon ? `<i class="fas ${s.icon}"></i>` : `<i class="fas ${parent.icon || 'fa-tag'}"></i>`,
-                color: parent.color || '#64748b'
-            }));
-
-            openSelectionDrawer(
-                `Kategorie: ${parent.name}`,
-                subOptions,
-                (subId) => {
-                    const sub = structuredCategories.find(c => c.id === subId);
-                    if (onSelect) onSelect(parent.name, sub ? sub.name : '');
-                },
-                currentSubCategory || '',
-                'grid',
-                showManageButton,
-                true,
-                () => openStep1()
-            );
-        }, currentParentId, 'grid', showManageButton, false);
-    };
-
-    openStep1();
-}
-
+// Hierarchiczny drawer usunięty - przeniesiony do shared/categories.js
 // =====================================================================
 // INIT
 // =====================================================================
