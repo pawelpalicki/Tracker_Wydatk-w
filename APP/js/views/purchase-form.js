@@ -1,3 +1,8 @@
+/**
+ * Widok formularza zakupu po Etapie 3.
+ * Skupia reczne dodawanie/edycje zakupu, drawer produktu, skan paragonu,
+ * kamere, wybor pliku, przeplyw glosowy i animacje analizy.
+ */
 import state from '../core/state.js';
 import { apiCall, apiCallWithFile } from '../core/api.js';
 import { formatAmount } from '../shared/format.js';
@@ -18,6 +23,7 @@ let productDrawerInitialized = false;
 let voiceExpenseInitialized = false;
 let productDrawerTags = {};
 
+// Animacja jest lokalna dla formularza, bo uruchamia sie tylko podczas analizy paragonu.
 const analysisAnimation = createAnalysisAnimation();
 
 function el(id) {
@@ -36,6 +42,7 @@ function purchaseSummaryEl() {
     return el('purchase-summary');
 }
 
+// Podpinamy listenery formularza tylko raz, bo modul jest wolany z bootstrapu app.js.
 export function initPurchaseForm() {
     if (purchaseFormInitialized) {
         initProductDrawer();
@@ -169,6 +176,7 @@ export function renderPurchaseItems() {
     updatePurchaseSummary();
 }
 
+// Drawer produktu odpowiada za pojedyncza pozycje w koszyku zakupu.
 function initProductDrawer() {
     if (productDrawerInitialized) return;
 
@@ -461,6 +469,7 @@ export async function resizeImage(file, maxSize = 1400, quality = 0.75) {
     });
 }
 
+// Wspolna sciezka analizy paragonu: przygotowanie UI, kompresja obrazu, API i wypelnienie formularza.
 export async function handleAnalyzeReceipt() {
     if (!state.currentFile) {
         alert('Prosze, wybierz najpierw plik z paragonem.');
@@ -921,6 +930,7 @@ function roundRect(ctx, x, y, width, height, radius) {
     ctx.closePath();
 }
 
+// Przeplyw glosowy ma wlasny maly state machine: intro -> recording -> review -> analyzing.
 function initVoiceExpense() {
     if (voiceExpenseInitialized) return;
 

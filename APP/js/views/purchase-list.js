@@ -1,3 +1,8 @@
+/**
+ * Widok listy zakupow po Etapie 3.
+ * Odpowiada za render kart zakupow, rozwiniecie szczegolow, edycje/usuwanie,
+ * filtry oraz paginacje infinite scroll.
+ */
 import state from '../core/state.js';
 import { apiCall } from '../core/api.js';
 import { formatAmount } from '../shared/format.js';
@@ -13,6 +18,7 @@ function el(id) {
     return document.getElementById(id);
 }
 
+// Delegacja klikniec zostaje na kontenerze listy, dzieki czemu dziala tez dla kolejnych stron.
 export function initPurchaseList() {
     if (purchaseListInitialized) return;
     purchaseListInitialized = true;
@@ -52,6 +58,7 @@ export function initPurchaseList() {
     initPurchaseListFilters();
 }
 
+// Filtry trzymaja wartosci w core/state.js, a UI filtrow jest budowany na podstawie aktualnych danych.
 export function initPurchaseListFilters() {
     if (filtersInitialized) return;
     filtersInitialized = true;
@@ -331,6 +338,7 @@ export async function handleFilterChange() {
     }
 }
 
+// Jedno miejsce budowania query stringa dla pierwszego ladowania, filtrowania i kolejnych stron.
 export function getFilterQueryParams() {
     const params = new URLSearchParams();
     const keyword = el('filter-keyword')?.value;

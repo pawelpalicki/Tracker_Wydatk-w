@@ -223,15 +223,18 @@ APP/js/
    - z `app.js`: obsługa paginacji, usuwanie zakupów, wejście w tryb edycji
 
 **🧪 Punkt testów manualnych:**
-- [ ] Dashboard: wykresy kołowe, wykres czasowy, picker miesiąca
-- [ ] Dashboard: kliknięcie w kategorię otwiera modal szczegółów
-- [ ] Dodawanie zakupu ręcznie (formularz + zapis)
-- [ ] Edycja istniejącego zakupu
-- [ ] Usuwanie zakupu
-- [ ] Analiza zdjęcia paragonu (tryb AI)
-- [ ] Nagranie głosowe → transkrypcja → analiza AI
-- [ ] Dodawanie/usuwanie produktów w formularzu
-- [ ] Lista zakupów: paginacja, filtry daty, wyszukiwanie
+- [x] Dashboard: picker miesiąca, kafelki kategorii, ostatnie transakcje
+- [x] Dashboard: kliknięcie w kategorię otwiera drawer szczegółów
+- [x] Dodawanie zakupu ręcznie (formularz + zapis)
+- [x] Edycja istniejącego zakupu
+- [x] Usuwanie zakupu
+- [x] Analiza zdjęcia paragonu (tryb AI)
+- [x] Nagranie głosowe → transkrypcja → analiza AI
+- [x] Dodawanie/usuwanie produktów w formularzu
+- [x] Lista zakupów: paginacja, filtry daty, wyszukiwanie
+
+> [!NOTE]
+> **Status Etapu 3:** Zakończono pozytywnie. Utworzono `views/dashboard.js`, `views/purchase-form.js` i `views/purchase-list.js`, przepięto `main.js` na nowe moduły, usunięto ładowanie przeniesionych legacy skryptów z `index.html` oraz zastąpiono stare pliki migracyjnymi placeholderami. Po szybkich testach manualnych nie stwierdzono regresji.
 
 ---
 

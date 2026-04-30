@@ -1,3 +1,8 @@
+/**
+ * Widok kokpitu po Etapie 3.
+ * Zawiera podsumowanie miesiaca, kafelki kategorii, drawer szczegolow kategorii
+ * oraz powiadomienia, bo alerty budzetowe powstaja z danych kokpitu.
+ */
 import state from '../core/state.js';
 import { apiCall } from '../core/api.js';
 import { formatAmount } from '../shared/format.js';
@@ -10,6 +15,8 @@ let homeDashboardPickerYear = null;
 let homeSwipeInitialized = false;
 let notificationsInitialized = false;
 let currentNotifications = [];
+
+// Glowne odswiezenie kokpitu: ustala aktywny miesiac, renderuje popup wyboru miesiaca, summary i ostatnie transakcje.
 
 export async function renderDashboard() {
     try {
@@ -42,6 +49,7 @@ export function initDashboard() {
     initNotifications();
 }
 
+// Picker miesiaca jest budowany dynamicznie z miesiecy zwroconych przez API.
 function updateHomeMonthLabel() {
     const label = document.getElementById('home-month-label-text');
     if (!label || !homeDashboardMonth) return;
@@ -416,6 +424,67 @@ function renderHomeCategoryTiles(purchases, budgets = {}) {
     });
 }
 
+function renderHomeSubCategoryTiles(purchases) {
+    const container = document.getElementById('home-subcategory-tiles');
+    if (!container) return;
+    container.innerHTML = '';
+
+    const bySubCategory = {};
+    purchases.forEach(p => {
+        (p.items || []).forEach(item => {
+            if (item.subCategory) {
+                const subCat = item.subCategory;
+                if (!bySubCategory[subCat]) {
+                    bySubCategory[subCat] = {
+                        amount: 0,
+                        parentCategory: item.category || 'inne'
+                    };
+                }
+                bySubCategory[subCat].amount += item.price || 0;
+            }
+        });
+    });
+
+    const sorted = Object.entries(bySubCategory).sort((a, b) => b[1].amount - a[1].amount);
+    if (sorted.length === 0) {
+        container.innerHTML = '<p class="text-xs text-gray-500 italic pl-1">Brak wydatkow w podkategoriach</p>';
+        return;
+    }
+
+    sorted.forEach(([subCat, data]) => {
+        const parentCat = state.structuredCategories.find(c => c.name === data.parentCategory && !c.parentId);
+        const color = (parentCat && parentCat.color) || '#6b7280';
+        const subCatData = parentCat ? state.structuredCategories.find(c => c.name === subCat && c.parentId === parentCat.id) : null;
+        const icon = (subCatData && subCatData.icon) || (parentCat && parentCat.icon) || 'fa-tag';
+
+        const tile = document.createElement('div');
+        tile.className = 'flex-shrink-0 snap-start flex flex-col items-center justify-center gap-1 p-3 rounded-2xl bg-white/5 hover:bg-white/10 transition-colors cursor-pointer min-w-[100px] text-center active:scale-95';
+        tile.innerHTML = `
+            <div class="w-8 h-8 rounded-full flex items-center justify-center mb-1" style="background-color:${color}22;color:${color}">
+                <i class="fas ${icon} text-xs"></i>
+            </div>
+            <p class="text-[11px] text-gray-300 font-medium leading-tight max-w-[90px] truncate">${subCat}</p>
+            <p class="text-xs font-bold text-white whitespace-nowrap">${formatAmount(data.amount)}</p>
+        `;
+
+        tile.addEventListener('click', () => {
+            const itemsInSubCategory = purchases.flatMap(p =>
+                (p.items || [])
+                    .filter(item => (item.subCategory || '').toLowerCase() === subCat.toLowerCase())
+                    .map(item => ({
+                        ...item,
+                        purchaseDate: p.date,
+                        shop: p.shop
+                    }))
+            );
+
+            renderCategoryDetailsModal(subCat, itemsInSubCategory, true);
+        });
+
+        container.appendChild(tile);
+    });
+}
+
 async function renderHomeRecentTransactions() {
     const container = document.getElementById('home-recent-transactions');
     const noData = document.getElementById('home-no-transactions');
@@ -644,67 +713,9 @@ function showSwipeAnimation(direction) {
     }, 150);
 }
 
-function renderHomeSubCategoryTiles(purchases) {
-    const container = document.getElementById('home-subcategory-tiles');
-    if (!container) return;
-    container.innerHTML = '';
 
-    const bySubCategory = {};
-    purchases.forEach(p => {
-        (p.items || []).forEach(item => {
-            if (item.subCategory) {
-                const subCat = item.subCategory;
-                if (!bySubCategory[subCat]) {
-                    bySubCategory[subCat] = {
-                        amount: 0,
-                        parentCategory: item.category || 'inne'
-                    };
-                }
-                bySubCategory[subCat].amount += item.price || 0;
-            }
-        });
-    });
 
-    const sorted = Object.entries(bySubCategory).sort((a, b) => b[1].amount - a[1].amount);
-    if (sorted.length === 0) {
-        container.innerHTML = '<p class="text-xs text-gray-500 italic pl-1">Brak wydatkow w podkategoriach</p>';
-        return;
-    }
-
-    sorted.forEach(([subCat, data]) => {
-        const parentCat = state.structuredCategories.find(c => c.name === data.parentCategory && !c.parentId);
-        const color = (parentCat && parentCat.color) || '#6b7280';
-        const subCatData = parentCat ? state.structuredCategories.find(c => c.name === subCat && c.parentId === parentCat.id) : null;
-        const icon = (subCatData && subCatData.icon) || (parentCat && parentCat.icon) || 'fa-tag';
-
-        const tile = document.createElement('div');
-        tile.className = 'flex-shrink-0 snap-start flex flex-col items-center justify-center gap-1 p-3 rounded-2xl bg-white/5 hover:bg-white/10 transition-colors cursor-pointer min-w-[100px] text-center active:scale-95';
-        tile.innerHTML = `
-            <div class="w-8 h-8 rounded-full flex items-center justify-center mb-1" style="background-color:${color}22;color:${color}">
-                <i class="fas ${icon} text-xs"></i>
-            </div>
-            <p class="text-[11px] text-gray-300 font-medium leading-tight max-w-[90px] truncate">${subCat}</p>
-            <p class="text-xs font-bold text-white whitespace-nowrap">${formatAmount(data.amount)}</p>
-        `;
-
-        tile.addEventListener('click', () => {
-            const itemsInSubCategory = purchases.flatMap(p =>
-                (p.items || [])
-                    .filter(item => (item.subCategory || '').toLowerCase() === subCat.toLowerCase())
-                    .map(item => ({
-                        ...item,
-                        purchaseDate: p.date,
-                        shop: p.shop
-                    }))
-            );
-
-            renderCategoryDetailsModal(subCat, itemsInSubCategory, true);
-        });
-
-        container.appendChild(tile);
-    });
-}
-
+// Wspolny drawer szczegolow uzywany przez kafelki dashboardu i analize dlugoterminowa.
 export function renderCategoryDetailsModal(category, items, isSubCategoryView = false) {
     const listContainer = document.getElementById('category-details-list');
     const titleEl = document.getElementById('category-details-title');
@@ -810,6 +821,7 @@ export function closeCategoryDetailsDrawer() {
     closeDrawer('category-details-drawer', 'category-details-drawer-overlay');
 }
 
+// Powiadomienia zostaly scalone z dashboardem, bo dashboard wylicza progi budzetowe.
 export function initNotifications() {
     if (notificationsInitialized) return;
     notificationsInitialized = true;
