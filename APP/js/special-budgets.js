@@ -148,6 +148,9 @@ function renderSpecialBudgetsTab() {
 
 function populateBudgetTypeSelect() {
     budgetTypeSelectValue = 'monthly';
+    if (typeof window.setPurchaseBudgetType === 'function') {
+        window.setPurchaseBudgetType('monthly');
+    }
     const label = document.getElementById('budget-type-label');
     if (label) {
         label.textContent = 'Budżet miesięczny';

@@ -423,7 +423,7 @@ export function closeSelectionDrawer() {
 export function navigateToCategoryManagementFromDrawer() {
     const filterDrawerOverlay = document.getElementById('filter-drawer-overlay');
     if (filterDrawerOverlay && filterDrawerOverlay.classList.contains('active')) {
-        closeFilterDrawer();
+        window.closeFilterDrawer?.();
     }
 
     const productDrawerOverlay = document.getElementById('product-drawer-overlay');

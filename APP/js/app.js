@@ -1,4 +1,4 @@
-// Tracker Wydatków - Main Application Functions
+﻿// Tracker Wydatków - Main Application Functions
 //
 // Konfiguracja Firebase, stan aplikacji i logika auth są w:
 //   core/config.js, core/state.js, core/auth.js, main.js
@@ -232,81 +232,8 @@ function setupAppEventListeners() {
         }, 300); // Wait 300ms for rotation animation to finish
     });
 
-    purchaseForm.addEventListener('submit', handlePurchaseFormSubmit);
-    document.getElementById('cancel-edit-btn')?.addEventListener('click', () => {
-        if (typeof exitEditMode === 'function') exitEditMode();
-        switchTab('list'); // Go back to list after canceling
-    });
-    addItemBtn.addEventListener('click', () => {
-        if (typeof openProductDrawer === 'function') openProductDrawer();
-    });
-    itemsContainer.addEventListener('input', (e) => {
-        if (e.target.classList.contains('item-price') || e.target.classList.contains('item-name')) {
-            updatePurchaseSummary();
-        }
-    });
-
-
-
-    purchasesList.addEventListener('click', async (e) => {
-        const editBtn = e.target.closest('.edit-purchase-btn');
-        if (editBtn) {
-            const purchaseId = e.target.closest('[data-purchase-id]').dataset.purchaseId;
-            enterEditMode(purchaseId);
-            return;
-        }
-
-        const deleteBtn = e.target.closest('.delete-purchase-btn');
-        if (deleteBtn) {
-            const purchaseId = e.target.closest('[data-purchase-id]').dataset.purchaseId;
-            if (confirm('Czy na pewno chcesz usunąć ten zakup? Operacja jest nieodwracalna.')) {
-                try {
-                    await apiCall(`/api/purchases/${purchaseId}`, 'DELETE');
-                    await fetchInitialData(false); // nie przełączaj zakładki
-                } catch (error) {
-                    alert('Nie udało się usunąć zakupu: ' + error.message);
-                }
-            }
-            return;
-        }
-
-        const header = e.target.closest('.purchase-header');
-        if (header) {
-            const itemsDiv = header.nextElementSibling;
-            itemsDiv.classList.toggle('hidden');
-            const arrow = header.querySelector('.toggle-arrow');
-            arrow.classList.toggle('rotate-180');
-        }
-    });
-
-    analyzeReceiptBtn.addEventListener('click', handleAnalyzeReceipt);
-    receiptFileInput.addEventListener('change', handleFileSelect);
-    startCameraBtn.addEventListener('click', startCamera);
-    cancelCameraBtn.addEventListener('click', stopCamera);
-    capturePhotoBtn.addEventListener('click', capturePhoto);
-
-
-    // (Obsługa szuflady szczegółów odbywa się w ui.js)
-
-    // Autouzupełnianie sklepu
-    shopInput.addEventListener('input', () => renderShopAutocomplete(shopInput.value));
-    shopInput.addEventListener('focus', () => renderShopAutocomplete(shopInput.value));
-
-    shopAutocompleteList.addEventListener('click', (e) => {
-        if (e.target.tagName === 'DIV') {
-            shopInput.value = e.target.textContent;
-            shopAutocompleteList.classList.add('hidden');
-        }
-    });
-
-    // Ukryj autouzupełnianie po kliknięciu gdziekolwiek indziej
-    document.addEventListener('click', (e) => {
-        if (!shopInput.contains(e.target) && !shopAutocompleteList.contains(e.target)) {
-            shopAutocompleteList.classList.add('hidden');
-        }
-    });
-
-    // Zarządzanie budżetem
+    if (typeof initPurchaseForm === 'function') initPurchaseForm();
+    if (typeof initPurchaseList === 'function') initPurchaseList();
 
     saveBudgetBtn.addEventListener('click', handleSaveBudget);
     copyBudgetBtn.addEventListener('click', () => openOverlay('copy-budget-modal'));
@@ -342,24 +269,6 @@ function setupAppEventListeners() {
     cancelEditSpecialBudgetBtn.addEventListener('click', () => closeOverlay('edit-special-budget-modal'));
 
     // Custom Triggers for Selects (Drawer version)
-    document.getElementById('budget-type-btn')?.addEventListener('click', () => {
-        const options = [
-            { value: 'monthly', label: 'Miesięczny', icon: '📅' }
-        ];
-
-        // Dodaj wszystkie budżety specjalne użytkownika
-        if (typeof allSpecialBudgets !== 'undefined' && allSpecialBudgets.length > 0) {
-            allSpecialBudgets.forEach(sb => {
-                options.push({ value: sb.id, label: sb.name, icon: '⭐' });
-            });
-        }
-
-        openSelectionDrawer('Wybierz budżet', options, (val, label) => {
-            budgetTypeSelectValue = val;
-            document.getElementById('budget-type-label').textContent = label;
-            document.getElementById('budget-type-icon').innerHTML = `<span>${val === 'monthly' ? '📅' : '⭐'}</span>`;
-        }, budgetTypeSelectValue);
-    });
 
     document.getElementById('budget-month-btn')?.addEventListener('click', () => {
         const options = [];
@@ -431,74 +340,6 @@ function setupAppEventListeners() {
         }, recurringDayOfWeekValue);
     });
 
-    // Main FAB button to show/hide action menu
-    const mainFabBtn = document.getElementById('main-fab-btn');
-    const fabActions = document.getElementById('fab-actions');
-    const fabOverlay = document.getElementById('fab-overlay');
-    
-    // Wspólne zamknięcie menu FAB, żeby wszystkie akcje korzystały z tego samego zachowania i animacji.
-    const closeFabActionsMenu = () => {
-        fabActions.classList.add('opacity-0', 'translate-y-4');
-        fabActions.classList.remove('opacity-100', 'translate-y-0');
-        fabOverlay.classList.add('hidden');
-        fabOverlay.classList.remove('pointer-events-auto');
-        mainFabBtn.classList.remove('expanded');
-        setTimeout(() => fabActions.classList.add('hidden'), 300);
-    };
-
-    mainFabBtn?.addEventListener('click', () => {
-        const isHidden = fabActions.classList.contains('hidden');
-        if (isHidden) {
-            // Show the actions
-            fabActions.classList.remove('hidden', 'opacity-0', 'translate-y-4');
-            fabActions.classList.add('opacity-100', 'translate-y-0');
-            fabOverlay.classList.remove('hidden');
-            fabOverlay.classList.add('pointer-events-auto');
-            mainFabBtn.classList.add('expanded');
-        } else {
-            // Hide the actions
-            closeFabActionsMenu();
-        }
-    });
-
-    // Hide actions when clicking overlay
-    fabOverlay?.addEventListener('click', () => {
-        closeFabActionsMenu();
-    });
-
-    // Menu action buttons
-    fabAddManualBtn?.addEventListener('click', () => {
-        closeFabActionsMenu();
-        
-        if (typeof clearPurchaseItems === 'function') clearPurchaseItems();
-        switchTab('add');
-        setTimeout(() => shopInput.focus(), 100);
-    });
-
-    fabSelectFileBtn?.addEventListener('click', () => {
-        closeFabActionsMenu();
-        
-        receiptFileInput.click(); // Trigger the hidden file input
-    });
-
-    fabVoiceExpenseBtn?.addEventListener('click', () => {
-        closeFabActionsMenu();
-
-        // Modal głosowy ma własny, wieloetapowy flow, więc tylko go otwieramy.
-        if (typeof openVoiceExpenseModal === 'function') {
-            openVoiceExpenseModal();
-        }
-    });
-
-    fabScanReceiptBtn?.addEventListener('click', () => {
-        closeFabActionsMenu();
-        
-        switchTab('add');
-        setTimeout(() => startCamera(), 100);
-    });
-
-    // Infinite scroll
-    window.addEventListener('scroll', handleInfiniteScroll);
 
     // Dynamic Navbar buttons
     document.getElementById('nav-back-btn')?.addEventListener('click', () => {
@@ -507,10 +348,6 @@ function setupAppEventListeners() {
 
     document.getElementById('nav-user-btn')?.addEventListener('click', () => {
         switchTab('more');
-    });
-
-    document.getElementById('nav-notifications-btn')?.addEventListener('click', () => {
-        if (typeof openNotificationsDrawer === 'function') openNotificationsDrawer();
     });
 
     // Inicjalizuj powiadomienia
@@ -549,7 +386,7 @@ async function handleFilterChange() {
 
     if (!queryString) {
         window.addEventListener('scroll', handleInfiniteScroll);
-        await loadInitialPurchases();
+        await window.loadInitialPurchases();
         if (structuredCategories.length === 0 && allCategories.length > 0) {
             const refetchedStructuredCategories = await apiCall('/api/categories/v2');
             if (Array.isArray(refetchedStructuredCategories) && refetchedStructuredCategories.length > 0) {
@@ -615,7 +452,7 @@ async function fetchInitialData(shouldSwitchToDefault = true) {
         if (typeof renderAnalysisTagFilterButton === 'function') renderAnalysisTagFilterButton();
 
         // Załaduj pierwszą stronę zakupów
-        await loadInitialPurchases();
+        await window.loadInitialPurchases();
 
         // Auto-migracja, jeśli brak kategorii hierarchicznych
         if (structuredCategories.length === 0 && allCategories.length > 0) {
@@ -720,77 +557,9 @@ async function migrateToStructuredCategories() {
     }
 }
 
-function getFilterQueryParams() {
-    const params = new URLSearchParams();
-    
-    const keyword = document.getElementById('filter-keyword')?.value;
-    if (keyword) params.append('keyword', keyword);
-    
-    if (typeof filterCategoryValue !== 'undefined' && filterCategoryValue) params.append('category', filterCategoryValue);
-    if (typeof filterSubCategoryValue !== 'undefined' && filterSubCategoryValue) params.append('subCategory', filterSubCategoryValue);
-    if (typeof filterBudgetValue !== 'undefined' && filterBudgetValue) params.append('specialBudgetId', filterBudgetValue);
-    if (typeof filterShopValue !== 'undefined' && filterShopValue) params.append('shop', filterShopValue);
-    
-    const start = document.getElementById('filter-date-start')?.value;
-    const end = document.getElementById('filter-date-end')?.value;
-    if (start) params.append('startDate', start);
-    if (end) params.append('endDate', end);
-    
-    const min = document.getElementById('filter-min-amount')?.value;
-    const max = document.getElementById('filter-max-amount')?.value;
-    if (min) params.append('minAmount', min);
-    if (max) params.append('maxAmount', max);
-    
-    return params.toString();
-}
-
-async function loadInitialPurchases() {
-    isLoadingPurchases = true;
-    // Zawsze usuń listener, aby uniknąć duplikatów i zresetować stan
-    window.removeEventListener('scroll', handleInfiniteScroll);
-    try {
-        const query = getFilterQueryParams();
-        const { purchases, nextCursor } = await apiCall(`/api/purchases?${query}`);
-        allPurchases = purchases;
-        nextPurchaseCursor = nextCursor;
-        renderPurchasesList(allPurchases); // Renderuj tylko listę zakupów
-
-        // Jeśli jest następna strona, ponownie dodaj listener
-        if (nextCursor) {
-            window.addEventListener('scroll', handleInfiniteScroll);
-        }
-    } catch (error) {
-        console.error('Błąd ładowania początkowych zakupów:', error);
-    } finally {
-        isLoadingPurchases = false;
-    }
-}
-
-async function fetchMorePurchases() {
-    if (isLoadingPurchases || !nextPurchaseCursor) return;
-
-    isLoadingPurchases = true;
-    try {
-        const query = getFilterQueryParams();
-        const { purchases, nextCursor } = await apiCall(`/api/purchases?lastVisible=${nextPurchaseCursor}&${query}`);
-        if (purchases && purchases.length > 0) {
-            allPurchases.push(...purchases);
-            renderPurchasesList(purchases, true); // Renderuj tylko nowe zakupy
-        }
-        nextPurchaseCursor = nextCursor; // Zaktualizuj kursor nawet jeśli jest null
-        if (!nextCursor) {
-            window.removeEventListener('scroll', handleInfiniteScroll);
-        }
-    } catch (error) {
-        console.error('Błąd doładowywania zakupów:', error);
-    } finally {
-        isLoadingPurchases = false;
-    }
-}
-
 async function renderAll() {
     await updateMonthlyBalance();
-    await renderDashboard(); // Renduruj kokpit zamiast starych statystyk
+    await window.renderDashboard?.(); // Renderuj kokpit z views/dashboard.js
     renderSpecialBudgetsList();
     populateBudgetTypeSelect();
 }

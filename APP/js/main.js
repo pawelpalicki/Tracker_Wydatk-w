@@ -14,6 +14,9 @@ import * as format from './shared/format.js';
 import * as ui from './shared/ui.js';
 import * as categories from './shared/categories.js';
 import * as tags from './shared/tags.js';
+import * as dashboard from './views/dashboard.js';
+import * as purchaseForm from './views/purchase-form.js';
+import * as purchaseList from './views/purchase-list.js';
 
 // =====================================================================
 // EKSPOZYCJA GLOBALI DLA STARYCH SKRYPTÓW
@@ -68,6 +71,55 @@ window.openTagsDrawer = tags.openTagsDrawer;
 window.closeTagsDrawer = tags.closeTagsDrawer;
 window.confirmTagsSelection = tags.confirmTagsSelection;
 window.initTagsSelectionDrawer = tags.initTagsSelectionDrawer;
+
+// Eksport widokĂłw Etapu 3
+window.renderDashboard = dashboard.renderDashboard;
+window.initDashboard = dashboard.initDashboard;
+window.initHomeDashboardControls = dashboard.initHomeDashboardControls;
+window.renderCategoryDetailsModal = dashboard.renderCategoryDetailsModal;
+window.closeCategoryDetailsDrawer = dashboard.closeCategoryDetailsDrawer;
+window.initNotifications = dashboard.initNotifications;
+window.loadNotifications = dashboard.loadNotifications;
+window.openNotificationsDrawer = dashboard.openNotificationsDrawer;
+window.closeNotificationsDrawer = dashboard.closeNotificationsDrawer;
+window.deleteNotification = dashboard.deleteNotification;
+window.checkAndGenerateNotifications = dashboard.checkAndGenerateNotifications;
+window.generateAIInsights = dashboard.generateAIInsights;
+window.calculateCurrentMonthStats = dashboard.calculateCurrentMonthStats;
+
+window.initPurchaseForm = purchaseForm.initPurchaseForm;
+window.updatePurchaseSummary = purchaseForm.updatePurchaseSummary;
+window.clearPurchaseItems = purchaseForm.clearPurchaseItems;
+window.addItemRow = purchaseForm.addItemRow;
+window.renderPurchaseItems = purchaseForm.renderPurchaseItems;
+window.openProductDrawer = purchaseForm.openProductDrawer;
+window.closeProductDrawer = purchaseForm.closeProductDrawer;
+window.handlePurchaseFormSubmit = purchaseForm.handlePurchaseFormSubmit;
+window.handleAnalyzeReceipt = purchaseForm.handleAnalyzeReceipt;
+window.fillFormWithAnalysis = purchaseForm.fillFormWithAnalysis;
+window.enterEditMode = purchaseForm.enterEditMode;
+window.exitEditMode = purchaseForm.exitEditMode;
+window.setPurchaseBudgetType = purchaseForm.setPurchaseBudgetType;
+window.startCamera = purchaseForm.startCamera;
+window.stopCamera = purchaseForm.stopCamera;
+window.capturePhoto = purchaseForm.capturePhoto;
+window.handleFileSelect = purchaseForm.handleFileSelect;
+window.renderShopAutocomplete = purchaseForm.renderShopAutocomplete;
+window.resizeImage = purchaseForm.resizeImage;
+window.openVoiceExpenseModal = purchaseForm.openVoiceExpenseModal;
+window.analysisAnimation = purchaseForm.analysisAnimation;
+
+window.initPurchaseList = purchaseList.initPurchaseList;
+window.initPurchaseListFilters = purchaseList.initPurchaseListFilters;
+window.initFilterDrawers = purchaseList.initPurchaseListFilters;
+window.openFilterDrawer = purchaseList.openFilterDrawer;
+window.closeFilterDrawer = purchaseList.closeFilterDrawer;
+window.handleFilterChange = purchaseList.handleFilterChange;
+window.handleInfiniteScroll = purchaseList.handleInfiniteScroll;
+window.getFilterQueryParams = purchaseList.getFilterQueryParams;
+window.loadInitialPurchases = purchaseList.loadInitialPurchases;
+window.fetchMorePurchases = purchaseList.fetchMorePurchases;
+window.renderPurchasesList = purchaseList.renderPurchasesList;
 
 // Stan aplikacji — proxy na window, żeby stare skrypty mogły czytać/pisać
 // zmienne jak allPurchases, structuredCategories itp.

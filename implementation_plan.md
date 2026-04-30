@@ -175,9 +175,12 @@ APP/js/
 > **Po tym etapie aplikacja będzie miała dwa współistniejące systemy**: stare pliki (jeszcze globalowe) i nowe moduły core. Na tym etapie to jest w porządku — stare pliki zostaną zmigrowane w kolejnych etapach. Kluczowe jest, żeby `main.js` poprawnie zainicjalizował Firebase i auth, a stare pliki mogły nadal czytać stan z `window` (tymczasowo wyeksponowany z `state.js`).
 
 **🧪 Punkt testów manualnych:**
-- [ ] Logowanie i rejestracja działają
-- [ ] Po zalogowaniu ładują się dane (zakupy, kategorie, budżety)
-- [ ] Dashboard wyświetla poprawne podsumowanie miesiąca
+- [x] Logowanie i rejestracja działają
+- [x] Po zalogowaniu ładują się dane (zakupy, kategorie, budżety)
+- [x] Dashboard wyświetla poprawne podsumowanie miesiąca
+
+> [!NOTE]
+> **Status Etapu 1:** Zakończono pozytywnie. Fundamenty modularne (`core/config.js`, `core/api.js`, `core/auth.js`, `core/state.js`) działają poprawnie, a `main.js` prawidłowo zarządza inicjalizacją i pomostem (bridge) do starego kodu.
 
 ---
 
@@ -194,11 +197,14 @@ APP/js/
 **Po tym etapie** stary `ui.js` i `categories-v2.js` powinny być puste lub zawierać już tylko logikę specyficzną dla widoku Settings (edytor kategorii, menedżer tagów).
 
 **🧪 Punkt testów manualnych:**
-- [ ] Nawigacja między zakładkami (dolny pasek)
-- [ ] Historia przeglądarki (przycisk wstecz) działa poprawnie
-- [ ] Drawer wyboru kategorii otwiera się z formularza zakupów
-- [ ] Drawer wyboru tagów otwiera się i zamyka poprawnie
-- [ ] Formatowanie kwot (np. "1 234,56 zł") wyświetla się poprawnie
+- [x] Nawigacja między zakładkami (dolny pasek)
+- [x] Historia przeglądarki (przycisk wstecz) działa poprawnie
+- [x] Drawer wyboru kategorii otwiera się z formularza zakupów
+- [x] Drawer wyboru tagów otwiera się i zamyka poprawnie
+- [x] Formatowanie kwot (np. "1 234,56 zł") wyświetla się poprawnie
+
+> [!NOTE]
+> **Status Etapu 2:** Zakończono pozytywnie. Wyczyszczono stare pliki `tags.js`, `api.js`, `auth.js` oraz zmigrowano współdzieloną logikę z `ui.js` i `categories-v2.js` do folderu `shared/`. Aplikacja zachowuje pełną stabilność.
 
 ---
 
