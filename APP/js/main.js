@@ -17,6 +17,7 @@ import * as tags from './shared/tags.js';
 import * as dashboard from './views/dashboard.js';
 import * as purchaseForm from './views/purchase-form.js';
 import * as purchaseList from './views/purchase-list.js';
+import * as notifications from './shared/notifications.js';
 
 // =====================================================================
 // EKSPOZYCJA GLOBALI DLA STARYCH SKRYPTÓW
@@ -72,20 +73,23 @@ window.closeTagsDrawer = tags.closeTagsDrawer;
 window.confirmTagsSelection = tags.confirmTagsSelection;
 window.initTagsSelectionDrawer = tags.initTagsSelectionDrawer;
 
-// Eksport widokĂłw Etapu 3
 window.renderDashboard = dashboard.renderDashboard;
 window.initDashboard = dashboard.initDashboard;
 window.initHomeDashboardControls = dashboard.initHomeDashboardControls;
-window.renderCategoryDetailsModal = dashboard.renderCategoryDetailsModal;
-window.closeCategoryDetailsDrawer = dashboard.closeCategoryDetailsDrawer;
-window.initNotifications = dashboard.initNotifications;
-window.loadNotifications = dashboard.loadNotifications;
-window.openNotificationsDrawer = dashboard.openNotificationsDrawer;
-window.closeNotificationsDrawer = dashboard.closeNotificationsDrawer;
-window.deleteNotification = dashboard.deleteNotification;
-window.checkAndGenerateNotifications = dashboard.checkAndGenerateNotifications;
-window.generateAIInsights = dashboard.generateAIInsights;
-window.calculateCurrentMonthStats = dashboard.calculateCurrentMonthStats;
+
+// Eksport modala kategorii (przeniesiony do shared/ui.js)
+window.renderCategoryDetailsModal = ui.renderCategoryDetailsModal;
+window.closeCategoryDetailsDrawer = ui.closeCategoryDetailsDrawer;
+
+// Eksport powiadomień (przeniesiony do shared/notifications.js)
+window.initNotifications = notifications.initNotifications;
+window.loadNotifications = notifications.loadNotifications;
+window.openNotificationsDrawer = notifications.openNotificationsDrawer;
+window.closeNotificationsDrawer = notifications.closeNotificationsDrawer;
+window.deleteNotification = notifications.deleteNotification;
+window.checkAndGenerateNotifications = notifications.checkAndGenerateNotifications;
+window.generateAIInsights = notifications.generateAIInsights;
+window.calculateCurrentMonthStats = notifications.calculateCurrentMonthStats;
 
 window.initPurchaseForm = purchaseForm.initPurchaseForm;
 window.updatePurchaseSummary = purchaseForm.updatePurchaseSummary;
@@ -181,6 +185,7 @@ auth.onAuthStateChanged(user => {
 
 document.addEventListener('DOMContentLoaded', () => {
     setupAuthEventListeners();
+    notifications.initNotifications();
 
     // Service Worker
     if ('serviceWorker' in navigator) {

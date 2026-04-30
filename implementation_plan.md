@@ -119,10 +119,11 @@ APP/js/
 │   ├── api.js               ← Wrapper fetch z tokenem auth (obecny api.js, minimalnie zmieniony)
 │   └── auth.js              ← Logika logowania/rejestracji (obecny auth.js + fragment z app.js)
 ├── shared/
-│   ├── ui.js                ← Nawigacja (switchTab), drawery ogólne, modele, overlay management
+│   ├── ui.js                ← Nawigacja (switchTab), drawery ogólne, modele, overlay management, Category Details Modal
 │   ├── format.js            ← formatAmount(), formatDate(), i inne helpery formatowania
 │   ├── categories.js        ← Drawer wyboru kategorii hierarchicznych, helpery kategorii (getParentCategoryByName itp.)
-│   └── tags.js              ← Helpery tagów, drawer zbiorczego wyboru tagów (obecny tags.js)
+│   ├── tags.js              ← Helpery tagów, drawer zbiorczego wyboru tagów (obecny tags.js)
+│   └── notifications.js     ← Pobieranie, renderowanie i generowanie powiadomień, AI Insights
 ├── views/
 │   ├── dashboard.js         ← Kokpit: renderDashboard(), wykresy kołowe, picker miesiąca, przegląd kategorii
 │   ├── purchase-form.js     ← Formularz dodawania/edycji zakupu, analiza paragonów AI, kamera, modal głosowy, animacja
@@ -153,7 +154,7 @@ APP/js/
 | `views/settings.js` | Eksportuje `initSettings()` — scala logikę edytora kategorii (`categories-v2.js`), budżetu (`budget.js`), wydatków cyklicznych (`recurring-expenses.js`), i zarządzania budżetami specjalnymi. |
 
 > [!NOTE]
-> Plik `notifications.js` zostaje włączony do `main.js` (inicjalizacja) + `views/dashboard.js` (generowanie powiadomień budżetowych) — nie potrzebuje osobnego modułu, bo jego logika naturalne dzieli się na te dwa konteksty.
+> Plik `notifications.js` został ostatecznie wydzielony jako osobny moduł `shared/notifications.js`. Dzięki temu logika powiadomień jest dostępna globalnie (inicjalizacja w `main.js`), co pozwala na obsługę dzwonka powiadomień niezależnie od aktywnego widoku.
 
 ---
 
@@ -234,7 +235,7 @@ APP/js/
 - [x] Lista zakupów: paginacja, filtry daty, wyszukiwanie
 
 > [!NOTE]
-> **Status Etapu 3:** Zakończono pozytywnie. Utworzono `views/dashboard.js`, `views/purchase-form.js` i `views/purchase-list.js`, przepięto `main.js` na nowe moduły, usunięto ładowanie przeniesionych legacy skryptów z `index.html` oraz zastąpiono stare pliki migracyjnymi placeholderami. Po szybkich testach manualnych nie stwierdzono regresji.
+> **Status Etapu 3:** Zakończono pozytywnie. Utworzono `views/dashboard.js`, `views/purchase-form.js` i `views/purchase-list.js`. Dodatkowo przeprowadzono konsolidację komponentów UI (przeniesienie modala szczegółów kategorii do `shared/ui.js`) oraz wydzielono logikę powiadomień do `shared/notifications.js`, co pozwoliło na globalną obsługę alertów i AI Insights.
 
 ---
 

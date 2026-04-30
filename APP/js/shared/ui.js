@@ -8,8 +8,10 @@
  * - Mechanizm blokowania historii (OverlayNavigationLock) 
  * - Otwieranie i zamykanie drawerów oraz nakładek (openDrawer, openOverlay)
  * - Obsługę drawerów filtrowania i wyboru
+ * - Szufladę szczegółów kategorii (Category Details Modal)
  */
 import state from '../core/state.js';
+import { formatAmount } from './format.js';
 
 export const VIEW_DEPTH = {
     'home': 0,
@@ -418,6 +420,114 @@ export function openSelectionDrawer(title, options, onSelect, selectedValue = nu
 
 export function closeSelectionDrawer() {
     closeDrawer('category-drawer', 'category-drawer-overlay');
+}
+
+/**
+ * Renderuje szufladę ze szczegółami wydatków w danej kategorii.
+ * Współdzielona między Kokpitem a widokiem Analizy.
+ */
+export function renderCategoryDetailsModal(category, items, isSubCategoryView = false) {
+    const listContainer = document.getElementById('category-details-list');
+    const titleEl = document.getElementById('category-details-title');
+    if (!listContainer || !titleEl) return;
+
+    titleEl.textContent = category.charAt(0).toUpperCase() + category.slice(1);
+    listContainer.innerHTML = '';
+
+    if (items.length === 0) {
+        listContainer.innerHTML = '<div class="text-center py-6 text-gray-500 text-sm">Brak wydatków w tym okresie.</div>';
+    } else {
+        if (!isSubCategoryView) {
+            const bySub = {};
+            items.forEach(item => {
+                const sub = item.subCategory || 'Inne';
+                bySub[sub] = (bySub[sub] || 0) + (item.price || 0);
+            });
+
+            const sortedSub = Object.entries(bySub).sort((a, b) => b[1] - a[1]);
+            if (sortedSub.length > 1 || (sortedSub.length === 1 && sortedSub[0][0] !== 'Inne')) {
+                const breakdown = document.createElement('div');
+                breakdown.className = 'mb-4 space-y-2';
+                breakdown.innerHTML = `
+                    <p class="text-[10px] text-gray-500 uppercase tracking-widest font-bold ml-1 mb-2">Podział na podkategorie</p>
+                    <div class="grid grid-cols-2 gap-2">
+                        ${sortedSub.map(([sub, amount]) => `
+                            <div class="bg-white/5 border border-white/10 rounded-xl p-2 px-3">
+                                <p class="text-[10px] text-gray-400 truncate">${sub}</p>
+                                <p class="text-sm font-bold text-white">${formatAmount(amount).replace(' zł', '').replace(' zl', '')}</p>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <hr class="border-white/5 mt-4">
+                `;
+                listContainer.appendChild(breakdown);
+            }
+        }
+
+        items.sort((a, b) => new Date(b.purchaseDate) - new Date(a.purchaseDate));
+        items.forEach(item => {
+            const itemEl = document.createElement('div');
+            itemEl.className = 'flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/10 mb-2';
+
+            let dateStr = item.purchaseDate;
+            try {
+                const parts = item.purchaseDate.split('-');
+                if (parts.length === 3) {
+                    const d = new Date(parts[0], parseInt(parts[1], 10) - 1, parts[2]);
+                    dateStr = d.toLocaleDateString('pl-PL', { day: 'numeric', month: 'short' });
+                }
+            } catch (e) {}
+
+            const subLabel = item.subCategory ? `<span class="text-[10px] bg-white/10 px-1.5 py-0.5 rounded text-gray-400 mr-2">${item.subCategory}</span>` : '';
+            itemEl.innerHTML = `
+                <div class="flex flex-col overflow-hidden mr-3">
+                    <span class="text-sm font-medium text-white truncate w-full">${item.name}</span>
+                    <div class="flex items-center text-xs text-gray-400 mt-1 space-x-2">
+                        ${isSubCategoryView ? '' : subLabel}
+                        <span class="truncate max-w-[80px]">${item.shop || 'Inny'}</span>
+                        <span>*</span>
+                        <span>${dateStr}</span>
+                    </div>
+                </div>
+                <div class="text-right flex-shrink-0">
+                    <span class="text-sm font-bold text-white">${formatAmount(item.price || 0)}</span>
+                </div>
+            `;
+            listContainer.appendChild(itemEl);
+        });
+    }
+
+    const drawer = document.getElementById('category-details-drawer');
+    const overlay = document.getElementById('category-details-drawer-overlay');
+    const closeBtn = document.getElementById('close-category-details-drawer');
+    if (!drawer || !overlay) return;
+
+    const handleClose = () => closeCategoryDetailsDrawer();
+    const wasAlreadyOpen = overlay.classList.contains('active') || !overlay.classList.contains('hidden');
+    
+    if (closeBtn) {
+        closeBtn.onclick = (e) => {
+            e.stopPropagation();
+            handleClose();
+        };
+    }
+    overlay.onclick = (e) => {
+        if (e.target === overlay) handleClose();
+    };
+
+    drawer.classList.remove('hidden');
+    overlay.classList.remove('hidden');
+    if (!wasAlreadyOpen) acquireOverlayNavigationLock();
+    document.body.style.overflow = 'hidden';
+
+    setTimeout(() => {
+        drawer.classList.add('active');
+        overlay.classList.add('active');
+    }, 10);
+}
+
+export function closeCategoryDetailsDrawer() {
+    closeDrawer('category-details-drawer', 'category-details-drawer-overlay');
 }
 
 export function navigateToCategoryManagementFromDrawer() {
