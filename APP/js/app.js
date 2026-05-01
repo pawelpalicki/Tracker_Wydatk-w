@@ -79,51 +79,9 @@ const filterMinAmount = document.getElementById('filter-min-amount');
 const filterMaxAmount = document.getElementById('filter-max-amount');
 const clearFiltersBtn = document.getElementById('clear-filters-btn');
 
-// Elementy wydatków cyklicznych
-const recurringExpensesList = document.getElementById('recurring-expenses-list');
-const addRecurringExpenseForm = document.getElementById('add-recurring-expense-form');
-const recurringName = document.getElementById('recurring-name');
-const recurringAmount = document.getElementById('recurring-amount');
-let recurringCategoryValue = '';
-let recurringSubCategoryValue = ''; // NOWA ZMIENNA
-let recurringTagValues = {}; // Tagi dla cyklicznego (wszystkie grupy)
-let scheduleTypeValue = 'monthly';
-const monthlySettings = document.getElementById('recurring-monthly-settings');
-const weeklySettings = document.getElementById('recurring-weekly-settings');
-const intervalSettings = document.getElementById('recurring-interval-settings');
-const recurringDayOfMonth = document.getElementById('recurring-day-of-month');
-let recurringDayOfWeekValue = '1';
-const recurringInterval = document.getElementById('recurring-interval');
-const recurringStartDate = document.getElementById('recurring-start-date');
-
-// Elementy budżetów specjalnych
-const specialBudgetsList = document.getElementById('special-budgets-list');
-const addSpecialBudgetForm = document.getElementById('add-special-budget-form');
-let budgetTypeSelectValue = 'monthly';
-
-// Elementy modala edycji budżetu specjalnego
-const editSpecialBudgetModal = document.getElementById('edit-special-budget-modal');
-const editSpecialBudgetForm = document.getElementById('edit-special-budget-form');
-const closeEditSpecialBudgetModalBtn = document.getElementById('close-edit-special-budget-modal');
-const cancelEditSpecialBudgetBtn = document.getElementById('cancel-edit-special-budget');
-const editSpecialBudgetNameInput = document.getElementById('edit-special-budget-name');
-const editSpecialBudgetAmountInput = document.getElementById('edit-special-budget-amount');
-
 const shopAutocompleteList = document.getElementById('shop-autocomplete-list');
 
 // --- Funkcje Pomocnicze ---
-// Tagi i inne pomocnicze funkcje obsługujące kategorie i widoki
-
-function applyRecurringCategorySelection(parentName = '', subCategoryName = '') {
-    recurringCategoryValue = parentName || '';
-    recurringSubCategoryValue = subCategoryName || '';
-
-    applyCategorySelectionState({
-        buttonEl: document.getElementById('recurring-category-btn'),
-        labelEl: document.getElementById('recurring-category-label'),
-        iconEl: document.getElementById('recurring-category-icon')
-    }, recurringCategoryValue, recurringSubCategoryValue, 'Wybierz kategorię');
-}
 
 // --- Funkcja kompresji/optymalizacji obrazu ---
 async function resizeImage(file, maxSize = 1400, quality = 0.75) {
@@ -220,126 +178,15 @@ function setupAppEventListeners() {
         }
     });
 
-    // Handle Resize for Charts
-    let resizeTimer;
-    window.addEventListener('resize', () => {
-        clearTimeout(resizeTimer);
-        resizeTimer = setTimeout(() => {
-
-            if (document.getElementById('home-tab').classList.contains('active')) {
-                if (typeof renderDashboard === 'function') renderDashboard();
-            }
-        }, 300); // Wait 300ms for rotation animation to finish
-    });
-
     if (typeof initPurchaseForm === 'function') initPurchaseForm();
     if (typeof initPurchaseList === 'function') initPurchaseList();
-
-    saveBudgetBtn.addEventListener('click', handleSaveBudget);
-    copyBudgetBtn.addEventListener('click', () => openOverlay('copy-budget-modal'));
-
-    // Modal kopiowania budżetu
-    closeCopyBudgetModal.addEventListener('click', () => closeOverlay('copy-budget-modal'));
-    cancelCopyBudget.addEventListener('click', () => closeOverlay('copy-budget-modal'));
-    copyBudgetModal.addEventListener('click', (e) => {
-        if (e.target === copyBudgetModal) {
-            closeOverlay('copy-budget-modal');
-        }
-    });
-
-    // Przyciski wyboru liczby miesięcy
-    copyMonthsBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            const monthsCount = parseInt(btn.dataset.months);
-            handleCopyBudget(monthsCount);
-            closeOverlay('copy-budget-modal');
-        });
-    });
-
-    // Logika wydatków cyklicznych
-    addRecurringExpenseForm.addEventListener('submit', handleAddOrUpdateRecurringExpense);
-    recurringExpensesList.addEventListener('click', handleRecurringExpenseActions);
-    // scheduleTypeSelect event is now called directly from drawer callback
-
-    // Logika budżetów specjalnych
-    addSpecialBudgetForm.addEventListener('submit', handleAddSpecialBudget);
-    specialBudgetsList.addEventListener('click', handleSpecialBudgetActions);
-    editSpecialBudgetForm.addEventListener('submit', handleEditSpecialBudgetSubmit);
-    closeEditSpecialBudgetModalBtn.addEventListener('click', () => closeOverlay('edit-special-budget-modal'));
-    cancelEditSpecialBudgetBtn.addEventListener('click', () => closeOverlay('edit-special-budget-modal'));
+    if (typeof initSpecialBudgets === 'function') initSpecialBudgets();
+    if (typeof initSettingsRecurring === 'function') initSettingsRecurring();
+    if (typeof initMonthlyBudget === 'function') initMonthlyBudget();
+    if (typeof initCategoriesManager === 'function') initCategoriesManager();
+    if (typeof initTagsManager === 'function') initTagsManager();
 
     // Custom Triggers for Selects (Drawer version)
-
-    document.getElementById('budget-month-btn')?.addEventListener('click', () => {
-        const options = [];
-        const today = new Date();
-        for (let i = -12; i <= 12; i++) {
-            const d = new Date(today.getFullYear(), today.getMonth() + i, 1);
-            const mStr = d.toISOString().substring(0, 7);
-            const label = d.toLocaleString('pl-PL', { month: 'long', year: 'numeric' });
-            options.push({ value: mStr, label: label });
-        }
-        options.sort((a, b) => b.value.localeCompare(a.value));
-
-        openSelectionDrawer('Wybierz miesiąc', options, (val, label) => {
-            budgetMonthValue = val;
-            document.getElementById('budget-month-label').textContent = label;
-            if (typeof renderBudgetInputs === 'function') renderBudgetInputs();
-        }, budgetMonthValue);
-    });
-
-    document.getElementById('recurring-category-btn')?.addEventListener('click', () => {
-        if (typeof openHierarchicalCategoryDrawer === 'function') {
-            const currentCat = recurringCategoryValue || '';
-            const currentSub = recurringSubCategoryValue || '';
-            openHierarchicalCategoryDrawer(null, currentCat, currentSub, (pName, sName) => {
-                applyRecurringCategorySelection(pName, sName);
-            });
-        }
-    });
-
-    // Tagi dla wydatków cyklicznych - jeden przycisk
-    document.getElementById('recurring-tags-btn')?.addEventListener('click', () => {
-        openTagsDrawer(recurringTagValues, (newTags) => {
-            recurringTagValues = newTags;
-            const summaryEl = document.getElementById('recurring-tags-summary');
-            if (summaryEl) summaryEl.textContent = buildTagsSummary(newTags);
-        });
-    });
-
-    // Initializuj szufladę tagów
-    initTagsSelectionDrawer();
-
-
-    document.getElementById('recurring-schedule-btn')?.addEventListener('click', () => {
-        const options = [
-            { value: 'monthly', label: 'Co miesiąc', icon: '📅' },
-            { value: 'weekly', label: 'Co tydzień', icon: '🔁' },
-            { value: 'daily_interval', label: 'Interwał dni', icon: '🔢' }
-        ];
-        openSelectionDrawer('Częstotliwość', options, (val, label) => {
-            scheduleTypeValue = val;
-            document.getElementById('recurring-schedule-label').textContent = label;
-            handleScheduleTypeChange();
-        }, scheduleTypeValue);
-    });
-
-    document.getElementById('recurring-day-of-week-btn')?.addEventListener('click', () => {
-        const options = [
-            { value: '1', label: 'Poniedziałek' },
-            { value: '2', label: 'Wtorek' },
-            { value: '3', label: 'Środa' },
-            { value: '4', label: 'Czwartek' },
-            { value: '5', label: 'Piątek' },
-            { value: '6', label: 'Sobota' },
-            { value: '0', label: 'Niedziela' }
-        ];
-        openSelectionDrawer('Dzień tygodnia', options, (val, label) => {
-            recurringDayOfWeekValue = val;
-            document.getElementById('recurring-day-of-week-label').textContent = label;
-        }, recurringDayOfWeekValue);
-    });
-
 
     // Dynamic Navbar buttons
     document.getElementById('nav-back-btn')?.addEventListener('click', () => {
@@ -444,10 +291,6 @@ async function fetchInitialData(shouldSwitchToDefault = true) {
             apiCall('/api/tags')
         ]);
 
-        // Inicjalizuj domyślne tagi cykliczne ze wszystkich grup
-        recurringTagValues = getDefaultTagValues();
-        const recurringTagsSummaryEl = document.getElementById('recurring-tags-summary');
-        if (recurringTagsSummaryEl) recurringTagsSummaryEl.textContent = buildTagsSummary(recurringTagValues);
         // Renderuj dynamiczne filtry tagów w analizie
         if (typeof renderAnalysisTagFilterButton === 'function') renderAnalysisTagFilterButton();
 
@@ -558,10 +401,18 @@ async function migrateToStructuredCategories() {
 }
 
 async function renderAll() {
-    await updateMonthlyBalance();
-    await window.renderDashboard?.(); // Renderuj kokpit z views/dashboard.js
+    // Uruchamiamy procesy niezależnie, aby nie blokować renderowania prostych list
+    updateMonthlyBalance().catch(err => console.error('Błąd salda:', err));
+    window.renderDashboard?.().catch(err => console.error('Błąd kokpitu:', err));
+    
+    // To renderuje się natychmiast, bo nie wymaga oczekiwania na powyższe
     renderSpecialBudgetsList();
     populateBudgetTypeSelect();
+    
+    // Jeśli jesteśmy na zakładce budżetów specjalnych, odświeżamy też karty z wykresami
+    if (typeof renderSpecialBudgetsTab === 'function' && document.getElementById('special-budgets-tab')?.classList.contains('active')) {
+        renderSpecialBudgetsTab();
+    }
 }
 
 

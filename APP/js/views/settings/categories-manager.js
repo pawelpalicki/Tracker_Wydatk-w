@@ -1,0 +1,389 @@
+/**
+ * Moduł Zarządzania Kategoriami Hierarchicznymi (Ustawienia).
+ */
+import state from '../../core/state.js';
+import { apiCall } from '../../core/api.js';
+import { openOverlay, closeOverlay } from '../../shared/ui.js';
+
+// =====================================================================
+// STAŁE: paleta ikon i kolorów
+// =====================================================================
+const CAT_ICON_OPTIONS = [
+    'fa-tag', 'fa-shopping-basket', 'fa-home', 'fa-car', 'fa-film',
+    'fa-heartbeat', 'fa-shopping-bag', 'fa-file-invoice-dollar',
+    'fa-graduation-cap', 'fa-running', 'fa-jug-detergent', 'fa-pump-soap',
+    'fa-tshirt', 'fa-piggy-bank', 'fa-cookie-bite', 'fa-recycle',
+    'fa-utensils', 'fa-plane', 'fa-gift', 'fa-dumbbell', 'fa-baby',
+    'fa-paw', 'fa-laptop', 'fa-music', 'fa-book', 'fa-hammer',
+    'fa-ellipsis-h',
+    'fa-apple-alt', 'fa-candy-cane', 'fa-ice-cream', 'fa-truck', 'fa-coffee', 'fa-wine-glass',
+    'fa-building', 'fa-bolt', 'fa-tint', 'fa-fire', 'fa-couch', 'fa-paint-roller', 'fa-tools', 'fa-lightbulb',
+    'fa-stethoscope', 'fa-pills', 'fa-capsules', 'fa-cut', 'fa-spa', 'fa-toilet-paper', 'fa-tooth',
+    'fa-gas-pump', 'fa-taxi', 'fa-bus', 'fa-subway', 'fa-train', 'fa-suitcase-rolling', 'fa-bicycle',
+    'fa-hamburger', 'fa-theater-masks', 'fa-ticket-alt', 'fa-play-circle', 'fa-gamepad', 'fa-palette', 'fa-football-ball',
+    'fa-hand-holding-usd', 'fa-chart-line', 'fa-wallet', 'fa-coins', 'fa-credit-card',
+    'fa-shoe-prints', 'fa-gem', 'fa-hat-cowboy',
+    'fa-chalkboard-teacher', 'fa-book-open', 'fa-language',
+    'fa-smoking', 'fa-beer', 'fa-archive', 'fa-wifi', 'fa-tv', 'fa-mobile-alt', 'fa-microchip', 'fa-headphones', 'fa-dog', 'fa-camera', 'fa-baby-carriage', 'fa-briefcase', 'fa-church'
+];
+
+const CAT_COLOR_OPTIONS = [
+    '#3b82f6', '#10b981', '#ef4444', '#f97316', '#8b5cf6',
+    '#ec4899', '#f59e0b', '#14b8a6', '#64748b', '#06b6d4',
+    '#a855f7', '#eab308', '#0ea5e9', '#be185d', '#16a34a',
+    '#f43f5e', '#84cc16', '#6366f1', '#d946ef', '#fb7185'
+];
+
+let initialized = false;
+
+function el(id) {
+    return document.getElementById(id);
+}
+
+/**
+ * Inicjalizuje moduł kategorii.
+ */
+export function initCategoriesManager() {
+    if (initialized) return;
+
+    el('add-parent-category-btn')?.addEventListener('click', () => showParentCategoryForm());
+    el('cat-v2-save-btn')?.addEventListener('click', saveParentCategory);
+    el('cat-v2-sub-save-btn')?.addEventListener('click', saveSubCategory);
+
+    el('close-category-editor-drawer')?.addEventListener('click', () => closeOverlay('category-editor-drawer'));
+    el('category-editor-drawer-overlay')?.addEventListener('click', (e) => {
+        if (e.target.id === 'category-editor-drawer-overlay') {
+            closeOverlay('category-editor-drawer');
+        }
+    });
+
+    initialized = true;
+    renderCategoriesListV2();
+}
+
+/**
+ * Renderuje listę kategorii i podkategorii w ustawieniach.
+ */
+export function renderCategoriesListV2() {
+    const container = el('categories-v2-list');
+    if (!container) return;
+
+    if (!state.structuredCategories || state.structuredCategories.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-8 text-gray-500 text-sm">
+                <i class="fas fa-folder-open text-3xl mb-3 block opacity-40"></i>
+                Brak kategorii. Kliknij „Dodaj kategorię", aby zacząć.
+            </div>`;
+        return;
+    }
+
+    const parents = state.structuredCategories.filter(c => !c.parentId);
+    const children = state.structuredCategories.filter(c => c.parentId);
+
+    container.innerHTML = parents.map(parent => {
+        const subs = children.filter(c => c.parentId === parent.id);
+        const color = parent.color || '#64748b';
+        const icon = parent.icon || 'fa-tag';
+
+        return `
+        <div class="cat-v2-parent-row rounded-2xl border border-white/10 overflow-hidden mb-2" data-id="${parent.id}">
+            <div class="flex items-center px-3 py-3 bg-white/5 cursor-pointer cat-v2-toggle-btn">
+                <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 mr-3"
+                     style="background-color:${color}25; color:${color}">
+                    <i class="fas ${icon} text-sm"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <span class="font-semibold text-white text-sm">${parent.name}</span>
+                    <span class="text-xs text-gray-500 ml-2">${subs.length} podkat.</span>
+                </div>
+                <div class="flex items-center gap-1 ml-2">
+                    <button class="cat-v2-add-sub-btn p-1.5 rounded-lg text-gray-400 hover:text-green-400 hover:bg-white/5 transition-colors"
+                            data-parent-id="${parent.id}" title="Dodaj podkategorię">
+                        <i class="fas fa-plus text-xs"></i>
+                    </button>
+                    <button class="cat-v2-edit-parent-btn p-1.5 rounded-lg text-gray-400 hover:text-blue-400 hover:bg-white/5 transition-colors"
+                            data-id="${parent.id}" title="Edytuj">
+                        <i class="fas fa-pen text-xs"></i>
+                    </button>
+                    <button class="cat-v2-delete-parent-btn p-1.5 rounded-lg text-gray-400 hover:text-red-400 hover:bg-white/5 transition-colors"
+                            data-id="${parent.id}" title="Usuń">
+                        <i class="fas fa-trash text-xs"></i>
+                    </button>
+                    <i class="fas fa-chevron-down text-xs text-gray-500 ml-1 cat-v2-chevron transition-transform"></i>
+                </div>
+            </div>
+            <div class="cat-v2-sub-list hidden border-t border-white/5">
+                ${subs.length === 0
+                    ? `<p class="text-xs text-gray-600 italic px-12 py-2">Brak podkategorii</p>`
+                    : subs.map(sub => `
+                    <div class="flex items-center px-4 py-2.5 border-b border-white/5 last:border-0" data-sub-id="${sub.id}">
+                        ${sub.icon 
+                            ? `<div class="w-6 h-6 rounded-lg flex items-center justify-center mr-2.5 flex-shrink-0" style="background-color:${color}20; color:${color}">
+                                 <i class="fas ${sub.icon} text-[10px]"></i>
+                               </div>`
+                            : `<div class="w-1.5 h-1.5 rounded-full mr-3 flex-shrink-0" style="background-color:${color}"></div>`
+                        }
+                        <span class="flex-1 text-sm text-gray-300">${sub.name}</span>
+                        <div class="flex items-center gap-1">
+                            <button class="cat-v2-edit-sub-btn p-1.5 rounded-lg text-gray-500 hover:text-blue-400 hover:bg-white/5 transition-colors"
+                                    data-id="${sub.id}" data-parent-id="${parent.id}" title="Edytuj">
+                                <i class="fas fa-pen text-xs"></i>
+                            </button>
+                            <button class="cat-v2-delete-sub-btn p-1.5 rounded-lg text-gray-500 hover:text-red-400 hover:bg-white/5 transition-colors"
+                                    data-id="${sub.id}" title="Usuń">
+                                <i class="fas fa-trash text-xs"></i>
+                            </button>
+                        </div>
+                    </div>`).join('')}
+            </div>
+        </div>`;
+    }).join('');
+
+    // Delegacja eventów
+    setupListEvents(container);
+}
+
+function setupListEvents(container) {
+    container.querySelectorAll('.cat-v2-toggle-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            if (e.target.closest('button')) return;
+            const row = btn.closest('.cat-v2-parent-row');
+            const subList = row.querySelector('.cat-v2-sub-list');
+            const chevron = row.querySelector('.cat-v2-chevron');
+            subList.classList.toggle('hidden');
+            chevron.classList.toggle('rotate-180');
+        });
+    });
+
+    container.querySelectorAll('.cat-v2-add-sub-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => { e.stopPropagation(); showSubCategoryForm(btn.dataset.parentId); });
+    });
+
+    container.querySelectorAll('.cat-v2-edit-parent-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => { e.stopPropagation(); editParentCategory(btn.dataset.id); });
+    });
+
+    container.querySelectorAll('.cat-v2-delete-parent-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => { e.stopPropagation(); deleteCategory(btn.dataset.id, true); });
+    });
+
+    container.querySelectorAll('.cat-v2-edit-sub-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => { e.stopPropagation(); editSubCategory(btn.dataset.id, btn.dataset.parentId); });
+    });
+
+    container.querySelectorAll('.cat-v2-delete-sub-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => { e.stopPropagation(); deleteCategory(btn.dataset.id, false); });
+    });
+}
+
+/**
+ * Renderuje picker ikon.
+ */
+function renderIconPicker(selectedIcon = 'fa-tag', containerId = 'cat-v2-icon-picker', inputId = 'cat-v2-icon-value') {
+    const container = el(containerId);
+    if (!container) return;
+    container.innerHTML = CAT_ICON_OPTIONS.map(icon => `
+        <button type="button" data-icon="${icon}" title="${icon}"
+            class="icon-pick-btn w-10 h-10 rounded-xl flex items-center justify-center text-sm transition-all
+                   ${icon === selectedIcon ? 'bg-brand-600 text-white ring-2 ring-brand-400' : 'bg-white/5 text-gray-400 hover:bg-white/10'}">
+            <i class="fas ${icon}"></i>
+        </button>`).join('');
+
+    container.querySelectorAll('.icon-pick-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            el(inputId).value = btn.dataset.icon;
+            container.querySelectorAll('.icon-pick-btn').forEach(b => {
+                b.classList.remove('bg-brand-600', 'text-white', 'ring-2', 'ring-brand-400');
+                b.classList.add('bg-white/5', 'text-gray-400', 'hover:bg-white/10');
+            });
+            btn.classList.add('bg-brand-600', 'text-white', 'ring-2', 'ring-brand-400');
+            btn.classList.remove('bg-white/5', 'text-gray-400', 'hover:bg-white/10');
+        });
+    });
+}
+
+/**
+ * Renderuje picker kolorów.
+ */
+function renderColorPicker(selectedColor = '#3b82f6') {
+    const container = el('cat-v2-color-picker');
+    if (!container) return;
+    container.innerHTML = CAT_COLOR_OPTIONS.map(color => `
+        <button type="button" data-color="${color}"
+            class="color-pick-btn w-7 h-7 rounded-full transition-all border-2
+                   ${color === selectedColor ? 'border-white scale-110' : 'border-transparent hover:scale-105'}"
+            style="background-color:${color}">
+        </button>`).join('');
+
+    container.querySelectorAll('.color-pick-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            el('cat-v2-color-value').value = btn.dataset.color;
+            container.querySelectorAll('.color-pick-btn').forEach(b => {
+                b.classList.remove('border-white', 'scale-110');
+                b.classList.add('border-transparent', 'hover:scale-105');
+            });
+            btn.classList.remove('border-transparent', 'hover:scale-105');
+            btn.classList.add('border-white', 'scale-110');
+        });
+    });
+}
+
+function showParentCategoryForm(editId = null) {
+    const parentForm = el('cat-v2-parent-form');
+    const subForm = el('cat-v2-sub-form');
+    const nameInput = el('cat-v2-name-input');
+    const editIdInput = el('cat-v2-edit-id');
+
+    if (!parentForm || !subForm || !nameInput) return;
+
+    parentForm.classList.remove('hidden');
+    subForm.classList.add('hidden');
+
+    if (editId) {
+        const cat = state.structuredCategories.find(c => c.id === editId);
+        if (!cat) return;
+        el('category-editor-drawer-title').textContent = `Edytuj: ${cat.name}`;
+        nameInput.value = cat.name;
+        editIdInput.value = editId;
+        renderIconPicker(cat.icon || 'fa-tag');
+        renderColorPicker(cat.color || '#3b82f6');
+        el('cat-v2-icon-value').value = cat.icon || 'fa-tag';
+        el('cat-v2-color-value').value = cat.color || '#3b82f6';
+    } else {
+        el('category-editor-drawer-title').textContent = 'Nowa kategoria główna';
+        nameInput.value = '';
+        editIdInput.value = '';
+        renderIconPicker();
+        renderColorPicker();
+        el('cat-v2-icon-value').value = 'fa-tag';
+        el('cat-v2-color-value').value = '#3b82f6';
+    }
+
+    openOverlay('category-editor-drawer');
+    setTimeout(() => nameInput.focus(), 400);
+}
+
+function showSubCategoryForm(parentId, editId = null) {
+    const parentForm = el('cat-v2-parent-form');
+    const subForm = el('cat-v2-sub-form');
+    const nameInput = el('cat-v2-sub-name-input');
+
+    if (!parentForm || !subForm || !nameInput) return;
+
+    parentForm.classList.add('hidden');
+    subForm.classList.remove('hidden');
+    el('cat-v2-sub-parent-id').value = parentId;
+    el('cat-v2-sub-edit-id').value = editId || '';
+
+    const parent = state.structuredCategories.find(c => c.id === parentId);
+    const parentName = parent ? parent.name : '';
+
+    if (editId) {
+        const sub = state.structuredCategories.find(c => c.id === editId);
+        el('category-editor-drawer-title').textContent = `Edytuj podkategorię`;
+        nameInput.value = sub ? sub.name : '';
+        const currentIcon = (sub && sub.icon) ? sub.icon : '';
+        renderIconPicker(currentIcon, 'cat-v2-sub-icon-picker', 'cat-v2-sub-icon-value');
+        el('cat-v2-sub-icon-value').value = currentIcon;
+    } else {
+        el('category-editor-drawer-title').textContent = `Nowa podkategoria → ${parentName}`;
+        nameInput.value = '';
+        renderIconPicker('', 'cat-v2-sub-icon-picker', 'cat-v2-sub-icon-value');
+        el('cat-v2-sub-icon-value').value = '';
+    }
+
+    openOverlay('category-editor-drawer');
+    setTimeout(() => nameInput.focus(), 400);
+}
+
+function editParentCategory(id) { showParentCategoryForm(id); }
+function editSubCategory(id, parentId) { showSubCategoryForm(parentId, id); }
+
+function generateId() {
+    return Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+}
+
+async function saveParentCategory() {
+    const name = el('cat-v2-name-input').value.trim();
+    const editId = el('cat-v2-edit-id').value;
+    const icon = el('cat-v2-icon-value').value;
+    const color = el('cat-v2-color-value').value;
+
+    if (!name) { alert('Podaj nazwę kategorii.'); return; }
+
+    const saveBtn = el('cat-v2-save-btn');
+    const originalText = saveBtn.textContent;
+
+    try {
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<i class="fas fa-spinner animate-spin mr-2"></i> Zapisywanie...';
+
+        if (editId) {
+            await apiCall(`/api/categories/v2/${editId}`, 'PUT', { name, icon, color });
+        } else {
+            const newStructured = [...state.structuredCategories, { id: generateId(), name, parentId: null, icon, color }];
+            await apiCall('/api/categories/v2', 'POST', { structuredCategories: newStructured });
+        }
+        
+        closeOverlay('category-editor-drawer');
+        if (typeof window.fetchInitialData === 'function') await window.fetchInitialData(false);
+        renderCategoriesListV2();
+    } catch (err) {
+        alert('Błąd: ' + err.message);
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = originalText;
+    }
+}
+
+async function saveSubCategory() {
+    const name = el('cat-v2-sub-name-input').value.trim();
+    const parentId = el('cat-v2-sub-parent-id').value;
+    const editId = el('cat-v2-sub-edit-id').value;
+    const icon = el('cat-v2-sub-icon-value').value;
+
+    if (!name) { alert('Podaj nazwę podkategorii.'); return; }
+
+    const saveBtn = el('cat-v2-sub-save-btn');
+    const originalText = saveBtn.textContent;
+
+    try {
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<i class="fas fa-spinner animate-spin mr-2"></i> Zapisywanie...';
+
+        if (editId) {
+            await apiCall(`/api/categories/v2/${editId}`, 'PUT', { name, icon });
+        } else {
+            const newStructured = [...state.structuredCategories, { id: generateId(), name, parentId, icon }];
+            await apiCall('/api/categories/v2', 'POST', { structuredCategories: newStructured });
+        }
+        
+        closeOverlay('category-editor-drawer');
+        if (typeof window.fetchInitialData === 'function') await window.fetchInitialData(false);
+        renderCategoriesListV2();
+    } catch (err) {
+        alert('Błąd: ' + err.message);
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = originalText;
+    }
+}
+
+async function deleteCategory(id, isParent) {
+    const cat = state.structuredCategories.find(c => c.id === id);
+    if (!cat) return;
+
+    const msg = isParent
+        ? `Usunąć kategorię „${cat.name}" i wszystkie jej podkategorie?`
+        : `Usunąć podkategorię „${cat.name}"?`;
+
+    if (!confirm(msg)) return;
+
+    try {
+        await apiCall(`/api/categories/v2/${id}`, 'DELETE');
+        if (typeof window.fetchInitialData === 'function') await window.fetchInitialData(false);
+        renderCategoriesListV2();
+    } catch (err) {
+        alert('Błąd: ' + err.message);
+    }
+}

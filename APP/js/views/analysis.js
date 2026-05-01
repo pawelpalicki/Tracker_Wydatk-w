@@ -1,4 +1,18 @@
-// Tracker Wydatkow - Unified long-term analysis
+// views/analysis.js — Analiza długoterminowa wydatków (ES Module)
+//
+// Zawiera całą logikę widoku analitycznego z długoterminowymi porównaniami wydatków,
+// budżetami, filtrami kategorii i tagów, oraz wykresy interaktywne.
+
+import state from '../core/state.js';
+import { apiCall } from '../core/api.js';
+import { formatAmount } from '../shared/format.js';
+import { renderCategoryDetailsModal, openSelectionDrawer } from '../shared/ui.js';
+import { getParentCategoryByName, getSubCategoryByName, applyCategorySelectionState } from '../shared/categories.js';
+import { buildTagsSummary, openTagsDrawer } from '../shared/tags.js';
+
+// =====================================================================
+// STAN LOKALNY MODUŁU — Variables
+// =====================================================================
 
 let longTermBudgetChart = null;
 let longTermBudgetInitialized = false;
@@ -26,6 +40,12 @@ let comparisonSwipeLocked = false;
 
 const ANALYSIS_MONTH_NAMES_SHORT = ['sty', 'lut', 'mar', 'kwi', 'maj', 'cze', 'lip', 'sie', 'wrz', 'paz', 'lis', 'gru'];
 const ANALYSIS_WEEKDAY_LABELS = ['Pon', 'Wt', 'Sr', 'Czw', 'Pt', 'Sob', 'Nd'];
+
+let shopBarChart = null;
+
+// =====================================================================
+// HELPERY DATY
+// =====================================================================
 
 function normalizeAnalysisTagValue(value) {
     return value == null ? '' : String(value).trim().toLowerCase();
@@ -72,6 +92,10 @@ function formatDateRange(startDate, endDate) {
     const end = parseLocalDate(endDate);
     return `${start.toLocaleDateString('pl-PL')} - ${end.toLocaleDateString('pl-PL')}`;
 }
+
+// =====================================================================
+// POBIERANIE DANYCH Z BACKENDU
+// =====================================================================
 
 async function ensureComparisonAvailableMonths() {
     if (comparisonAvailableMonths.length > 0) {
@@ -147,6 +171,10 @@ function getBudgetValueForMonth(budgetMap, monthKey) {
     return Object.values(monthBudget).reduce((sum, value) => sum + (Number(value) || 0), 0);
 }
 
+// =====================================================================
+// FILTROWANIE DANYCH
+// =====================================================================
+
 function getFilteredPurchaseItems(purchases) {
     return purchases.flatMap(purchase => {
         const purchaseTags = purchase.tags || {};
@@ -179,6 +207,10 @@ function getFilteredPurchaseItems(purchases) {
             }));
     });
 }
+
+// =====================================================================
+// BUDKETY DANYCH DLA OKRESU
+// =====================================================================
 
 function getCurrentWeekBuckets(referenceDate = comparisonReferenceDate) {
     const dayIndex = (referenceDate.getDay() + 6) % 7;
@@ -286,6 +318,10 @@ function getDisplayedComparisonRangeText(buckets) {
     return `styczen - grudzien ${comparisonSelectedYear}`;
 }
 
+// =====================================================================
+// LOGIKA FILTRÓW
+// =====================================================================
+
 function shouldUseToDateMode() {
     return (comparisonPeriod === '6months' || comparisonPeriod === 'year') &&
         Boolean(document.getElementById('comparison-mode-toggle')?.checked);
@@ -302,8 +338,8 @@ function canShowBudgetComparison() {
 }
 
 function getComparisonParentCategories() {
-    if (!Array.isArray(structuredCategories)) return [];
-    return structuredCategories.filter(category => !category.parentId);
+    if (!Array.isArray(state.structuredCategories)) return [];
+    return state.structuredCategories.filter(category => !category.parentId);
 }
 
 function getComparisonSelectedParentCategory() {
@@ -312,13 +348,17 @@ function getComparisonSelectedParentCategory() {
 
 function getComparisonSubCategories() {
     const parentCategory = getComparisonSelectedParentCategory();
-    if (!parentCategory || !Array.isArray(structuredCategories)) return [];
-    return structuredCategories.filter(category => category.parentId === parentCategory.id);
+    if (!parentCategory || !Array.isArray(state.structuredCategories)) return [];
+    return state.structuredCategories.filter(category => category.parentId === parentCategory.id);
 }
 
 function getComparisonSelectedSubCategory() {
     return getSubCategoryByName(currentComparisonCategory || '', currentComparisonSubCategory || '');
 }
+
+// =====================================================================
+// RENDEROWANIE CHIPÓW KATEGORII
+// =====================================================================
 
 function renderComparisonCategoryChips() {
     const container = document.getElementById('comparison-category-filters');
@@ -577,6 +617,10 @@ function openComparisonBucketDetails(bucket) {
     renderCategoryDetailsModal(bucket.title || bucket.label || 'Szczegoly', bucket.items || [], false);
 }
 
+// =====================================================================
+// BUDOWANIE WYKRESÓW
+// =====================================================================
+
 function buildComparisonChart(buckets) {
     const container = document.getElementById('comparison-chart-container');
     const canvas = document.getElementById('comparison-chart');
@@ -747,7 +791,6 @@ function buildMonthBucketsData(filteredItems, budgetMap) {
     return getCurrentMonthBuckets().map(bucket => {
         const items = getFilteredItemsForBucket(filteredItems, bucket);
         const spending = items.reduce((sum, item) => sum + item.price, 0);
-        // Proporcjonalny budżet dla zakresu dni
         const budget = totalBudget > 0 ? totalBudget * (bucket.rangeDays / daysInMonth) : 0;
         return { ...bucket, items, spending, budget };
     });
@@ -811,8 +854,6 @@ async function renderUnifiedComparisonChart() {
     buildShopChart(filteredItems);
 }
 
-let shopBarChart = null;
-
 function buildShopChart(filteredItems) {
     const card = document.getElementById('shop-chart-card');
     const container = document.getElementById('shop-chart-container');
@@ -823,7 +864,6 @@ function buildShopChart(filteredItems) {
 
     if (shopBarChart) { shopBarChart.destroy(); shopBarChart = null; }
 
-    // Agreguj wydatki po sklepie, pomijaj wydatki cykliczne (brak prawdziwego sklepu)
     const shopTotals = {};
     for (const item of filteredItems) {
         const shop = (item.shop || '').trim();
@@ -850,9 +890,6 @@ function buildShopChart(filteredItems) {
         ? [`Pozostałe (${rest.length})`, rest.reduce((s, [, v]) => s + v, 0)]
         : null;
 
-    // indexAxis:'y': Chart.js rysuje indeks 0 na górze, ostatni na dole
-    // sorted jest malejąco [największy, ..., najmniejszy]
-    // "Pozostałe" na końcu = na dole
     if (restEntry) top.push(restEntry);
     const labels = top.map(([name]) => name);
     const data = top.map(([, val]) => Number(val.toFixed(2)));
@@ -922,6 +959,10 @@ function buildShopChart(filteredItems) {
         }
     });
 }
+
+// =====================================================================
+// LOGIKA NAWIGACJI I OKRESÓW
+// =====================================================================
 
 function setActiveComparisonPeriodButton(period) {
     document.querySelectorAll('#comparison-segment-control .segment-btn').forEach(button => {
@@ -1004,6 +1045,10 @@ function openComparisonDetailsFromTouchEvent(nativeEvent) {
     openComparisonBucketDetails(bucket);
 }
 
+// =====================================================================
+// GESTY NA EKRANIE DOTYKOWYM
+// =====================================================================
+
 function initializeComparisonChartGestures() {
     const chartContainer = document.getElementById('comparison-chart-container');
     const canvas = document.getElementById('comparison-chart');
@@ -1081,6 +1126,10 @@ function initializeComparisonChartGestures() {
         }, { passive: true });
     });
 }
+
+// =====================================================================
+// INICJALIZACJA EVENT LISTENERÓW
+// =====================================================================
 
 function initializeComparisonPeriodControls() {
     const periodSelect = document.getElementById('comparison-period-select');
@@ -1208,21 +1257,9 @@ function initializeComparisonPeriodControls() {
     initializeComparisonChartGestures();
 }
 
-async function initializeLongTermBudget() {
-    if (longTermBudgetInitialized) return;
-
-    if (typeof ChartDataLabels !== 'undefined') {
-        Chart.register(ChartDataLabels);
-    }
-
-    await ensureComparisonAvailableMonths();
-    initializeComparisonPeriodControls();
-    renderAnalysisTagFilterButton();
-
-    longTermBudgetInitialized = true;
-    window.updateComparisonChart = renderUnifiedComparisonChart;
-    await renderUnifiedComparisonChart();
-}
+// =====================================================================
+// FILTRY TAGÓW
+// =====================================================================
 
 function renderAnalysisTagFilterButton() {
     const labelEl = document.getElementById('analysis-filter-tags-label');
@@ -1252,6 +1289,23 @@ function renderAnalysisTagFilterButton() {
     };
 }
 
-window.renderAnalysisTagFilterButton = renderAnalysisTagFilterButton;
-window.initializeLongTermBudget = initializeLongTermBudget;
-window.updateComparisonChart = renderUnifiedComparisonChart;
+// =====================================================================
+// GŁÓWNA FUNKCJA INICJALIZACYJNA
+// =====================================================================
+
+export async function initializeLongTermBudget() {
+    if (longTermBudgetInitialized) return;
+
+    if (typeof ChartDataLabels !== 'undefined') {
+        Chart.register(ChartDataLabels);
+    }
+
+    await ensureComparisonAvailableMonths();
+    initializeComparisonPeriodControls();
+    renderAnalysisTagFilterButton();
+
+    longTermBudgetInitialized = true;
+    await renderUnifiedComparisonChart();
+}
+
+export { renderUnifiedComparisonChart, renderAnalysisTagFilterButton };

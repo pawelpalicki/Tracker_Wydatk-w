@@ -1,8 +1,54 @@
-// Tracker Wydatków - Special Budgets Tab Functions
+// views/special-budgets.js — Budżety Specjalne (ES Module)
+//
+// Zawiera logikę wyświetlania, edytowania i usuwania budżetów specjalnych
+// z wykresami doughnut pokazującymi rozkład wydatków.
+
+import state from '../core/state.js';
+import { apiCall } from '../core/api.js';
+import { formatAmount } from '../shared/format.js';
+import { openOverlay, closeOverlay } from '../shared/ui.js';
+
+// =====================================================================
+// STAN LOKALNY MODUŁU
+// =====================================================================
 
 let specialBudgetCharts = {};
+let editingSpecialBudgetId = null;
+let specialBudgetsInitialized = false;
 
-function renderSpecialBudgetsTab() {
+function el(id) {
+    return document.getElementById(id);
+}
+
+/**
+ * Inicjalizuje listenery dla widoku budżetów specjalnych.
+ * Wywoływana raz przy starcie aplikacji.
+ */
+export function initSpecialBudgets() {
+    if (specialBudgetsInitialized) return;
+
+    el('add-special-budget-form')?.addEventListener('submit', handleAddSpecialBudget);
+    el('special-budgets-list')?.addEventListener('click', handleSpecialBudgetActions);
+    el('edit-special-budget-form')?.addEventListener('submit', handleEditSpecialBudgetSubmit);
+    
+    el('close-edit-special-budget-modal')?.addEventListener('click', () => closeOverlay('edit-special-budget-modal'));
+    el('cancel-edit-special-budget')?.addEventListener('click', () => closeOverlay('edit-special-budget-modal'));
+    
+    // Zamknięcie modala przez kliknięcie w overlay
+    el('edit-special-budget-modal')?.addEventListener('click', (e) => {
+        if (e.target.id === 'edit-special-budget-modal') {
+            closeOverlay('edit-special-budget-modal');
+        }
+    });
+
+    specialBudgetsInitialized = true;
+}
+
+// =====================================================================
+// RENDEROWANIE WIDOKU GŁÓWNEGO
+// =====================================================================
+
+export function renderSpecialBudgetsTab() {
     const tabContent = document.getElementById('special-budgets-tab');
     if (!tabContent) return;
 
@@ -10,7 +56,7 @@ function renderSpecialBudgetsTab() {
     Object.values(specialBudgetCharts).forEach(chart => chart.destroy());
     specialBudgetCharts = {};
 
-    if (!allSpecialBudgets || allSpecialBudgets.length === 0) {
+    if (!state.allSpecialBudgets || state.allSpecialBudgets.length === 0) {
         tabContent.innerHTML = `
             <div class="text-center py-12 px-4">
                 <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-16 w-16 text-gray-500 mb-4 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
@@ -28,8 +74,8 @@ function renderSpecialBudgetsTab() {
         return;
     }
 
-    const budgetsWithData = allSpecialBudgets.map(budget => {
-        const budgetPurchases = allPurchases.filter(p => p.specialBudgetId === budget.id);
+    const budgetsWithData = state.allSpecialBudgets.map(budget => {
+        const budgetPurchases = state.allPurchases.filter(p => p.specialBudgetId === budget.id);
         const spent = budgetPurchases.reduce((sum, p) => sum + p.totalAmount, 0);
         const remaining = budget.amount - spent;
         const progress = budget.amount > 0 ? (spent / budget.amount) * 100 : 0;
@@ -110,7 +156,9 @@ function renderSpecialBudgetsTab() {
     // Renderuj wykresy po dodaniu canvasów do DOM
     budgetsWithData.forEach(budget => {
         if (Object.keys(budget.spendingByCategory).length > 0) {
-            const ctx = document.getElementById(`chart-special-${budget.id}`).getContext('2d');
+            const ctx = document.getElementById(`chart-special-${budget.id}`)?.getContext('2d');
+            if (!ctx) return;
+
             const chartData = Object.entries(budget.spendingByCategory);
 
             specialBudgetCharts[budget.id] = new Chart(ctx, {
@@ -120,10 +168,12 @@ function renderSpecialBudgetsTab() {
                     datasets: [{
                         data: chartData.map(d => d[1]),
                         backgroundColor: chartData.map(d => {
-                            const pCat = typeof structuredCategories !== 'undefined' ? structuredCategories.find(c => c.name === d[0] && !c.parentId) : null;
+                            const pCat = Array.isArray(state.structuredCategories)
+                                ? state.structuredCategories.find(c => c.name === d[0] && !c.parentId)
+                                : null;
                             return (pCat && pCat.color) || '#6b7280';
                         }),
-                        borderColor: '#4a5568', // dark:bg-gray-700
+                        borderColor: '#4a5568',
                         borderWidth: 2
                     }]
                 },
@@ -134,7 +184,7 @@ function renderSpecialBudgetsTab() {
                         legend: {
                             position: 'bottom',
                             labels: {
-                                color: '#d1d5db', // text-gray-300
+                                color: '#d1d5db',
                                 boxWidth: 12,
                                 padding: 15
                             }
@@ -146,25 +196,21 @@ function renderSpecialBudgetsTab() {
     });
 }
 
-function populateBudgetTypeSelect() {
-    budgetTypeSelectValue = 'monthly';
-    if (typeof window.setPurchaseBudgetType === 'function') {
-        window.setPurchaseBudgetType('monthly');
-    }
-    const label = document.getElementById('budget-type-label');
-    if (label) {
-        label.textContent = 'Budżet miesięczny';
-    }
-}
+// =====================================================================
+// LISTA BUDŻETÓW W USTAWIENIACH
+// =====================================================================
 
-function renderSpecialBudgetsList() {
+export function renderSpecialBudgetsList() {
+    const specialBudgetsList = document.getElementById('special-budgets-list');
+    if (!specialBudgetsList) return;
+
     specialBudgetsList.innerHTML = '';
-    if (!allSpecialBudgets || allSpecialBudgets.length === 0) {
+    if (!state.allSpecialBudgets || state.allSpecialBudgets.length === 0) {
         specialBudgetsList.innerHTML = `<p class="text-gray-500 dark:text-gray-400 text-sm">Brak budżetów specjalnych. Dodaj nowy poniżej.</p>`;
         return;
     }
 
-    allSpecialBudgets.forEach(budget => {
+    state.allSpecialBudgets.forEach(budget => {
         const budgetEl = document.createElement('div');
         budgetEl.className = 'w-full flex items-center justify-between p-3 bg-white/5 hover:bg-white/10 rounded-xl border border-white/5 transition-all group';
         budgetEl.innerHTML = `
@@ -185,69 +231,123 @@ function renderSpecialBudgetsList() {
     });
 }
 
-async function handleAddSpecialBudget(e) {
+// =====================================================================
+// OBSŁUGA FORMULARZY I AKCJI
+// =====================================================================
+
+export async function handleAddSpecialBudget(e) {
     e.preventDefault();
-    const nameInput = document.getElementById('new-special-budget-name');
-    const amountInput = document.getElementById('new-special-budget-amount');
-    const name = nameInput.value.trim();
-    const amount = parseFloat(amountInput.value);
+    const form = e.target;
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const nameInput = el('new-special-budget-name');
+    const amountInput = el('new-special-budget-amount');
+    const name = nameInput?.value.trim();
+    const amount = parseFloat(amountInput?.value);
 
     if (name && amount > 0) {
+        const originalText = submitBtn.innerHTML;
         try {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner animate-spin mr-2"></i> Zapisywanie...';
+            
             await apiCall('/api/special-budgets', 'POST', { name, amount });
-            nameInput.value = '';
-            amountInput.value = '';
-            await fetchInitialData(false);
+            
+            if (nameInput) nameInput.value = '';
+            if (amountInput) amountInput.value = '';
+            
+            // fetchInitialData odświeża stan i wywołuje renderowanie
+            if (typeof window.fetchInitialData === 'function') {
+                await window.fetchInitialData(false);
+            }
         } catch (error) {
             alert('Nie udało się dodać budżetu specjalnego: ' + error.message);
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
         }
     }
 }
 
-async function handleSpecialBudgetActions(e) {
+export async function handleSpecialBudgetActions(e) {
     const deleteBtn = e.target.closest('.delete-special-budget-btn');
     if (deleteBtn) {
         const budgetId = deleteBtn.dataset.id;
-        const budget = allSpecialBudgets.find(b => b.id === budgetId);
+        const budget = state.allSpecialBudgets.find(b => b.id === budgetId);
         if (confirm(`Czy na pewno chcesz usunąć budżet "${budget.name}"?`)) {
+            const originalContent = deleteBtn.innerHTML;
             try {
+                deleteBtn.disabled = true;
+                deleteBtn.innerHTML = '<i class="fas fa-spinner animate-spin"></i>';
                 await apiCall(`/api/special-budgets/${budgetId}`, 'DELETE');
-                await fetchInitialData(false);
+                if (typeof window.fetchInitialData === 'function') {
+                    await window.fetchInitialData(false);
+                }
             } catch (error) {
                 alert('Nie udało się usunąć budżetu: ' + error.message);
+                deleteBtn.disabled = false;
+                deleteBtn.innerHTML = originalContent;
             }
         }
-        return; // Zatrzymaj dalsze wykonywanie
+        return;
     }
 
     const editBtn = e.target.closest('.edit-special-budget-btn');
     if (editBtn) {
         const budgetId = editBtn.dataset.id;
-        const budget = allSpecialBudgets.find(b => b.id === budgetId);
+        const budget = state.allSpecialBudgets.find(b => b.id === budgetId);
         if (budget) {
             editingSpecialBudgetId = budgetId;
-            editSpecialBudgetNameInput.value = budget.name;
-            editSpecialBudgetAmountInput.value = budget.amount;
+            const editNameInput = el('edit-special-budget-name');
+            const editAmountInput = el('edit-special-budget-amount');
+            if (editNameInput) editNameInput.value = budget.name;
+            if (editAmountInput) editAmountInput.value = budget.amount;
             openOverlay('edit-special-budget-modal');
         }
     }
 }
 
-async function handleEditSpecialBudgetSubmit(e) {
+export function populateBudgetTypeSelect() {
+    state.budgetTypeSelectValue = 'monthly';
+    if (typeof window.setPurchaseBudgetType === 'function') {
+        window.setPurchaseBudgetType('monthly');
+    }
+    const label = document.getElementById('budget-type-label');
+    if (label) {
+        label.textContent = 'Budżet miesięczny';
+    }
+}
+
+export async function handleEditSpecialBudgetSubmit(e) {
     e.preventDefault();
     if (!editingSpecialBudgetId) return;
 
-    const name = editSpecialBudgetNameInput.value.trim();
-    const amount = parseFloat(editSpecialBudgetAmountInput.value);
+    const form = e.target;
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const editNameInput = el('edit-special-budget-name');
+    const editAmountInput = el('edit-special-budget-amount');
+    const name = editNameInput?.value.trim();
+    const amount = parseFloat(editAmountInput?.value);
 
     if (name && amount > 0) {
+        const originalText = submitBtn.innerHTML;
         try {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner animate-spin mr-2"></i> Zapisywanie...';
+            
             await apiCall(`/api/special-budgets/${editingSpecialBudgetId}`, 'PUT', { name, amount });
-            editSpecialBudgetModal.classList.add('hidden');
+            
+            // fetchInitialData odświeża stan i wywołuje renderowanie
+            if (typeof window.fetchInitialData === 'function') {
+                await window.fetchInitialData(false);
+            }
+            
+            closeOverlay('edit-special-budget-modal');
             editingSpecialBudgetId = null;
-            await fetchInitialData(false);
         } catch (error) {
             alert('Nie udało się zaktualizować budżetu: ' + error.message);
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
         }
     }
 }

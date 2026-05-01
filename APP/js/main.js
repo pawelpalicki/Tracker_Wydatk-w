@@ -17,6 +17,12 @@ import * as tags from './shared/tags.js';
 import * as dashboard from './views/dashboard.js';
 import * as purchaseForm from './views/purchase-form.js';
 import * as purchaseList from './views/purchase-list.js';
+import * as analysis from './views/analysis.js';
+import * as specialBudgets from './views/special-budgets.js';
+import * as recurringExpenses from './views/settings/recurring-expenses.js';
+import * as monthlyBudget from './views/settings/monthly-budget.js';
+import * as categoriesManager from './views/settings/categories-manager.js';
+import * as tagsManager from './views/settings/tags-manager.js';
 import * as notifications from './shared/notifications.js';
 
 // =====================================================================
@@ -125,6 +131,38 @@ window.loadInitialPurchases = purchaseList.loadInitialPurchases;
 window.fetchMorePurchases = purchaseList.fetchMorePurchases;
 window.renderPurchasesList = purchaseList.renderPurchasesList;
 
+// Eksport budżetów specjalnych (views/special-budgets.js)
+window.initSpecialBudgets = specialBudgets.initSpecialBudgets;
+window.renderSpecialBudgetsTab = specialBudgets.renderSpecialBudgetsTab;
+window.renderSpecialBudgetsList = specialBudgets.renderSpecialBudgetsList;
+window.populateBudgetTypeSelect = specialBudgets.populateBudgetTypeSelect;
+window.handleAddSpecialBudget = specialBudgets.handleAddSpecialBudget;
+window.handleSpecialBudgetActions = specialBudgets.handleSpecialBudgetActions;
+window.handleEditSpecialBudgetSubmit = specialBudgets.handleEditSpecialBudgetSubmit;
+
+// Eksport wydatków cyklicznych (views/settings/recurring-expenses.js)
+window.initSettingsRecurring = recurringExpenses.initSettingsRecurring;
+window.renderRecurringExpenses = recurringExpenses.renderRecurringExpenses;
+window.handleScheduleTypeChange = recurringExpenses.handleScheduleTypeChange;
+
+// Eksport budżetu miesięcznego (views/settings/monthly-budget.js)
+window.initMonthlyBudget = monthlyBudget.initMonthlyBudget;
+window.renderBudgetInputs = monthlyBudget.renderBudgetInputs;
+window.populateBudgetMonthSelector = monthlyBudget.populateBudgetMonthSelector;
+
+// Eksport managera kategorii (views/settings/categories-manager.js)
+window.initCategoriesManager = categoriesManager.initCategoriesManager;
+window.renderCategoriesListV2 = categoriesManager.renderCategoriesListV2;
+
+// Eksport managera tagów (views/settings/tags-manager.js)
+window.initTagsManager = tagsManager.initTagsManager;
+window.renderTagsManager = tagsManager.renderTagsManager;
+
+// Eksport analizy (views/analysis.js)
+window.initializeLongTermBudget = analysis.initializeLongTermBudget;
+window.renderUnifiedComparisonChart = analysis.renderUnifiedComparisonChart;
+window.renderAnalysisTagFilterButton = analysis.renderAnalysisTagFilterButton;
+
 // Stan aplikacji — proxy na window, żeby stare skrypty mogły czytać/pisać
 // zmienne jak allPurchases, structuredCategories itp.
 // Używamy Object.defineProperty, żeby zmiany w state.X były widoczne globalnie
@@ -186,6 +224,7 @@ auth.onAuthStateChanged(user => {
 document.addEventListener('DOMContentLoaded', () => {
     setupAuthEventListeners();
     notifications.initNotifications();
+    tags.initTagsSelectionDrawer();
 
     // Service Worker
     if ('serviceWorker' in navigator) {

@@ -130,7 +130,11 @@ APP/js/
 │   ├── purchase-list.js     ← Lista zakupów z filtrami, paginacja, wyszukiwanie, usuwanie
 │   ├── analysis.js          ← Analiza długoterminowa: wykresy porównawcze, gesty, shop chart, filtry
 │   ├── special-budgets.js   ← Widok budżetów specjalnych + wykresy doughnut
-│   └── settings.js          ← Ustawienia: edytor kategorii, budżet miesięczny, wydatki cykliczne, budżety specjalne (CRUD)
+└── settings/            ← Folder modułów ustawień (CRUD)
+    ├── categories-manager.js ← Edytor kategorii hierarchicznych (z categories-v2.js)
+    ├── tags-manager.js       ← Zarządzanie grupami i definicjami tagów
+    ├── monthly-budget.js     ← Konfiguracja i kopiowanie budżetu miesięcznego
+    └── recurring-expenses.js ← Zarządzanie subskrypcjami i wydatkami cyklicznymi
 ```
 
 ### Opis ról (po jednym zdaniu)
@@ -239,34 +243,47 @@ APP/js/
 
 ---
 
-### Etap 4: Widoki — `views/analysis.js` + `views/special-budgets.js` + `views/settings.js`
+### Etap 4: Widoki — `views/analysis.js` + `views/special-budgets.js` + `views/settings/`
 
-**Cel:** Zmigrować pozostałe widoki i usunąć stare pliki.
+**Cel:** Zmigrować pozostałe widoki, rozbijając ustawienia na mniejsze moduły, i usunąć stare pliki.
 
 **Zakres prac:**
 1. Stworzyć `views/analysis.js` — przenieść cały `long-term-budget.js` jako moduł z jawnymi importami (state, api, categories, tags, format, ui)
 2. Stworzyć `views/special-budgets.js` — przenieść z `special-budgets.js`: widok kart budżetów + wykresy doughnut
-3. Stworzyć `views/settings.js` — scala:
-   - z `categories-v2.js`: edytor kategorii nadrzędnych i podkategorii, formularz ikon/kolorów, menedżer tagów
-   - z `budget.js`: formularz budżetu miesięcznego, kopiowanie budżetu
-   - z `recurring-expenses.js`: lista wydatków cyklicznych, formularz dodawania/edycji
-   - z `special-budgets.js`: formularz CRUD budżetów specjalnych (część ustawień)
-4. Zaktualizować `main.js` — usunąć wszelkie tymczasowe `window.*` eksporty, upewnić się że wszystkie widoki są importowane i inicjalizowane
+3. Stworzyć folder `views/settings/` i moduły:
+   - `recurring-expenses.js`: Zarządzanie wydatkami cyklicznymi (CRUD) — przenieść z `recurring-expenses.js` i `app.js`.
+   - `monthly-budget.js`: Zarządzanie budżetem miesięcznym — przenieść z `budget.js` i `app.js`.
+   - `categories-manager.js`: Edytor kategorii hierarchicznych — przenieść z `categories-v2.js`.
+   - `tags-manager.js`: Zarządzanie grupami i definicjami tagów — przenieść z `categories-v2.js` i `tags.js`.
+4. Zaktualizować `main.js` — importować wszystkie nowe moduły, usunąć wszelkie tymczasowe `window.*` eksporty.
 
 **Po tym etapie** wszystkie stare pliki (`ui.js`, `app.js`, `statistics.js`, `purchases.js`, `categories-v2.js`, `tags.js`, `budget.js`, `special-budgets.js`, `recurring-expenses.js`, `long-term-budget.js`, `notifications.js`, `voice-expenses.js`, `analysis-animation.js`, `auth.js`, `api.js`) powinny zostać usunięte.
 
 **🧪 Punkt testów manualnych:**
-- [ ] Analiza długoterminowa: przełączanie zakładek (tydzień/miesiąc/6m/rok)
-- [ ] Analiza: filtry kategorii (chipy), filtry tagów
-- [ ] Analiza: swipe na wykresie zmienia zakres
-- [ ] Analiza: long-press na słupku otwiera szczegóły
-- [ ] Wykres sklepów
-- [ ] Budżety specjalne: widok kart z wykresami doughnut
-- [ ] Ustawienia → Kategorie: dodawanie/edycja/usuwanie kategorii i podkategorii
-- [ ] Ustawienia → Tagi: dodawanie/edycja/usuwanie grup tagów i tagów
-- [ ] Ustawienia → Budżet: ustawianie i kopiowanie budżetu
-- [ ] Ustawienia → Subskrypcje: dodawanie/edycja/usuwanie wydatków cyklicznych
-- [ ] Ustawienia → Budżety specjalne: CRUD
+- [x] Analiza długoterminowa: przełączanie zakładek (tydzień/miesiąc/6m/rok)
+- [x] Analiza: filtry kategorii (chipy), filtry tagów
+- [x] Analiza: swipe na wykresie zmienia zakres
+- [x] Analiza: long-press na słupku otwiera szczegóły
+- [x] Wykres sklepów
+- [x] Budżety specjalne: widok kart z wykresami doughnut
+- [x] Budżety specjalne: edycja i usuwanie budżetów
+- [x] Budżety specjalne: zamykanie modala przez kliknięcie w overlay
+- [x] Ustawienia → Kategorie: dodawanie/edycja/usuwanie kategorii i podkategorii
+- [x] Ustawienia → Tagi: dodawanie/edycja/usuwanie grup tagów i tagów
+- [x] Ustawienia → Budżet: ustawianie i kopiowanie budżetu
+- [x] Ustawienia → Budżet: zamykanie modala kopiowania przez kliknięcie w overlay
+- [x] Ustawienia → Subskrypcje: dodawanie/edycja/usuwanie wydatków cyklicznych
+- [x] Ustawienia → Subskrypcje: przycisk "Anuluj" w trybie edycji
+- [x] Ustawienia → Budżety specjalne: CRUD
+
+> [!NOTE]
+> **Status Etapu 4:** Zakończono pozytywnie. Utworzono `views/analysis.js`, `views/special-budgets.js` oraz wszystkie moduły w folderze `views/settings/` (`categories-manager.js`, `tags-manager.js`, `monthly-budget.js`, `recurring-expenses.js`). Usunięto wszystkie stare pliki JS, które zostały zmigrowane do nowej struktury modułowej. Naprawiono problemy z zamykaniem modali (dodano obsługę kliknięcia w overlay) oraz dodano przycisk "Anuluj" w formularzu wydatków cyklicznych. Aplikacja zachowuje pełną stabilność i wszystkie funkcjonalności działają poprawnie.
+
+**Dodatkowe usprawnienia wprowadzone w Etapie 4:**
+- ✅ Dodano obsługę zamykania modali przez kliknięcie w overlay (budżety specjalne, kopiowanie budżetu)
+- ✅ Dodano przycisk "Anuluj" w formularzu wydatków cyklicznych z możliwością wyjścia z trybu edycji
+- ✅ Usunięto stare pliki: `api.js`, `auth.js`, `budget.js`, `categories-v2.js`, `long-term-budget.js`, `recurring-expenses.js`, `special-budgets.js`, `tags.js`
+- ✅ Struktura `APP/js/` zawiera teraz tylko `main.js`, `app.js` (do migracji w Etapie 5) oraz foldery `core/`, `shared/`, `views/`
 
 ---
 

@@ -12,6 +12,8 @@
  */
 import state from '../core/state.js';
 import { formatAmount } from './format.js';
+import { populateBudgetMonthSelector, renderBudgetInputs } from '../views/settings/monthly-budget.js';
+import { renderRecurringExpenses } from '../views/settings/recurring-expenses.js';
 
 export const VIEW_DEPTH = {
     'home': 0,
@@ -119,9 +121,9 @@ export function switchTab(tabName, pushToHistory = true) {
             window.renderCategoriesListV2();
             if (typeof window.renderTagsManager === 'function') window.renderTagsManager();
         }
-        if (typeof window.populateBudgetMonthSelector === 'function') window.populateBudgetMonthSelector();
-        if (typeof window.renderBudgetInputs === 'function') window.renderBudgetInputs();
-        if (typeof window.renderRecurringExpenses === 'function') window.renderRecurringExpenses();
+        populateBudgetMonthSelector();
+        renderBudgetInputs();
+        renderRecurringExpenses();
     }
 
     if (tabName === 'list') {
@@ -550,4 +552,25 @@ export function navigateToCategoryManagementFromDrawer() {
 document.addEventListener('DOMContentLoaded', () => {
     const currentTab = document.querySelector('.bottom-nav-btn.active')?.dataset.tab || 'home';
     updateNavbar(currentTab);
+
+    // Globalny listener zmiany rozmiaru okna (np. obrót telefonu)
+    let resizeTimer;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => {
+            const activeTab = document.querySelector('.tab-content.active');
+            if (!activeTab) return;
+
+            const tabId = activeTab.id.replace('-tab', '');
+
+            // Odśwież wykresy w zależności od aktywnej zakładki
+            if (tabId === 'home') {
+                if (typeof window.renderDashboard === 'function') window.renderDashboard();
+            } else if (tabId === 'analysis') {
+                if (typeof window.renderUnifiedComparisonChart === 'function') {
+                    window.renderUnifiedComparisonChart().catch(console.error);
+                }
+            }
+        }, 300); // 300ms opóźnienia, aby poczekać na zakończenie animacji obrotu
+    });
 });
