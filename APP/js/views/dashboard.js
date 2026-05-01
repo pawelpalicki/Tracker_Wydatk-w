@@ -3,11 +3,9 @@ import { apiCall } from '../core/api.js';
 import { formatAmount } from '../shared/format.js';
 import { getTagGroups, getTagGroupLabel, getTagLabel } from '../shared/tags.js';
 import { renderCategoryDetailsModal } from '../shared/ui.js';
-import { 
-    initNotifications, 
-    loadNotifications, 
-    checkAndGenerateNotifications,
-    calculateCurrentMonthStats
+import {
+    initNotifications,
+    checkAndGenerateNotifications
 } from '../shared/notifications.js';
 
 let homeDashboardMonth = null;
@@ -573,12 +571,12 @@ function renderRecentTransactionItem(item) {
             </div>
             <div class="flex flex-wrap gap-x-3 gap-y-0.5 ml-5 mt-0.5">
                 ${getTagGroups().map(group => {
-                    const val = item.tags?.[group];
-                    if (!val) return '';
-                    const groupLabel = getTagGroupLabel(group);
-                    const tagLabel = getTagLabel(group, val);
-                    return `<span class="text-[10px] text-gray-500">${groupLabel.charAt(0).toUpperCase()}: <span class="text-gray-400">${tagLabel}</span></span>`;
-                }).join('')}
+        const val = item.tags?.[group];
+        if (!val) return '';
+        const groupLabel = getTagGroupLabel(group);
+        const tagLabel = getTagLabel(group, val);
+        return `<span class="text-[10px] text-gray-500">${groupLabel.charAt(0).toUpperCase()}: <span class="text-gray-400">${tagLabel}</span></span>`;
+    }).join('')}
             </div>
         </div>
     `;
@@ -711,7 +709,3 @@ function showSwipeAnimation(direction) {
         }, 200);
     }, 150);
 }
-
-
-
-// Wspolny drawer szczegolow uzywany przez kafelki dashboardu i analize dlugoterminowa.
