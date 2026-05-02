@@ -289,7 +289,7 @@
 
                         <!-- Analysis Link -->
                         <div class="mt-2 text-center">
-                            <button onclick="switchTab('analysis')"
+                            <button id="dashboard-analysis-link"
                                 class="text-xs font-semibold text-brand-500 hover:text-brand-300 transition-colors flex items-center justify-center mx-auto space-x-1">
                                 <span>Szczegółowa analiza</span>
                                 <i class="fas fa-chart-pie"></i>
@@ -303,7 +303,7 @@
                     <div class="flex justify-between items-center mb-3 ml-1">
                         <h3 class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Ostatnie transakcje
                         </h3>
-                        <button onclick="switchTab('list')"
+                        <button id="dashboard-list-link"
                             class="text-[10px] font-bold text-brand-500 hover:text-brand-300 transition-colors uppercase tracking-widest">Zobacz
                             wszystkie &rarr;</button>
                     </div>
@@ -871,7 +871,7 @@
                         </p>
 
                         <!-- Zarządzaj kategoriami -->
-                        <button onclick="switchTab('settings-categories')"
+                        <button id="settings-categories-link"
                             class="w-full flex items-center justify-between p-4 bg-white/5 hover:bg-white/10 rounded-xl border border-white/5 transition-all group">
                             <div class="flex items-center space-x-3 text-white">
                                 <svg xmlns="http://www.w3.org/2000/svg"
@@ -887,7 +887,7 @@
                         </button>
 
                         <!-- Miesięczny budżet -->
-                        <button onclick="switchTab('settings-budget')"
+                        <button id="settings-budget-link"
                             class="w-full flex items-center justify-between p-4 bg-white/5 hover:bg-white/10 rounded-xl border border-white/5 transition-all group">
                             <div class="flex items-center space-x-3 text-white">
                                 <svg xmlns="http://www.w3.org/2000/svg"
@@ -903,7 +903,7 @@
                         </button>
 
                         <!-- Zarządzanie budżetami specjalnymi -->
-                        <button onclick="switchTab('settings-special')"
+                        <button id="settings-special-link"
                             class="w-full flex items-center justify-between p-4 bg-white/5 hover:bg-white/10 rounded-xl border border-white/5 transition-all group">
                             <div class="flex items-center space-x-3 text-white">
                                 <svg xmlns="http://www.w3.org/2000/svg"
@@ -919,7 +919,7 @@
                         </button>
 
                         <!-- Stałe opłaty -->
-                        <button onclick="switchTab('settings-recurring')"
+                        <button id="settings-recurring-link"
                             class="w-full flex items-center justify-between p-4 bg-white/5 hover:bg-white/10 rounded-xl border border-white/5 transition-all group">
                             <div class="flex items-center space-x-3 text-white">
                                 <svg xmlns="http://www.w3.org/2000/svg"
@@ -1599,7 +1599,7 @@
     <!-- REMOVED: recurring-expenses.js is now views/settings/recurring-expenses.js (ES Module) -->
     <!-- REMOVED: categories-v2.js is now views/settings/categories-manager.js (ES Module) -->
     <!-- REMOVED: tags.js is now views/settings/tags-manager.js (ES Module) -->
-    <script src="js/app.js?v=12"></script>
+    <!-- REMOVED: app.js is now core/bootstrap.js (ES Module) -->
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/pl.js"></script>
 </body>

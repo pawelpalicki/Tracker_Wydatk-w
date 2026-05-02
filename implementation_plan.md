@@ -312,6 +312,60 @@ APP/js/
 - [ ] Deploy na Firebase Hosting i test na telefonie
 
 ---
+Krok 5.1: ✅ Analiza (zakończony)
+- Przeanalizowaliśmy app.js
+- Zidentyfikowaliśmy funkcje do przeniesienia
+- Znaleźliśmy 6 inline onclick do zamiany
+
+✅ Podsumowanie Kroku 5.2 - Zakończony
+Wykonane działania:
+✅ Utworzono 
+bootstrap.js
+ - nowy moduł zawierający wszystkie funkcje inicjalizacyjne z app.js
+
+✅ Zaktualizowano main.js - dodano import i ekspozycję funkcji z bootstrap.js
+
+✅ Usunięto app.js - wszystkie funkcje przeniesione do bootstrap.js
+
+✅ Usunięto tag <script src="js/app.js"> z HTML
+
+✅ Usunięto wszystkie 6 inline onclick z HTML:
+
+Dashboard: link do analizy → #dashboard-analysis-link
+Dashboard: link do listy → #dashboard-list-link
+Settings: link do kategorii → #settings-categories-link
+Settings: link do budżetu → #settings-budget-link
+Settings: link do budżetów specjalnych → #settings-special-link
+Settings: link do wydatków cyklicznych → #settings-recurring-link
+✅ Dodano event listenery w setupInlineClickHandlers() - wszystkie przyciski mają teraz ID i event listenery w JS
+
+Finalna struktura APP/js:
+APP/js/
+├── main.js                          ← Punkt wejścia (ES Module)
+├── core/                            ← Moduły podstawowe
+│   ├── config.js
+│   ├── state.js
+│   ├── api.js
+│   ├── auth.js
+│   └── bootstrap.js                 ← NOWY - funkcje inicjalizacyjne
+├── shared/                          ← Moduły współdzielone
+│   ├── ui.js
+│   ├── format.js
+│   ├── categories.js
+│   ├── tags.js
+│   └── notifications.js
+└── views/                           ← Moduły widoków
+    ├── dashboard.js
+    ├── purchase-form.js
+    ├── purchase-list.js
+    ├── analysis.js
+    ├── special-budgets.js
+    └── settings/
+        ├── categories-manager.js
+        ├── tags-manager.js
+        ├── monthly-budget.js
+        └── recurring-expenses.js
+
 
 ## 5. Zauważone problemy techniczne (osobna lista)
 
