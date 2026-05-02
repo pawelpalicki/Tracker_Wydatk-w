@@ -272,7 +272,6 @@ export async function fetchInitialData(shouldSwitchToDefault = true) {
  */
 async function renderAll() {
     // Uruchamiamy procesy niezależnie, aby nie blokować renderowania prostych list
-    updateMonthlyBalance().catch(err => console.error('Błąd salda:', err));
     window.renderDashboard?.().catch(err => console.error('Błąd kokpitu:', err));
     
     // To renderuje się natychmiast, bo nie wymaga oczekiwania na powyższe
@@ -288,55 +287,6 @@ async function renderAll() {
     if (typeof window.renderSpecialBudgetsTab === 'function' && 
         document.getElementById('special-budgets-tab')?.classList.contains('active')) {
         window.renderSpecialBudgetsTab();
-    }
-}
-
-/**
- * Aktualizuje saldo miesięczne w headerze.
- */
-export async function updateMonthlyBalance() {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth() + 1;
-    const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
-    const lastDay = new Date(year, month, 0).getDate();
-    const endDate = `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
-
-    const monthlyBalanceValue = document.getElementById('monthly-balance-value');
-    const monthlyBalanceLabel = document.getElementById('monthly-balance-label');
-
-    try {
-        let allMonthlyPurchases = [];
-        let lastVisible = null;
-        let hasMore = true;
-
-        // Fetch all purchases for the current month, handling pagination
-        while (hasMore) {
-            const queryString = `startDate=${startDate}&endDate=${endDate}` + (lastVisible ? `&lastVisible=${lastVisible}` : '');
-            const { purchases, nextCursor } = await apiCall(`/api/purchases?${queryString}`);
-
-            if (purchases && purchases.length > 0) {
-                allMonthlyPurchases.push(...purchases);
-            }
-
-            if (nextCursor) {
-                lastVisible = nextCursor;
-            } else {
-                hasMore = false;
-            }
-        }
-
-        const total = allMonthlyPurchases.reduce((sum, p) => sum + (p.totalAmount || 0), 0);
-        if (monthlyBalanceValue) monthlyBalanceValue.textContent = formatAmount(total);
-
-        const monthName = now.toLocaleString('pl-PL', { month: 'long' });
-        if (monthlyBalanceLabel) {
-            monthlyBalanceLabel.textContent = `Wydatki w ${monthName.charAt(0).toUpperCase() + monthName.slice(1)}`;
-        }
-
-    } catch (error) {
-        console.error('Failed to fetch all monthly purchases for header balance:', error);
-        if (monthlyBalanceValue) monthlyBalanceValue.textContent = `Błąd`;
     }
 }
 

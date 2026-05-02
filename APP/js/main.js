@@ -8,7 +8,7 @@ import { auth, db, IS_DEVELOPMENT, API_BASE_URL } from './core/config.js';
 import state from './core/state.js';
 import { apiCall, apiCallWithFile } from './core/api.js';
 import { setupAuthEventListeners, logout } from './core/auth.js';
-import { initializeApp, fetchInitialData, updateMonthlyBalance } from './core/bootstrap.js';
+import { initializeApp, fetchInitialData } from './core/bootstrap.js';
 
 // Import warstwy współdzielonej
 import * as format from './shared/format.js';
@@ -42,7 +42,6 @@ window.apiCallWithFile = apiCallWithFile;
 window.logout = logout;
 window.initializeApp = initializeApp;
 window.fetchInitialData = fetchInitialData;
-window.updateMonthlyBalance = updateMonthlyBalance;
 
 // Eksport formatowania
 window.formatAmount = format.formatAmount;
