@@ -7,6 +7,7 @@ import state from '../core/state.js';
 import { apiCall } from '../core/api.js';
 import { formatAmount } from '../shared/format.js';
 import { openOverlay, closeOverlay } from '../shared/ui.js';
+import { setPurchaseBudgetType } from './purchase-form.js';
 
 // =====================================================================
 // STAN LOKALNY MODUŁU
@@ -307,10 +308,7 @@ export async function handleSpecialBudgetActions(e) {
 }
 
 export function populateBudgetTypeSelect() {
-    state.budgetTypeSelectValue = 'monthly';
-    if (typeof window.setPurchaseBudgetType === 'function') {
-        window.setPurchaseBudgetType('monthly');
-    }
+    setPurchaseBudgetType('monthly');
     const label = document.getElementById('budget-type-label');
     if (label) {
         label.textContent = 'Budżet miesięczny';

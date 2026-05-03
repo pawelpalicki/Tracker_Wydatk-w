@@ -27,21 +27,12 @@ const state = {
     },
 
     // =====================================================================
-    // STAN EDYCJI
+    // STAN GLOBALNY UI
     // =====================================================================
     editMode: { active: false, purchaseId: null },
-    editingSpecialBudgetId: null,
-    editingRecurringExpenseId: null,
-
+    
     // =====================================================================
-    // STAN FORMULARZA ZAKUPÓW
-    // =====================================================================
-    currentFile: null,
-    cameraStream: null,
-    currentPurchaseItems: [],
-
-    // =====================================================================
-    // PAGINACJA
+    // PAGINACJA I ŁADOWANIE
     // =====================================================================
     nextPurchaseCursor: null,
     isLoadingPurchases: false,
@@ -53,30 +44,15 @@ const state = {
     filterSubCategoryValue: '',
     filterShopValue: '',
     filterBudgetValue: '',
+    filterDateStart: '',
+    filterDateEnd: '',
+    filterMinAmount: '',
+    filterMaxAmount: '',
 
     // =====================================================================
-    // WYDATKI CYKLICZNE
-    // =====================================================================
-    recurringCategoryValue: '',
-    recurringSubCategoryValue: '',
-    recurringTagValues: {},
-    scheduleTypeValue: 'monthly',
-    recurringDayOfWeekValue: '1',
-
-    // =====================================================================
-    // BUDŻETY SPECJALNE
-    // =====================================================================
-    budgetTypeSelectValue: 'monthly',
-
-    // =====================================================================
-    // FLAGI
+    // FLAGI SYSTEMOWE
     // =====================================================================
     appEventListenersInitialized: false,
-
-    // =====================================================================
-    // FLATPICKR
-    // =====================================================================
-    fp_range: null,
 };
 
 export default state;

@@ -130,9 +130,7 @@ export function initPurchaseListFilters() {
 
     dateBtn?.addEventListener('click', () => {
         openFilterDrawer('Wybierz zakres dat', 'date', () => {
-            const start = el('filter-date-start')?.value;
-            const end = el('filter-date-end')?.value;
-            const active = !!(start || end);
+            const active = !!(state.filterDateStart || state.filterDateEnd);
             const labelEl = el('filter-date-label');
             if (labelEl) labelEl.textContent = active ? 'Data (ustawiona)' : 'Data';
             setFilterButtonState(dateBtn, dateClear, active);
@@ -142,9 +140,7 @@ export function initPurchaseListFilters() {
 
     amountBtn?.addEventListener('click', () => {
         openFilterDrawer('Wybierz zakres kwot', 'amount', () => {
-            const min = el('filter-min-amount')?.value;
-            const max = el('filter-max-amount')?.value;
-            const active = !!(min || max);
+            const active = !!(state.filterMinAmount || state.filterMaxAmount);
             const labelEl = el('filter-amount-label');
             if (labelEl) labelEl.textContent = active ? 'Kwota (ustawiona)' : 'Kwota';
             setFilterButtonState(amountBtn, amountClear, active);
@@ -167,13 +163,13 @@ export function initPurchaseListFilters() {
             setText('filter-shop-label', 'Sklep');
             setFilterButtonState(shopBtn, shopClear, false);
         } else if (type === 'date') {
-            if (el('filter-date-start')) el('filter-date-start').value = '';
-            if (el('filter-date-end')) el('filter-date-end').value = '';
+            state.filterDateStart = '';
+            state.filterDateEnd = '';
             setText('filter-date-label', 'Data');
             setFilterButtonState(dateBtn, dateClear, false);
         } else if (type === 'amount') {
-            if (el('filter-min-amount')) el('filter-min-amount').value = '';
-            if (el('filter-max-amount')) el('filter-max-amount').value = '';
+            state.filterMinAmount = '';
+            state.filterMaxAmount = '';
             setText('filter-amount-label', 'Kwota');
             setFilterButtonState(amountBtn, amountClear, false);
         }
@@ -200,11 +196,10 @@ export function initPurchaseListFilters() {
         state.filterSubCategoryValue = '';
         state.filterBudgetValue = '';
         state.filterShopValue = '';
-
-        ['filter-date-start', 'filter-date-end', 'filter-min-amount', 'filter-max-amount'].forEach(id => {
-            const input = el(id);
-            if (input) input.value = '';
-        });
+        state.filterDateStart = '';
+        state.filterDateEnd = '';
+        state.filterMinAmount = '';
+        state.filterMaxAmount = '';
 
         const labels = {
             'filter-category-label': 'Kategoria',
@@ -242,8 +237,8 @@ export function openFilterDrawer(title, type, onApply) {
     content.innerHTML = '';
 
     if (type === 'date') {
-        const startVal = el('filter-date-start')?.value || '';
-        const endVal = el('filter-date-end')?.value || '';
+        const startVal = state.filterDateStart || '';
+        const endVal = state.filterDateEnd || '';
         content.innerHTML = `
             <div class="space-y-4">
                 <div>
@@ -257,8 +252,8 @@ export function openFilterDrawer(title, type, onApply) {
             </div>
         `;
     } else if (type === 'amount') {
-        const minVal = el('filter-min-amount')?.value || '';
-        const maxVal = el('filter-max-amount')?.value || '';
+        const minVal = state.filterMinAmount || '';
+        const maxVal = state.filterMaxAmount || '';
         content.innerHTML = `
             <div class="space-y-4">
                 <div>
@@ -275,11 +270,11 @@ export function openFilterDrawer(title, type, onApply) {
 
     applyBtn.onclick = () => {
         if (type === 'date') {
-            if (el('filter-date-start')) el('filter-date-start').value = el('drawer-date-start')?.value || '';
-            if (el('filter-date-end')) el('filter-date-end').value = el('drawer-date-end')?.value || '';
+            state.filterDateStart = el('drawer-date-start')?.value || '';
+            state.filterDateEnd = el('drawer-date-end')?.value || '';
         } else if (type === 'amount') {
-            if (el('filter-min-amount')) el('filter-min-amount').value = el('drawer-min-amount')?.value || '';
-            if (el('filter-max-amount')) el('filter-max-amount').value = el('drawer-max-amount')?.value || '';
+            state.filterMinAmount = el('drawer-min-amount')?.value || '';
+            state.filterMaxAmount = el('drawer-max-amount')?.value || '';
         }
         onApply();
         closeFilterDrawer();
@@ -348,23 +343,11 @@ export function getFilterQueryParams() {
     if (state.filterBudgetValue) params.append('budget', state.filterBudgetValue);
     if (state.filterShopValue) params.append('shop', state.filterShopValue);
 
-    const start = el('filter-date-start')?.value;
-    const end = el('filter-date-end')?.value;
-    if (start && end) {
-        params.append('startDate', start);
-        params.append('endDate', end);
-    } else if (state.fp_range && Array.isArray(state.fp_range.selectedDates) && state.fp_range.selectedDates.length === 2) {
-        params.append('startDate', state.fp_range.selectedDates[0].toISOString().split('T')[0]);
-        params.append('endDate', state.fp_range.selectedDates[1].toISOString().split('T')[0]);
-    } else {
-        if (start) params.append('startDate', start);
-        if (end) params.append('endDate', end);
-    }
+    if (state.filterDateStart) params.append('startDate', state.filterDateStart);
+    if (state.filterDateEnd) params.append('endDate', state.filterDateEnd);
 
-    const min = el('filter-min-amount')?.value;
-    const max = el('filter-max-amount')?.value;
-    if (min) params.append('minAmount', min);
-    if (max) params.append('maxAmount', max);
+    if (state.filterMinAmount) params.append('minAmount', state.filterMinAmount);
+    if (state.filterMaxAmount) params.append('maxAmount', state.filterMaxAmount);
 
     return params.toString();
 }

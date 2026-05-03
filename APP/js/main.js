@@ -213,10 +213,6 @@ auth.onAuthStateChanged(user => {
     } else {
         authSection.classList.remove('hidden');
         appSection.classList.add('hidden');
-        if (state.cameraStream) {
-            state.cameraStream.getTracks().forEach(track => track.stop());
-            state.cameraStream = null;
-        }
     }
 });
 
@@ -234,19 +230,5 @@ document.addEventListener('DOMContentLoaded', () => {
         navigator.serviceWorker.register('/sw.js')
             .then(reg => console.log('Service Worker zarejestrowany:', reg))
             .catch(err => console.log('Błąd rejestracji Service Workera:', err));
-    }
-
-    // Flatpickr (ładowany z CDN jako zwykły <script>)
-    const rangeEl = document.querySelector('#filter-date-range');
-    if (rangeEl && typeof flatpickr !== 'undefined') {
-        state.fp_range = flatpickr(rangeEl, {
-            mode: "range",
-            dateFormat: "Y-m-d",
-            altInput: true,
-            altFormat: "d.m.Y",
-            theme: "dark",
-            locale: "pl",
-            allowInput: true
-        });
     }
 });

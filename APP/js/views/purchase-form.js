@@ -23,6 +23,12 @@ let productDrawerInitialized = false;
 let voiceExpenseInitialized = false;
 let productDrawerTags = {};
 
+// Stan lokalny formularza (przeniesiony z core/state.js)
+let currentPurchaseItems = [];
+let currentFile = null;
+let cameraStream = null;
+let budgetTypeSelectValue = 'monthly';
+
 // Animacja jest lokalna dla formularza, bo uruchamia sie tylko podczas analizy paragonu.
 const analysisAnimation = createAnalysisAnimation();
 
@@ -78,19 +84,19 @@ export function initPurchaseForm() {
 }
 
 export function updatePurchaseSummary() {
-    const total = state.currentPurchaseItems.reduce((sum, item) => sum + (parseFloat(item.price) || 0), 0);
+    const total = currentPurchaseItems.reduce((sum, item) => sum + (parseFloat(item.price) || 0), 0);
     const summary = purchaseSummaryEl();
     if (summary) summary.textContent = `Suma: ${formatAmount(total)}`;
 }
 
 export function clearPurchaseItems() {
-    state.currentPurchaseItems = [];
+    currentPurchaseItems = [];
     renderPurchaseItems();
 }
 
 export function addItemRow(item = {}) {
     const defaultTags = getDefaultTagValues();
-    state.currentPurchaseItems.push({
+    currentPurchaseItems.push({
         name: item.name || '',
         price: typeof item.price === 'number' ? item.price : (parseFloat(item.price) || 0),
         category: item.category || 'Inne',
@@ -105,7 +111,7 @@ export function renderPurchaseItems() {
     if (!container) return;
     container.innerHTML = '';
 
-    state.currentPurchaseItems.forEach((item, index) => {
+    currentPurchaseItems.forEach((item, index) => {
         const itemRow = document.createElement('div');
         itemRow.className = 'glass-card rounded-xl p-3 mb-2 flex flex-col gap-2 relative border border-white/5 bg-white/5';
 
@@ -168,7 +174,7 @@ export function renderPurchaseItems() {
     container.querySelectorAll('.remove-item-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             const index = parseInt(e.currentTarget.dataset.index, 10);
-            state.currentPurchaseItems.splice(index, 1);
+            currentPurchaseItems.splice(index, 1);
             renderPurchaseItems();
         });
     });
@@ -247,9 +253,9 @@ function initProductDrawer() {
         }
 
         if (indexStr !== '') {
-            state.currentPurchaseItems[parseInt(indexStr, 10)] = newItem;
+            currentPurchaseItems[parseInt(indexStr, 10)] = newItem;
         } else {
-            state.currentPurchaseItems.push(newItem);
+            currentPurchaseItems.push(newItem);
         }
 
         renderPurchaseItems();
@@ -270,9 +276,9 @@ export function openProductDrawer(index = null) {
     const catIcon = el('product-drawer-category-icon');
     if (!drawerOverlay || !drawer || !title || !form || !idxInput || !nameInput || !priceInput) return;
 
-    if (index !== null && index >= 0 && index < state.currentPurchaseItems.length) {
+    if (index !== null && index >= 0 && index < currentPurchaseItems.length) {
         title.textContent = 'Edytuj produkt';
-        const item = state.currentPurchaseItems[index];
+        const item = currentPurchaseItems[index];
         idxInput.value = String(index);
         nameInput.value = item.name;
         priceInput.value = Number(item.price || 0).toFixed(2);
@@ -322,7 +328,7 @@ export function closeProductDrawer() {
 export async function handlePurchaseFormSubmit(e) {
     e.preventDefault();
 
-    if (state.currentPurchaseItems.length === 0) {
+    if (currentPurchaseItems.length === 0) {
         alert('Dodaj przynajmniej jedna pozycje do zakupu.');
         return;
     }
@@ -330,8 +336,8 @@ export async function handlePurchaseFormSubmit(e) {
     const purchaseData = {
         shop: el('shop')?.value || '',
         date: el('date')?.value || new Date().toISOString().split('T')[0],
-        specialBudgetId: state.budgetTypeSelectValue === 'monthly' ? null : state.budgetTypeSelectValue,
-        items: state.currentPurchaseItems.map(item => ({
+        specialBudgetId: budgetTypeSelectValue === 'monthly' ? null : budgetTypeSelectValue,
+        items: currentPurchaseItems.map(item => ({
             name: item.name,
             price: item.price,
             category: item.category,
@@ -365,7 +371,7 @@ export function enterEditMode(purchaseId) {
     if (shopInput) shopInput.value = purchase.shop || '';
     if (dateInput) dateInput.value = purchase.date || new Date().toISOString().split('T')[0];
 
-    state.currentPurchaseItems = (purchase.items || []).map(item => ({
+    currentPurchaseItems = (purchase.items || []).map(item => ({
         name: item.name || '',
         price: typeof item.price === 'number' ? item.price : (parseFloat(item.price) || 0),
         category: item.category || 'Inne',
@@ -391,7 +397,7 @@ export function exitEditMode() {
     state.editMode.purchaseId = null;
 
     purchaseFormEl()?.reset();
-    state.currentPurchaseItems = [];
+    currentPurchaseItems = [];
     const container = itemsContainerEl();
     if (container) container.innerHTML = '';
     const dateInput = el('date');
@@ -412,13 +418,13 @@ export function exitEditMode() {
 }
 
 export function setPurchaseBudgetType(value = 'monthly', label = null) {
-    state.budgetTypeSelectValue = value || 'monthly';
-    const selectedBudget = state.allSpecialBudgets.find(b => b.id === state.budgetTypeSelectValue);
-    const resolvedLabel = label || (state.budgetTypeSelectValue === 'monthly' ? 'Miesieczny' : (selectedBudget?.name || 'Specjalny'));
+    budgetTypeSelectValue = value || 'monthly';
+    const selectedBudget = state.allSpecialBudgets.find(b => b.id === budgetTypeSelectValue);
+    const resolvedLabel = label || (budgetTypeSelectValue === 'monthly' ? 'Miesieczny' : (selectedBudget?.name || 'Specjalny'));
     const labelEl = el('budget-type-label');
     const iconEl = el('budget-type-icon');
     if (labelEl) labelEl.textContent = resolvedLabel;
-    if (iconEl) iconEl.innerHTML = `<span>${state.budgetTypeSelectValue === 'monthly' ? '📅' : '⭐'}</span>`;
+    if (iconEl) iconEl.innerHTML = `<span>${budgetTypeSelectValue === 'monthly' ? '📅' : '⭐'}</span>`;
 }
 
 function initBudgetTypeButton() {
@@ -430,7 +436,7 @@ function initBudgetTypeButton() {
 
         window.openSelectionDrawer?.('Wybierz budzet', options, (value, label) => {
             setPurchaseBudgetType(value, label);
-        }, state.budgetTypeSelectValue);
+        }, budgetTypeSelectValue);
     });
 }
 
@@ -471,7 +477,7 @@ export async function resizeImage(file, maxSize = 1400, quality = 0.75) {
 
 // Wspolna sciezka analizy paragonu: przygotowanie UI, kompresja obrazu, API i wypelnienie formularza.
 export async function handleAnalyzeReceipt() {
-    if (!state.currentFile) {
+    if (!currentFile) {
         alert('Prosze, wybierz najpierw plik z paragonem.');
         return;
     }
@@ -520,9 +526,9 @@ export async function handleAnalyzeReceipt() {
     el('image-preview-container')?.classList.add('hidden');
 
     try {
-        let fileToSend = state.currentFile;
-        if (state.currentFile.type.startsWith('image/')) {
-            fileToSend = await resizeImage(state.currentFile);
+        let fileToSend = currentFile;
+        if (currentFile.type.startsWith('image/')) {
+            fileToSend = await resizeImage(currentFile);
         }
         const { analysis } = await apiCallWithFile('/api/analyze-receipt', fileToSend);
         await fillFormWithAnalysis(analysis);
@@ -537,7 +543,7 @@ export async function handleAnalyzeReceipt() {
         if (analyzeBtn) analyzeBtn.disabled = false;
         const receiptInput = el('receipt-file-input');
         if (receiptInput) receiptInput.value = '';
-        state.currentFile = null;
+        currentFile = null;
         if (scannerContainer) {
             scannerContainer.style.minHeight = '';
             scannerContainer.classList.add('hidden');
@@ -614,7 +620,7 @@ export async function fillFormWithAnalysis(analysis) {
         };
     });
 
-    state.currentPurchaseItems = processedItems.map(item => normalizeAnalyzedItem(item));
+    currentPurchaseItems = processedItems.map(item => normalizeAnalyzedItem(item));
     renderPurchaseItems();
     updatePurchaseSummary();
     alert('Gotowe! Analiza AI zakonczona. Sprawdz i uzupelnij dane, a nastepnie zapisz caly zakup.');
@@ -664,12 +670,12 @@ export async function startCamera() {
     }
 
     try {
-        state.cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+        cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
         el('scanner-container')?.classList.remove('hidden');
         el('scanner-controls')?.classList.add('hidden');
         el('camera-view')?.classList.remove('hidden');
         const cameraStreamEl = el('camera-stream');
-        if (cameraStreamEl) cameraStreamEl.srcObject = state.cameraStream;
+        if (cameraStreamEl) cameraStreamEl.srcObject = cameraStream;
 
         setTimeout(() => el('capture-photo-btn')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100);
     } catch (err) {
@@ -678,12 +684,12 @@ export async function startCamera() {
 }
 
 export function stopCamera() {
-    if (state.cameraStream) {
-        state.cameraStream.getTracks().forEach(track => track.stop());
+    if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
     }
     el('camera-view')?.classList.add('hidden');
     el('scanner-controls')?.classList.remove('hidden');
-    state.cameraStream = null;
+    cameraStream = null;
 }
 
 export function capturePhoto() {
@@ -696,23 +702,23 @@ export function capturePhoto() {
     canvas.getContext('2d').drawImage(cameraStreamEl, 0, 0);
     stopCamera();
     canvas.toBlob(blob => {
-        state.currentFile = new File([blob], 'paragon.jpg', { type: 'image/jpeg' });
+        currentFile = new File([blob], 'paragon.jpg', { type: 'image/jpeg' });
         handleAnalyzeReceipt();
     }, 'image/jpeg');
 }
 
 export function handleFileSelect(event) {
-    state.currentFile = event.target.files[0] || null;
+    currentFile = event.target.files[0] || null;
     const imagePreview = el('image-preview');
     const previewContainer = el('image-preview-container');
 
-    if (!state.currentFile) {
+    if (!currentFile) {
         previewContainer?.classList.add('hidden');
         return;
     }
 
-    if (state.currentFile.type.startsWith('image/')) {
-        if (imagePreview) imagePreview.src = URL.createObjectURL(state.currentFile);
+    if (currentFile.type.startsWith('image/')) {
+        if (imagePreview) imagePreview.src = URL.createObjectURL(currentFile);
         previewContainer?.classList.remove('hidden');
     } else {
         previewContainer?.classList.add('hidden');
