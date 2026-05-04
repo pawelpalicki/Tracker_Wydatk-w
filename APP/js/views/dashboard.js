@@ -2,7 +2,7 @@ import state from '../core/state.js';
 import { apiCall } from '../core/api.js';
 import { formatAmount } from '../shared/format.js';
 import { getTagGroups, getTagGroupLabel, getTagLabel } from '../shared/tags.js';
-import { renderCategoryDetailsModal } from '../shared/ui.js';
+import { renderCategoryDetailsModal, switchTab } from '../shared/ui.js';
 import {
     initNotifications,
     checkAndGenerateNotifications

@@ -50,8 +50,12 @@ export function initMonthlyBudget() {
     el('cancel-copy-budget')?.addEventListener('click', () => closeOverlay('copy-budget-modal'));
     
     // Zamknięcie modala przez kliknięcie w overlay
+    let mousedownTarget = null;
+    el('copy-budget-modal')?.addEventListener('mousedown', (e) => {
+        mousedownTarget = e.target;
+    });
     el('copy-budget-modal')?.addEventListener('click', (e) => {
-        if (e.target.id === 'copy-budget-modal') {
+        if (e.target.id === 'copy-budget-modal' && mousedownTarget?.id === 'copy-budget-modal') {
             closeOverlay('copy-budget-modal');
         }
     });
@@ -59,9 +63,8 @@ export function initMonthlyBudget() {
     const copyMonthsBtns = document.querySelectorAll('.copy-months-btn');
     copyMonthsBtns.forEach(btn => {
         btn.addEventListener('click', () => {
-            const monthsCount = parseInt(btn.dataset.months);
-            handleCopyBudget(monthsCount);
-            closeOverlay('copy-budget-modal');
+            const months = parseInt(btn.dataset.months);
+            handleCopyBudget(months, btn);
         });
     });
 
@@ -173,7 +176,7 @@ async function handleSaveBudget() {
 /**
  * Kopiuje budżet na kolejne miesiące.
  */
-async function handleCopyBudget(monthsCount) {
+async function handleCopyBudget(monthsCount, btn = null) {
     const list = el('budgets-list');
     if (!list) return;
 
@@ -194,7 +197,13 @@ async function handleCopyBudget(monthsCount) {
         return;
     }
 
+    const originalContent = btn ? btn.innerHTML : null;
     try {
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner animate-spin mr-2"></i>';
+        }
+
         const promises = [];
         for (let i = 1; i <= monthsCount; i++) {
             const targetDate = new Date(currentYear, parseInt(currentMonth) - 1 + i, 1);
@@ -214,5 +223,10 @@ async function handleCopyBudget(monthsCount) {
 
     } catch (error) {
         alert('Błąd podczas kopiowania budżetu: ' + error.message);
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = originalContent;
+        }
     }
 }

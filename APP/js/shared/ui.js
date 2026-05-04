@@ -12,8 +12,7 @@
  */
 import state from '../core/state.js';
 import { formatAmount } from './format.js';
-import { populateBudgetMonthSelector, renderBudgetInputs } from '../views/settings/monthly-budget.js';
-import { renderRecurringExpenses } from '../views/settings/recurring-expenses.js';
+
 
 export const VIEW_DEPTH = {
     'home': 0,
@@ -82,7 +81,7 @@ export function switchTab(tabName, pushToHistory = true) {
             history.pushState({ type: 'tab', id: tabName }, "", "");
         }
     }
-    window.scrollTo({ top: 0, behavior: 'instant' });
+    scrollTo({ top: 0, behavior: 'instant' });
     document.querySelectorAll('.bottom-nav-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tabName));
 
     document.querySelectorAll('.tab-content').forEach(content => {
@@ -90,7 +89,7 @@ export function switchTab(tabName, pushToHistory = true) {
     });
 
     if (tabName !== 'add') {
-        if (typeof window.exitEditMode === 'function') window.exitEditMode();
+        import('../views/purchase-form.js').then(m => m.exitEditMode?.());
         document.getElementById('scanner-container')?.classList.add('hidden');
     }
 
@@ -103,31 +102,29 @@ export function switchTab(tabName, pushToHistory = true) {
     }
 
     if (tabName === 'home') {
-        if (typeof window.renderDashboard === 'function') window.renderDashboard();
+        import('../views/dashboard.js').then(m => m.renderDashboard());
     }
 
     if (tabName === 'analysis') {
-        if (typeof window.initializeLongTermBudget === 'function') {
-            window.initializeLongTermBudget().catch(console.error);
-        }
+        import('../views/analysis.js').then(m => m.initializeLongTermBudget().catch(console.error));
     }
 
     if (tabName === 'special-budgets') {
-        if (typeof window.renderSpecialBudgetsTab === 'function') window.renderSpecialBudgetsTab();
+        import('../views/special-budgets.js').then(m => m.renderSpecialBudgetsTab());
     }
 
     if (tabName === 'settings' || tabName.startsWith('settings-')) {
-        if (typeof window.renderCategoriesListV2 === 'function') {
-            window.renderCategoriesListV2();
-            if (typeof window.renderTagsManager === 'function') window.renderTagsManager();
-        }
-        populateBudgetMonthSelector();
-        renderBudgetInputs();
-        renderRecurringExpenses();
+        import('../views/settings/categories-manager.js').then(m => m.renderCategoriesListV2?.());
+        import('../views/settings/tags-manager.js').then(m => m.renderTagsManager?.());
+        import('../views/settings/monthly-budget.js').then(m => {
+            m.populateBudgetMonthSelector?.();
+            m.renderBudgetInputs?.();
+        });
+        import('../views/settings/recurring-expenses.js').then(m => m.renderRecurringExpenses?.());
     }
 
     if (tabName === 'list') {
-        if (typeof window.initFilterDrawers === 'function') window.initFilterDrawers();
+        import('../views/purchase-list.js').then(m => m.initPurchaseListFilters?.());
     }
 
     if (!(tabName === 'add' && state.editMode.active)) {
@@ -286,11 +283,6 @@ export function openSelectionDrawer(title, options, onSelect, selectedValue = nu
 
     if (!overlay || !drawer) return;
 
-    window.currentOnSelect = (...args) => {
-        onSelect(...args);
-        if (autoClose) closeSelectionDrawer();
-    };
-
     if (addBtn) addBtn.classList.remove('hidden');
     if (addForm) addForm.classList.add('hidden');
     if (searchInput) searchInput.value = '';
@@ -298,10 +290,10 @@ export function openSelectionDrawer(title, options, onSelect, selectedValue = nu
     if (backBtn) {
         if (onBack) {
             backBtn.classList.remove('hidden');
-            backBtn.onclick = (e) => {
+            backBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 onBack();
-            };
+            });
         } else {
             backBtn.classList.add('hidden');
         }
@@ -309,15 +301,15 @@ export function openSelectionDrawer(title, options, onSelect, selectedValue = nu
 
     const handleClose = () => closeSelectionDrawer();
     if (closeBtn) {
-        closeBtn.onclick = (e) => {
+        closeBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             handleClose();
-        };
+        });
     }
     if (overlay) {
-        overlay.onclick = (e) => {
+        overlay.addEventListener('click', (e) => {
             if (e.target === overlay) handleClose();
-        };
+        });
     }
 
     if (searchContainer) {
@@ -331,13 +323,12 @@ export function openSelectionDrawer(title, options, onSelect, selectedValue = nu
     if (addBtn) {
         if (showAddBtn) {
             addBtn.classList.remove('hidden');
-            addBtn.onclick = (e) => {
+            addBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 navigateToCategoryManagementFromDrawer();
-            };
+            });
         } else {
             addBtn.classList.add('hidden');
-            addBtn.onclick = null;
         }
     }
 
@@ -398,10 +389,10 @@ export function openSelectionDrawer(title, options, onSelect, selectedValue = nu
             nameLabel.textContent = opt.label;
             item.appendChild(nameLabel);
 
-            item.onclick = () => {
+            item.addEventListener('click', () => {
                 onSelect(opt.value, opt.label);
                 if (autoClose) closeSelectionDrawer();
-            };
+            });
 
             grid.appendChild(item);
         });
@@ -412,7 +403,7 @@ export function openSelectionDrawer(title, options, onSelect, selectedValue = nu
     };
 
     if (searchInput) {
-        searchInput.oninput = (e) => renderOptions(e.target.value);
+        searchInput.addEventListener('input', (e) => renderOptions(e.target.value));
     }
 
     renderOptions();
@@ -508,14 +499,14 @@ export function renderCategoryDetailsModal(category, items, isSubCategoryView = 
     const wasAlreadyOpen = overlay.classList.contains('active') || !overlay.classList.contains('hidden');
     
     if (closeBtn) {
-        closeBtn.onclick = (e) => {
+        closeBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             handleClose();
-        };
+        });
     }
-    overlay.onclick = (e) => {
+    overlay.addEventListener('click', (e) => {
         if (e.target === overlay) handleClose();
-    };
+    });
 
     drawer.classList.remove('hidden');
     overlay.classList.remove('hidden');
@@ -535,14 +526,12 @@ export function closeCategoryDetailsDrawer() {
 export function navigateToCategoryManagementFromDrawer() {
     const filterDrawerOverlay = document.getElementById('filter-drawer-overlay');
     if (filterDrawerOverlay && filterDrawerOverlay.classList.contains('active')) {
-        window.closeFilterDrawer?.();
+        import('../views/purchase-list.js').then(m => m.closeFilterDrawer?.());
     }
 
     const productDrawerOverlay = document.getElementById('product-drawer-overlay');
     if (productDrawerOverlay && productDrawerOverlay.classList.contains('active')) {
-        if (typeof window.closeProductDrawer === 'function') {
-            window.closeProductDrawer();
-        }
+        import('../views/purchase-form.js').then(m => m.closeProductDrawer?.());
     }
 
     closeSelectionDrawer();
@@ -555,7 +544,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Globalny listener zmiany rozmiaru okna (np. obrót telefonu)
     let resizeTimer;
-    window.addEventListener('resize', () => {
+    addEventListener('resize', () => {
         clearTimeout(resizeTimer);
         resizeTimer = setTimeout(() => {
             const activeTab = document.querySelector('.tab-content.active');
@@ -565,11 +554,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Odśwież wykresy w zależności od aktywnej zakładki
             if (tabId === 'home') {
-                if (typeof window.renderDashboard === 'function') window.renderDashboard();
+                import('../views/dashboard.js').then(m => m.renderDashboard());
             } else if (tabId === 'analysis') {
-                if (typeof window.renderUnifiedComparisonChart === 'function') {
-                    window.renderUnifiedComparisonChart().catch(console.error);
-                }
+                import('../views/analysis.js').then(m => m.renderUnifiedComparisonChart().catch(console.error));
             }
         }, 300); // 300ms opóźnienia, aby poczekać na zakończenie animacji obrotu
     });

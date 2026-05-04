@@ -35,11 +35,10 @@ export function getCategorySelectionState(parentName = '', subCategoryName = '',
     const iconName =
         (subCategory && subCategory.icon) ||
         (parentCategory && parentCategory.icon) ||
-        ((window.categoryIcons && safeParentName) ? window.categoryIcons[safeParentName.toLowerCase()] : null) ||
         'fa-tag';
     const color =
         (parentCategory && parentCategory.color) ||
-        (typeof window.getCategoryColor === 'function' && safeParentName ? window.getCategoryColor(safeParentName) : '#6b7280');
+        '#6b7280';
 
     return {
         parentName: safeParentName,
@@ -84,10 +83,6 @@ export function openHierarchicalCategoryDrawer(row, currentCategory, currentSubC
     const parents = state.structuredCategories.filter(c => !c.parentId);
 
     if (parents.length === 0) {
-        // Fallback: otwórz stary płaski drawer
-        if (typeof window.openCategoryDrawer === 'function') {
-            window.openCategoryDrawer(row, currentCategory, onSelect);
-        }
         return;
     }
 

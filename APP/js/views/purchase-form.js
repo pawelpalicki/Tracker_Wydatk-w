@@ -6,8 +6,9 @@
 import state from '../core/state.js';
 import { apiCall, apiCallWithFile } from '../core/api.js';
 import { formatAmount } from '../shared/format.js';
-import { switchTab, acquireOverlayNavigationLock, releaseOverlayNavigationLock, hasVisibleBlockingOverlay } from '../shared/ui.js';
+import { switchTab, acquireOverlayNavigationLock, releaseOverlayNavigationLock, hasVisibleBlockingOverlay, openSelectionDrawer } from '../shared/ui.js';
 import { applyCategorySelectionState, openHierarchicalCategoryDrawer } from '../shared/categories.js';
+import { fetchInitialData } from '../core/data-loader.js';
 import {
     buildTagsSummary,
     getDefaultTagValues,
@@ -226,6 +227,9 @@ function initProductDrawer() {
     form.addEventListener('submit', (e) => {
         e.preventDefault();
 
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const originalText = submitBtn ? submitBtn.innerHTML : 'Zapisz produkt';
+
         const indexStr = el('product-drawer-index')?.value || '';
         const name = el('product-drawer-name')?.value.trim() || '';
         const price = parseFloat(el('product-drawer-price')?.value || '0');
@@ -252,14 +256,26 @@ function initProductDrawer() {
             state.allCategories.sort();
         }
 
-        if (indexStr !== '') {
-            currentPurchaseItems[parseInt(indexStr, 10)] = newItem;
-        } else {
-            currentPurchaseItems.push(newItem);
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner animate-spin mr-2"></i> Zapisywanie...';
         }
 
-        renderPurchaseItems();
-        closeProductDrawer();
+        setTimeout(() => {
+            if (indexStr !== '') {
+                currentPurchaseItems[parseInt(indexStr, 10)] = newItem;
+            } else {
+                currentPurchaseItems.push(newItem);
+            }
+
+            renderPurchaseItems();
+            closeProductDrawer();
+            
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            }
+        }, 100);
     });
 }
 
@@ -346,16 +362,29 @@ export async function handlePurchaseFormSubmit(e) {
         }))
     };
 
+    const submitBtn = purchaseFormEl()?.querySelector('button[type="submit"]');
+    const originalText = submitBtn ? submitBtn.innerHTML : 'Zapisz caly zakup';
+
     try {
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner animate-spin mr-2"></i> Zapisywanie...';
+        }
+
         if (state.editMode.active) {
             await apiCall(`/api/purchases/${state.editMode.purchaseId}`, 'PUT', purchaseData);
         } else {
             await apiCall('/api/purchases', 'POST', purchaseData);
         }
-        await window.fetchInitialData?.(false);
+        await fetchInitialData(false);
         switchTab('list');
     } catch (error) {
         alert('Blad zapisu: ' + error.message);
+    } finally {
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
+        }
     }
 }
 
@@ -434,7 +463,7 @@ function initBudgetTypeButton() {
             options.push({ value: budget.id, label: budget.name, icon: '⭐' });
         });
 
-        window.openSelectionDrawer?.('Wybierz budzet', options, (value, label) => {
+        openSelectionDrawer('Wybierz budzet', options, (value, label) => {
             setPurchaseBudgetType(value, label);
         }, budgetTypeSelectValue);
     });
@@ -987,15 +1016,15 @@ function initVoiceExpense() {
         stopTimer();
         voiceState.startedAt = Date.now();
         updateTimer();
-        voiceState.timerIntervalId = window.setInterval(updateTimer, 250);
-        voiceState.autoStopTimeoutId = window.setTimeout(() => {
+        voiceState.timerIntervalId = setInterval(updateTimer, 250);
+        voiceState.autoStopTimeoutId = setTimeout(() => {
             if (voiceState.mediaRecorder?.state === 'recording') stopRecording(true);
         }, MAX_RECORDING_MS);
     }
 
     function stopTimer() {
-        if (voiceState.timerIntervalId) window.clearInterval(voiceState.timerIntervalId);
-        if (voiceState.autoStopTimeoutId) window.clearTimeout(voiceState.autoStopTimeoutId);
+        if (voiceState.timerIntervalId) clearInterval(voiceState.timerIntervalId);
+        if (voiceState.autoStopTimeoutId) clearTimeout(voiceState.autoStopTimeoutId);
         voiceState.timerIntervalId = null;
         voiceState.autoStopTimeoutId = null;
         voiceState.startedAt = 0;
@@ -1130,7 +1159,7 @@ function initVoiceExpense() {
         overlay.classList.add('opacity-0');
         modal.classList.add('opacity-0', 'scale-95');
 
-        window.setTimeout(() => {
+        setTimeout(() => {
             if (!wasRecording) resetRecordingState();
             overlay.classList.add('hidden');
             modal.classList.add('hidden');
@@ -1189,7 +1218,7 @@ function initVoiceExpense() {
             await fillFormWithAnalysis(analysis);
             renderStep('success');
             setBusyState(false);
-            window.setTimeout(() => {
+            setTimeout(() => {
                 if (!voiceState.isBusy) closeVoiceExpenseModal();
             }, 900);
         } catch (error) {
@@ -1297,7 +1326,6 @@ function initVoiceExpense() {
     closeBtn.addEventListener('click', closeVoiceExpenseModal);
     overlay.addEventListener('click', closeVoiceExpenseModal);
 
-    window.__purchaseFormVoiceClose = closeVoiceExpenseModal;
     renderStep('intro');
 }
 

@@ -102,14 +102,14 @@ async function ensureComparisonAvailableMonths() {
         return comparisonAvailableMonths;
     }
 
-    const cached = Array.isArray(window.availableMonthsListGlobal) ? window.availableMonthsListGlobal : [];
+    const cached = Array.isArray(state.availableMonthsList) ? state.availableMonthsList : [];
     if (cached.length > 0) {
         comparisonAvailableMonths = [...cached].sort().reverse();
     } else {
         try {
             const stats = await apiCall('/api/statistics');
             comparisonAvailableMonths = Array.isArray(stats.availableMonths) ? [...stats.availableMonths].sort().reverse() : [];
-            window.availableMonthsListGlobal = comparisonAvailableMonths;
+            state.availableMonthsList = comparisonAvailableMonths;
         } catch (error) {
             console.error('Blad pobierania dostepnych miesiecy analizy:', error);
             comparisonAvailableMonths = [];
@@ -403,7 +403,7 @@ function renderComparisonCategoryChips() {
                 preserveScroll();
             }
         });
-        button.onclick = onClick;
+        button.addEventListener('click', onClick);
         return button;
     };
 
@@ -1280,13 +1280,13 @@ function renderAnalysisTagFilterButton() {
     button.classList.toggle('shadow-sm', !isActive);
     indicatorEl?.classList.toggle('hidden', !isActive);
 
-    button.onclick = () => {
+    button.addEventListener('click', () => {
         openTagsDrawer(currentComparisonTags, async (newTags) => {
             currentComparisonTags = newTags;
             renderAnalysisTagFilterButton();
             await renderUnifiedComparisonChart();
         }, true);
-    };
+    });
 }
 
 // =====================================================================

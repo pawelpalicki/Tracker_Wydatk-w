@@ -129,7 +129,7 @@ export function openTagsDrawer(currentTags, onConfirm, isFilter = false) {
         content.appendChild(groupEl);
     });
 
-    content.onclick = (e) => {
+    content.addEventListener('click', (e) => {
         const btn = e.target.closest('.tag-select-btn');
         if (!btn) return;
         const group = btn.dataset.group;
@@ -145,7 +145,7 @@ export function openTagsDrawer(currentTags, onConfirm, isFilter = false) {
         btn.classList.replace('border-white/10', 'border-brand-500');
 
         _tagsDrawerCurrentValues[group] = (val === 'all') ? null : val;
-    };
+    });
     
     const wasAlreadyOpen = overlay.classList.contains('active') || !overlay.classList.contains('hidden');
     if (!wasAlreadyOpen && typeof acquireOverlayNavigationLock === 'function') {

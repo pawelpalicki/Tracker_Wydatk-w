@@ -6,7 +6,8 @@
 import state from '../core/state.js';
 import { apiCall } from '../core/api.js';
 import { formatAmount } from '../shared/format.js';
-import { openOverlay, closeOverlay } from '../shared/ui.js';
+import { switchTab, openOverlay, closeOverlay } from '../shared/ui.js';
+import { fetchInitialData } from '../core/data-loader.js';
 import { setPurchaseBudgetType } from './purchase-form.js';
 
 // =====================================================================
@@ -36,8 +37,12 @@ export function initSpecialBudgets() {
     el('cancel-edit-special-budget')?.addEventListener('click', () => closeOverlay('edit-special-budget-modal'));
     
     // Zamknięcie modala przez kliknięcie w overlay
+    let mousedownTarget = null;
+    el('edit-special-budget-modal')?.addEventListener('mousedown', (e) => {
+        mousedownTarget = e.target;
+    });
     el('edit-special-budget-modal')?.addEventListener('click', (e) => {
-        if (e.target.id === 'edit-special-budget-modal') {
+        if (e.target.id === 'edit-special-budget-modal' && mousedownTarget?.id === 'edit-special-budget-modal') {
             closeOverlay('edit-special-budget-modal');
         }
     });
@@ -66,7 +71,7 @@ export function renderSpecialBudgetsTab() {
                 <h3 class="text-lg font-bold text-white mb-2">Brak budżetów specjalnych</h3>
                 <p class="text-sm text-gray-400 mb-8 max-w-xs mx-auto">Zdefiniuj cele oszczędnościowe lub limity na konkretne okazje w ustawieniach.</p>
                 <div class="flex justify-center">
-                    <button onclick="switchTab('settings-special')" class="px-8 py-3.5 btn-primary rounded-xl text-sm font-bold transition-all active:scale-95 shadow-xl">
+                    <button data-nav-tab="settings-special" class="px-8 py-3.5 btn-primary rounded-xl text-sm font-bold transition-all active:scale-95 shadow-xl">
                         Dodaj budżet specjalny
                     </button>
                 </div>
@@ -76,11 +81,11 @@ export function renderSpecialBudgetsTab() {
     }
 
     const budgetsWithData = state.allSpecialBudgets.map(budget => {
+        const spent = Number(budget.spent || 0);
+        const remaining = Math.max(0, budget.amount - spent);
+        const progress = budget.amount > 0 ? Math.min(100, (spent / budget.amount) * 100) : 0;
+        
         const budgetPurchases = state.allPurchases.filter(p => p.specialBudgetId === budget.id);
-        const spent = budgetPurchases.reduce((sum, p) => sum + p.totalAmount, 0);
-        const remaining = budget.amount - spent;
-        const progress = budget.amount > 0 ? (spent / budget.amount) * 100 : 0;
-
         const spendingByCategory = budgetPurchases
             .flatMap(p => p.items || [])
             .reduce((acc, item) => {
@@ -131,9 +136,8 @@ export function renderSpecialBudgetsTab() {
     }).join('');
 
     const header = `
-        <div class="flex justify-between items-center mb-6 max-w-4xl mx-auto px-4">
-            <h2 class="text-2xl font-bold text-white">Budżety Specjalne</h2>
-            <button onclick="switchTab('settings-special')" class="flex items-center space-x-2 px-3 py-1.5 bg-white/10 hover:bg-white/20 border border-white/10 rounded-lg text-brand-400 transition-all text-xs font-medium">
+        <div class="flex justify-end items-center mb-6 max-w-4xl mx-auto px-4">
+            <button data-nav-tab="settings-special" class="flex items-center space-x-2 px-3 py-1.5 bg-white/10 hover:bg-white/20 border border-white/10 rounded-lg text-brand-400 transition-all text-xs font-medium">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
                     <circle cx="12" cy="12" r="3"/>
@@ -153,6 +157,20 @@ export function renderSpecialBudgetsTab() {
             </div>
         </div>
     `;
+
+    // Obsługa przycisków nawigacyjnych (Zarządzaj / Dodaj)
+    tabContent.querySelectorAll('[data-nav-tab]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const tab = btn.dataset.navTab;
+            switchTab(tab);
+        });
+    });
+
+    // Wyczyść stare instancje wykresów przed renderowaniem nowych
+    Object.values(specialBudgetCharts).forEach(chart => {
+        if (chart) chart.destroy();
+    });
+    for (const key in specialBudgetCharts) delete specialBudgetCharts[key];
 
     // Renderuj wykresy po dodaniu canvasów do DOM
     budgetsWithData.forEach(budget => {
@@ -257,9 +275,7 @@ export async function handleAddSpecialBudget(e) {
             if (amountInput) amountInput.value = '';
             
             // fetchInitialData odświeża stan i wywołuje renderowanie
-            if (typeof window.fetchInitialData === 'function') {
-                await window.fetchInitialData(false);
-            }
+            await fetchInitialData(false);
         } catch (error) {
             alert('Nie udało się dodać budżetu specjalnego: ' + error.message);
         } finally {
@@ -280,9 +296,7 @@ export async function handleSpecialBudgetActions(e) {
                 deleteBtn.disabled = true;
                 deleteBtn.innerHTML = '<i class="fas fa-spinner animate-spin"></i>';
                 await apiCall(`/api/special-budgets/${budgetId}`, 'DELETE');
-                if (typeof window.fetchInitialData === 'function') {
-                    await window.fetchInitialData(false);
-                }
+                await fetchInitialData(false);
             } catch (error) {
                 alert('Nie udało się usunąć budżetu: ' + error.message);
                 deleteBtn.disabled = false;
@@ -335,9 +349,7 @@ export async function handleEditSpecialBudgetSubmit(e) {
             await apiCall(`/api/special-budgets/${editingSpecialBudgetId}`, 'PUT', { name, amount });
             
             // fetchInitialData odświeża stan i wywołuje renderowanie
-            if (typeof window.fetchInitialData === 'function') {
-                await window.fetchInitialData(false);
-            }
+            await fetchInitialData(false);
             
             closeOverlay('edit-special-budget-modal');
             editingSpecialBudgetId = null;

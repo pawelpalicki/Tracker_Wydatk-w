@@ -28,8 +28,24 @@ router.post('/budgets/:year/:month', authMiddleware, asyncHandler(async (req, re
 router.get('/special-budgets', authMiddleware, asyncHandler(async (req, res) => {
     const snapshot = await specialBudgetsCollection.where('userId', '==', req.userId).get();
     const budgets = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    budgets.sort((a, b) => b.createdAt.toDate() - a.createdAt.toDate());
-    res.json(budgets);
+    
+    // Obliczamy wydatki dla każdego budżetu
+    const budgetsWithSpent = await Promise.all(budgets.map(async (budget) => {
+        const purchaseSnapshot = await purchasesCollection
+            .where('userId', '==', req.userId)
+            .where('specialBudgetId', '==', budget.id)
+            .get();
+        
+        let spent = 0;
+        purchaseSnapshot.forEach(doc => {
+            spent += (doc.data().totalAmount || 0);
+        });
+        
+        return { ...budget, spent };
+    }));
+
+    budgetsWithSpent.sort((a, b) => b.createdAt.toDate() - a.createdAt.toDate());
+    res.json(budgetsWithSpent);
 }));
 
 router.post('/special-budgets', authMiddleware, asyncHandler(async (req, res) => {

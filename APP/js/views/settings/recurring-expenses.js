@@ -7,6 +7,7 @@ import { formatAmount } from '../../shared/format.js';
 import { openSelectionDrawer, openOverlay, closeOverlay } from '../../shared/ui.js';
 import { applyCategorySelectionState, openHierarchicalCategoryDrawer } from '../../shared/categories.js';
 import { buildTagsSummary, openTagsDrawer, getDefaultTagValues } from '../../shared/tags.js';
+import { fetchInitialData } from '../../core/data-loader.js';
 
 // Stan lokalny formularza
 let editingRecurringExpenseId = null;
@@ -217,9 +218,7 @@ async function handleAddOrUpdateRecurringExpense(e) {
 
         exitRecurringExpenseEditMode();
         
-        if (typeof window.fetchInitialData === 'function') {
-            await window.fetchInitialData(false);
-        }
+        await fetchInitialData(false);
     } catch (error) {
         alert(`Nie udało się zapisać wydatku cyklicznego: ${error.message}`);
     } finally {
@@ -256,9 +255,7 @@ async function deleteRecurringExpense(expenseId, btn) {
         btn.innerHTML = '<i class="fas fa-spinner animate-spin"></i>';
         await apiCall(`/api/recurring-expenses/${expenseId}`, 'DELETE');
         
-        if (typeof window.fetchInitialData === 'function') {
-            await window.fetchInitialData(false);
-        }
+        await fetchInitialData(false);
     } catch (error) {
         alert('Nie udało się usunąć wydatku: ' + error.message);
         btn.disabled = false;

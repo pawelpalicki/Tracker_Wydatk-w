@@ -2,7 +2,8 @@
  * Moduł Zarządzania Tagami (Ustawienia).
  */
 import state from '../../core/state.js';
-import { apiCall } from '../../core/api.js';
+import { getTagGroups, getTagGroupLabel, getTagOptions } from '../../shared/tags.js';
+import { fetchInitialData } from '../../core/data-loader.js';
 
 let initialized = false;
 
@@ -43,7 +44,7 @@ export function renderTagsManager() {
     const container = el('tags-groups-container');
     if (!container) return;
 
-    const groups = (typeof window.getTagGroups === 'function') ? window.getTagGroups() : ['nature', 'purpose'];
+    const groups = getTagGroups();
     if (groups.length === 0) {
         container.innerHTML = '<p class="text-xs text-gray-500 italic">Brak grup tagów.</p>';
         return;
@@ -52,8 +53,8 @@ export function renderTagsManager() {
 }
 
 function renderTagGroupSection(group) {
-    const groupLabel = (typeof window.getTagGroupLabel === 'function') ? window.getTagGroupLabel(group) : group;
-    const tags = (typeof window.getTagOptions === 'function') ? window.getTagOptions(group) : [];
+    const groupLabel = getTagGroupLabel(group);
+    const tags = getTagOptions(group);
     const isBuiltin = ['nature', 'purpose'].includes(group);
 
     const tagsHtml = tags.length === 0
@@ -145,7 +146,7 @@ function openTagFormModal(group, oldValue = null) {
     const iconInput = el('tag-form-icon-input');
 
     if (oldValue) {
-        const tags = (typeof window.getTagOptions === 'function') ? window.getTagOptions(group) : [];
+        const tags = getTagOptions(group);
         const existing = tags.find(t => t.value === oldValue);
         el('tag-form-modal-title').textContent = 'Edytuj tag';
         labelInput.value = existing ? existing.label : oldValue;
@@ -188,17 +189,30 @@ async function saveTagFromModal() {
 
     if (!value) { alert('Nie można wygenerować wartości.'); return; }
 
+    const saveBtn = el('tag-form-save-btn');
+    const originalText = saveBtn ? saveBtn.innerHTML : 'Zapisz';
+
     try {
+        if (saveBtn) {
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = '<i class="fas fa-spinner animate-spin mr-2"></i> Zapisywanie...';
+        }
+
         if (oldValue) {
             await apiCall(`/api/tags/${group}/${encodeURIComponent(oldValue)}`, 'PUT', { value, label: labelRaw, icon });
         } else {
             await apiCall(`/api/tags/${group}`, 'POST', { value, label: labelRaw, icon });
         }
         closeTagFormModal();
-        if (typeof window.fetchInitialData === 'function') await window.fetchInitialData(false);
+        await fetchInitialData(false);
         renderTagsManager();
     } catch (err) {
         alert('Błąd: ' + err.message);
+    } finally {
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = originalText;
+        }
     }
 }
 
@@ -206,7 +220,7 @@ async function deleteTagConfirm(group, value) {
     if (!confirm(`Usunąć tag "${value}"?`)) return;
     try {
         await apiCall(`/api/tags/${group}/${encodeURIComponent(value)}`, 'DELETE');
-        if (typeof window.fetchInitialData === 'function') await window.fetchInitialData(false);
+        await fetchInitialData(false);
         renderTagsManager();
     } catch (err) {
         alert('Błąd: ' + err.message);
@@ -224,7 +238,7 @@ function openTagGroupModal(existingGroup = null) {
     const initialTagContainer = el('tag-group-initial-tag-container');
 
     if (existingGroup) {
-        const label = (typeof window.getTagGroupLabel === 'function') ? window.getTagGroupLabel(existingGroup) : existingGroup;
+        const label = getTagGroupLabel(existingGroup);
         el('tag-group-modal-title').textContent = 'Edytuj grupę tagów';
         labelInput.value = label;
         keyPreview.textContent = existingGroup;
@@ -262,7 +276,15 @@ async function saveTagGroup() {
 
     if (!label) { alert('Podaj nazwę grupy.'); return; }
     
+    const saveBtn = el('tag-group-save-btn');
+    const originalText = saveBtn ? saveBtn.innerHTML : 'Zapisz';
+
     try {
+        if (saveBtn) {
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = '<i class="fas fa-spinner animate-spin mr-2"></i> Zapisywanie...';
+        }
+
         if (editGroupId) {
             await apiCall(`/api/tags/groups/${encodeURIComponent(editGroupId)}`, 'PUT', { label });
         } else {
@@ -273,10 +295,15 @@ async function saveTagGroup() {
             await apiCall('/api/tags/groups', 'POST', { group: groupKey, label, firstLabel, firstIcon });
         }
         closeTagGroupModal();
-        if (typeof window.fetchInitialData === 'function') await window.fetchInitialData(false);
+        await fetchInitialData(false);
         renderTagsManager();
     } catch (err) {
         alert('Błąd: ' + err.message);
+    } finally {
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = originalText;
+        }
     }
 }
 
@@ -284,7 +311,7 @@ async function deleteTagGroup(group) {
     if (!confirm(`Usunąć grupę "${group}"?`)) return;
     try {
         await apiCall(`/api/tags/groups/${encodeURIComponent(group)}`, 'DELETE');
-        if (typeof window.fetchInitialData === 'function') await window.fetchInitialData(false);
+        await fetchInitialData(false);
         renderTagsManager();
     } catch (err) {
         alert('Błąd: ' + err.message);

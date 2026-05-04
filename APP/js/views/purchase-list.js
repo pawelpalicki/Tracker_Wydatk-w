@@ -9,10 +9,13 @@ import { formatAmount } from '../shared/format.js';
 import { openSelectionDrawer, openDrawer, closeDrawer } from '../shared/ui.js';
 import { openHierarchicalCategoryDrawer } from '../shared/categories.js';
 import { getTagGroups, getTagGroupLabel, getTagLabel } from '../shared/tags.js';
+import { fetchInitialData } from '../core/data-loader.js';
 import { enterEditMode } from './purchase-form.js';
 
 let purchaseListInitialized = false;
 let filtersInitialized = false;
+let currentFilterType = null;
+let currentFilterOnApply = null;
 
 function el(id) {
     return document.getElementById(id);
@@ -36,11 +39,16 @@ export function initPurchaseList() {
             const purchaseId = e.target.closest('[data-purchase-id]')?.dataset.purchaseId;
             if (!purchaseId) return;
             if (confirm('Czy na pewno chcesz usunac ten zakup? Operacja jest nieodwracalna.')) {
+                const originalContent = deleteBtn.innerHTML;
                 try {
+                    deleteBtn.disabled = true;
+                    deleteBtn.innerHTML = '<i class="fas fa-spinner animate-spin"></i>';
                     await apiCall(`/api/purchases/${purchaseId}`, 'DELETE');
-                    await window.fetchInitialData?.(false);
+                    await fetchInitialData(false);
                 } catch (error) {
                     alert('Nie udalo sie usunac zakupu: ' + error.message);
+                    deleteBtn.disabled = false;
+                    deleteBtn.innerHTML = originalContent;
                 }
             }
             return;
@@ -54,7 +62,7 @@ export function initPurchaseList() {
         }
     });
 
-    window.addEventListener('scroll', handleInfiniteScroll);
+    addEventListener('scroll', handleInfiniteScroll);
     initPurchaseListFilters();
 }
 
@@ -217,6 +225,32 @@ export function initPurchaseListFilters() {
         document.querySelectorAll('.filter-clear').forEach(clear => clear.classList.add('hidden'));
         handleFilterChange();
     });
+
+    // Inicjalizacja przycisków szuflady filtrów (jeden raz)
+    const applyBtn = el('filter-drawer-apply-btn');
+    const closeBtn = el('close-filter-drawer');
+    const overlay = el('filter-drawer-overlay');
+
+    applyBtn?.addEventListener('click', () => {
+        if (currentFilterType === 'date') {
+            state.filterDateStart = el('drawer-date-start')?.value || '';
+            state.filterDateEnd = el('drawer-date-end')?.value || '';
+        } else if (currentFilterType === 'amount') {
+            state.filterMinAmount = el('drawer-min-amount')?.value || '';
+            state.filterMaxAmount = el('drawer-max-amount')?.value || '';
+        }
+        if (typeof currentFilterOnApply === 'function') currentFilterOnApply();
+        closeFilterDrawer();
+    });
+
+    closeBtn?.addEventListener('click', () => closeFilterDrawer());
+    let mousedownTarget = null;
+    overlay?.addEventListener('mousedown', (e) => {
+        mousedownTarget = e.target;
+    });
+    overlay?.addEventListener('click', (e) => {
+        if (e.target === overlay && mousedownTarget === overlay) closeFilterDrawer();
+    });
 }
 
 function setText(id, text) {
@@ -229,9 +263,10 @@ export function openFilterDrawer(title, type, onApply) {
     const drawer = el('filter-drawer');
     const titleEl = el('filter-drawer-title');
     const content = el('filter-drawer-content');
-    const applyBtn = el('filter-drawer-apply-btn');
-    const closeBtn = el('close-filter-drawer');
-    if (!overlay || !drawer || !content || !applyBtn) return;
+    if (!overlay || !drawer || !content) return;
+
+    currentFilterType = type;
+    currentFilterOnApply = onApply;
 
     if (titleEl) titleEl.textContent = title;
     content.innerHTML = '';
@@ -268,24 +303,6 @@ export function openFilterDrawer(title, type, onApply) {
         `;
     }
 
-    applyBtn.onclick = () => {
-        if (type === 'date') {
-            state.filterDateStart = el('drawer-date-start')?.value || '';
-            state.filterDateEnd = el('drawer-date-end')?.value || '';
-        } else if (type === 'amount') {
-            state.filterMinAmount = el('drawer-min-amount')?.value || '';
-            state.filterMaxAmount = el('drawer-max-amount')?.value || '';
-        }
-        onApply();
-        closeFilterDrawer();
-    };
-
-    const handleClose = () => closeFilterDrawer();
-    if (closeBtn) closeBtn.onclick = handleClose;
-    overlay.onclick = (e) => {
-        if (e.target === overlay) handleClose();
-    };
-
     openDrawer('filter-drawer', 'filter-drawer-overlay');
 }
 
@@ -295,7 +312,7 @@ export function closeFilterDrawer() {
 
 export const handleInfiniteScroll = () => {
     if (!el('list-tab')?.classList.contains('active')) return;
-    if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 200) {
+    if ((innerHeight + scrollY) >= document.body.offsetHeight - 200) {
         fetchMorePurchases();
     }
 };
@@ -304,7 +321,7 @@ export async function handleFilterChange() {
     const queryString = getFilterQueryParams();
 
     if (!queryString) {
-        window.addEventListener('scroll', handleInfiniteScroll);
+        addEventListener('scroll', handleInfiniteScroll);
         await loadInitialPurchases();
         if (state.structuredCategories.length === 0 && state.allCategories.length > 0) {
             const refetchedStructuredCategories = await apiCall('/api/categories/v2');
@@ -315,7 +332,7 @@ export async function handleFilterChange() {
         return;
     }
 
-    window.removeEventListener('scroll', handleInfiniteScroll);
+    removeEventListener('scroll', handleInfiniteScroll);
     state.isLoadingPurchases = true;
     const list = el('purchases-list');
     if (list) list.innerHTML = '<div class="text-center py-12">Filtrowanie...</div>';
@@ -354,7 +371,7 @@ export function getFilterQueryParams() {
 
 export async function loadInitialPurchases() {
     state.isLoadingPurchases = true;
-    window.removeEventListener('scroll', handleInfiniteScroll);
+    removeEventListener('scroll', handleInfiniteScroll);
     try {
         const query = getFilterQueryParams();
         const suffix = query ? `?${query}` : '';
@@ -363,7 +380,7 @@ export async function loadInitialPurchases() {
         state.nextPurchaseCursor = nextCursor || null;
         renderPurchasesList(state.allPurchases);
         if (state.nextPurchaseCursor) {
-            window.addEventListener('scroll', handleInfiniteScroll);
+            addEventListener('scroll', handleInfiniteScroll);
         }
     } catch (error) {
         console.error('Blad ladowania poczatkowych zakupow:', error);
@@ -386,7 +403,7 @@ export async function fetchMorePurchases() {
         }
         state.nextPurchaseCursor = nextCursor || null;
         if (!state.nextPurchaseCursor) {
-            window.removeEventListener('scroll', handleInfiniteScroll);
+            removeEventListener('scroll', handleInfiniteScroll);
         }
     } catch (error) {
         console.error('Blad doladowywania zakupow:', error);

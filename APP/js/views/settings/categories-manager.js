@@ -4,6 +4,7 @@
 import state from '../../core/state.js';
 import { apiCall } from '../../core/api.js';
 import { openOverlay, closeOverlay } from '../../shared/ui.js';
+import { fetchInitialData } from '../../core/data-loader.js';
 
 // =====================================================================
 // STAŁE: paleta ikon i kolorów
@@ -51,8 +52,13 @@ export function initCategoriesManager() {
     el('cat-v2-sub-save-btn')?.addEventListener('click', saveSubCategory);
 
     el('close-category-editor-drawer')?.addEventListener('click', () => closeOverlay('category-editor-drawer'));
+    // Zamknięcie szuflady przez kliknięcie w overlay
+    let mousedownTarget = null;
+    el('category-editor-drawer-overlay')?.addEventListener('mousedown', (e) => {
+        mousedownTarget = e.target;
+    });
     el('category-editor-drawer-overlay')?.addEventListener('click', (e) => {
-        if (e.target.id === 'category-editor-drawer-overlay') {
+        if (e.target.id === 'category-editor-drawer-overlay' && mousedownTarget?.id === 'category-editor-drawer-overlay') {
             closeOverlay('category-editor-drawer');
         }
     });
@@ -326,7 +332,7 @@ async function saveParentCategory() {
         }
         
         closeOverlay('category-editor-drawer');
-        if (typeof window.fetchInitialData === 'function') await window.fetchInitialData(false);
+        await fetchInitialData(false);
         renderCategoriesListV2();
     } catch (err) {
         alert('Błąd: ' + err.message);
@@ -359,7 +365,7 @@ async function saveSubCategory() {
         }
         
         closeOverlay('category-editor-drawer');
-        if (typeof window.fetchInitialData === 'function') await window.fetchInitialData(false);
+        await fetchInitialData(false);
         renderCategoriesListV2();
     } catch (err) {
         alert('Błąd: ' + err.message);
@@ -381,7 +387,7 @@ async function deleteCategory(id, isParent) {
 
     try {
         await apiCall(`/api/categories/v2/${id}`, 'DELETE');
-        if (typeof window.fetchInitialData === 'function') await window.fetchInitialData(false);
+        await fetchInitialData(false);
         renderCategoriesListV2();
     } catch (err) {
         alert('Błąd: ' + err.message);

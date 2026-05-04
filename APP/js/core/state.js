@@ -50,6 +50,11 @@ const state = {
     filterMaxAmount: '',
 
     // =====================================================================
+    // CACHE DANYCH
+    // =====================================================================
+    availableMonthsList: [], // Wykorzystywane w analizie długoterminowej
+
+    // =====================================================================
     // FLAGI SYSTEMOWE
     // =====================================================================
     appEventListenersInitialized: false,

@@ -11,8 +11,29 @@
 import state from './state.js';
 import { apiCall } from './api.js';
 import { auth } from './config.js';
-import { switchTab } from '../shared/ui.js';
+import {
+    switchTab,
+    consumeOverlayLockPopstateIgnore,
+    hasVisibleBlockingOverlay,
+    reapplyOverlayNavigationLock
+} from '../shared/ui.js';
 import { formatAmount } from '../shared/format.js';
+
+// Importy widoków i ich inicjalizacji
+import { initPurchaseForm, exitEditMode } from '../views/purchase-form.js';
+import { initPurchaseList, initPurchaseListFilters } from '../views/purchase-list.js';
+import {
+    initSpecialBudgets,
+} from '../views/special-budgets.js';
+import { initSettingsRecurring, handleScheduleTypeChange } from '../views/settings/recurring-expenses.js';
+import { initMonthlyBudget } from '../views/settings/monthly-budget.js';
+import { initCategoriesManager } from '../views/settings/categories-manager.js';
+import { initTagsManager } from '../views/settings/tags-manager.js';
+import { initNotifications } from '../shared/notifications.js';
+import { initHomeDashboardControls } from '../views/dashboard.js';
+
+// Importy serwisu danych
+import { fetchInitialData } from './data-loader.js';
 
 let appEventListenersInitialized = false;
 
@@ -45,17 +66,15 @@ function setupAppEventListeners() {
     }
 
     // Browser back button support (obsługuje też natywny systemowy gest swipe wstecz: iOS / Android)
-    window.addEventListener('popstate', (event) => {
+    addEventListener('popstate', (event) => {
         const stateData = event.state;
         
-        if (typeof window.consumeOverlayLockPopstateIgnore === 'function' && window.consumeOverlayLockPopstateIgnore()) {
+        if (consumeOverlayLockPopstateIgnore()) {
             return;
         }
 
-        if (typeof window.hasVisibleBlockingOverlay === 'function' && window.hasVisibleBlockingOverlay()) {
-            if (typeof window.reapplyOverlayNavigationLock === 'function') {
-                window.reapplyOverlayNavigationLock();
-            }
+        if (hasVisibleBlockingOverlay()) {
+            reapplyOverlayNavigationLock();
             return;
         }
 
@@ -67,17 +86,17 @@ function setupAppEventListeners() {
     });
 
     // Inicjalizacja modułów
-    if (typeof window.initPurchaseForm === 'function') window.initPurchaseForm();
-    if (typeof window.initPurchaseList === 'function') window.initPurchaseList();
-    if (typeof window.initSpecialBudgets === 'function') window.initSpecialBudgets();
-    if (typeof window.initSettingsRecurring === 'function') window.initSettingsRecurring();
-    if (typeof window.initMonthlyBudget === 'function') window.initMonthlyBudget();
-    if (typeof window.initCategoriesManager === 'function') window.initCategoriesManager();
-    if (typeof window.initTagsManager === 'function') window.initTagsManager();
+    initPurchaseForm();
+    initPurchaseList();
+    initSpecialBudgets();
+    initSettingsRecurring();
+    initMonthlyBudget();
+    initCategoriesManager();
+    initTagsManager();
 
     // Dynamic Navbar buttons
     document.getElementById('nav-back-btn')?.addEventListener('click', () => {
-        window.history.back();
+        history.back();
     });
 
     document.getElementById('nav-user-btn')?.addEventListener('click', () => {
@@ -85,7 +104,7 @@ function setupAppEventListeners() {
     });
 
     // Inicjalizuj powiadomienia
-    if (typeof window.initNotifications === 'function') window.initNotifications();
+    initNotifications();
 
     // Zamiana inline onclick na event listenery
     setupInlineClickHandlers();
@@ -124,173 +143,6 @@ function setupInlineClickHandlers() {
 }
 
 /**
- * Auto-migracja starych kategorii do struktury hierarchicznej.
- */
-async function migrateToStructuredCategories() {
-    // Mapa ikon dla domyślnych kategorii
-    const defaultIcons = {
-        'spożywcze': 'fa-shopping-basket',
-        'jedzenie/napoje': 'fa-apple-alt',
-        'słodycze/przekąski': 'fa-cookie-bite',
-        'dania gotowe/z dostawy': 'fa-moped',
-        'mieszkanie': 'fa-home',
-        'czynsz': 'fa-building',
-        'media(prąd/gaz/woda)': 'fa-bolt',
-        'wyposażenie': 'fa-couch',
-        'chemia': 'fa-jug-detergent',
-        'remonty/naprawy': 'fa-tools',
-        'artykuły gospodarcze': 'fa-recycle',
-        'zdrowie & uroda': 'fa-heartbeat',
-        'zdrowie': 'fa-heartbeat',
-        'lekarz': 'fa-stethoscope',
-        'apteka': 'fa-pills',
-        'usługi kosmetyczne': 'fa-cut',
-        'kosmetyki': 'fa-spa',
-        'higieniczne': 'fa-toilet-paper',
-        'suplementy': 'fa-capsules',
-        'transport': 'fa-car',
-        'samochód': 'fa-gas-pump',
-        'taxi': 'fa-taxi',
-        'komunikacja miejska': 'fa-bus',
-        'podróże': 'fa-suitcase-rolling',
-        'rozrywka': 'fa-film',
-        'gastronomia': 'fa-hamburger',
-        'kultura': 'fa-theater-masks',
-        'subskrypcje (vod)': 'fa-play-circle',
-        'hobby': 'fa-gamepad',
-        'sport': 'fa-football-ball',
-        'dom': 'fa-home',
-        'rachunki': 'fa-file-invoice-dollar',
-        'finanse': 'fa-file-invoice-dollar',
-        'spłata kredytów': 'fa-hand-holding-usd',
-        'oszczędności / inwestycje': 'fa-piggy-bank',
-        'odzież': 'fa-tshirt',
-        'ubrania': 'fa-tshirt',
-        'ubrania i biżuteria': 'fa-tshirt',
-        'buty': 'fa-shoe-prints',
-        'dodatki': 'fa-gem',
-        'edukacja': 'fa-graduation-cap',
-        'kursy/szkolenia': 'fa-chalkboard-teacher',
-        'książki': 'fa-book-open',
-        'alkohol/papierosy': 'fa-smoking',
-        'kaucje': 'fa-archive',
-        'internet/tv': 'fa-tv',
-        'telefon': 'fa-mobile-alt',
-        'elektronika': 'fa-microchip',
-        'prezenty': 'fa-gift',
-        'zwierzęta': 'fa-dog',
-        'inne': 'fa-tag'
-    };
-
-    // Paleta domyślna
-    const colorPalette = ['#3b82f6', '#10b981', '#ef4444', '#f97316', '#8b5cf6', '#ec4899', '#f59e0b', '#14b8a6', '#64748b', '#06b6d4', '#a855f7', '#eab308', '#0ea5e9', '#be185d', '#16a34a', '#f43f5e', '#84cc16', '#6366f1', '#d946ef', '#fb7185'];
-
-    // Generuj nową strukturę
-    state.structuredCategories = state.allCategories.map((catName, index) => {
-        const color = colorPalette[index % colorPalette.length];
-        const icon = defaultIcons[catName.toLowerCase()] || 'fa-tag';
-        return {
-            id: `migrated-${index}`,
-            name: catName,
-            parentId: null,
-            color: color,
-            icon: icon
-        };
-    });
-
-    try {
-        // Zapisz zmigrowane kategorie do backendu (v2)
-        await apiCall('/api/categories/v2', 'POST', { structuredCategories: state.structuredCategories });
-        console.log("Pomyślnie zmigrowano kategorie.");
-    } catch (err) {
-        console.error("Błąd podczas migracji kategorii:", err);
-    }
-}
-
-/**
- * Pobiera początkowe dane aplikacji.
- */
-export async function fetchInitialData(shouldSwitchToDefault = true) {
-    try {
-        // Pobierz dane, które nie wymagają paginacji
-        [
-            state.allCategories,
-            state.structuredCategories,
-            state.allShops,
-            state.allSpecialBudgets,
-            state.allRecurringExpenses,
-            state.tagDefinitions
-        ] = await Promise.all([
-            apiCall('/api/categories'),
-            apiCall('/api/categories/v2'),
-            apiCall('/api/shops'),
-            apiCall('/api/special-budgets'),
-            apiCall('/api/recurring-expenses'),
-            apiCall('/api/tags')
-        ]);
-
-        // Renderuj dynamiczne filtry tagów w analizie
-        if (typeof window.renderAnalysisTagFilterButton === 'function') {
-            window.renderAnalysisTagFilterButton();
-        }
-
-        // Załaduj pierwszą stronę zakupów
-        await window.loadInitialPurchases?.();
-
-        // Auto-migracja, jeśli brak kategorii hierarchicznych
-        if (state.structuredCategories.length === 0 && state.allCategories.length > 0) {
-            console.log("Wykryto brak kategorii hierarchicznych. Uruchamiam auto-migrację...");
-            await migrateToStructuredCategories();
-        }
-
-        // Renderuj wszystko po załadowaniu wszystkich danych
-        await renderAll();
-        
-        if (typeof window.populateBudgetMonthSelector === 'function') {
-            window.populateBudgetMonthSelector();
-        }
-        
-        if (typeof window.renderRecurringExpenses === 'function') {
-            window.renderRecurringExpenses();
-        }
-        
-        if (shouldSwitchToDefault) {
-            switchTab('home');
-        }
-
-        // Załaduj powiadomienia po starcie
-        if (typeof window.loadNotifications === 'function') {
-            window.loadNotifications();
-        }
-    } catch (error) {
-        alert(error.message);
-    }
-}
-
-/**
- * Renderuje wszystkie widoki aplikacji.
- */
-async function renderAll() {
-    // Uruchamiamy procesy niezależnie, aby nie blokować renderowania prostych list
-    window.renderDashboard?.().catch(err => console.error('Błąd kokpitu:', err));
-    
-    // To renderuje się natychmiast, bo nie wymaga oczekiwania na powyższe
-    if (typeof window.renderSpecialBudgetsList === 'function') {
-        window.renderSpecialBudgetsList();
-    }
-    
-    if (typeof window.populateBudgetTypeSelect === 'function') {
-        window.populateBudgetTypeSelect();
-    }
-    
-    // Jeśli jesteśmy na zakładce budżetów specjalnych, odświeżamy też karty z wykresami
-    if (typeof window.renderSpecialBudgetsTab === 'function' && 
-        document.getElementById('special-budgets-tab')?.classList.contains('active')) {
-        window.renderSpecialBudgetsTab();
-    }
-}
-
-/**
  * Główna funkcja inicjalizacyjna aplikacji.
  */
 export async function initializeApp() {
@@ -310,7 +162,7 @@ export async function initializeApp() {
         await fetchInitialData(false);
     }
 
-    if (typeof window.exitEditMode === 'function') window.exitEditMode();
-    if (typeof window.handleScheduleTypeChange === 'function') window.handleScheduleTypeChange();
-    if (typeof window.initHomeDashboardControls === 'function') window.initHomeDashboardControls();
+    exitEditMode();
+    handleScheduleTypeChange();
+    initHomeDashboardControls();
 }
