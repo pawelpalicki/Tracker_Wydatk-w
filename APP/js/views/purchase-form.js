@@ -377,6 +377,7 @@ export async function handlePurchaseFormSubmit(e) {
             await apiCall('/api/purchases', 'POST', purchaseData);
         }
         await fetchInitialData(false);
+        exitEditMode();
         switchTab('list');
     } catch (error) {
         alert('Blad zapisu: ' + error.message);

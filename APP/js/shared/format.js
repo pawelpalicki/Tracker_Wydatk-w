@@ -7,9 +7,14 @@
 // Standardowy format waluty: "1 234,56 zł"
 export function formatAmount(amount) {
     if (amount === undefined || amount === null) amount = 0;
-    // Formatujemy liczbę ręcznie
-    const parts = amount.toFixed(2).split('.');
-    // Wstawiamy zwykłą spację co 3 cyfry dla 100% widoczności
+    const formatted = formatNumber(amount.toFixed(2));
+    return formatted.replace('.', ',') + ' zł';
+}
+
+// Formatowanie samej liczby (tysiące)
+export function formatNumber(num) {
+    if (num === undefined || num === null) return '';
+    const parts = num.toString().split('.');
     parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
-    return parts.join(',') + ' zł';
+    return parts.join('.');
 }

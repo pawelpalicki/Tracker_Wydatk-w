@@ -37,7 +37,7 @@ export const NAV_TITLES = {
     'special-budgets': 'Budżety specjalne',
     'more': 'Więcej',
     'settings': 'Ustawienia',
-    'settings-categories': 'Zarządzaj kategoriami',
+    'settings-categories': 'Zarządzaj kategoriami i tagami',
     'settings-budget': 'Miesięczny Budżet',
     'settings-special': 'Zarządzaj budżetami',
     'settings-recurring': 'Stałe Opłaty',
@@ -89,7 +89,7 @@ export function switchTab(tabName, pushToHistory = true) {
     });
 
     if (tabName !== 'add') {
-        import('../views/purchase-form.js').then(m => m.exitEditMode?.());
+        import('../views/purchase-form.js').then(m => m.stopCamera?.());
         document.getElementById('scanner-container')?.classList.add('hidden');
     }
 

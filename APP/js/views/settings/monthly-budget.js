@@ -4,6 +4,7 @@
 import state from '../../core/state.js';
 import { apiCall } from '../../core/api.js';
 import { openSelectionDrawer, openOverlay, closeOverlay } from '../../shared/ui.js';
+import { formatNumber } from '../../shared/format.js';
 import { renderDashboard } from '../dashboard.js';
 
 let budgetMonthValue = '';
@@ -115,17 +116,45 @@ export async function renderBudgetInputs() {
             categoriesToRender = state.allCategories;
         }
 
-        list.innerHTML = categoriesToRender.map(cat => `
-            <div class="flex justify-between items-center py-2 border-b border-white/5 last:border-0">
-                <label for="budget-${cat}" class="text-gray-800 dark:text-gray-200">${cat.charAt(0).toUpperCase() + cat.slice(1)}</label>
-                <div class="relative">
-                    <input type="number" id="budget-${cat}" data-category="${cat}"
-                           class="budget-input w-32 rounded-md border-white/10 bg-white/5 text-white text-right pr-8 py-2 focus:bg-white/10 transition-all text-sm font-semibold"
-                           placeholder="0" value="${budgets[cat] || ''}">
-                    <span class="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-gray-500 font-bold">zł</span>
+        list.innerHTML = categoriesToRender.map(cat => {
+            const val = budgets[cat] || '';
+            const formatted = formatNumber(val);
+            return `
+                <div class="flex justify-between items-center py-2 border-b border-white/5 last:border-0">
+                    <label for="budget-${cat}" class="text-gray-800 dark:text-gray-200">${cat.charAt(0).toUpperCase() + cat.slice(1)}</label>
+                    <div class="relative">
+                        <input type="text" inputmode="decimal" id="budget-${cat}" data-category="${cat}"
+                               class="budget-input rounded-md border-white/10 bg-white/5 text-white text-right py-2 focus:bg-white/10 transition-all text-base font-semibold"
+                               style="padding-right: 2.2rem !important; width: 9rem !important;"
+                               placeholder="0" value="${formatted}">
+                        <span class="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-400 font-bold">zł</span>
+                    </div>
                 </div>
-            </div>
-        `).join('');
+            `;
+        }).join('');
+
+        // Dodaj listener do formatowania w locie
+        list.querySelectorAll('.budget-input').forEach(input => {
+            input.addEventListener('input', (e) => {
+                let cursorPosition = e.target.selectionStart;
+                let originalLength = e.target.value.length;
+                
+                let rawVal = e.target.value.replace(/\s/g, '').replace(',', '.');
+                if (rawVal === '' || isNaN(rawVal.replace('.', ''))) {
+                    if (rawVal !== '') {
+                        e.target.value = rawVal.replace(/[^0-9.]/g, '');
+                    }
+                    return;
+                }
+
+                const newVal = formatNumber(rawVal);
+                e.target.value = newVal;
+
+                // Przywróć pozycję kursora
+                let newLength = newVal.length;
+                e.target.setSelectionRange(cursorPosition + (newLength - originalLength), cursorPosition + (newLength - originalLength));
+            });
+        });
     } catch (error) {
         console.error("Błąd renderowania pól budżetu:", error);
         list.innerHTML = `<p class="text-red-500 text-sm">Nie udało się załadować danych budżetu.</p>`;
@@ -145,7 +174,7 @@ async function handleSaveBudget() {
 
     budgetInputs.forEach(input => {
         const category = input.dataset.category;
-        const amount = parseFloat(input.value);
+        const amount = parseFloat(input.value.replace(/\s/g, '').replace(',', '.'));
         if (amount > 0) {
             budgets[category] = amount;
         }

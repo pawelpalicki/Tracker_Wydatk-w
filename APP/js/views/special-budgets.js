@@ -47,6 +47,13 @@ export function initSpecialBudgets() {
         }
     });
 
+    el('special-budgets-tab')?.addEventListener('click', (e) => {
+        const navBtn = e.target.closest('[data-nav-tab]');
+        if (navBtn) {
+            switchTab(navBtn.dataset.navTab);
+        }
+    });
+
     specialBudgetsInitialized = true;
 }
 

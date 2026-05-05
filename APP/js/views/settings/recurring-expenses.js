@@ -311,7 +311,7 @@ function enterRecurringExpenseEditMode(expenseId) {
 
     const form = el('add-recurring-expense-form');
     if (form) {
-        form.querySelector('button[type="submit"]').textContent = 'Zaktualizuj subskrypcję';
+        form.querySelector('button[type="submit"]').textContent = 'Aktualizuj';
         form.scrollIntoView({ behavior: 'smooth' });
     }
 

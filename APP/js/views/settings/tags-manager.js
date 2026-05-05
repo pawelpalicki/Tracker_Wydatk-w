@@ -2,6 +2,7 @@
  * Moduł Zarządzania Tagami (Ustawienia).
  */
 import state from '../../core/state.js';
+import { apiCall } from '../../core/api.js';
 import { getTagGroups, getTagGroupLabel, getTagOptions } from '../../shared/tags.js';
 import { fetchInitialData } from '../../core/data-loader.js';
 
@@ -118,7 +119,7 @@ function handleTagsContainerClick(e) {
     }
     const deleteBtn = e.target.closest('.tag-delete-btn');
     if (deleteBtn) {
-        deleteTagConfirm(deleteBtn.dataset.group, deleteBtn.dataset.value);
+        deleteTagConfirm(deleteBtn.dataset.group, deleteBtn.dataset.value, deleteBtn);
         return;
     }
     const editGroupBtn = e.target.closest('.edit-tag-group-btn');
@@ -128,7 +129,7 @@ function handleTagsContainerClick(e) {
     }
     const delGroupBtn = e.target.closest('.delete-tag-group-btn');
     if (delGroupBtn) {
-        deleteTagGroup(delGroupBtn.dataset.group);
+        deleteTagGroup(delGroupBtn.dataset.group, delGroupBtn);
     }
 }
 
@@ -216,14 +217,19 @@ async function saveTagFromModal() {
     }
 }
 
-async function deleteTagConfirm(group, value) {
+async function deleteTagConfirm(group, value, btn) {
     if (!confirm(`Usunąć tag "${value}"?`)) return;
+    const originalContent = btn.innerHTML;
     try {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner animate-spin"></i>';
         await apiCall(`/api/tags/${group}/${encodeURIComponent(value)}`, 'DELETE');
         await fetchInitialData(false);
         renderTagsManager();
     } catch (err) {
         alert('Błąd: ' + err.message);
+        btn.disabled = false;
+        btn.innerHTML = originalContent;
     }
 }
 
@@ -307,13 +313,18 @@ async function saveTagGroup() {
     }
 }
 
-async function deleteTagGroup(group) {
+async function deleteTagGroup(group, btn) {
     if (!confirm(`Usunąć grupę "${group}"?`)) return;
+    const originalContent = btn.innerHTML;
     try {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner animate-spin"></i>';
         await apiCall(`/api/tags/groups/${encodeURIComponent(group)}`, 'DELETE');
         await fetchInitialData(false);
         renderTagsManager();
     } catch (err) {
         alert('Błąd: ' + err.message);
+        btn.disabled = false;
+        btn.innerHTML = originalContent;
     }
 }
