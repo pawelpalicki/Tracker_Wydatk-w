@@ -294,58 +294,6 @@ input:-webkit-autofill {
 
 /* ===== Drawer & Bottom Sheet ===== */
 
-#category-drawer-overlay,
-#filter-drawer-overlay,
-#tags-selection-overlay,
-#product-drawer-overlay,
-#category-details-drawer-overlay,
-#category-editor-drawer-overlay {
-    background: rgba(0, 0, 0, 0.6);
-    backdrop-filter: blur(4px);
-    transition: opacity 0.3s ease;
-}
-
-#category-drawer-overlay.active,
-#filter-drawer-overlay.active,
-#tags-selection-overlay.active,
-#product-drawer-overlay.active,
-#category-details-drawer-overlay.active,
-#category-editor-drawer-overlay.active {
-    opacity: 1 !important;
-}
-
-#category-drawer,
-#filter-drawer,
-#tags-selection-drawer,
-#product-drawer,
-#category-details-drawer,
-#category-editor-drawer {
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* Performance tweak: keep category drawer on compositor layer for smoother opening animation. */
-#category-drawer {
-    will-change: transform;
-    backface-visibility: hidden;
-    transform: translate3d(0, 100%, 0);
-    height: 85vh;
-}
-
-@supports (height: 100dvh) {
-    #category-drawer {
-        height: 85dvh;
-    }
-}
-
-#category-drawer.active,
-#filter-drawer.active,
-#tags-selection-drawer.active,
-#product-drawer.active,
-#category-details-drawer.active,
-#category-editor-drawer.active {
-    transform: translateY(0) !important;
-}
-
 .drawer-grid-layout {
     display: grid;
     grid-template-columns: repeat(3, 1fr);

@@ -143,18 +143,7 @@ export function getCurrentTabHistoryState() {
 }
 
 export function hasVisibleBlockingOverlay() {
-    return !!document.querySelector(`
-        #filter-drawer-overlay.active,
-        #category-drawer-overlay.active,
-        #category-details-drawer-overlay.active,
-        #product-drawer-overlay.active,
-        #tags-selection-overlay.active,
-        #category-editor-drawer-overlay.active,
-        #copy-budget-modal:not(.hidden),
-        #edit-special-budget-modal:not(.hidden),
-        #tag-form-modal:not(.hidden),
-        #tag-group-modal:not(.hidden)
-    `);
+    return Drawer.isOpen;
 }
 
 export function acquireOverlayNavigationLock() {
@@ -198,176 +187,73 @@ export function restoreBodyScrollIfNeeded() {
     }
 }
 
-export function openDrawer(drawerId, overlayId) {
-    const drawer = document.getElementById(drawerId);
-    const overlay = document.getElementById(overlayId);
-    if (!drawer || !overlay) return;
-
-    const wasAlreadyOpen = overlay.classList.contains('active') || !overlay.classList.contains('hidden');
-    if (!wasAlreadyOpen) {
-        acquireOverlayNavigationLock();
-    }
-    drawer.classList.remove('hidden');
-    overlay.classList.remove('hidden');
-    document.body.style.overflow = 'hidden';
-
-    setTimeout(() => {
-        drawer.classList.add('active');
-        overlay.classList.add('active');
-    }, 10);
-}
-
-export function closeDrawer(drawerId, overlayId) {
-    const drawer = document.getElementById(drawerId);
-    const overlay = document.getElementById(overlayId);
-    if (!drawer || !overlay) return;
-
-    releaseOverlayNavigationLock();
-    drawer.classList.remove('active');
-    overlay.classList.remove('active');
-
-    setTimeout(() => {
-        drawer.classList.add('hidden');
-        overlay.classList.add('hidden');
-        restoreBodyScrollIfNeeded();
-    }, 300);
-}
-
-export function openOverlay(elementId) {
-    const el = document.getElementById(elementId);
-    const overlay = document.getElementById(elementId + '-overlay');
-    if (!el) return;
-
-    const wasAlreadyOpen = el.classList.contains('active') || !el.classList.contains('hidden');
-    if (!wasAlreadyOpen) {
-        acquireOverlayNavigationLock();
-    }
-    el.classList.remove('hidden');
-    if (overlay) overlay.classList.remove('hidden');
-
-    document.body.style.overflow = 'hidden';
-
-    setTimeout(() => {
-        el.classList.add('active');
-        if (overlay) overlay.classList.add('active');
-    }, 10);
-}
-
-export function closeOverlay(elementId) {
-    const el = document.getElementById(elementId);
-    const overlay = document.getElementById(elementId + '-overlay');
-    if (!el) return;
-
-    releaseOverlayNavigationLock();
-    el.classList.remove('active');
-    if (overlay) overlay.classList.remove('active');
-
-    setTimeout(() => {
-        el.classList.add('hidden');
-        if (overlay) overlay.classList.add('hidden');
-        restoreBodyScrollIfNeeded();
-    }, 300);
-}
-
-
 
 export function openSelectionDrawer(title, options, onSelect, selectedValue = null, layoutType = 'list', showAddBtn = false, autoClose = true, onBack = null) {
-    const overlay = document.getElementById('category-drawer-overlay');
-    const drawer = document.getElementById('category-drawer');
-    const titleEl = document.getElementById('category-drawer-title');
-    const searchInput = document.getElementById('drawer-search-input');
-    const searchContainer = document.getElementById('drawer-search-container');
-    const addBtn = document.getElementById('add-category-drawer-btn');
-    const addForm = document.getElementById('new-category-drawer-form');
-    const backBtn = document.getElementById('category-drawer-back-btn');
-    const closeBtn = document.getElementById('close-category-drawer');
+    // Rozpoznajemy czy to jest krok wewnątrz szukania kategorii/budżetu (replace) czy nowa szuflada (push)
+    // Jeśli mamy onBack lub tytuł zawiera "Kategorie:", to prawdopodobnie jesteśmy w przepływie wyboru
+    const lowerTitle = title.toLowerCase();
+    const isReplacing = Drawer.isOpen && (
+        lowerTitle.includes('kategorie:') || 
+        lowerTitle.includes('wybierz kategorię') && Drawer.current?.opts.title.toLowerCase().includes('kategorie:') ||
+        lowerTitle.includes('budżet') && Drawer.current?.opts.title.toLowerCase().includes('budżet')
+    );
 
-    if (!overlay || !drawer) return;
+    const buildContent = () => {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'selection-drawer-wrapper';
 
-    if (addBtn) addBtn.classList.remove('hidden');
-    if (addForm) addForm.classList.add('hidden');
-    if (searchInput) searchInput.value = '';
+        const searchHtml = options.length > 5 ? `
+            <div class="mb-4">
+                <input type="text" id="u-selection-search" class="w-full bg-white/5 border border-white/10 rounded-xl py-2.5 px-4 text-sm text-white focus:border-brand-500 focus:bg-white/10 transition-all outline-none" placeholder="Wyszukaj...">
+            </div>
+        ` : '';
 
-    if (backBtn) {
-        if (onBack) {
-            backBtn.classList.remove('hidden');
-            backBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                onBack();
-            });
-        } else {
-            backBtn.classList.add('hidden');
-        }
-    }
+        const gridHtml = `<div id="u-selection-grid" class="${layoutType === 'grid' ? 'drawer-grid-layout' : 'drawer-list-layout'}"></div>`;
 
-    const handleClose = () => closeSelectionDrawer();
-    if (closeBtn) {
-        closeBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            handleClose();
-        });
-    }
-    if (overlay) {
-        overlay.addEventListener('click', (e) => {
-            if (e.target === overlay) handleClose();
-        });
-    }
+        const addBtnHtml = showAddBtn ? `
+            <div class="mt-6 border-t border-white/5 pt-4">
+                <button id="u-selection-add-btn" class="w-full py-4 px-4 bg-white/5 border border-dashed border-white/20 rounded-2xl text-gray-400 hover:text-white hover:bg-white/10 transition-all flex items-center justify-center space-x-2">
+                    <i class="fas fa-cog"></i>
+                    <span>Zarządzaj kategoriami</span>
+                </button>
+            </div>
+        ` : '';
 
-    if (searchContainer) {
-        if (options.length > 5) {
-            searchContainer.classList.remove('hidden');
-        } else {
-            searchContainer.classList.add('hidden');
-        }
-    }
+        wrapper.innerHTML = searchHtml + gridHtml + addBtnHtml;
+        return wrapper;
+    };
 
-    if (addBtn) {
-        if (showAddBtn) {
-            addBtn.classList.remove('hidden');
-            addBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                navigateToCategoryManagementFromDrawer();
-            });
-        } else {
-            addBtn.classList.add('hidden');
-        }
-    }
+    const drawerObj = Drawer.open({
+        title,
+        content: buildContent(),
+        size: 'lg',
+        onBack: onBack,
+        showCloseBtn: true
+    }, isReplacing);
 
-    if (titleEl) titleEl.textContent = title;
-
-    const grid = document.getElementById('category-drawer-grid');
-    if (!grid) return;
-
-    grid.classList.remove('drawer-grid-layout', 'drawer-list-layout');
-    grid.classList.add(layoutType === 'grid' ? 'drawer-grid-layout' : 'drawer-list-layout');
+    const panel = drawerObj.panel;
+    const grid = panel.querySelector('#u-selection-grid');
+    const searchInput = panel.querySelector('#u-selection-search');
+    const addBtn = panel.querySelector('#u-selection-add-btn');
 
     const renderOptions = (filterText = '') => {
+        if (!grid) return;
         grid.innerHTML = '';
+        const lowFilter = filterText.toLowerCase();
         
-        let filtered = options;
-        if (filterText.length > 0) {
-            const lowFilter = filterText.toLowerCase();
-            filtered = options.filter(opt => {
-                const matchesMain = opt.label.toLowerCase().includes(lowFilter);
-                if (matchesMain) return true;
-                
-                if (title.toLowerCase().includes('kategori')) {
-                    const parent = state.structuredCategories.find(c => c.name === opt.label && !c.parentId);
-                    if (parent) {
-                        return state.structuredCategories.some(c => c.parentId === parent.id && c.name.toLowerCase().includes(lowFilter));
-                    }
-                }
-                return false;
-            });
-        }
+        const filtered = options.filter(opt => {
+            const matchesMain = opt.label.toLowerCase().includes(lowFilter);
+            if (matchesMain) return true;
 
-        if (addBtn && title.toLowerCase().includes('kategori')) {
-            if (filterText.length > 0) {
-                addBtn.classList.add('hidden');
-            } else {
-                addBtn.classList.remove('hidden');
+            // Logika wyszukiwania w podkategoriach gdy jesteśmy w widoku kategorii głównych
+            if (lowerTitle.includes('kategori') && !lowerTitle.includes(':')) {
+                const parent = state.structuredCategories.find(c => c.name === opt.label && !c.parentId);
+                if (parent) {
+                    return state.structuredCategories.some(c => c.parentId === parent.id && c.name.toLowerCase().includes(lowFilter));
+                }
             }
-        }
+            return false;
+        });
 
         filtered.forEach(opt => {
             const item = document.createElement('div');
@@ -377,10 +263,9 @@ export function openSelectionDrawer(title, options, onSelect, selectedValue = nu
             if (layoutType === 'grid') {
                 const iconWrapper = document.createElement('div');
                 iconWrapper.className = 'category-icon-wrapper';
-                iconWrapper.style.backgroundColor = opt.color ? (opt.color + '44') : 'rgba(255, 255, 255, 0.1)';
+                iconWrapper.style.backgroundColor = opt.color ? (opt.color + '25') : 'rgba(255, 255, 255, 0.1)';
                 iconWrapper.style.color = opt.color || 'white';
-                iconWrapper.style.filter = opt.color ? `drop-shadow(0 0 5px ${opt.color}88)` : 'none';
-                iconWrapper.style.border = `1px solid ${opt.color ? opt.color + '66' : 'rgba(255,255,255,0.2)'}`;
+                iconWrapper.style.border = `1px solid ${opt.color ? opt.color + '40' : 'rgba(255,255,255,0.1)'}`;
                 iconWrapper.innerHTML = opt.icon || '<span>?</span>';
                 item.appendChild(iconWrapper);
             }
@@ -390,30 +275,34 @@ export function openSelectionDrawer(title, options, onSelect, selectedValue = nu
             nameLabel.textContent = opt.label;
             item.appendChild(nameLabel);
 
-            item.addEventListener('click', () => {
+            item.onclick = (e) => {
+                e.stopPropagation();
                 onSelect(opt.value, opt.label);
-                if (autoClose) closeSelectionDrawer();
-            });
-
+                if (autoClose) Drawer.close();
+            };
             grid.appendChild(item);
         });
-
+        
         if (filtered.length === 0) {
             grid.innerHTML = '<div class="text-center py-8 text-gray-500 text-sm">Nie znaleziono...</div>';
         }
     };
 
     if (searchInput) {
-        searchInput.addEventListener('input', (e) => renderOptions(e.target.value));
+        searchInput.oninput = (e) => renderOptions(e.target.value);
+    }
+    if (addBtn) {
+        addBtn.onclick = (e) => {
+            e.stopPropagation();
+            navigateToCategoryManagementFromDrawer();
+        };
     }
 
     renderOptions();
-
-    openDrawer('category-drawer', 'category-drawer-overlay');
 }
 
 export function closeSelectionDrawer() {
-    closeDrawer('category-drawer', 'category-drawer-overlay');
+    Drawer.close();
 }
 
 /**
@@ -500,22 +389,8 @@ export function renderCategoryDetailsModal(category, items, isSubCategoryView = 
     });
 }
 
-export function closeCategoryDetailsDrawer() {
-    Drawer.close();
-}
-
 export function navigateToCategoryManagementFromDrawer() {
-    const filterDrawerOverlay = document.getElementById('filter-drawer-overlay');
-    if (filterDrawerOverlay && filterDrawerOverlay.classList.contains('active')) {
-        import('../views/purchase-list.js').then(m => m.closeFilterDrawer?.());
-    }
-
-    const productDrawerOverlay = document.getElementById('product-drawer-overlay');
-    if (productDrawerOverlay && productDrawerOverlay.classList.contains('active')) {
-        import('../views/purchase-form.js').then(m => m.closeProductDrawer?.());
-    }
-
-    closeSelectionDrawer();
+    Drawer.closeAll();
     switchTab('settings-categories');
 }
 

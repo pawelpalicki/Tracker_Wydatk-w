@@ -155,7 +155,3 @@ export function openTagsDrawer(currentTags, onConfirm, isFilter = false) {
         }
     }, 50);
 }
-
-export function closeTagsDrawer() {
-    Drawer.close();
-}

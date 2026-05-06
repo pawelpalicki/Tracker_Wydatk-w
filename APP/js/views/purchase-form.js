@@ -18,6 +18,7 @@ import {
     getTagLabel,
     openTagsDrawer
 } from '../shared/tags.js';
+import Drawer from '../shared/drawer.js';
 
 let purchaseFormInitialized = false;
 let productDrawerInitialized = false;
@@ -183,53 +184,138 @@ export function renderPurchaseItems() {
     updatePurchaseSummary();
 }
 
-// Drawer produktu odpowiada za pojedyncza pozycje w koszyku zakupu.
+// Drawer produktu
 function initProductDrawer() {
     if (productDrawerInitialized) return;
-
-    const drawerOverlay = el('product-drawer-overlay');
-    const drawer = el('product-drawer');
-    const closeBtn = el('close-product-drawer');
-    const form = el('product-drawer-form');
-    const categoryBtn = el('product-drawer-category-btn');
-    const tagsBtn = el('product-drawer-tags-btn');
-    if (!drawer || !drawerOverlay || !form) return;
-
     productDrawerInitialized = true;
+}
 
-    closeBtn?.addEventListener('click', closeProductDrawer);
-    drawerOverlay.addEventListener('click', (e) => {
-        if (e.target === drawerOverlay) closeProductDrawer();
+export function openProductDrawer(index = null) {
+    const isEdit = (index !== null && index >= 0 && index < currentPurchaseItems.length);
+    const title = isEdit ? 'Edytuj produkt' : 'Dodaj produkt';
+    
+    let item = isEdit ? currentPurchaseItems[index] : { price: 0, name: '', category: 'Inne', subCategory: '' };
+    productDrawerTags = isEdit ? Object.assign({}, getDefaultTagValues(), item.tags || {}) : Object.assign({}, getDefaultTagValues());
+
+    const contentHtml = `
+        <form id="product-drawer-form" class="space-y-4 pb-safe" novalidate>
+            <input type="hidden" id="product-drawer-index" value="${isEdit ? index : ''}">
+            <div>
+                <label class="block text-xs font-semibold text-gray-400 mb-1.5 uppercase tracking-wider pl-1">Nazwa</label>
+                <input type="text" id="product-drawer-name" required value="${item.name.replace(/"/g, '&quot;')}"
+                    class="block w-full rounded-xl border-white/10 bg-white/5 text-white py-3 px-4 focus:bg-white/10 transition-all text-sm font-medium"
+                    placeholder="np. Kawa">
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-gray-400 mb-1.5 uppercase tracking-wider pl-1">Kwota (zł)</label>
+                <input type="number" id="product-drawer-price" step="0.01" required value="${Number(item.price || 0).toFixed(2)}"
+                    class="block w-full rounded-xl border-white/10 bg-white/5 text-white py-3 px-4 focus:bg-white/10 transition-all text-sm font-medium"
+                    placeholder="0.00">
+            </div>
+
+            <!-- Kategoria -->
+            <div>
+                <label class="block text-xs font-semibold text-gray-400 mb-1.5 uppercase tracking-wider pl-1">Kategoria</label>
+                <button type="button" id="product-drawer-category-btn"
+                        class="w-full flex items-center justify-between p-3 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-all text-left">
+                    <div class="flex items-center">
+                        <div id="product-drawer-category-icon"
+                             class="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 bg-white/5 mr-3 shrink-0">
+                            <i class="fas fa-tag"></i>
+                        </div>
+                        <span id="product-drawer-category-label" class="text-white text-sm">Wybierz kategorię</span>
+                    </div>
+                    <i class="fas fa-chevron-right text-gray-500 text-xs"></i>
+                </button>
+                <input type="hidden" id="product-drawer-category-value" value="">
+            </div>
+
+            <!-- Tagi z szuflady -->
+            <div>
+                <label class="block text-xs font-semibold text-gray-400 mb-1.5 uppercase tracking-wider pl-1">Tagi i opcje</label>
+                <button type="button" id="product-drawer-tags-btn"
+                        class="w-full flex items-center justify-between p-3 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-all text-left">
+                    <div class="flex items-center min-w-0 mr-3">
+                        <div class="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 bg-white/5 mr-3 shrink-0">
+                            <i class="fas fa-tags"></i>
+                        </div>
+                        <span id="product-drawer-tags-summary" class="text-white text-sm text-left truncate">Wybierz</span>
+                    </div>
+                    <i class="fas fa-chevron-right text-gray-500 text-xs"></i>
+                </button>
+            </div>
+            
+            <button type="submit" class="hidden" id="product-drawer-submit-hidden"></button>
+        </form>
+    `;
+
+    Drawer.open({
+        title,
+        content: contentHtml,
+        size: 'lg',
+        showCloseBtn: true,
+        confirmLabel: 'Zapisz produkt',
+        onConfirm: async () => {
+            const form = document.getElementById('product-drawer-form');
+            if (form) {
+                if (!form.checkValidity()) {
+                    form.reportValidity();
+                    throw new Error('Validation error');
+                } else {
+                    return saveProductFromForm();
+                }
+            }
+        }
     });
 
-    tagsBtn?.addEventListener('click', (e) => {
-        e.preventDefault();
-        openTagsDrawer(productDrawerTags, (newTags) => {
-            productDrawerTags = newTags;
-            const summary = el('product-drawer-tags-summary');
-            if (summary) summary.textContent = buildTagsSummary(newTags);
+    setTimeout(() => {
+        applyCategorySelectionState({
+            valueEl: el('product-drawer-category-value'),
+            labelEl: el('product-drawer-category-label'),
+            iconEl: el('product-drawer-category-icon')
+        }, item.category, item.subCategory, 'Wybierz kategorię');
+        
+        const tagsSummary = el('product-drawer-tags-summary');
+        if (tagsSummary) tagsSummary.textContent = buildTagsSummary(productDrawerTags);
+
+        const form = el('product-drawer-form');
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            document.getElementById('u-drawer-confirm')?.click();
         });
-    });
 
-    categoryBtn?.addEventListener('click', (e) => {
-        e.preventDefault();
-        const currentVal = el('product-drawer-category-value')?.value || '';
-        const [currentCat, currentSub] = currentVal.split('|');
-        openHierarchicalCategoryDrawer(drawer, currentCat || '', currentSub || '', (parentName, subName) => {
-            applyCategorySelectionState({
-                valueEl: el('product-drawer-category-value'),
-                labelEl: el('product-drawer-category-label'),
-                iconEl: el('product-drawer-category-icon')
-            }, parentName, subName, 'Wybierz kategorie');
+        el('product-drawer-category-btn')?.addEventListener('click', (e) => {
+            e.preventDefault();
+            const currentVal = el('product-drawer-category-value')?.value || '';
+            const [currentCat, currentSub] = currentVal.split('|');
+            openHierarchicalCategoryDrawer(null, currentCat || '', currentSub || '', (parentName, subName) => {
+                applyCategorySelectionState({
+                    valueEl: el('product-drawer-category-value'),
+                    labelEl: el('product-drawer-category-label'),
+                    iconEl: el('product-drawer-category-icon')
+                }, parentName, subName, 'Wybierz kategorię');
+            });
         });
-    });
 
-    form.addEventListener('submit', (e) => {
-        e.preventDefault();
+        el('product-drawer-tags-btn')?.addEventListener('click', (e) => {
+            e.preventDefault();
+            openTagsDrawer(productDrawerTags, (newTags) => {
+                productDrawerTags = newTags;
+                const summary = el('product-drawer-tags-summary');
+                if (summary) summary.textContent = buildTagsSummary(newTags);
+            });
+        });
 
-        const submitBtn = form.querySelector('button[type="submit"]');
-        const originalText = submitBtn ? submitBtn.innerHTML : 'Zapisz produkt';
+        el('product-drawer-name')?.focus();
+    }, 50);
+}
 
+export function closeProductDrawer() {
+    Drawer.close();
+}
+
+function saveProductFromForm() {
+    return new Promise((resolve) => {
         const indexStr = el('product-drawer-index')?.value || '';
         const name = el('product-drawer-name')?.value.trim() || '';
         const price = parseFloat(el('product-drawer-price')?.value || '0');
@@ -256,89 +342,16 @@ function initProductDrawer() {
             state.allCategories.sort();
         }
 
-        if (submitBtn) {
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i class="fas fa-spinner animate-spin mr-2"></i> Zapisywanie...';
+        if (indexStr !== '') {
+            currentPurchaseItems[parseInt(indexStr, 10)] = newItem;
+        } else {
+            currentPurchaseItems.push(newItem);
         }
 
-        setTimeout(() => {
-            if (indexStr !== '') {
-                currentPurchaseItems[parseInt(indexStr, 10)] = newItem;
-            } else {
-                currentPurchaseItems.push(newItem);
-            }
-
-            renderPurchaseItems();
-            closeProductDrawer();
-            
-            if (submitBtn) {
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = originalText;
-            }
-        }, 100);
+        renderPurchaseItems();
+        Drawer.close();
+        resolve();
     });
-}
-
-export function openProductDrawer(index = null) {
-    const drawerOverlay = el('product-drawer-overlay');
-    const drawer = el('product-drawer');
-    const title = el('product-drawer-title');
-    const form = el('product-drawer-form');
-    const idxInput = el('product-drawer-index');
-    const nameInput = el('product-drawer-name');
-    const priceInput = el('product-drawer-price');
-    const catValue = el('product-drawer-category-value');
-    const catLabel = el('product-drawer-category-label');
-    const catIcon = el('product-drawer-category-icon');
-    if (!drawerOverlay || !drawer || !title || !form || !idxInput || !nameInput || !priceInput) return;
-
-    if (index !== null && index >= 0 && index < currentPurchaseItems.length) {
-        title.textContent = 'Edytuj produkt';
-        const item = currentPurchaseItems[index];
-        idxInput.value = String(index);
-        nameInput.value = item.name;
-        priceInput.value = Number(item.price || 0).toFixed(2);
-        applyCategorySelectionState({ valueEl: catValue, labelEl: catLabel, iconEl: catIcon }, item.category, item.subCategory, 'Wybierz kategorie');
-        productDrawerTags = Object.assign({}, getDefaultTagValues(), item.tags || {});
-    } else {
-        title.textContent = 'Dodaj produkt';
-        form.reset();
-        idxInput.value = '';
-        applyCategorySelectionState({ valueEl: catValue, labelEl: catLabel, iconEl: catIcon }, 'Inne', '', 'Wybierz kategorie');
-        productDrawerTags = Object.assign({}, getDefaultTagValues());
-    }
-
-    const tagsSummary = el('product-drawer-tags-summary');
-    if (tagsSummary) tagsSummary.textContent = buildTagsSummary(productDrawerTags);
-
-    const wasAlreadyOpen = drawerOverlay.classList.contains('active') || !drawerOverlay.classList.contains('hidden');
-    if (!wasAlreadyOpen) acquireOverlayNavigationLock();
-
-    drawerOverlay.classList.remove('hidden');
-    drawer.classList.remove('hidden');
-    document.body.style.overflow = 'hidden';
-
-    setTimeout(() => {
-        drawerOverlay.classList.add('active');
-        drawer.classList.add('active');
-    }, 10);
-    setTimeout(() => nameInput.focus(), 300);
-}
-
-export function closeProductDrawer() {
-    const drawerOverlay = el('product-drawer-overlay');
-    const drawer = el('product-drawer');
-    if (!drawerOverlay || !drawer) return;
-
-    releaseOverlayNavigationLock();
-    drawerOverlay.classList.remove('active');
-    drawer.classList.remove('active');
-
-    setTimeout(() => {
-        drawerOverlay.classList.add('hidden');
-        drawer.classList.add('hidden');
-        if (!hasVisibleBlockingOverlay()) document.body.style.overflow = '';
-    }, 300);
 }
 
 export async function handlePurchaseFormSubmit(e) {
