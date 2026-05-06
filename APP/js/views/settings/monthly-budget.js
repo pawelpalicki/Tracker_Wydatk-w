@@ -3,7 +3,8 @@
  */
 import state from '../../core/state.js';
 import { apiCall } from '../../core/api.js';
-import { openSelectionDrawer, openOverlay, closeOverlay } from '../../shared/ui.js';
+import { openSelectionDrawer } from '../../shared/ui.js';
+import Drawer from '../../shared/drawer.js';
 import { formatNumber } from '../../shared/format.js';
 import { renderDashboard } from '../dashboard.js';
 
@@ -44,29 +45,34 @@ export function initMonthlyBudget() {
     });
 
     el('save-budget-btn')?.addEventListener('click', handleSaveBudget);
-    el('copy-budget-btn')?.addEventListener('click', () => openOverlay('copy-budget-modal'));
-    
-    // Listenery dla modala kopiowania
-    el('close-copy-budget-modal')?.addEventListener('click', () => closeOverlay('copy-budget-modal'));
-    el('cancel-copy-budget')?.addEventListener('click', () => closeOverlay('copy-budget-modal'));
-    
-    // Zamknięcie modala przez kliknięcie w overlay
-    let mousedownTarget = null;
-    el('copy-budget-modal')?.addEventListener('mousedown', (e) => {
-        mousedownTarget = e.target;
-    });
-    el('copy-budget-modal')?.addEventListener('click', (e) => {
-        if (e.target.id === 'copy-budget-modal' && mousedownTarget?.id === 'copy-budget-modal') {
-            closeOverlay('copy-budget-modal');
-        }
-    });
-
-    const copyMonthsBtns = document.querySelectorAll('.copy-months-btn');
-    copyMonthsBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            const months = parseInt(btn.dataset.months);
-            handleCopyBudget(months, btn);
+    el('copy-budget-btn')?.addEventListener('click', () => {
+        Drawer.open({
+            title: 'Kopiuj budżet na następne miesiące',
+            content: `
+                <div class="space-y-4">
+                    <p class="text-gray-600 dark:text-gray-300 text-sm">Na ile miesięcy do przodu chcesz skopiować obecny budżet?</p>
+                    <div class="grid grid-cols-2 gap-3">
+                        <button class="copy-months-btn btn-secondary rounded-xl font-medium" data-months="1">1 miesiąc</button>
+                        <button class="copy-months-btn btn-secondary rounded-xl font-medium" data-months="3">3 miesiące</button>
+                        <button class="copy-months-btn btn-secondary rounded-xl font-medium" data-months="6">6 miesięcy</button>
+                        <button class="copy-months-btn btn-secondary rounded-xl font-medium" data-months="12">12 miesięcy</button>
+                    </div>
+                </div>
+            `,
+            size: 'sm',
+            showCloseBtn: true,
+            triggerId: 'copy-budget-btn',
         });
+        
+        setTimeout(() => {
+            const copyMonthsBtns = document.querySelectorAll('.copy-months-btn');
+            copyMonthsBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const months = parseInt(btn.dataset.months);
+                    handleCopyBudget(months, btn);
+                });
+            });
+        }, 50);
     });
 
     initialized = true;
@@ -248,7 +254,7 @@ async function handleCopyBudget(monthsCount, btn = null) {
 
         const monthText = monthsCount === 1 ? '1 miesiąc' : `${monthsCount} miesięcy`;
         alert(`✅ Budżet został skopiowany na następne ${monthText}!`);
-        closeOverlay('copy-budget-modal');
+        Drawer.close();
 
     } catch (error) {
         alert('Błąd podczas kopiowania budżetu: ' + error.message);
