@@ -3,7 +3,6 @@
  */
 import state from '../../core/state.js';
 import { apiCall } from '../../core/api.js';
-import { closeOverlay } from '../../shared/ui.js';
 import Drawer from '../../shared/drawer.js';
 import { fetchInitialData } from '../../core/data-loader.js';
 

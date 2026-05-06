@@ -4,7 +4,8 @@
 import state from '../../core/state.js';
 import { apiCall } from '../../core/api.js';
 import { formatAmount } from '../../shared/format.js';
-import { openSelectionDrawer, openOverlay, closeOverlay } from '../../shared/ui.js';
+import { openSelectionDrawer } from '../../shared/ui.js';
+import Drawer from '../../shared/drawer.js';
 import { applyCategorySelectionState, openHierarchicalCategoryDrawer } from '../../shared/categories.js';
 import { buildTagsSummary, openTagsDrawer, getDefaultTagValues } from '../../shared/tags.js';
 import { fetchInitialData } from '../../core/data-loader.js';
