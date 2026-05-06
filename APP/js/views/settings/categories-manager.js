@@ -3,7 +3,8 @@
  */
 import state from '../../core/state.js';
 import { apiCall } from '../../core/api.js';
-import { openOverlay, closeOverlay } from '../../shared/ui.js';
+import { closeOverlay } from '../../shared/ui.js';
+import Drawer from '../../shared/drawer.js';
 import { fetchInitialData } from '../../core/data-loader.js';
 
 // =====================================================================
@@ -48,20 +49,6 @@ export function initCategoriesManager() {
     if (initialized) return;
 
     el('add-parent-category-btn')?.addEventListener('click', () => showParentCategoryForm());
-    el('cat-v2-save-btn')?.addEventListener('click', saveParentCategory);
-    el('cat-v2-sub-save-btn')?.addEventListener('click', saveSubCategory);
-
-    el('close-category-editor-drawer')?.addEventListener('click', () => closeOverlay('category-editor-drawer'));
-    // Zamknięcie szuflady przez kliknięcie w overlay
-    let mousedownTarget = null;
-    el('category-editor-drawer-overlay')?.addEventListener('mousedown', (e) => {
-        mousedownTarget = e.target;
-    });
-    el('category-editor-drawer-overlay')?.addEventListener('click', (e) => {
-        if (e.target.id === 'category-editor-drawer-overlay' && mousedownTarget?.id === 'category-editor-drawer-overlay') {
-            closeOverlay('category-editor-drawer');
-        }
-    });
 
     initialized = true;
     renderCategoriesListV2();
@@ -235,71 +222,107 @@ function renderColorPicker(selectedColor = '#3b82f6') {
 }
 
 function showParentCategoryForm(editId = null) {
-    const parentForm = el('cat-v2-parent-form');
-    const subForm = el('cat-v2-sub-form');
-    const nameInput = el('cat-v2-name-input');
-    const editIdInput = el('cat-v2-edit-id');
-
-    if (!parentForm || !subForm || !nameInput) return;
-
-    parentForm.classList.remove('hidden');
-    subForm.classList.add('hidden');
-
-    if (editId) {
-        const cat = state.structuredCategories.find(c => c.id === editId);
+    const isEdit = !!editId;
+    let cat = null;
+    if (isEdit) {
+        cat = state.structuredCategories.find(c => c.id === editId);
         if (!cat) return;
-        el('category-editor-drawer-title').textContent = `Edytuj: ${cat.name}`;
-        nameInput.value = cat.name;
-        editIdInput.value = editId;
-        renderIconPicker(cat.icon || 'fa-tag');
-        renderColorPicker(cat.color || '#3b82f6');
-        el('cat-v2-icon-value').value = cat.icon || 'fa-tag';
-        el('cat-v2-color-value').value = cat.color || '#3b82f6';
-    } else {
-        el('category-editor-drawer-title').textContent = 'Nowa kategoria główna';
-        nameInput.value = '';
-        editIdInput.value = '';
-        renderIconPicker();
-        renderColorPicker();
-        el('cat-v2-icon-value').value = 'fa-tag';
-        el('cat-v2-color-value').value = '#3b82f6';
     }
 
-    openOverlay('category-editor-drawer');
-    setTimeout(() => nameInput.focus(), 400);
+    const title = isEdit ? `Edytuj: ${cat.name}` : 'Nowa kategoria główna';
+    const currentName = cat ? cat.name : '';
+    const currentIcon = cat ? (cat.icon || 'fa-tag') : 'fa-tag';
+    const currentColor = cat ? (cat.color || '#3b82f6') : '#3b82f6';
+
+    const contentHtml = `
+        <div id="cat-v2-parent-form" class="space-y-4 pb-safe">
+            <input type="hidden" id="cat-v2-edit-id" value="${editId || ''}">
+            <input type="text" id="cat-v2-name-input" value="${currentName}" placeholder="Nazwa kategorii (np. Spożywcze)"
+                class="block w-full rounded-xl border-white/10 bg-white/5 text-white py-3 px-4 focus:bg-white/10 transition-all text-sm font-medium">
+            <!-- Wybór ikony -->
+            <div>
+                <p class="text-xs text-gray-400 mb-2 font-semibold uppercase tracking-wider">Wybierz ikonę</p>
+                <div id="cat-v2-icon-picker" class="flex flex-wrap gap-2 max-h-[200px] overflow-y-auto p-1 scrollbar-hide">
+                    <!-- generowane przez JS -->
+                </div>
+                <input type="hidden" id="cat-v2-icon-value" value="${currentIcon}">
+            </div>
+            <!-- Wybór koloru -->
+            <div>
+                <p class="text-xs text-gray-400 mb-2 font-semibold uppercase tracking-wider">Wybierz kolor</p>
+                <div id="cat-v2-color-picker" class="flex flex-wrap gap-3 p-1">
+                    <!-- generowane przez JS -->
+                </div>
+                <input type="hidden" id="cat-v2-color-value" value="${currentColor}">
+            </div>
+        </div>
+    `;
+
+    Drawer.open({
+        title,
+        content: contentHtml,
+        size: 'lg',
+        showCloseBtn: true,
+        confirmLabel: 'Zapisz kategorię',
+        onConfirm: async () => {
+            await saveParentCategory();
+        }
+    });
+
+    setTimeout(() => {
+        renderIconPicker(currentIcon, 'cat-v2-icon-picker', 'cat-v2-icon-value');
+        renderColorPicker(currentColor);
+        el('cat-v2-name-input')?.focus();
+    }, 50);
 }
 
 function showSubCategoryForm(parentId, editId = null) {
-    const parentForm = el('cat-v2-parent-form');
-    const subForm = el('cat-v2-sub-form');
-    const nameInput = el('cat-v2-sub-name-input');
-
-    if (!parentForm || !subForm || !nameInput) return;
-
-    parentForm.classList.add('hidden');
-    subForm.classList.remove('hidden');
-    el('cat-v2-sub-parent-id').value = parentId;
-    el('cat-v2-sub-edit-id').value = editId || '';
-
     const parent = state.structuredCategories.find(c => c.id === parentId);
     const parentName = parent ? parent.name : '';
 
-    if (editId) {
-        const sub = state.structuredCategories.find(c => c.id === editId);
-        el('category-editor-drawer-title').textContent = `Edytuj podkategorię`;
-        nameInput.value = sub ? sub.name : '';
-        const currentIcon = (sub && sub.icon) ? sub.icon : '';
-        renderIconPicker(currentIcon, 'cat-v2-sub-icon-picker', 'cat-v2-sub-icon-value');
-        el('cat-v2-sub-icon-value').value = currentIcon;
-    } else {
-        el('category-editor-drawer-title').textContent = `Nowa podkategoria → ${parentName}`;
-        nameInput.value = '';
-        renderIconPicker('', 'cat-v2-sub-icon-picker', 'cat-v2-sub-icon-value');
-        el('cat-v2-sub-icon-value').value = '';
+    const isEdit = !!editId;
+    let sub = null;
+    if (isEdit) {
+        sub = state.structuredCategories.find(c => c.id === editId);
     }
 
-    openOverlay('category-editor-drawer');
-    setTimeout(() => nameInput.focus(), 400);
+    const title = isEdit ? 'Edytuj podkategorię' : `Nowa podkategoria → ${parentName}`;
+    const currentName = sub ? sub.name : '';
+    const currentIcon = (sub && sub.icon) ? sub.icon : '';
+
+    const contentHtml = `
+        <div id="cat-v2-sub-form" class="space-y-4 pb-safe">
+            <input type="hidden" id="cat-v2-sub-parent-id" value="${parentId}">
+            <input type="hidden" id="cat-v2-sub-edit-id" value="${editId || ''}">
+            <input type="text" id="cat-v2-sub-name-input" value="${currentName}" placeholder="Nazwa podkategorii (np. Nabiał)"
+                class="block w-full rounded-xl border-white/10 bg-white/5 text-white py-3 px-4 focus:bg-white/10 transition-all text-sm font-medium">
+
+            <!-- Wybór ikony dla podkategorii -->
+            <div>
+                <p class="text-xs text-gray-400 mb-2 font-semibold uppercase tracking-wider">Ikona (opcjonalnie)</p>
+                <div id="cat-v2-sub-icon-picker" class="flex flex-wrap gap-2 max-h-[200px] overflow-y-auto p-1 scrollbar-hide">
+                    <!-- generowane przez JS -->
+                </div>
+                <input type="hidden" id="cat-v2-sub-icon-value" value="${currentIcon}">
+            </div>
+        </div>
+    `;
+
+    Drawer.open({
+        title,
+        content: contentHtml,
+        size: 'lg',
+        showCloseBtn: true,
+        confirmLabel: 'Zapisz podkategorię',
+        onConfirm: async () => {
+            await saveSubCategory();
+        }
+    });
+
+    setTimeout(() => {
+        renderIconPicker(currentIcon, 'cat-v2-sub-icon-picker', 'cat-v2-sub-icon-value');
+        el('cat-v2-sub-name-input')?.focus();
+    }, 50);
 }
 
 function editParentCategory(id) { showParentCategoryForm(id); }
@@ -310,69 +333,49 @@ function generateId() {
 }
 
 async function saveParentCategory() {
-    const name = el('cat-v2-name-input').value.trim();
-    const editId = el('cat-v2-edit-id').value;
-    const icon = el('cat-v2-icon-value').value;
-    const color = el('cat-v2-color-value').value;
+    const name = el('cat-v2-name-input')?.value.trim();
+    const editId = el('cat-v2-edit-id')?.value;
+    const icon = el('cat-v2-icon-value')?.value;
+    const color = el('cat-v2-color-value')?.value;
 
-    if (!name) { alert('Podaj nazwę kategorii.'); return; }
-
-    const saveBtn = el('cat-v2-save-btn');
-    const originalText = saveBtn.textContent;
-
-    try {
-        saveBtn.disabled = true;
-        saveBtn.innerHTML = '<i class="fas fa-spinner animate-spin mr-2"></i> Zapisywanie...';
-
-        if (editId) {
-            await apiCall(`/api/categories/v2/${editId}`, 'PUT', { name, icon, color });
-        } else {
-            const newStructured = [...state.structuredCategories, { id: generateId(), name, parentId: null, icon, color }];
-            await apiCall('/api/categories/v2', 'POST', { structuredCategories: newStructured });
-        }
-        
-        closeOverlay('category-editor-drawer');
-        await fetchInitialData(false);
-        renderCategoriesListV2();
-    } catch (err) {
-        alert('Błąd: ' + err.message);
-    } finally {
-        saveBtn.disabled = false;
-        saveBtn.textContent = originalText;
+    if (!name) { 
+        alert('Podaj nazwę kategorii.'); 
+        throw new Error('Validation Error'); 
     }
+
+    if (editId) {
+        await apiCall(`/api/categories/v2/${editId}`, 'PUT', { name, icon, color });
+    } else {
+        const newStructured = [...state.structuredCategories, { id: generateId(), name, parentId: null, icon, color }];
+        await apiCall('/api/categories/v2', 'POST', { structuredCategories: newStructured });
+    }
+    
+    Drawer.close();
+    await fetchInitialData(false);
+    renderCategoriesListV2();
 }
 
 async function saveSubCategory() {
-    const name = el('cat-v2-sub-name-input').value.trim();
-    const parentId = el('cat-v2-sub-parent-id').value;
-    const editId = el('cat-v2-sub-edit-id').value;
-    const icon = el('cat-v2-sub-icon-value').value;
+    const name = el('cat-v2-sub-name-input')?.value.trim();
+    const parentId = el('cat-v2-sub-parent-id')?.value;
+    const editId = el('cat-v2-sub-edit-id')?.value;
+    const icon = el('cat-v2-sub-icon-value')?.value;
 
-    if (!name) { alert('Podaj nazwę podkategorii.'); return; }
-
-    const saveBtn = el('cat-v2-sub-save-btn');
-    const originalText = saveBtn.textContent;
-
-    try {
-        saveBtn.disabled = true;
-        saveBtn.innerHTML = '<i class="fas fa-spinner animate-spin mr-2"></i> Zapisywanie...';
-
-        if (editId) {
-            await apiCall(`/api/categories/v2/${editId}`, 'PUT', { name, icon });
-        } else {
-            const newStructured = [...state.structuredCategories, { id: generateId(), name, parentId, icon }];
-            await apiCall('/api/categories/v2', 'POST', { structuredCategories: newStructured });
-        }
-        
-        closeOverlay('category-editor-drawer');
-        await fetchInitialData(false);
-        renderCategoriesListV2();
-    } catch (err) {
-        alert('Błąd: ' + err.message);
-    } finally {
-        saveBtn.disabled = false;
-        saveBtn.textContent = originalText;
+    if (!name) { 
+        alert('Podaj nazwę podkategorii.'); 
+        throw new Error('Validation Error'); 
     }
+
+    if (editId) {
+        await apiCall(`/api/categories/v2/${editId}`, 'PUT', { name, icon });
+    } else {
+        const newStructured = [...state.structuredCategories, { id: generateId(), name, parentId, icon }];
+        await apiCall('/api/categories/v2', 'POST', { structuredCategories: newStructured });
+    }
+    
+    Drawer.close();
+    await fetchInitialData(false);
+    renderCategoriesListV2();
 }
 
 async function deleteCategory(id, isParent) {

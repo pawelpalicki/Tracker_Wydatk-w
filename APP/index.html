@@ -1283,72 +1283,7 @@
 
 
 
-    <!-- Category Editor Drawer (Add/Edit Parents and Subs) -->
-    <div id="category-editor-drawer-overlay"
-        class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[110] transition-opacity duration-300 opacity-0">
-    </div>
-    <div id="category-editor-drawer"
-        class="hidden fixed bottom-0 left-0 right-0 z-[120] bg-[#141414] border-t border-white/10 rounded-t-3xl shadow-2xl transform translate-y-full transition-transform duration-300 ease-out flex flex-col max-h-[90vh]">
-        <div
-            class="p-5 border-b border-white/5 flex justify-between items-center bg-[#141414] rounded-t-3xl sticky top-0 z-10 shrink-0">
-            <div>
-                <h3 id="category-editor-drawer-title" class="text-lg font-bold text-white">Edytuj kategorię</h3>
-            </div>
-            <button id="close-category-editor-drawer"
-                class="w-10 h-10 flex items-center justify-center bg-white/5 rounded-full text-gray-400 hover:text-white transition-colors">&times;</button>
-        </div>
-        <div class="p-5 overflow-y-auto flex-grow bg-[#0a0a0a]">
-            <!-- Formularz dodawania / edycji kategorii głównej -->
-            <div id="cat-v2-parent-form" class="hidden space-y-4">
-                <input type="hidden" id="cat-v2-edit-id">
-                <input type="text" id="cat-v2-name-input" placeholder="Nazwa kategorii (np. Spożywcze)"
-                    class="block w-full rounded-xl border-white/10 bg-white/5 text-white py-3 px-4 focus:bg-white/10 transition-all text-sm font-medium">
-                <!-- Wybór ikony -->
-                <div>
-                    <p class="text-xs text-gray-400 mb-2 font-semibold uppercase tracking-wider">Wybierz ikonę</p>
-                    <div id="cat-v2-icon-picker"
-                        class="flex flex-wrap gap-2 max-h-[200px] overflow-y-auto p-1 scrollbar-hide">
-                        <!-- generowane przez JS -->
-                    </div>
-                    <input type="hidden" id="cat-v2-icon-value" value="fa-tag">
-                </div>
-                <!-- Wybór koloru -->
-                <div>
-                    <p class="text-xs text-gray-400 mb-2 font-semibold uppercase tracking-wider">Wybierz kolor</p>
-                    <div id="cat-v2-color-picker" class="flex flex-wrap gap-3 p-1">
-                        <!-- generowane przez JS -->
-                    </div>
-                    <input type="hidden" id="cat-v2-color-value" value="#3b82f6">
-                </div>
-                <div class="flex gap-3 pt-4">
-                    <button id="cat-v2-save-btn" class="flex-1 btn-primary rounded-xl font-bold">Zapisz
-                        kategorię</button>
-                </div>
-            </div>
 
-            <!-- Formularz dodawania podkategorii -->
-            <div id="cat-v2-sub-form" class="hidden space-y-4">
-                <input type="hidden" id="cat-v2-sub-parent-id">
-                <input type="hidden" id="cat-v2-sub-edit-id">
-                <input type="text" id="cat-v2-sub-name-input" placeholder="Nazwa podkategorii (np. Nabiał)"
-                    class="block w-full rounded-xl border-white/10 bg-white/5 text-white py-3 px-4 focus:bg-white/10 transition-all text-sm font-medium">
-
-                <!-- Wybór ikony dla podkategorii -->
-                <div>
-                    <p class="text-xs text-gray-400 mb-2 font-semibold uppercase tracking-wider">Ikona (opcjonalnie)</p>
-                    <div id="cat-v2-sub-icon-picker"
-                        class="flex flex-wrap gap-2 max-h-[200px] overflow-y-auto p-1 scrollbar-hide">
-                        <!-- generowane przez JS -->
-                    </div>
-                    <input type="hidden" id="cat-v2-sub-icon-value" value="">
-                </div>
-                <div class="flex gap-3 pt-4">
-                    <button id="cat-v2-sub-save-btn" class="flex-1 btn-primary rounded-xl font-bold">Zapisz
-                        podkategorię</button>
-                </div>
-            </div>
-        </div>
-    </div>
 
 
 
