@@ -9,7 +9,8 @@
  * - Formatowanie i budowanie opisów tagów w UI (buildTagsSummary, getTagGroupLabel)
  */
 import state from '../core/state.js';
-import { openSelectionDrawer, acquireOverlayNavigationLock, releaseOverlayNavigationLock, hasVisibleBlockingOverlay } from './ui.js';
+import { openSelectionDrawer } from './ui.js';
+import Drawer from './drawer.js';
 
 export function getTagOptions(group) {
     return (state.tagDefinitions && Array.isArray(state.tagDefinitions[group])) ? state.tagDefinitions[group] : [];
@@ -86,31 +87,20 @@ let _tagsDrawerCurrentValues = {};
 let _tagsDrawerIsFilter = false;
 
 export function openTagsDrawer(currentTags, onConfirm, isFilter = false) {
-    const overlay = document.getElementById('tags-selection-overlay');
-    const drawer = document.getElementById('tags-selection-drawer');
-    const content = document.getElementById('tags-selection-content');
-    if (!drawer || !content) {
-        console.warn('Tags selection drawer not found in DOM');
-        return;
-    }
-
-    _tagsDrawerCallback = onConfirm;
-    _tagsDrawerIsFilter = isFilter;
+    const groups = getTagGroups();
     _tagsDrawerCurrentValues = Object.assign({}, isFilter ? {} : getDefaultTagValues(), currentTags || {});
 
-    const groups = getTagGroups();
-    content.innerHTML = '';
-
+    let contentHtml = '<div id="tags-selection-content" class="space-y-4 pb-4">';
+    
     groups.forEach(group => {
         const options = getTagOptions(group);
         const groupLabel = String(getTagGroupLabel(group) || group || '');
         const currentVal = _tagsDrawerCurrentValues[group] || (isFilter ? 'all' : (options[0] && options[0].value) || '');
 
-        const groupEl = document.createElement('div');
-        groupEl.innerHTML = `
+        contentHtml += `
             <div class="mb-2">
                 <p class="text-xs text-gray-500 uppercase tracking-widest font-semibold mb-2">${groupLabel}</p>
-                <div class="flex flex-wrap gap-2">
+                <div class="flex flex-wrap gap-2 group-tags-container" data-group="${group}">
                     ${isFilter ? `
                         <button class="tag-select-btn px-3 py-1.5 rounded-lg text-xs transition-all border ${currentVal === 'all' || !currentVal ? 'bg-brand-600 text-white border-brand-500' : 'bg-white/5 text-gray-400 border-white/10 hover:bg-white/10'}"
                             data-group="${group}" data-value="all">
@@ -126,70 +116,45 @@ export function openTagsDrawer(currentTags, onConfirm, isFilter = false) {
                 </div>
             </div>
         `;
-        content.appendChild(groupEl);
-    });
-
-    content.addEventListener('click', (e) => {
-        const btn = e.target.closest('.tag-select-btn');
-        if (!btn) return;
-        const group = btn.dataset.group;
-        const val = btn.dataset.value;
-
-        const btns = content.querySelectorAll(`.tag-select-btn[data-group="${group}"]`);
-        btns.forEach(b => b.classList.replace('bg-brand-600', 'bg-white/5'));
-        btns.forEach(b => b.classList.replace('text-white', 'text-gray-400'));
-        btns.forEach(b => b.classList.replace('border-brand-500', 'border-white/10'));
-
-        btn.classList.replace('bg-white/5', 'bg-brand-600');
-        btn.classList.replace('text-gray-400', 'text-white');
-        btn.classList.replace('border-white/10', 'border-brand-500');
-
-        _tagsDrawerCurrentValues[group] = (val === 'all') ? null : val;
     });
     
-    const wasAlreadyOpen = overlay.classList.contains('active') || !overlay.classList.contains('hidden');
-    if (!wasAlreadyOpen && typeof acquireOverlayNavigationLock === 'function') {
-        acquireOverlayNavigationLock();
-    }
-    overlay.classList.remove('hidden');
-    drawer.classList.remove('hidden');
+    contentHtml += '</div>';
+
+    Drawer.open({
+        title: 'Wybierz tagi',
+        content: contentHtml,
+        size: 'sm',
+        showCloseBtn: true,
+        confirmLabel: 'Zatwierdź wybór',
+        onConfirm: () => {
+            if (onConfirm) onConfirm(_tagsDrawerCurrentValues);
+        }
+    });
+
     setTimeout(() => {
-        overlay.classList.add('active');
-        drawer.classList.add('active');
-    }, 10);
-    document.body.style.overflow = 'hidden';
+        const content = document.getElementById('tags-selection-content');
+        if (content) {
+            content.addEventListener('click', (e) => {
+                const btn = e.target.closest('.tag-select-btn');
+                if (!btn) return;
+                const group = btn.dataset.group;
+                const val = btn.dataset.value;
+
+                const btns = content.querySelectorAll(`.tag-select-btn[data-group="${group}"]`);
+                btns.forEach(b => b.classList.replace('bg-brand-600', 'bg-white/5'));
+                btns.forEach(b => b.classList.replace('text-white', 'text-gray-400'));
+                btns.forEach(b => b.classList.replace('border-brand-500', 'border-white/10'));
+
+                btn.classList.replace('bg-white/5', 'bg-brand-600');
+                btn.classList.replace('text-gray-400', 'text-white');
+                btn.classList.replace('border-white/10', 'border-brand-500');
+
+                _tagsDrawerCurrentValues[group] = (val === 'all') ? null : val;
+            });
+        }
+    }, 50);
 }
 
 export function closeTagsDrawer() {
-    const overlay = document.getElementById('tags-selection-overlay');
-    const drawer = document.getElementById('tags-selection-drawer');
-    if (!overlay || !drawer) return;
-
-    if (typeof releaseOverlayNavigationLock === 'function') {
-        releaseOverlayNavigationLock();
-    }
-    overlay.classList.remove('active');
-    drawer.classList.remove('active');
-    setTimeout(() => {
-        overlay.classList.add('hidden');
-        drawer.classList.add('hidden');
-        if (typeof hasVisibleBlockingOverlay === 'function' && !hasVisibleBlockingOverlay()) {
-            document.body.style.overflow = '';
-        }
-    }, 300);
-}
-
-export function confirmTagsSelection() {
-    if (_tagsDrawerCallback) {
-        _tagsDrawerCallback(_tagsDrawerCurrentValues);
-    }
-    closeTagsDrawer();
-}
-
-export function initTagsSelectionDrawer() {
-    document.getElementById('close-tags-selection-drawer')?.addEventListener('click', closeTagsDrawer);
-    document.getElementById('tags-selection-overlay')?.addEventListener('click', (e) => {
-        if (e.target.id === 'tags-selection-overlay') closeTagsDrawer();
-    });
-    document.getElementById('tags-selection-confirm-btn')?.addEventListener('click', confirmTagsSelection);
+    Drawer.close();
 }
