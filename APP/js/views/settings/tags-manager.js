@@ -19,13 +19,9 @@ function el(id) {
 export function initTagsManager() {
     if (initialized) return;
 
+    // Przyciski i eventy dla tags-manager inicjalizowane są inline lub przez delegację
     // Przycisk "Dodaj grupę tagów"
     el('add-tag-group-btn')?.addEventListener('click', () => openTagGroupModal(null));
-
-    // Przyciski modalu grupy
-    el('tag-group-cancel-btn')?.addEventListener('click', closeTagGroupModal);
-    el('tag-group-modal-backdrop')?.addEventListener('click', closeTagGroupModal);
-    el('tag-group-save-btn')?.addEventListener('click', saveTagGroup);
 
     // Delegacja eventów w kontenerze grup
     el('tags-groups-container')?.addEventListener('click', handleTagsContainerClick);
@@ -247,43 +243,70 @@ async function deleteTagConfirm(group, value, btn) {
 // --- MODALE GRUP ---
 
 function openTagGroupModal(existingGroup = null) {
-    const modal = el('tag-group-modal');
-    if (!modal) return;
-
-    const labelInput = el('tag-group-label-input');
-    const keyPreview = el('tag-group-key-preview');
-    const initialTagContainer = el('tag-group-initial-tag-container');
-
+    let label = '';
+    let keyPreview = '—';
     if (existingGroup) {
-        const label = getTagGroupLabel(existingGroup);
-        el('tag-group-modal-title').textContent = 'Edytuj grupę tagów';
-        labelInput.value = label;
-        keyPreview.textContent = existingGroup;
-        el('tag-group-edit-id').value = existingGroup;
-        initialTagContainer?.classList.add('hidden');
-    } else {
-        el('tag-group-modal-title').textContent = 'Nowa grupa tagów';
-        labelInput.value = '';
-        keyPreview.textContent = '—';
-        el('tag-group-edit-id').value = '';
-        el('tag-group-first-label').value = '';
-        el('tag-group-first-icon').value = '';
-        initialTagContainer?.classList.remove('hidden');
+        label = getTagGroupLabel(existingGroup);
+        keyPreview = existingGroup;
     }
 
-    labelInput.oninput = () => {
-        const raw = labelInput.value.trim().toLowerCase()
-            .replace(/\s+/g, '_')
-            .replace(/[^a-z0-9_-]/g, '')
-            .slice(0, 32);
-        keyPreview.textContent = raw || '—';
-    };
+    const content = `
+        <div class="space-y-4">
+            <input type="hidden" id="tag-group-edit-id" value="${existingGroup || ''}">
+            <div>
+                <label class="block text-xs text-gray-400 mb-1">Nazwa grupy (wyświetlana) *</label>
+                <input type="text" id="tag-group-label-input" value="${label.replace(/"/g, '&quot;')}"
+                    class="block w-full rounded-xl border-white/10 bg-white/5 text-white py-3 px-4 focus:bg-white/10 focus:ring-1 focus:ring-brand-500 transition-all outline-none text-sm"
+                    placeholder="np. Sezon">
+            </div>
+            <div>
+                <label class="block text-xs text-gray-400 mb-1">Klucz grupy (auto)</label>
+                <div class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/5 border border-white/10">
+                    <span class="text-xs text-gray-500">key:</span>
+                    <span id="tag-group-key-preview" class="text-brand-500 font-mono text-sm">${keyPreview}</span>
+                </div>
+            </div>
+            ${!existingGroup ? `
+            <div id="tag-group-initial-tag-container" class="border-t border-white/10 pt-4">
+                <p class="text-xs text-gray-400 mb-2">Pierwsza wartość (wymagana)</p>
+                <div class="flex gap-2">
+                    <input type="text" id="tag-group-first-label"
+                        class="flex-1 rounded-xl border-white/10 bg-white/5 text-white py-2.5 px-3 focus:bg-white/10 transition-all outline-none text-sm"
+                        placeholder="np. Letni">
+                    <input type="text" id="tag-group-first-icon"
+                        class="w-16 rounded-xl border-white/10 bg-white/5 text-white py-2.5 px-3 focus:bg-white/10 transition-all outline-none text-sm text-center"
+                        placeholder="emoji" maxlength="4">
+                </div>
+            </div>` : ''}
+        </div>
+    `;
 
-    modal.classList.remove('hidden');
-}
+    Drawer.open({
+        title: existingGroup ? 'Edytuj grupę tagów' : 'Nowa grupa tagów',
+        content,
+        size: 'sm',
+        confirmLabel: 'Zapisz',
+        cancelLabel: 'Anuluj',
+        onConfirm: async () => {
+            await saveTagGroup();
+        },
+        triggerId: 'add-tag-group-btn',
+    });
 
-function closeTagGroupModal() {
-    el('tag-group-modal')?.classList.add('hidden');
+    setTimeout(() => {
+        const labelInput = el('tag-group-label-input');
+        const keyPreviewEl = el('tag-group-key-preview');
+        if (labelInput && keyPreviewEl) {
+            labelInput.oninput = () => {
+                const raw = labelInput.value.trim().toLowerCase()
+                    .replace(/\s+/g, '_')
+                    .replace(/[^a-z0-9_-]/g, '')
+                    .slice(0, 32);
+                keyPreviewEl.textContent = raw || '—';
+            };
+            labelInput.focus();
+        }
+    }, 50);
 }
 
 async function saveTagGroup() {
@@ -291,36 +314,24 @@ async function saveTagGroup() {
     const groupKey = el('tag-group-key-preview').textContent.trim();
     const editGroupId = el('tag-group-edit-id').value;
 
-    if (!label) { alert('Podaj nazwę grupy.'); return; }
-    
-    const saveBtn = el('tag-group-save-btn');
-    const originalText = saveBtn ? saveBtn.innerHTML : 'Zapisz';
+    if (!label) { alert('Podaj nazwę grupy.'); throw new Error('Brak nazwy grupy'); }
 
     try {
-        if (saveBtn) {
-            saveBtn.disabled = true;
-            saveBtn.innerHTML = '<i class="fas fa-spinner animate-spin mr-2"></i> Zapisywanie...';
-        }
-
         if (editGroupId) {
             await apiCall(`/api/tags/groups/${encodeURIComponent(editGroupId)}`, 'PUT', { label });
         } else {
             const firstLabel = el('tag-group-first-label').value.trim();
             const firstIcon = el('tag-group-first-icon').value.trim();
-            if (!firstLabel) { alert('Podaj pierwszą wartość grupy.'); return; }
-            if (groupKey === '—' || !groupKey) { alert('Błąd: Nieprawidłowy klucz grupy.'); return; }
+            if (!firstLabel) { alert('Podaj pierwszą wartość grupy.'); throw new Error('Brak pierwszej wartości'); }
+            if (groupKey === '—' || !groupKey) { alert('Błąd: Nieprawidłowy klucz grupy.'); throw new Error('Nieprawidłowy klucz'); }
             await apiCall('/api/tags/groups', 'POST', { group: groupKey, label, firstLabel, firstIcon });
         }
-        closeTagGroupModal();
+        Drawer.close();
         await fetchInitialData(false);
         renderTagsManager();
     } catch (err) {
         alert('Błąd: ' + err.message);
-    } finally {
-        if (saveBtn) {
-            saveBtn.disabled = false;
-            saveBtn.innerHTML = originalText;
-        }
+        throw err;
     }
 }
 
