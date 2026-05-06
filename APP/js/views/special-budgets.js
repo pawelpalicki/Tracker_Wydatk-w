@@ -6,7 +6,8 @@
 import state from '../core/state.js';
 import { apiCall } from '../core/api.js';
 import { formatAmount } from '../shared/format.js';
-import { switchTab, openOverlay, closeOverlay } from '../shared/ui.js';
+import { switchTab } from '../shared/ui.js';
+import Drawer from '../shared/drawer.js';
 import { fetchInitialData } from '../core/data-loader.js';
 import { setPurchaseBudgetType } from './purchase-form.js';
 
@@ -31,21 +32,6 @@ export function initSpecialBudgets() {
 
     el('add-special-budget-form')?.addEventListener('submit', handleAddSpecialBudget);
     el('special-budgets-list')?.addEventListener('click', handleSpecialBudgetActions);
-    el('edit-special-budget-form')?.addEventListener('submit', handleEditSpecialBudgetSubmit);
-    
-    el('close-edit-special-budget-modal')?.addEventListener('click', () => closeOverlay('edit-special-budget-modal'));
-    el('cancel-edit-special-budget')?.addEventListener('click', () => closeOverlay('edit-special-budget-modal'));
-    
-    // Zamknięcie modala przez kliknięcie w overlay
-    let mousedownTarget = null;
-    el('edit-special-budget-modal')?.addEventListener('mousedown', (e) => {
-        mousedownTarget = e.target;
-    });
-    el('edit-special-budget-modal')?.addEventListener('click', (e) => {
-        if (e.target.id === 'edit-special-budget-modal' && mousedownTarget?.id === 'edit-special-budget-modal') {
-            closeOverlay('edit-special-budget-modal');
-        }
-    });
 
     el('special-budgets-tab')?.addEventListener('click', (e) => {
         const navBtn = e.target.closest('[data-nav-tab]');
@@ -319,11 +305,36 @@ export async function handleSpecialBudgetActions(e) {
         const budget = state.allSpecialBudgets.find(b => b.id === budgetId);
         if (budget) {
             editingSpecialBudgetId = budgetId;
-            const editNameInput = el('edit-special-budget-name');
-            const editAmountInput = el('edit-special-budget-amount');
-            if (editNameInput) editNameInput.value = budget.name;
-            if (editAmountInput) editAmountInput.value = budget.amount;
-            openOverlay('edit-special-budget-modal');
+            const content = `
+                <div class="space-y-4">
+                    <div>
+                        <label for="edit-special-budget-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Nazwa</label>
+                        <input type="text" id="edit-special-budget-name" value="${budget.name.replace(/"/g, '&quot;')}" required
+                            class="mt-1 block w-full rounded-xl border-gray-300 dark:border-white/10 dark:bg-white/5 dark:text-white shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm py-2 px-3">
+                    </div>
+                    <div>
+                        <label for="edit-special-budget-amount" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Kwota bazowa</label>
+                        <input type="number" id="edit-special-budget-amount" value="${budget.amount}" step="0.01" min="0" required
+                            class="mt-1 block w-full rounded-xl border-gray-300 dark:border-white/10 dark:bg-white/5 dark:text-white shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm py-2 px-3">
+                    </div>
+                </div>
+            `;
+            Drawer.open({
+                title: 'Edytuj budżet specjalny',
+                content,
+                size: 'sm',
+                confirmLabel: 'Zapisz',
+                cancelLabel: 'Anuluj',
+                onConfirm: async () => {
+                    await handleEditSpecialBudgetSubmit();
+                },
+                onClose: () => {
+                    editingSpecialBudgetId = null;
+                }
+            });
+            setTimeout(() => {
+                el('edit-special-budget-name')?.focus();
+            }, 50);
         }
     }
 }
@@ -336,35 +347,23 @@ export function populateBudgetTypeSelect() {
     }
 }
 
-export async function handleEditSpecialBudgetSubmit(e) {
-    e.preventDefault();
+export async function handleEditSpecialBudgetSubmit() {
     if (!editingSpecialBudgetId) return;
 
-    const form = e.target;
-    const submitBtn = form.querySelector('button[type="submit"]');
     const editNameInput = el('edit-special-budget-name');
     const editAmountInput = el('edit-special-budget-amount');
     const name = editNameInput?.value.trim();
     const amount = parseFloat(editAmountInput?.value);
 
-    if (name && amount > 0) {
-        const originalText = submitBtn.innerHTML;
-        try {
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i class="fas fa-spinner animate-spin mr-2"></i> Zapisywanie...';
-            
-            await apiCall(`/api/special-budgets/${editingSpecialBudgetId}`, 'PUT', { name, amount });
-            
-            // fetchInitialData odświeża stan i wywołuje renderowanie
-            await fetchInitialData(false);
-            
-            closeOverlay('edit-special-budget-modal');
-            editingSpecialBudgetId = null;
-        } catch (error) {
-            alert('Nie udało się zaktualizować budżetu: ' + error.message);
-        } finally {
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = originalText;
-        }
+    if (!name) { alert('Podaj nazwę.'); throw new Error('Brak nazwy'); }
+    if (!amount || amount <= 0) { alert('Podaj poprawną kwotę.'); throw new Error('Niepoprawna kwota'); }
+
+    try {
+        await apiCall(`/api/special-budgets/${editingSpecialBudgetId}`, 'PUT', { name, amount });
+        await fetchInitialData(false);
+        Drawer.close();
+    } catch (error) {
+        alert('Nie udało się zaktualizować budżetu: ' + error.message);
+        throw error;
     }
 }
