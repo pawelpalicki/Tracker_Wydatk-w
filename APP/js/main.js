@@ -10,7 +10,6 @@ import { initializeApp } from './core/bootstrap.js';
 // Importy dla inicjalizacji DOM (te moduły same podpinają listenery jeśli trzeba, 
 // lub są wywoływane w initializeApp)
 import { initNotifications } from './shared/notifications.js';
-import { initTagsSelectionDrawer } from './shared/tags.js';
 
 // =====================================================================
 // AUTH OBSERVER
@@ -58,7 +57,6 @@ auth.onAuthStateChanged(user => {
 document.addEventListener('DOMContentLoaded', () => {
     setupAuthEventListeners();
     initNotifications();
-    initTagsSelectionDrawer();
 
     // Service Worker
     if ('serviceWorker' in navigator) {
