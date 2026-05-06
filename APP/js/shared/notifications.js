@@ -11,7 +11,7 @@
 import state from '../core/state.js';
 import { apiCall } from '../core/api.js';
 import { formatAmount } from './format.js';
-import { hasVisibleBlockingOverlay } from './ui.js';
+import Drawer from './drawer.js';
 
 let notificationsInitialized = false;
 let currentNotifications = [];
@@ -21,8 +21,6 @@ export function initNotifications() {
     notificationsInitialized = true;
 
     document.getElementById('nav-notifications-btn')?.addEventListener('click', openNotificationsDrawer);
-    document.getElementById('close-notifications-drawer')?.addEventListener('click', closeNotificationsDrawer);
-    document.getElementById('notifications-overlay')?.addEventListener('click', closeNotificationsDrawer);
     document.getElementById('ai-insight-btn')?.addEventListener('click', generateAIInsights);
 }
 
@@ -44,16 +42,47 @@ function updateNotificationBadge() {
 }
 
 export function openNotificationsDrawer() {
-    const drawer = document.getElementById('notifications-drawer');
-    const overlay = document.getElementById('notifications-overlay');
-    if (!drawer || !overlay) return;
+    let contentHtml = '';
+    
+    if (!Array.isArray(currentNotifications) || currentNotifications.length === 0) {
+        contentHtml = `
+            <div id="notifications-content">
+                <div class="text-center py-10 opacity-50">
+                    <i class="fas fa-bell-slash text-3xl mb-3 block"></i>
+                    <p class="text-sm">Brak nowych powiadomień</p>
+                </div>
+            </div>
+        `;
+    } else {
+        contentHtml = `
+            <div id="notifications-content" class="space-y-3">
+                ${currentNotifications.map(notificationTemplate).join('')}
+            </div>
+        `;
+    }
 
-    drawer.classList.remove('hidden');
-    overlay.classList.remove('hidden');
-    setTimeout(() => {
-        drawer.classList.remove('translate-y-full');
-        overlay.classList.remove('opacity-0');
-    }, 10);
+    Drawer.open({
+        title: 'Powiadomienia',
+        content: `
+            <p class="text-xs text-gray-400 mt-0.5 mb-4 -translate-y-2">Twoje alerty i wskazówki</p>
+            ${contentHtml}
+        `,
+        size: 'md',
+        showCloseBtn: true,
+        closeOnBackdrop: true
+    });
+
+    if (Array.isArray(currentNotifications) && currentNotifications.length > 0) {
+        setTimeout(() => {
+            const container = document.getElementById('notifications-content');
+            if (container) {
+                container.querySelectorAll('[data-delete-notification-id]').forEach(btn => {
+                    btn.addEventListener('click', () => deleteNotification(btn.dataset.deleteNotificationId));
+                });
+                setupNotificationSwipes();
+            }
+        }, 50);
+    }
 
     const unreadIds = currentNotifications.filter(n => !n.isRead).map(n => n.id);
     if (unreadIds.length > 0) {
@@ -62,17 +91,7 @@ export function openNotificationsDrawer() {
 }
 
 export function closeNotificationsDrawer() {
-    const drawer = document.getElementById('notifications-drawer');
-    const overlay = document.getElementById('notifications-overlay');
-    if (!drawer || !overlay) return;
-
-    drawer.classList.add('translate-y-full');
-    overlay.classList.add('opacity-0');
-    setTimeout(() => {
-        drawer.classList.add('hidden');
-        overlay.classList.add('hidden');
-        if (!hasVisibleBlockingOverlay()) document.body.style.overflow = '';
-    }, 300);
+    Drawer.close();
 }
 
 async function markNotificationsAsRead(ids) {
