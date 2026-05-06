@@ -6,7 +6,8 @@
 import state from '../core/state.js';
 import { apiCall } from '../core/api.js';
 import { formatAmount } from '../shared/format.js';
-import { openSelectionDrawer, openDrawer, closeDrawer } from '../shared/ui.js';
+import { openSelectionDrawer } from '../shared/ui.js';
+import Drawer from '../shared/drawer.js';
 import { openHierarchicalCategoryDrawer } from '../shared/categories.js';
 import { getTagGroups, getTagGroupLabel, getTagLabel } from '../shared/tags.js';
 import { fetchInitialData } from '../core/data-loader.js';
@@ -226,31 +227,7 @@ export function initPurchaseListFilters() {
         handleFilterChange();
     });
 
-    // Inicjalizacja przycisków szuflady filtrów (jeden raz)
-    const applyBtn = el('filter-drawer-apply-btn');
-    const closeBtn = el('close-filter-drawer');
-    const overlay = el('filter-drawer-overlay');
 
-    applyBtn?.addEventListener('click', () => {
-        if (currentFilterType === 'date') {
-            state.filterDateStart = el('drawer-date-start')?.value || '';
-            state.filterDateEnd = el('drawer-date-end')?.value || '';
-        } else if (currentFilterType === 'amount') {
-            state.filterMinAmount = el('drawer-min-amount')?.value || '';
-            state.filterMaxAmount = el('drawer-max-amount')?.value || '';
-        }
-        if (typeof currentFilterOnApply === 'function') currentFilterOnApply();
-        closeFilterDrawer();
-    });
-
-    closeBtn?.addEventListener('click', () => closeFilterDrawer());
-    let mousedownTarget = null;
-    overlay?.addEventListener('mousedown', (e) => {
-        mousedownTarget = e.target;
-    });
-    overlay?.addEventListener('click', (e) => {
-        if (e.target === overlay && mousedownTarget === overlay) closeFilterDrawer();
-    });
 }
 
 function setText(id, text) {
@@ -259,22 +236,12 @@ function setText(id, text) {
 }
 
 export function openFilterDrawer(title, type, onApply) {
-    const overlay = el('filter-drawer-overlay');
-    const drawer = el('filter-drawer');
-    const titleEl = el('filter-drawer-title');
-    const content = el('filter-drawer-content');
-    if (!overlay || !drawer || !content) return;
-
-    currentFilterType = type;
-    currentFilterOnApply = onApply;
-
-    if (titleEl) titleEl.textContent = title;
-    content.innerHTML = '';
+    let content = '';
 
     if (type === 'date') {
         const startVal = state.filterDateStart || '';
         const endVal = state.filterDateEnd || '';
-        content.innerHTML = `
+        content = `
             <div class="space-y-4">
                 <div>
                     <label class="block text-xs text-gray-400 mb-2 ml-1">Data od</label>
@@ -289,7 +256,7 @@ export function openFilterDrawer(title, type, onApply) {
     } else if (type === 'amount') {
         const minVal = state.filterMinAmount || '';
         const maxVal = state.filterMaxAmount || '';
-        content.innerHTML = `
+        content = `
             <div class="space-y-4">
                 <div>
                     <label class="block text-xs text-gray-400 mb-2 ml-1">Kwota minimalna</label>
@@ -303,11 +270,29 @@ export function openFilterDrawer(title, type, onApply) {
         `;
     }
 
-    openDrawer('filter-drawer', 'filter-drawer-overlay');
+    Drawer.open({
+        title,
+        content,
+        size: 'sm',
+        confirmLabel: 'Zastosuj',
+        cancelLabel: 'Anuluj',
+        onConfirm: () => {
+            if (type === 'date') {
+                state.filterDateStart = el('drawer-date-start')?.value || '';
+                state.filterDateEnd = el('drawer-date-end')?.value || '';
+            } else if (type === 'amount') {
+                state.filterMinAmount = el('drawer-min-amount')?.value || '';
+                state.filterMaxAmount = el('drawer-max-amount')?.value || '';
+            }
+            if (typeof onApply === 'function') onApply();
+            Drawer.close();
+        },
+        triggerId: type === 'date' ? 'filter-date-btn' : 'filter-amount-btn',
+    });
 }
 
 export function closeFilterDrawer() {
-    closeDrawer('filter-drawer', 'filter-drawer-overlay');
+    Drawer.close();
 }
 
 export const handleInfiniteScroll = () => {
