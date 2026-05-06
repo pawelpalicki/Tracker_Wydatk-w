@@ -24,6 +24,7 @@
     <link rel="icon" href="icon-new.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="icon-new.svg">
     <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/drawer.css">
 </head>
 
 <body class="dark bg-[#0a0a0a] font-sans text-white">
@@ -1452,42 +1453,6 @@
         </div>
     </div>
 
-    <!-- Modal: Formularz tagu (dodaj/edytuj) -->
-    <div id="tag-form-modal" class="hidden fixed inset-0 z-[200] flex items-end sm:items-center justify-center">
-        <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" id="tag-form-modal-backdrop"></div>
-        <div
-            class="relative w-full max-w-sm mx-auto bg-[#141414] border border-white/10 rounded-t-3xl sm:rounded-3xl shadow-2xl p-6 z-10">
-            <h3 id="tag-form-modal-title" class="text-lg font-bold text-white mb-4">Nowy tag</h3>
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-xs text-gray-400 mb-1">Etykieta (nazwa wyświetlana) *</label>
-                    <input type="text" id="tag-form-label-input"
-                        class="block w-full rounded-xl border-white/10 bg-white/5 text-white py-3 px-4 focus:bg-white/10 focus:ring-1 focus:ring-brand-500 transition-all outline-none text-sm"
-                        placeholder="np. Okazjonalny">
-                </div>
-                <div>
-                    <label class="block text-xs text-gray-400 mb-1">Podgląd wartości (auto)</label>
-                    <div class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/5 border border-white/10">
-                        <span class="text-xs text-gray-500">value:</span>
-                        <span id="tag-form-value-preview" class="text-brand-500 font-mono text-sm">—</span>
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-xs text-gray-400 mb-1">Emoji (opcjonalnie)</label>
-                    <input type="text" id="tag-form-icon-input"
-                        class="block w-full rounded-xl border-white/10 bg-white/5 text-white py-3 px-4 focus:bg-white/10 focus:ring-1 focus:ring-brand-500 transition-all outline-none text-sm"
-                        placeholder="np. ⭐" maxlength="4">
-                </div>
-                <input type="hidden" id="tag-form-group">
-                <input type="hidden" id="tag-form-old-value">
-            </div>
-            <div class="flex gap-3 mt-6">
-                <button id="tag-form-cancel-btn"
-                    class="flex-1 py-3 bg-white/5 hover:bg-white/10 text-white rounded-xl text-sm transition-colors">Anuluj</button>
-                <button id="tag-form-save-btn" class="flex-1 btn-primary rounded-xl font-semibold">Zapisz</button>
-            </div>
-        </div>
-    </div>
 
     <!-- Modal: Nowa grupa tagów -->
     <div id="tag-group-modal" class="hidden fixed inset-0 z-[200] flex items-end sm:items-center justify-center">

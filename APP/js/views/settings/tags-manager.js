@@ -5,6 +5,7 @@ import state from '../../core/state.js';
 import { apiCall } from '../../core/api.js';
 import { getTagGroups, getTagGroupLabel, getTagOptions } from '../../shared/tags.js';
 import { fetchInitialData } from '../../core/data-loader.js';
+import Drawer from '../../shared/drawer.js';
 
 let initialized = false;
 
@@ -20,11 +21,6 @@ export function initTagsManager() {
 
     // Przycisk "Dodaj grupę tagów"
     el('add-tag-group-btn')?.addEventListener('click', () => openTagGroupModal(null));
-
-    // Przyciski modalu tagu
-    el('tag-form-cancel-btn')?.addEventListener('click', closeTagFormModal);
-    el('tag-form-modal-backdrop')?.addEventListener('click', closeTagFormModal);
-    el('tag-form-save-btn')?.addEventListener('click', saveTagFromModal);
 
     // Przyciski modalu grupy
     el('tag-group-cancel-btn')?.addEventListener('click', closeTagGroupModal);
@@ -136,43 +132,70 @@ function handleTagsContainerClick(e) {
 // --- MODALE TAGÓW ---
 
 function openTagFormModal(group, oldValue = null) {
-    const modal = el('tag-form-modal');
-    if (!modal) return;
-
-    el('tag-form-group').value = group;
-    el('tag-form-old-value').value = oldValue || '';
-
-    const labelInput = el('tag-form-label-input');
-    const valuePreview = el('tag-form-value-preview');
-    const iconInput = el('tag-form-icon-input');
-
-    if (oldValue) {
+    const isEdit = !!oldValue;
+    
+    let label = '';
+    let icon = '';
+    if (isEdit) {
         const tags = getTagOptions(group);
         const existing = tags.find(t => t.value === oldValue);
-        el('tag-form-modal-title').textContent = 'Edytuj tag';
-        labelInput.value = existing ? existing.label : oldValue;
-        iconInput.value = existing ? existing.icon : '';
-        valuePreview.textContent = oldValue;
-    } else {
-        el('tag-form-modal-title').textContent = 'Nowy tag';
-        labelInput.value = '';
-        iconInput.value = '';
-        valuePreview.textContent = '—';
+        label = existing ? existing.label : oldValue;
+        icon = existing ? existing.icon : '';
     }
 
-    labelInput.oninput = () => {
-        const raw = labelInput.value.trim().toLowerCase()
-            .replace(/\s+/g, '_')
-            .replace(/[^a-z0-9_\u00e0-\u017e-]/g, '')
-            .slice(0, 32);
-        valuePreview.textContent = raw || '—';
-    };
+    const content = `
+        <div class="space-y-4">
+            <div>
+                <label class="block text-xs text-gray-400 mb-1">Etykieta (nazwa wyświetlana) *</label>
+                <input type="text" id="tag-form-label-input" value="${label.replace(/"/g, '&quot;')}"
+                    class="block w-full rounded-xl border-white/10 bg-white/5 text-white py-3 px-4 focus:bg-white/10 focus:ring-1 focus:ring-brand-500 transition-all outline-none text-sm"
+                    placeholder="np. Okazjonalny">
+            </div>
+            <div>
+                <label class="block text-xs text-gray-400 mb-1">Podgląd wartości (auto)</label>
+                <div class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/5 border border-white/10">
+                    <span class="text-xs text-gray-500">value:</span>
+                    <span id="tag-form-value-preview" class="text-brand-500 font-mono text-sm">${oldValue || '—'}</span>
+                </div>
+            </div>
+            <div>
+                <label class="block text-xs text-gray-400 mb-1">Emoji (opcjonalnie)</label>
+                <input type="text" id="tag-form-icon-input" value="${icon.replace(/"/g, '&quot;')}"
+                    class="block w-full rounded-xl border-white/10 bg-white/5 text-white py-3 px-4 focus:bg-white/10 focus:ring-1 focus:ring-brand-500 transition-all outline-none text-sm"
+                    placeholder="np. ⭐" maxlength="4">
+            </div>
+            <input type="hidden" id="tag-form-group" value="${group}">
+            <input type="hidden" id="tag-form-old-value" value="${oldValue || ''}">
+        </div>
+    `;
 
-    modal.classList.remove('hidden');
-}
+    Drawer.open({
+        title: isEdit ? 'Edytuj tag' : 'Nowy tag',
+        content,
+        size: 'sm',
+        confirmLabel: 'Zapisz',
+        cancelLabel: 'Anuluj',
+        onConfirm: async () => {
+            await saveTagFromModal();
+        },
+        triggerId: isEdit ? null : 'add-tag-group-btn',
+    });
 
-function closeTagFormModal() {
-    el('tag-form-modal')?.classList.add('hidden');
+    // Podepnij nasłuchiwanie na input dla podglądu wartości
+    setTimeout(() => {
+        const labelInput = el('tag-form-label-input');
+        const valuePreview = el('tag-form-value-preview');
+        if (labelInput && valuePreview) {
+            labelInput.oninput = () => {
+                const raw = labelInput.value.trim().toLowerCase()
+                    .replace(/\s+/g, '_')
+                    .replace(/[^a-z0-9_\u00e0-\u017e-]/g, '')
+                    .slice(0, 32);
+                valuePreview.textContent = raw || '—';
+            };
+            labelInput.focus();
+        }
+    }, 50);
 }
 
 async function saveTagFromModal() {
@@ -181,39 +204,27 @@ async function saveTagFromModal() {
     const labelRaw = el('tag-form-label-input').value.trim();
     const icon = el('tag-form-icon-input').value.trim();
 
-    if (!labelRaw) { alert('Podaj etykietę tagu.'); return; }
+    if (!labelRaw) { alert('Podaj etykietę tagu.'); throw new Error('Brak etykiety'); }
 
     const value = labelRaw.toLowerCase()
         .replace(/\s+/g, '_')
         .replace(/[^a-z0-9_\u00e0-\u017e-]/g, '')
         .slice(0, 32);
 
-    if (!value) { alert('Nie można wygenerować wartości.'); return; }
-
-    const saveBtn = el('tag-form-save-btn');
-    const originalText = saveBtn ? saveBtn.innerHTML : 'Zapisz';
+    if (!value) { alert('Nie można wygenerować wartości.'); throw new Error('Błąd generacji wartości'); }
 
     try {
-        if (saveBtn) {
-            saveBtn.disabled = true;
-            saveBtn.innerHTML = '<i class="fas fa-spinner animate-spin mr-2"></i> Zapisywanie...';
-        }
-
         if (oldValue) {
             await apiCall(`/api/tags/${group}/${encodeURIComponent(oldValue)}`, 'PUT', { value, label: labelRaw, icon });
         } else {
             await apiCall(`/api/tags/${group}`, 'POST', { value, label: labelRaw, icon });
         }
-        closeTagFormModal();
+        Drawer.close();
         await fetchInitialData(false);
         renderTagsManager();
     } catch (err) {
         alert('Błąd: ' + err.message);
-    } finally {
-        if (saveBtn) {
-            saveBtn.disabled = false;
-            saveBtn.innerHTML = originalText;
-        }
+        throw err;
     }
 }
 
