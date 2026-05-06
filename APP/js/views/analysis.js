@@ -1261,7 +1261,10 @@ function initializeComparisonPeriodControls() {
 // FILTRY TAGÓW
 // =====================================================================
 
-function renderAnalysisTagFilterButton() {
+/**
+ * Aktualizuje wygląd przycisku filtra tagów bez dodawania listenerów.
+ */
+function updateAnalysisTagFilterUI() {
     const labelEl = document.getElementById('analysis-filter-tags-label');
     const button = document.getElementById('analysis-filter-tags-btn');
     const indicatorEl = document.getElementById('analysis-filter-tags-indicator');
@@ -1279,11 +1282,20 @@ function renderAnalysisTagFilterButton() {
     button.classList.toggle('bg-white/5', !isActive);
     button.classList.toggle('shadow-sm', !isActive);
     indicatorEl?.classList.toggle('hidden', !isActive);
+}
+
+/**
+ * Inicjalizuje listener dla przycisku tagów (wywoływane raz).
+ */
+function initializeAnalysisTagFilter() {
+    const button = document.getElementById('analysis-filter-tags-btn');
+    if (!button || button.dataset.initialized === 'true') return;
+    button.dataset.initialized = 'true';
 
     button.addEventListener('click', () => {
         openTagsDrawer(currentComparisonTags, async (newTags) => {
             currentComparisonTags = newTags;
-            renderAnalysisTagFilterButton();
+            updateAnalysisTagFilterUI();
             await renderUnifiedComparisonChart();
         }, true);
     });
@@ -1302,10 +1314,18 @@ export async function initializeLongTermBudget() {
 
     await ensureComparisonAvailableMonths();
     initializeComparisonPeriodControls();
-    renderAnalysisTagFilterButton();
+    initializeAnalysisTagFilter();
+    updateAnalysisTagFilterUI();
 
     longTermBudgetInitialized = true;
     await renderUnifiedComparisonChart();
 }
 
-export { renderUnifiedComparisonChart, renderAnalysisTagFilterButton };
+/**
+ * Publiczny alias dla updateAnalysisTagFilterUI używany przez inne moduły.
+ */
+export function renderAnalysisTagFilterButton() {
+    updateAnalysisTagFilterUI();
+}
+
+export { renderUnifiedComparisonChart };
