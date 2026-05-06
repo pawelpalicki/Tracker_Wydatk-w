@@ -128,6 +128,7 @@ export function openTagsDrawer(currentTags, onConfirm, isFilter = false) {
         confirmLabel: 'Zatwierdź wybór',
         onConfirm: () => {
             if (onConfirm) onConfirm(_tagsDrawerCurrentValues);
+            Drawer.close();
         }
     });
 
