@@ -563,26 +563,32 @@
 
             <!-- Ustawienia: Budżety Specjalne -->
             <div id="settings-special-tab" class="tab-content px-2 pt-1">
-                <div class="flex items-center justify-between mb-4 px-1">
-                    <h3 class="text-xs font-bold text-gray-500 uppercase tracking-widest">Twoje budżety</h3>
-                    <button id="add-special-budget-btn" class="flex items-center gap-1.5 px-3 py-1.5 bg-brand-500/10 hover:bg-brand-500/20 text-brand-500 rounded-lg border border-brand-500/20 transition-all text-xs font-bold">
-                        <i class="fas fa-plus text-[10px]"></i>
-                        <span>Dodaj budżet</span>
-                    </button>
+                <div class="flex flex-col h-[calc(100vh-10rem)]">
+                    <div class="flex items-center justify-between mb-4 px-1 shrink-0">
+                        <h3 class="text-xs font-bold text-gray-500 uppercase tracking-widest">Twoje budżety</h3>
+                        <button id="add-special-budget-btn"
+                            class="flex items-center gap-1.5 px-3 py-1.5 bg-brand-500/10 hover:bg-brand-500/20 text-brand-500 rounded-lg border border-brand-500/20 transition-all text-xs font-bold">
+                            <i class="fas fa-plus text-[10px]"></i>
+                            <span>Dodaj budżet</span>
+                        </button>
+                    </div>
+                    <div id="special-budgets-list" class="flex-1 space-y-2 overflow-y-auto pr-2 pb-4 scrollbar-hide"></div>
                 </div>
-                <div id="special-budgets-list" class="space-y-2 mb-6 max-h-[calc(100vh-16rem)] overflow-y-auto pr-2"></div>
             </div>
 
             <!-- Ustawienia: Wydatki Cykliczne -->
             <div id="settings-recurring-tab" class="tab-content px-2 pt-1">
-                <div class="flex items-center justify-between mb-4 px-1">
-                    <h3 class="text-xs font-bold text-gray-500 uppercase tracking-widest">Subskrypcje i opłaty</h3>
-                    <button id="add-recurring-expense-btn" class="flex items-center gap-1.5 px-3 py-1.5 bg-brand-500/10 hover:bg-brand-500/20 text-brand-500 rounded-lg border border-brand-500/20 transition-all text-xs font-bold">
-                        <i class="fas fa-plus text-[10px]"></i>
-                        <span>Nowa opłata</span>
-                    </button>
+                <div class="flex flex-col h-[calc(100vh-10rem)]">
+                    <div class="flex items-center justify-between mb-4 px-1 shrink-0">
+                        <h3 class="text-xs font-bold text-gray-500 uppercase tracking-widest">Subskrypcje i opłaty</h3>
+                        <button id="add-recurring-expense-btn"
+                            class="flex items-center gap-1.5 px-3 py-1.5 bg-brand-500/10 hover:bg-brand-500/20 text-brand-500 rounded-lg border border-brand-500/20 transition-all text-xs font-bold">
+                            <i class="fas fa-plus text-[10px]"></i>
+                            <span>Nowa opłata</span>
+                        </button>
+                    </div>
+                    <div id="recurring-expenses-list" class="flex-1 space-y-3 overflow-y-auto pr-2 pb-4 scrollbar-hide"></div>
                 </div>
-                <div id="recurring-expenses-list" class="space-y-3 mb-6 max-h-[calc(100vh-16rem)] overflow-y-auto pr-2"></div>
             </div>
 
             <!-- Zakładka Analiza Budżetu -->
