@@ -125,15 +125,25 @@ export async function renderBudgetInputs() {
         list.innerHTML = categoriesToRender.map(cat => {
             const val = budgets[cat] || '';
             const formatted = formatNumber(val);
+            const parentCat = state.structuredCategories.find(c => c.name === cat && !c.parentId);
+            const icon = (parentCat && parentCat.icon) || 'fa-tag';
+            const color = (parentCat && parentCat.color) || '#6b7280';
+
+            const displayName = cat.charAt(0).toUpperCase() + cat.slice(1).toLowerCase();
+
             return `
-                <div class="flex justify-between items-center py-2 border-b border-white/5 last:border-0">
-                    <label for="budget-${cat}" class="text-gray-800 dark:text-gray-200">${cat.charAt(0).toUpperCase() + cat.slice(1)}</label>
-                    <div class="relative">
+                <div class="bg-white/[0.03] border border-white/5 rounded-2xl p-3 flex items-center justify-between gap-4 transition-colors hover:bg-white/[0.06]">
+                    <div class="flex items-center gap-3 flex-1 min-w-0">
+                        <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-sm" style="background-color: ${color}20; color: ${color}">
+                            <i class="fas ${icon} text-sm"></i>
+                        </div>
+                        <span class="text-sm font-bold text-gray-200 truncate tracking-tight">${displayName}</span>
+                    </div>
+                    <div class="flex items-baseline gap-1.5 shrink-0">
                         <input type="text" inputmode="decimal" id="budget-${cat}" data-category="${cat}"
-                               class="budget-input rounded-md border-white/10 bg-white/5 text-white text-right py-2 focus:bg-white/10 transition-all text-base font-semibold"
-                               style="padding-right: 2.2rem !important; width: 9rem !important;"
+                               class="budget-input bg-transparent text-white text-right text-lg font-black focus:outline-none w-24 placeholder-white/5"
                                placeholder="0" value="${formatted}">
-                        <span class="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-400 font-bold">zł</span>
+                        <span class="text-[10px] font-black text-white/30 uppercase tracking-tighter">zł</span>
                     </div>
                 </div>
             `;
@@ -221,7 +231,7 @@ async function handleCopyBudget(monthsCount, btn = null) {
 
     budgetInputs.forEach(input => {
         const category = input.dataset.category;
-        const amount = parseFloat(input.value);
+        const amount = parseFloat(input.value.replace(/\s/g, '').replace(',', '.'));
         if (amount > 0) {
             budgets[category] = amount;
         }
