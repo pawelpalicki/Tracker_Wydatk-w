@@ -99,10 +99,6 @@ function setupAppEventListeners() {
         history.back();
     });
 
-    document.getElementById('nav-user-btn')?.addEventListener('click', () => {
-        switchTab('more');
-    });
-
     // Inicjalizuj powiadomienia
     initNotifications();
 
