@@ -25,7 +25,7 @@ import { initPurchaseList, initPurchaseListFilters } from '../views/purchase-lis
 import {
     initSpecialBudgets,
 } from '../views/special-budgets.js';
-import { initSettingsRecurring, handleScheduleTypeChange } from '../views/settings/recurring-expenses.js';
+import { initSettingsRecurring } from '../views/settings/recurring-expenses.js';
 import { initMonthlyBudget } from '../views/settings/monthly-budget.js';
 import { initCategoriesManager } from '../views/settings/categories-manager.js';
 import { initTagsManager } from '../views/settings/tags-manager.js';
@@ -159,6 +159,5 @@ export async function initializeApp() {
     }
 
     exitEditMode();
-    handleScheduleTypeChange();
     initHomeDashboardControls();
 }

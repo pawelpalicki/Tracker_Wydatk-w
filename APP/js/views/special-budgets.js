@@ -16,7 +16,6 @@ import { setPurchaseBudgetType } from './purchase-form.js';
 // =====================================================================
 
 let specialBudgetCharts = {};
-let editingSpecialBudgetId = null;
 let specialBudgetsInitialized = false;
 
 function el(id) {
@@ -30,7 +29,7 @@ function el(id) {
 export function initSpecialBudgets() {
     if (specialBudgetsInitialized) return;
 
-    el('add-special-budget-form')?.addEventListener('submit', handleAddSpecialBudget);
+    el('add-special-budget-btn')?.addEventListener('click', () => openSpecialBudgetDrawer());
     el('special-budgets-list')?.addEventListener('click', handleSpecialBudgetActions);
 
     el('special-budgets-tab')?.addEventListener('click', (e) => {
@@ -131,10 +130,7 @@ export function renderSpecialBudgetsTab() {
     const header = `
         <div class="flex justify-end items-center mb-6 max-w-4xl mx-auto px-4">
             <button data-nav-tab="settings-special" class="flex items-center space-x-2 px-3 py-1.5 bg-white/10 hover:bg-white/20 border border-white/10 rounded-lg text-brand-400 transition-all text-xs font-medium">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-                    <circle cx="12" cy="12" r="3"/>
-                </svg>
+                <i class="fas fa-sliders-h text-sm"></i>
                 <span>Zarządzaj</span>
             </button>
         </div>
@@ -218,23 +214,23 @@ export function renderSpecialBudgetsList() {
 
     specialBudgetsList.innerHTML = '';
     if (!state.allSpecialBudgets || state.allSpecialBudgets.length === 0) {
-        specialBudgetsList.innerHTML = `<p class="text-gray-500 dark:text-gray-400 text-sm">Brak budżetów specjalnych. Dodaj nowy poniżej.</p>`;
+        specialBudgetsList.innerHTML = `<p class="text-gray-500 dark:text-gray-400 text-sm p-4 text-center">Brak budżetów specjalnych. Dodaj nowy przyciskiem powyżej.</p>`;
         return;
     }
 
     state.allSpecialBudgets.forEach(budget => {
         const budgetEl = document.createElement('div');
-        budgetEl.className = 'w-full flex items-center justify-between p-3 bg-white/5 hover:bg-white/10 rounded-xl border border-white/5 transition-all group';
+        budgetEl.className = 'w-full flex items-center justify-between p-3.5 bg-white/5 hover:bg-white/10 rounded-xl border border-white/5 transition-all group';
         budgetEl.innerHTML = `
             <div>
                 <span class="font-medium text-white">${budget.name}</span>
                 <span class="text-sm text-gray-400 ml-2">${formatAmount(budget.amount)}</span>
             </div>
             <div class="flex items-center space-x-2">
-                <button class="edit-special-budget-btn p-1 text-brand-400 hover:text-brand-300" data-id="${budget.id}" title="Edytuj">
+                <button class="edit-special-budget-btn p-2 text-brand-400 hover:text-brand-300 transition-colors" data-id="${budget.id}" title="Edytuj">
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L15.232 5.232z"></path></svg>
                 </button>
-                <button class="delete-special-budget-btn p-1 text-red-500 hover:text-red-700" data-id="${budget.id}" title="Usuń">
+                <button class="delete-special-budget-btn p-2 text-red-500 hover:text-red-700 transition-colors" data-id="${budget.id}" title="Usuń">
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                 </button>
             </div>
@@ -244,38 +240,59 @@ export function renderSpecialBudgetsList() {
 }
 
 // =====================================================================
-// OBSŁUGA FORMULARZY I AKCJI
+// OBSŁUGA SZUFLADY I AKCJI
 // =====================================================================
 
-export async function handleAddSpecialBudget(e) {
-    e.preventDefault();
-    const form = e.target;
-    const submitBtn = form.querySelector('button[type="submit"]');
-    const nameInput = el('new-special-budget-name');
-    const amountInput = el('new-special-budget-amount');
-    const name = nameInput?.value.trim();
-    const amount = parseFloat(amountInput?.value);
+export function openSpecialBudgetDrawer(budget = null) {
+    const isEdit = !!budget;
+    const title = isEdit ? 'Edytuj budżet specjalny' : 'Dodaj budżet specjalny';
+    
+    const contentHtml = `
+        <form id="special-budget-drawer-form" class="space-y-4">
+            <div>
+                <label for="sb-name" class="block text-xs font-semibold text-gray-400 mb-1.5 uppercase tracking-wider pl-1">Nazwa</label>
+                <input type="text" id="sb-name" value="${isEdit ? budget.name.replace(/"/g, '&quot;') : ''}" required
+                    class="block w-full rounded-xl border-white/10 bg-white/5 text-white py-3 px-4 focus:bg-white/10 transition-all text-sm font-medium"
+                    placeholder="np. Wakacje">
+            </div>
+            <div>
+                <label for="sb-amount" class="block text-xs font-semibold text-gray-400 mb-1.5 uppercase tracking-wider pl-1">Kwota bazowa (zł)</label>
+                <input type="number" id="sb-amount" value="${isEdit ? budget.amount : ''}" step="0.01" min="0" required
+                    class="block w-full rounded-xl border-white/10 bg-white/5 text-white py-3 px-4 focus:bg-white/10 transition-all text-sm font-medium"
+                    placeholder="0.00">
+            </div>
+        </form>
+    `;
 
-    if (name && amount > 0) {
-        const originalText = submitBtn.innerHTML;
-        try {
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i class="fas fa-spinner animate-spin mr-2"></i> Zapisywanie...';
-            
-            await apiCall('/api/special-budgets', 'POST', { name, amount });
-            
-            if (nameInput) nameInput.value = '';
-            if (amountInput) amountInput.value = '';
-            
-            // fetchInitialData odświeża stan i wywołuje renderowanie
-            await fetchInitialData(false);
-        } catch (error) {
-            alert('Nie udało się dodać budżetu specjalnego: ' + error.message);
-        } finally {
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = originalText;
+    Drawer.open({
+        title,
+        content: contentHtml,
+        size: 'sm',
+        confirmLabel: isEdit ? 'Zapisz zmiany' : 'Dodaj budżet',
+        cancelLabel: 'Anuluj',
+        onConfirm: async () => {
+            const form = el('special-budget-drawer-form');
+            if (!form.reportValidity()) return;
+
+            const name = el('sb-name').value.trim();
+            const amount = parseFloat(el('sb-amount').value);
+
+            try {
+                if (isEdit) {
+                    await apiCall(`/api/special-budgets/${budget.id}`, 'PUT', { name, amount });
+                } else {
+                    await apiCall('/api/special-budgets', 'POST', { name, amount });
+                }
+                await fetchInitialData(false);
+                Drawer.close();
+            } catch (error) {
+                alert('Błąd zapisu: ' + error.message);
+                throw error;
+            }
         }
-    }
+    });
+
+    setTimeout(() => el('sb-name')?.focus(), 50);
 }
 
 export async function handleSpecialBudgetActions(e) {
@@ -304,37 +321,7 @@ export async function handleSpecialBudgetActions(e) {
         const budgetId = editBtn.dataset.id;
         const budget = state.allSpecialBudgets.find(b => b.id === budgetId);
         if (budget) {
-            editingSpecialBudgetId = budgetId;
-            const content = `
-                <div class="space-y-4">
-                    <div>
-                        <label for="edit-special-budget-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Nazwa</label>
-                        <input type="text" id="edit-special-budget-name" value="${budget.name.replace(/"/g, '&quot;')}" required
-                            class="mt-1 block w-full rounded-xl border-gray-300 dark:border-white/10 dark:bg-white/5 dark:text-white shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm py-2 px-3">
-                    </div>
-                    <div>
-                        <label for="edit-special-budget-amount" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Kwota bazowa</label>
-                        <input type="number" id="edit-special-budget-amount" value="${budget.amount}" step="0.01" min="0" required
-                            class="mt-1 block w-full rounded-xl border-gray-300 dark:border-white/10 dark:bg-white/5 dark:text-white shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm py-2 px-3">
-                    </div>
-                </div>
-            `;
-            Drawer.open({
-                title: 'Edytuj budżet specjalny',
-                content,
-                size: 'sm',
-                confirmLabel: 'Zapisz',
-                cancelLabel: 'Anuluj',
-                onConfirm: async () => {
-                    await handleEditSpecialBudgetSubmit();
-                },
-                onClose: () => {
-                    editingSpecialBudgetId = null;
-                }
-            });
-            setTimeout(() => {
-                el('edit-special-budget-name')?.focus();
-            }, 50);
+            openSpecialBudgetDrawer(budget);
         }
     }
 }
@@ -344,26 +331,5 @@ export function populateBudgetTypeSelect() {
     const label = document.getElementById('budget-type-label');
     if (label) {
         label.textContent = 'Budżet miesięczny';
-    }
-}
-
-export async function handleEditSpecialBudgetSubmit() {
-    if (!editingSpecialBudgetId) return;
-
-    const editNameInput = el('edit-special-budget-name');
-    const editAmountInput = el('edit-special-budget-amount');
-    const name = editNameInput?.value.trim();
-    const amount = parseFloat(editAmountInput?.value);
-
-    if (!name) { alert('Podaj nazwę.'); throw new Error('Brak nazwy'); }
-    if (!amount || amount <= 0) { alert('Podaj poprawną kwotę.'); throw new Error('Niepoprawna kwota'); }
-
-    try {
-        await apiCall(`/api/special-budgets/${editingSpecialBudgetId}`, 'PUT', { name, amount });
-        await fetchInitialData(false);
-        Drawer.close();
-    } catch (error) {
-        alert('Nie udało się zaktualizować budżetu: ' + error.message);
-        throw error;
     }
 }

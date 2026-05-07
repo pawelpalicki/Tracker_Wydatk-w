@@ -563,124 +563,26 @@
 
             <!-- Ustawienia: Budżety Specjalne -->
             <div id="settings-special-tab" class="tab-content px-2 pt-1">
-                <div id="special-budgets-list" class="space-y-2 mb-6 max-h-[400px] overflow-y-auto pr-2"></div>
-                <form id="add-special-budget-form"
-                    class="space-y-4 bg-white/5 p-5 rounded-2xl border border-white/10 shadow-sm">
-                    <div>
-                        <input type="text" id="new-special-budget-name" placeholder="Nazwa (np. Wakacje)"
-                            class="block w-full rounded-xl border-white/10 bg-white/5 text-white shadow-sm focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 py-3.5 px-4 transition-colors"
-                            required autocomplete="off">
-                    </div>
-                    <div>
-                        <input type="number" id="new-special-budget-amount" placeholder="Kwota"
-                            class="block w-full rounded-xl border-white/10 bg-white/5 text-white shadow-sm focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 py-3.5 px-4 transition-colors"
-                            required step="0.01" autocomplete="off">
-                    </div>
-                    <div class="pt-2 flex justify-center">
-                        <button type="submit"
-                            class="btn-primary rounded-xl py-3 px-8 text-sm font-bold shadow-lg transition-transform active:scale-95">Dodaj
-                            budżet</button>
-                    </div>
-                </form>
+                <div class="flex items-center justify-between mb-4 px-1">
+                    <h3 class="text-xs font-bold text-gray-500 uppercase tracking-widest">Twoje budżety</h3>
+                    <button id="add-special-budget-btn" class="flex items-center gap-1.5 px-3 py-1.5 bg-brand-500/10 hover:bg-brand-500/20 text-brand-500 rounded-lg border border-brand-500/20 transition-all text-xs font-bold">
+                        <i class="fas fa-plus text-[10px]"></i>
+                        <span>Dodaj budżet</span>
+                    </button>
+                </div>
+                <div id="special-budgets-list" class="space-y-2 mb-6 max-h-[calc(100vh-16rem)] overflow-y-auto pr-2"></div>
             </div>
 
             <!-- Ustawienia: Wydatki Cykliczne -->
             <div id="settings-recurring-tab" class="tab-content px-2 pt-1">
-                <div id="recurring-expenses-list" class="space-y-3 mb-6 max-h-[400px] overflow-y-auto pr-2"></div>
-                <form id="add-recurring-expense-form"
-                    class="bg-white/5 p-5 rounded-2xl space-y-4 border border-white/10">
-                    <h4 class="font-semibold text-white text-xs uppercase tracking-wider opacity-60">Nowa
-                        subskrypcja</h4>
-                    <div class="grid grid-cols-1 gap-3">
-                        <input type="text" id="recurring-name" placeholder="Nazwa (np. Netflix)" required
-                            class="block w-full rounded-xl border-white/10 bg-white/5 text-white py-3 px-4 focus:bg-white/10 transition-all">
-                        <input type="number" id="recurring-amount" placeholder="Kwota" required step="0.01"
-                            class="block w-full rounded-xl border-white/10 bg-white/5 text-white py-3 px-4 focus:bg-white/10 transition-all">
-                        <button id="recurring-category-btn" type="button" class="category-trigger-card py-3">
-                            <div class="flex items-center">
-                                <div id="recurring-category-icon"
-                                    class="category-trigger-icon bg-white/5 text-white mr-2">
-                                    <span>📂</span>
-                                </div>
-                                <span id="recurring-category-label">Wybierz kategorię...</span>
-                            </div>
-                            <svg class="ml-2 w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor"
-                                viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M19 9l-7 7-7-7">
-                                </path>
-                            </svg>
-                        </button>
-
-
-                        <button id="recurring-schedule-btn" type="button" class="category-trigger-card py-3">
-                            <div class="flex items-center">
-                                <div class="category-trigger-icon bg-white/5 text-white mr-2">
-                                    <span>📅</span>
-                                </div>
-                                <span id="recurring-schedule-label">Co miesiąc</span>
-                            </div>
-                            <svg class="ml-2 w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor"
-                                viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M19 9l-7 7-7-7">
-                                </path>
-                            </svg>
-                        </button>
-
-                    </div>
-                    <div id="recurring-monthly-settings" class="mt-1">
-                        <input type="number" id="recurring-day-of-month" placeholder="Dzień (1-31)" min="1" max="31"
-                            class="block w-full rounded-xl border-white/10 bg-white/5 text-white py-3 px-4">
-                    </div>
-                    <div id="recurring-weekly-settings" class="hidden mt-1">
-                        <button id="recurring-day-of-week-btn" type="button" class="category-trigger-card py-3">
-                            <div class="flex items-center">
-                                <span id="recurring-day-of-week-label">Poniedziałek</span>
-                            </div>
-                            <svg class="ml-2 w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor"
-                                viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M19 9l-7 7-7-7">
-                                </path>
-                            </svg>
-                        </button>
-
-                    </div>
-                    <div id="recurring-interval-settings" class="hidden grid grid-cols-2 gap-2 mt-1">
-                        <input type="number" id="recurring-interval" placeholder="Dni" min="1"
-                            class="block w-full rounded-xl border-white/10 bg-white/5 text-white py-3 px-4">
-                        <input type="date" id="recurring-start-date"
-                            class="block w-full rounded-xl border-white/10 bg-white/5 text-white py-3 px-4">
-                    </div>
-
-                    <!-- Tagi dla cyklicznego -->
-                    <div class="pt-1 pb-1">
-                        <button type="button" id="recurring-tags-btn"
-                            class="w-full flex items-center justify-between gap-3 px-3 py-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all text-sm text-left">
-                            <div class="flex items-center gap-2">
-                                <span class="text-base">🏷️</span>
-                                <div class="flex flex-col min-w-0">
-                                    <span class="text-[10px] text-gray-500 leading-none">Tagi wydatku</span>
-                                    <span id="recurring-tags-summary"
-                                        class="text-white font-medium text-xs truncate mt-0.5">Wybierz
-                                        tagi...</span>
-                                </div>
-                            </div>
-                            <i class="fas fa-chevron-right text-gray-500 text-xs shrink-0"></i>
-                        </button>
-                    </div>
-
-                    <div class="flex gap-2">
-                        <button type="button" id="cancel-recurring-edit-btn"
-                            class="hidden flex-1 btn-secondary rounded-xl font-bold transition-all active:scale-95">
-                            Anuluj
-                        </button>
-                        <button type="submit"
-                            class="flex-1 btn-primary rounded-xl font-bold transition-all active:scale-95">Dodaj
-                            subskrypcję</button>
-                    </div>
-                </form>
+                <div class="flex items-center justify-between mb-4 px-1">
+                    <h3 class="text-xs font-bold text-gray-500 uppercase tracking-widest">Subskrypcje i opłaty</h3>
+                    <button id="add-recurring-expense-btn" class="flex items-center gap-1.5 px-3 py-1.5 bg-brand-500/10 hover:bg-brand-500/20 text-brand-500 rounded-lg border border-brand-500/20 transition-all text-xs font-bold">
+                        <i class="fas fa-plus text-[10px]"></i>
+                        <span>Nowa opłata</span>
+                    </button>
+                </div>
+                <div id="recurring-expenses-list" class="space-y-3 mb-6 max-h-[calc(100vh-16rem)] overflow-y-auto pr-2"></div>
             </div>
 
             <!-- Zakładka Analiza Budżetu -->
