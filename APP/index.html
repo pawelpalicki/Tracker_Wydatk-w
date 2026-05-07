@@ -101,7 +101,6 @@
 
     <div id="app-section" class="hidden">
 
-
         <!-- Dynamic Context Navbar -->
         <header id="app-header"
             class="sticky top-0 z-30 bg-[#0a0a0a]/80 backdrop-blur-lg border-b border-transparent shadow-none transition-all duration-300">
@@ -312,6 +311,69 @@
             </div>
             <!-- END home-tab -->
 
+            <!-- Purchase List tab -->
+            <div id="list-tab" class="tab-content pt-1">
+                <!-- New Filter UI -->
+                <div class="mb-4">
+                    <!-- Search Bar -->
+                    <div class="relative mb-3 px-2">
+                        <span class="absolute inset-y-0 left-4 flex items-center pointer-events-none text-gray-400">
+                            <i class="fas fa-search text-sm"></i>
+                        </span>
+                        <input type="text" id="filter-keyword" placeholder="Szukaj produktu..."
+                            class="block w-full rounded-2xl border-white/5 bg-white/5 text-white pl-14 pr-4 py-3 text-sm focus:bg-white/10 focus:ring-1 focus:ring-brand-500 transition-all outline-none border">
+                    </div>
+
+                    <!-- Filter Buttons Horizontal Scroll -->
+                    <div class="flex gap-2 overflow-x-auto pb-2 px-2 scrollbar-hide snap-x select-none">
+                        <button id="filter-category-btn" type="button"
+                            class="flex items-center gap-2 whitespace-nowrap rounded-xl border border-white/5 bg-white/5 px-4 py-2 text-sm font-medium text-gray-300 hover:bg-white/10 transition-all active:scale-95">
+                            <i class="fas fa-tag text-sm text-gray-500"></i>
+                            <span id="filter-category-label">Kategoria</span>
+                            <span class="filter-clear hidden ml-2 text-lg font-semibold text-red-300">×</span>
+                        </button>
+
+                        <button id="filter-budget-btn" type="button"
+                            class="flex items-center gap-2 whitespace-nowrap rounded-xl border border-white/5 bg-white/5 px-4 py-2 text-sm font-medium text-gray-300 hover:bg-white/10 transition-all active:scale-95">
+                            <i class="fas fa-wallet text-sm text-gray-500"></i>
+                            <span id="filter-budget-label">Budżet</span>
+                            <span class="filter-clear hidden ml-2 text-lg font-semibold text-red-300">×</span>
+                        </button>
+
+                        <button id="filter-shop-btn" type="button"
+                            class="flex items-center gap-2 whitespace-nowrap rounded-xl border border-white/5 bg-white/5 px-4 py-2 text-sm font-medium text-gray-300 hover:bg-white/10 transition-all active:scale-95">
+                            <i class="fas fa-store text-sm text-gray-500"></i>
+                            <span id="filter-shop-label">Sklep</span>
+                            <span class="filter-clear hidden ml-2 text-lg font-semibold text-red-300">×</span>
+                        </button>
+
+                        <button id="filter-date-btn" type="button"
+                            class="flex items-center gap-2 whitespace-nowrap rounded-xl border border-white/5 bg-white/5 px-4 py-2 text-sm font-medium text-gray-300 hover:bg-white/10 transition-all active:scale-95">
+                            <i class="fas fa-calendar text-sm text-gray-500"></i>
+                            <span id="filter-date-label">Data</span>
+                            <span class="filter-clear hidden ml-2 text-lg font-semibold text-red-300">×</span>
+                        </button>
+
+                        <button id="filter-amount-btn" type="button"
+                            class="flex items-center gap-2 whitespace-nowrap rounded-xl border border-white/5 bg-white/5 px-4 py-2 text-sm font-medium text-gray-300 hover:bg-white/10 transition-all active:scale-95">
+                            <i class="fas fa-coins text-sm text-gray-500"></i>
+                            <span id="filter-amount-label">Kwota</span>
+                            <span class="filter-clear hidden ml-2 text-lg font-semibold text-red-300">×</span>
+                        </button>
+
+                        <button id="clear-filters-btn" type="button"
+                            class="flex items-center gap-2 whitespace-nowrap rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-2 text-xs font-medium text-red-400 hover:bg-red-500/10 transition-all active:scale-95">
+                            <i class="fas fa-times text-[10px]"></i>
+                            <span>Wyczyść</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="purchases-list" class="space-y-4 px-2"></div>
+            </div>
+            <!-- End Purchase List tab -->
+
+            <!-- Add Purchase tab -->
             <div id="add-tab" class="tab-content pt-1">
                 <div id="scanner-container" class="glass-card rounded-2xl p-6 mb-6 hidden relative overflow-hidden">
                     <h3 class="text-lg font-semibold mb-4 text-white">Skanowanie paragonu</h3>
@@ -431,170 +493,9 @@
                     </form>
                 </div>
             </div>
+            <!-- End Add Purchase tab -->
 
-            <div id="list-tab" class="tab-content pt-1">
-                <!-- New Filter UI -->
-                <div class="mb-4">
-                    <!-- Search Bar -->
-                    <div class="relative mb-3 px-2">
-                        <span class="absolute inset-y-0 left-4 flex items-center pointer-events-none text-gray-400">
-                            <i class="fas fa-search text-sm"></i>
-                        </span>
-                        <input type="text" id="filter-keyword" placeholder="Szukaj produktu..."
-                            class="block w-full rounded-2xl border-white/5 bg-white/5 text-white pl-14 pr-4 py-3 text-sm focus:bg-white/10 focus:ring-1 focus:ring-brand-500 transition-all outline-none border">
-                    </div>
-
-                    <!-- Filter Buttons Horizontal Scroll -->
-                    <div class="flex gap-2 overflow-x-auto pb-2 px-2 scrollbar-hide snap-x select-none">
-                        <button id="filter-category-btn" type="button"
-                            class="flex items-center gap-2 whitespace-nowrap rounded-xl border border-white/5 bg-white/5 px-4 py-2 text-sm font-medium text-gray-300 hover:bg-white/10 transition-all active:scale-95">
-                            <i class="fas fa-tag text-sm text-gray-500"></i>
-                            <span id="filter-category-label">Kategoria</span>
-                            <span class="filter-clear hidden ml-2 text-lg font-semibold text-red-300">×</span>
-                        </button>
-
-                        <button id="filter-budget-btn" type="button"
-                            class="flex items-center gap-2 whitespace-nowrap rounded-xl border border-white/5 bg-white/5 px-4 py-2 text-sm font-medium text-gray-300 hover:bg-white/10 transition-all active:scale-95">
-                            <i class="fas fa-wallet text-sm text-gray-500"></i>
-                            <span id="filter-budget-label">Budżet</span>
-                            <span class="filter-clear hidden ml-2 text-lg font-semibold text-red-300">×</span>
-                        </button>
-
-                        <button id="filter-shop-btn" type="button"
-                            class="flex items-center gap-2 whitespace-nowrap rounded-xl border border-white/5 bg-white/5 px-4 py-2 text-sm font-medium text-gray-300 hover:bg-white/10 transition-all active:scale-95">
-                            <i class="fas fa-store text-sm text-gray-500"></i>
-                            <span id="filter-shop-label">Sklep</span>
-                            <span class="filter-clear hidden ml-2 text-lg font-semibold text-red-300">×</span>
-                        </button>
-
-                        <button id="filter-date-btn" type="button"
-                            class="flex items-center gap-2 whitespace-nowrap rounded-xl border border-white/5 bg-white/5 px-4 py-2 text-sm font-medium text-gray-300 hover:bg-white/10 transition-all active:scale-95">
-                            <i class="fas fa-calendar text-sm text-gray-500"></i>
-                            <span id="filter-date-label">Data</span>
-                            <span class="filter-clear hidden ml-2 text-lg font-semibold text-red-300">×</span>
-                        </button>
-
-                        <button id="filter-amount-btn" type="button"
-                            class="flex items-center gap-2 whitespace-nowrap rounded-xl border border-white/5 bg-white/5 px-4 py-2 text-sm font-medium text-gray-300 hover:bg-white/10 transition-all active:scale-95">
-                            <i class="fas fa-coins text-sm text-gray-500"></i>
-                            <span id="filter-amount-label">Kwota</span>
-                            <span class="filter-clear hidden ml-2 text-lg font-semibold text-red-300">×</span>
-                        </button>
-
-                        <button id="clear-filters-btn" type="button"
-                            class="flex items-center gap-2 whitespace-nowrap rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-2 text-xs font-medium text-red-400 hover:bg-red-500/10 transition-all active:scale-95">
-                            <i class="fas fa-times text-[10px]"></i>
-                            <span>Wyczyść</span>
-                        </button>
-                    </div>
-                </div>
-
-                <div id="purchases-list" class="space-y-4 px-2"></div>
-            </div>
-
-
-
-            <!-- Ustawienia: Kategorie (hierarchiczne v2) -->
-            <div id="settings-categories-tab" class="tab-content px-2 pt-1">
-                <div class="glass-card rounded-2xl p-4 sm:p-5 mb-4">
-                    <div class="flex items-center justify-between gap-3 mb-4">
-                        <div>
-                            <h3 class="text-base font-bold text-white">Kategorie</h3>
-                            <p class="text-xs text-gray-500 mt-1">Hierarchia kategorii i podkategorii wydatkow.</p>
-                        </div>
-                        <button id="add-parent-category-btn"
-                            class="shrink-0 flex items-center gap-1 px-3 py-1.5 btn-primary rounded-xl text-sm font-medium">
-                            <i class="fas fa-plus text-xs"></i> Dodaj kategorię
-                        </button>
-                    </div>
-
-                    <!-- Lista hierarchicznych kategorii v2 -->
-                    <div id="categories-v2-list" class="space-y-2 max-h-[60vh] overflow-y-auto pr-1">
-                        <!-- renderowane przez JS -->
-                    </div>
-                </div>
-
-                <div id="tags-manager-card" class="glass-card rounded-2xl p-4 sm:p-5 mb-4">
-                    <div class="flex items-center justify-between mb-1">
-                        <h3 class="text-base font-bold text-white">Tagi produktów</h3>
-                        <button id="add-tag-group-btn"
-                            class="flex items-center gap-1 px-3 py-1.5 text-xs rounded-lg border border-brand-500/30 hover:bg-brand-500/10 text-brand-500 transition-colors">
-                            <i class="fas fa-plus text-xs"></i> Dodaj grupę
-                        </button>
-                    </div>
-                    <p class="text-xs text-gray-500 mb-4">Dynamiczne listy tagów dla wydatków. Grupy "Natura" i
-                        "Celowość" są wbudowane.</p>
-                    <!-- Renderowane dynamicznie przez JS -->
-                    <div id="tags-groups-container" class="space-y-4">
-                    </div>
-                </div>
-            </div>
-
-            <!-- Ustawienia: Budżet -->
-            <div id="settings-budget-tab" class="tab-content px-2 pt-1 h-[calc(100vh-3.5rem)] -mb-24 overflow-hidden relative z-10">
-                <div class="flex flex-col h-[calc(100%-4rem)]">
-                    <!-- Fixed Header -->
-                    <div class="flex items-center justify-between gap-3 mb-4 px-1 shrink-0">
-                        <h3 class="text-xs font-bold text-gray-500 uppercase tracking-widest">Budżet na miesiąc</h3>
-                        <button id="budget-month-btn" type="button"
-                            class="flex items-center bg-white/5 hover:bg-white/10 text-white rounded-xl px-4 py-2 text-sm font-bold border border-white/10 transition-all active:scale-95 shadow-sm">
-                            <span id="budget-month-label">Wybierz miesiąc...</span>
-                            <i class="fas fa-chevron-down ml-3 text-[10px] text-brand-500"></i>
-                        </button>
-                    </div>
-
-                    <!-- Scrollable List -->
-                    <div class="flex-1 overflow-y-auto pr-1 scrollbar-hide">
-                        <div id="budgets-list" class="space-y-1.5 pb-4">
-                            <!-- renderowane przez JS -->
-                        </div>
-                    </div>
-
-                    <!-- Fixed Footer -->
-                    <div class="grid grid-cols-2 gap-3 py-4 shrink-0 mt-auto border-t border-white/5 bg-[#0a0a0a]">
-                        <button id="copy-budget-btn"
-                            class="w-full btn-secondary rounded-xl py-6 text-sm font-bold tracking-[0.15em] transition-all active:scale-95">
-                            Kopiuj
-                        </button>
-                        <button id="save-budget-btn"
-                            class="w-full btn-primary rounded-xl py-6 text-sm font-bold tracking-[0.15em] transition-all active:scale-95">
-                            Zapisz budżet
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Ustawienia: Budżety Specjalne -->
-            <div id="settings-special-tab" class="tab-content px-2 pt-1">
-                <div class="flex flex-col h-[calc(100vh-10rem)]">
-                    <div class="flex items-center justify-between mb-4 px-1 shrink-0">
-                        <h3 class="text-xs font-bold text-gray-500 uppercase tracking-widest">Twoje budżety</h3>
-                        <button id="add-special-budget-btn"
-                            class="flex items-center gap-1.5 px-3 py-1.5 bg-brand-500/10 hover:bg-brand-500/20 text-brand-500 rounded-lg border border-brand-500/20 transition-all text-xs font-bold">
-                            <i class="fas fa-plus text-[10px]"></i>
-                            <span>Dodaj budżet</span>
-                        </button>
-                    </div>
-                    <div id="special-budgets-list" class="flex-1 space-y-2 overflow-y-auto pr-2 pb-4 scrollbar-hide"></div>
-                </div>
-            </div>
-
-            <!-- Ustawienia: Wydatki Cykliczne -->
-            <div id="settings-recurring-tab" class="tab-content px-2 pt-1">
-                <div class="flex flex-col h-[calc(100vh-10rem)]">
-                    <div class="flex items-center justify-between mb-4 px-1 shrink-0">
-                        <h3 class="text-xs font-bold text-gray-500 uppercase tracking-widest">Subskrypcje i opłaty</h3>
-                        <button id="add-recurring-expense-btn"
-                            class="flex items-center gap-1.5 px-3 py-1.5 bg-brand-500/10 hover:bg-brand-500/20 text-brand-500 rounded-lg border border-brand-500/20 transition-all text-xs font-bold">
-                            <i class="fas fa-plus text-[10px]"></i>
-                            <span>Nowa opłata</span>
-                        </button>
-                    </div>
-                    <div id="recurring-expenses-list" class="flex-1 space-y-3 overflow-y-auto pr-2 pb-4 scrollbar-hide"></div>
-                </div>
-            </div>
-
-            <!-- Zakładka Analiza Budżetu -->
+            <!-- Analysis tab -->
             <div id="analysis-tab" class="tab-content px-2 pt-1">
                 <div
                     class="glass-card rounded-[24px] p-3 sm:p-4 flex flex-col border border-white/10 bg-white/[0.04] shadow-[0_20px_60px_rgba(0,0,0,0.24)]">
@@ -736,13 +637,9 @@
                     </div>
                 </div>
             </div>
+            <!-- End Analysis tab -->
 
-            <!-- Zakładka Budżety Specjalne -->
-            <div id="special-budgets-tab" class="tab-content pt-1">
-                <!-- Treść zostanie wyrenderowana przez special-budgets.js -->
-            </div>
-
-            <!-- Zakładka Więcej -->
+            <!-- More tab -->
             <div id="more-tab" class="tab-content px-2 pt-1 pb-20">
                 <div class="space-y-4">
 
@@ -857,10 +754,120 @@
 
                 </div>
             </div>
+            <!-- End More tab -->
+
+            <!-- Special Budgets tab -->
+            <div id="special-budgets-tab" class="tab-content pt-1">
+                <!-- Treść zostanie wyrenderowana przez special-budgets.js -->
+            </div>
+            <!-- End Special Budgets tab -->
+
+            <!-- Settings: Categories tab -->
+            <div id="settings-categories-tab" class="tab-content px-2 pt-1">
+                <div class="glass-card rounded-2xl p-4 sm:p-5 mb-4">
+                    <div class="flex items-center justify-between gap-3 mb-4">
+                        <div>
+                            <h3 class="text-base font-bold text-white">Kategorie</h3>
+                            <p class="text-xs text-gray-500 mt-1">Hierarchia kategorii i podkategorii wydatkow.</p>
+                        </div>
+                        <button id="add-parent-category-btn"
+                            class="shrink-0 flex items-center gap-1 px-3 py-1.5 btn-primary rounded-xl text-sm font-medium">
+                            <i class="fas fa-plus text-xs"></i> Dodaj kategorię
+                        </button>
+                    </div>
+
+                    <!-- Lista hierarchicznych kategorii v2 -->
+                    <div id="categories-v2-list" class="space-y-2 max-h-[60vh] overflow-y-auto pr-1">
+                        <!-- renderowane przez JS -->
+                    </div>
+                </div>
+
+                <div id="tags-manager-card" class="glass-card rounded-2xl p-4 sm:p-5 mb-4">
+                    <div class="flex items-center justify-between mb-1">
+                        <h3 class="text-base font-bold text-white">Tagi produktów</h3>
+                        <button id="add-tag-group-btn"
+                            class="flex items-center gap-1 px-3 py-1.5 text-xs rounded-lg border border-brand-500/30 hover:bg-brand-500/10 text-brand-500 transition-colors">
+                            <i class="fas fa-plus text-xs"></i> Dodaj grupę
+                        </button>
+                    </div>
+                    <p class="text-xs text-gray-500 mb-4">Dynamiczne listy tagów dla wydatków. Grupy "Natura" i
+                        "Celowość" są wbudowane.</p>
+                    <!-- Renderowane dynamicznie przez JS -->
+                    <div id="tags-groups-container" class="space-y-4">
+                    </div>
+                </div>
+            </div>
+            <!-- End Settings: Categories tab -->
+
+            <!-- Settings: Budget tab -->
+            <div id="settings-budget-tab" class="tab-content px-2 pt-1 h-[calc(100vh-3.5rem)] -mb-24 overflow-hidden relative z-10">
+                <div class="flex flex-col h-[calc(100%-4rem)]">
+                    <!-- Fixed Header -->
+                    <div class="flex items-center justify-between gap-3 mb-4 px-1 shrink-0">
+                        <h3 class="text-xs font-bold text-gray-500 uppercase tracking-widest">Budżet na miesiąc</h3>
+                        <button id="budget-month-btn" type="button"
+                            class="flex items-center bg-white/5 hover:bg-white/10 text-white rounded-xl px-4 py-2 text-sm font-bold border border-white/10 transition-all active:scale-95 shadow-sm">
+                            <span id="budget-month-label">Wybierz miesiąc...</span>
+                            <i class="fas fa-chevron-down ml-3 text-[10px] text-brand-500"></i>
+                        </button>
+                    </div>
+
+                    <!-- Scrollable List -->
+                    <div class="flex-1 overflow-y-auto pr-1 scrollbar-hide">
+                        <div id="budgets-list" class="space-y-1.5 pb-4">
+                            <!-- renderowane przez JS -->
+                        </div>
+                    </div>
+
+                    <!-- Fixed Footer -->
+                    <div class="grid grid-cols-2 gap-3 py-4 shrink-0 mt-auto border-t border-white/5 bg-[#0a0a0a]">
+                        <button id="copy-budget-btn"
+                            class="w-full btn-secondary rounded-xl py-6 text-sm font-bold tracking-[0.15em] transition-all active:scale-95">
+                            Kopiuj
+                        </button>
+                        <button id="save-budget-btn"
+                            class="w-full btn-primary rounded-xl py-6 text-sm font-bold tracking-[0.15em] transition-all active:scale-95">
+                            Zapisz budżet
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <!-- End Settings: Budget tab -->
+
+            <!-- Settings: Special Budgets -->
+            <div id="settings-special-tab" class="tab-content px-2 pt-1">
+                <div class="flex flex-col h-[calc(100vh-10rem)]">
+                    <div class="flex items-center justify-between mb-4 px-1 shrink-0">
+                        <h3 class="text-xs font-bold text-gray-500 uppercase tracking-widest">Twoje budżety</h3>
+                        <button id="add-special-budget-btn"
+                            class="flex items-center gap-1.5 px-3 py-1.5 bg-brand-500/10 hover:bg-brand-500/20 text-brand-500 rounded-lg border border-brand-500/20 transition-all text-xs font-bold">
+                            <i class="fas fa-plus text-[10px]"></i>
+                            <span>Dodaj budżet</span>
+                        </button>
+                    </div>
+                    <div id="special-budgets-list" class="flex-1 space-y-2 overflow-y-auto pr-2 pb-4 scrollbar-hide"></div>
+                </div>
+            </div>
+            <!-- End Settings: Special Budgets -->
+
+            <!-- Settings: Recurring Expenses -->
+            <div id="settings-recurring-tab" class="tab-content px-2 pt-1">
+                <div class="flex flex-col h-[calc(100vh-10rem)]">
+                    <div class="flex items-center justify-between mb-4 px-1 shrink-0">
+                        <h3 class="text-xs font-bold text-gray-500 uppercase tracking-widest">Subskrypcje i opłaty</h3>
+                        <button id="add-recurring-expense-btn"
+                            class="flex items-center gap-1.5 px-3 py-1.5 bg-brand-500/10 hover:bg-brand-500/20 text-brand-500 rounded-lg border border-brand-500/20 transition-all text-xs font-bold">
+                            <i class="fas fa-plus text-[10px]"></i>
+                            <span>Nowa opłata</span>
+                        </button>
+                    </div>
+                    <div id="recurring-expenses-list" class="flex-1 space-y-3 overflow-y-auto pr-2 pb-4 scrollbar-hide"></div>
+                </div>
+            </div>
+            <!-- End Settings: Recurring Expenses -->
+        </main>
+
     </div>
-
-
-
 
     <!-- Bottom Navigation Bar -->
     <nav id="bottom-nav" class="fixed bottom-0 left-0 right-0 z-[60] glass-card border-t border-white/10">
@@ -924,6 +931,7 @@
     <div id="fab-overlay" class="hidden fixed inset-0 bg-transparent z-[65] pointer-events-none">
     </div>
 
+    <!-- FAB Container -->
     <div id="fab-container"
         class="fixed left-1/2 -translate-x-1/2 bottom-20 z-[70] pointer-events-none transition-all duration-300">
         <div id="fab-actions"
@@ -990,6 +998,7 @@
         </div>
     </div>
 
+    <!-- Voice Expense Modal -->
     <div id="voice-expense-overlay"
         class="hidden fixed inset-0 z-[85] bg-black/70 backdrop-blur-sm opacity-0 transition-opacity duration-300">
     </div>
@@ -1066,38 +1075,9 @@
         </div>
     </div>
 
-    <!-- Category Selection Drawer moved to dynamic Drawer system -->
-    </div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    </main>
-    </div>
-
     <!-- Main application module (Entry point) -->
     <script type="module" src="js/main.js?v=13"></script>
 
-    <!-- Legacy scripts to be migrated -->
-    <!-- REMOVED: budget.js is now views/settings/monthly-budget.js (ES Module) -->
-    <!-- REMOVED: long-term-budget.js is now views/analysis.js (ES Module) -->
-    <!-- REMOVED: special-budgets.js is now views/special-budgets.js (ES Module) -->
-    <!-- REMOVED: recurring-expenses.js is now views/settings/recurring-expenses.js (ES Module) -->
-    <!-- REMOVED: categories-v2.js is now views/settings/categories-manager.js (ES Module) -->
-    <!-- REMOVED: tags.js is now views/settings/tags-manager.js (ES Module) -->
-    <!-- REMOVED: app.js is now core/bootstrap.js (ES Module) -->
 </body>
 
 </html>
