@@ -45,6 +45,7 @@ export const NAV_TITLES = {
 };
 
 const TABS_WITH_BACK = ['special-budgets', 'settings', 'settings-categories', 'settings-budget', 'settings-special', 'settings-recurring'];
+const registeredBlockingOverlays = new Map();
 
 export function updateNavbar(tabName) {
     const title = document.getElementById('nav-title');
@@ -70,7 +71,10 @@ export function switchTab(tabName, pushToHistory = true) {
         const currentDepth = VIEW_DEPTH[effectiveCurrentId] || 0;
         const newDepth = VIEW_DEPTH[effectiveTargetName] || 0;
 
-        if (newDepth === 0) {
+        if (history.state && history.state.overlayLock) {
+            history.replaceState({ type: 'tab', id: tabName }, "", "");
+            history.pushState({ type: 'tab', id: tabName, overlayLock: true, overlayDepth: overlayNavigationLockDepth }, "", "");
+        } else if (newDepth === 0) {
             history.pushState({ type: 'tab', id: tabName }, "", "");
         } else if (newDepth > currentDepth) {
             history.pushState({ type: 'tab', id: tabName }, "", "");
@@ -143,36 +147,81 @@ export function getCurrentTabHistoryState() {
 }
 
 export function hasVisibleBlockingOverlay() {
-    return Drawer.isOpen;
+    return Drawer.isOpen || Array.from(registeredBlockingOverlays.values()).some(overlay => {
+        if (typeof overlay.isVisible !== 'function') return false;
+        return overlay.isVisible();
+    });
+}
+
+export function registerBlockingOverlay(id, handlers) {
+    if (!id || !handlers) return () => {};
+    registeredBlockingOverlays.set(id, handlers);
+    return () => registeredBlockingOverlays.delete(id);
+}
+
+export function handleBlockingOverlayBackNavigation() {
+    if (Drawer.isOpen && typeof Drawer.handleBackNavigation === 'function') {
+        return Drawer.handleBackNavigation();
+    }
+
+    const visibleOverlays = Array.from(registeredBlockingOverlays.values())
+        .filter(overlay => typeof overlay.isVisible === 'function' && overlay.isVisible());
+    const topOverlay = visibleOverlays[visibleOverlays.length - 1];
+
+    if (topOverlay && typeof topOverlay.onBack === 'function') {
+        const result = topOverlay.onBack();
+        return { handled: true, overlayClosed: result !== false };
+    }
+
+    return { handled: false, overlayClosed: false };
 }
 
 export function acquireOverlayNavigationLock() {
     overlayNavigationLockDepth += 1;
-    if (overlayNavigationLockDepth > 1) return;
 
     const currentState = history.state;
     const baseState = currentState && currentState.type === 'tab'
         ? { type: 'tab', id: currentState.id }
         : getCurrentTabHistoryState();
 
-    history.pushState({ ...baseState, overlayLock: true }, "", "");
+    history.pushState({ ...baseState, overlayLock: true, overlayDepth: overlayNavigationLockDepth }, "", "");
 }
 
-export function releaseOverlayNavigationLock() {
+export function pushOverlayNavigationStep() {
+    const currentState = history.state;
+    const baseState = currentState && currentState.type === 'tab'
+        ? { type: 'tab', id: currentState.id }
+        : getCurrentTabHistoryState();
+
+    history.pushState({
+        ...baseState,
+        overlayLock: true,
+        overlayDepth: overlayNavigationLockDepth,
+        overlayStep: true
+    }, "", "");
+}
+
+export function releaseOverlayNavigationLock(options = {}) {
     if (overlayNavigationLockDepth === 0) return;
 
     overlayNavigationLockDepth -= 1;
-    if (overlayNavigationLockDepth > 0) return;
 
-    if (history.state && history.state.overlayLock) {
+    if (!options.skipHistoryBack && history.state && history.state.overlayLock) {
         shouldIgnoreNextOverlayLockPopstate = true;
         history.back();
     }
 }
 
-export function reapplyOverlayNavigationLock() {
+export function reapplyOverlayNavigationLock(options = {}) {
+    if (!options.force && history.state && history.state.overlayLock) return;
     const baseState = getCurrentTabHistoryState();
-    history.pushState({ ...baseState, overlayLock: true }, "", "");
+    history.pushState({ ...baseState, overlayLock: true, overlayDepth: overlayNavigationLockDepth }, "", "");
+}
+
+export function replaceOverlayLockWithCurrentTabState() {
+    if (history.state && history.state.overlayLock) {
+        history.replaceState(getCurrentTabHistoryState(), "", "");
+    }
 }
 
 export function consumeOverlayLockPopstateIgnore() {
@@ -188,15 +237,19 @@ export function restoreBodyScrollIfNeeded() {
 }
 
 
-export function openSelectionDrawer(title, options, onSelect, selectedValue = null, layoutType = 'list', showAddBtn = false, autoClose = true, onBack = null) {
+export function openSelectionDrawer(title, options, onSelect, selectedValue = null, layoutType = 'list', showAddBtn = false, autoClose = true, onBack = null, forceReplace = false) {
     // Rozpoznajemy czy to jest krok wewnątrz szukania kategorii/budżetu (replace) czy nowa szuflada (push)
     // Jeśli mamy onBack lub tytuł zawiera "Kategorie:", to prawdopodobnie jesteśmy w przepływie wyboru
     const lowerTitle = title.toLowerCase();
-    const isReplacing = Drawer.isOpen && (
+    const isReplacing = Drawer.isOpen && (forceReplace ||
         lowerTitle.includes('kategorie:') || 
         lowerTitle.includes('wybierz kategorię') && Drawer.current?.opts.title.toLowerCase().includes('kategorie:') ||
         lowerTitle.includes('budżet') && Drawer.current?.opts.title.toLowerCase().includes('budżet')
     );
+
+    if (isReplacing && typeof onBack === 'function') {
+        pushOverlayNavigationStep();
+    }
 
     const buildContent = () => {
         const wrapper = document.createElement('div');
@@ -390,7 +443,8 @@ export function renderCategoryDetailsModal(category, items, isSubCategoryView = 
 }
 
 export function navigateToCategoryManagementFromDrawer() {
-    Drawer.closeAll();
+    Drawer.closeAll({ skipHistoryBack: true });
+    replaceOverlayLockWithCurrentTabState();
     switchTab('settings-categories');
 }
 

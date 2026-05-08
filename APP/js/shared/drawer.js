@@ -13,6 +13,10 @@ import {
 // ─── Stałe ────────────────────────────────────────────────────────────────────
 
 const SIZES = { sm: 'drawer--sm', md: 'drawer--md', lg: 'drawer--lg', full: 'drawer--full' };
+const MOBILE_DRAWER_QUERY = '(max-width: 639px)';
+const DRAG_CLOSE_THRESHOLD = 96;
+const DRAG_CLOSE_VELOCITY = 0.65;
+const DRAG_FADE_DISTANCE = 360;
 
 const FOCUSABLE = [
     'a[href]', 'button:not([disabled])', 'textarea:not([disabled])',
@@ -120,6 +124,123 @@ function _buildFooter(drawerObj) {
     }
 }
 
+function _isMobileDrawer() {
+    return typeof window !== 'undefined'
+        && typeof window.matchMedia === 'function'
+        && window.matchMedia(MOBILE_DRAWER_QUERY).matches;
+}
+
+function _resetDragStyles(drawerObj) {
+    drawerObj.panel.classList.remove('u-drawer--dragging');
+    drawerObj.panel.style.transition = '';
+    drawerObj.panel.style.transform = '';
+    drawerObj.overlay.style.transition = '';
+    drawerObj.overlay.style.opacity = '';
+}
+
+function _bindDragToClose(drawerObj) {
+    const { panel, overlay, opts } = drawerObj;
+    const header = panel.querySelector('.u-drawer__header');
+    if (!header) return;
+
+    let pointerId = null;
+    let startX = 0;
+    let startY = 0;
+    let startTime = 0;
+    let dragging = false;
+
+    const isInteractiveTarget = target => !!target?.closest?.('button, a, input, textarea, select, [data-no-drawer-drag]');
+
+    const setDragOffset = (offset) => {
+        const y = Math.max(0, offset);
+        panel.style.transform = `translateY(${y}px)`;
+        overlay.style.opacity = String(Math.max(0.2, 1 - (y / DRAG_FADE_DISTANCE)));
+    };
+
+    const resetDrag = () => {
+        pointerId = null;
+        startX = 0;
+        startY = 0;
+        startTime = 0;
+        dragging = false;
+    };
+
+    header.addEventListener('pointerdown', (event) => {
+        if (!_isMobileDrawer() || opts.closeOnDrag === false) return;
+        if (event.button !== undefined && event.button !== 0) return;
+        if (isInteractiveTarget(event.target)) return;
+        if (_stack[_stack.length - 1] !== drawerObj) return;
+
+        pointerId = event.pointerId;
+        startX = event.clientX;
+        startY = event.clientY;
+        startTime = performance.now();
+        dragging = false;
+
+        try {
+            header.setPointerCapture(pointerId);
+        } catch (e) {}
+    });
+
+    header.addEventListener('pointermove', (event) => {
+        if (pointerId !== event.pointerId || _stack[_stack.length - 1] !== drawerObj) return;
+
+        const deltaX = event.clientX - startX;
+        const deltaY = event.clientY - startY;
+        const absX = Math.abs(deltaX);
+
+        if (!dragging) {
+            if (deltaY < 8 && absX < 8) return;
+            if (deltaY <= 0 || absX > deltaY) {
+                resetDrag();
+                return;
+            }
+
+            dragging = true;
+            panel.classList.add('u-drawer--dragging');
+            panel.style.transition = 'none';
+            overlay.style.transition = 'none';
+        }
+
+        event.preventDefault();
+        setDragOffset(deltaY);
+    });
+
+    const finishDrag = (event) => {
+        if (pointerId !== event.pointerId) return;
+
+        const deltaY = Math.max(0, event.clientY - startY);
+        const elapsed = Math.max(1, performance.now() - startTime);
+        const velocity = deltaY / elapsed;
+        const shouldClose = dragging && (deltaY >= DRAG_CLOSE_THRESHOLD || (deltaY > 32 && velocity >= DRAG_CLOSE_VELOCITY));
+
+        try {
+            header.releasePointerCapture(pointerId);
+        } catch (e) {}
+
+        if (shouldClose && _stack[_stack.length - 1] === drawerObj) {
+            Drawer.close({ closeFromDrag: true });
+            resetDrag();
+            return;
+        }
+
+        if (dragging) {
+            panel.style.transition = 'transform 0.22s cubic-bezier(0.4, 0, 0.2, 1)';
+            overlay.style.transition = 'opacity 0.22s ease';
+            setDragOffset(0);
+
+            setTimeout(() => {
+                if (_stack.includes(drawerObj)) _resetDragStyles(drawerObj);
+            }, 230);
+        }
+
+        resetDrag();
+    };
+
+    header.addEventListener('pointerup', finishDrag);
+    header.addEventListener('pointercancel', finishDrag);
+}
+
 // ─── Publiczne API ─────────────────────────────────────────────────────────────
 
 const Drawer = {
@@ -175,6 +296,7 @@ const Drawer = {
             onClose: null,
             onBack: null,
             closeOnBackdrop: true,
+            closeOnDrag: true,
             showCloseBtn: true,
             triggerId: null,
         }, opts);
@@ -252,6 +374,7 @@ const Drawer = {
                 Drawer.close();
             }
         };
+        _bindDragToClose(drawerObj);
 
         // Pokazywanie
         overlay.classList.remove('hidden');
@@ -285,14 +408,24 @@ const Drawer = {
     /**
      * Zamyka szczytową szufladę.
      */
-    close() {
+    close(options = {}) {
         if (_stack.length === 0) return;
         const top = _stack.pop();
+
+        if (options.closeFromDrag === true) {
+            top.panel.classList.remove('u-drawer--dragging');
+            top.panel.style.transition = 'transform 0.22s cubic-bezier(0.4, 0, 0.2, 1)';
+            top.panel.style.transform = 'translateY(100%)';
+            top.overlay.style.transition = 'opacity 0.22s ease';
+            top.overlay.style.opacity = '0';
+        } else {
+            _resetDragStyles(top);
+        }
 
         top.panel.classList.remove('u-drawer--open');
         top.overlay.classList.remove('u-drawer-overlay--open');
 
-        releaseOverlayNavigationLock();
+        releaseOverlayNavigationLock({ skipHistoryBack: options.skipHistoryBack === true });
 
         if (typeof top.opts.onClose === 'function') top.opts.onClose();
 
@@ -351,17 +484,35 @@ const Drawer = {
     /**
      * Zamyka wszystkie otwarte szuflady.
      */
-    closeAll() {
+    closeAll(options = {}) {
         while (_stack.length > 0) {
             const top = _stack.pop();
             top.panel.remove();
             top.overlay.remove();
-            releaseOverlayNavigationLock();
+            releaseOverlayNavigationLock({ skipHistoryBack: options.skipHistoryBack === true });
             if (typeof top.opts.onClose === 'function') top.opts.onClose();
         }
         if (!hasVisibleBlockingOverlay()) {
             document.body.style.overflow = _originalBodyOverflow || '';
         }
+    },
+
+    /**
+     * Obsluguje cofniecie systemowe/browserowe dla aktywnej szuflady.
+     * Najpierw wykonuje krok wstecz wewnatrz szuflady, jesli istnieje,
+     * a dopiero potem zamyka najwyzsza szuflade.
+     */
+    handleBackNavigation() {
+        if (_stack.length === 0) return { handled: false, overlayClosed: false };
+        const top = _stack[_stack.length - 1];
+
+        if (typeof top.opts.onBack === 'function') {
+            top.opts.onBack();
+            return { handled: true, overlayClosed: false };
+        }
+
+        Drawer.close({ skipHistoryBack: true });
+        return { handled: true, overlayClosed: true };
     },
 
     get isOpen() { return _stack.length > 0; },

@@ -15,7 +15,8 @@ import {
     switchTab,
     consumeOverlayLockPopstateIgnore,
     hasVisibleBlockingOverlay,
-    reapplyOverlayNavigationLock
+    reapplyOverlayNavigationLock,
+    handleBlockingOverlayBackNavigation
 } from '../shared/ui.js';
 import { formatAmount } from '../shared/format.js';
 
@@ -74,7 +75,10 @@ function setupAppEventListeners() {
         }
 
         if (hasVisibleBlockingOverlay()) {
-            reapplyOverlayNavigationLock();
+            const overlayBackResult = handleBlockingOverlayBackNavigation();
+            if (hasVisibleBlockingOverlay() && overlayBackResult?.overlayClosed !== false) {
+                reapplyOverlayNavigationLock();
+            }
             return;
         }
 

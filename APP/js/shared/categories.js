@@ -86,7 +86,7 @@ export function openHierarchicalCategoryDrawer(row, currentCategory, currentSubC
         return;
     }
 
-    const openStep1 = () => {
+    const openStep1 = (replaceCurrent = false) => {
         const currentParentDoc = parents.find(p => p.name === currentCategory);
         const currentParentId = currentParentDoc ? currentParentDoc.id : null;
 
@@ -125,9 +125,10 @@ export function openHierarchicalCategoryDrawer(row, currentCategory, currentSubC
                 'grid',
                 showManageButton,
                 true,
-                () => openStep1()
+                () => openStep1(true),
+                true
             );
-        }, currentParentId, 'grid', showManageButton, false);
+        }, currentParentId, 'grid', showManageButton, false, null, replaceCurrent);
     };
 
     openStep1();

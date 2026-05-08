@@ -6,7 +6,7 @@
 import state from '../core/state.js';
 import { apiCall, apiCallWithFile } from '../core/api.js';
 import { formatAmount } from '../shared/format.js';
-import { switchTab, acquireOverlayNavigationLock, releaseOverlayNavigationLock, hasVisibleBlockingOverlay, openSelectionDrawer } from '../shared/ui.js';
+import { switchTab, acquireOverlayNavigationLock, releaseOverlayNavigationLock, registerBlockingOverlay, openSelectionDrawer } from '../shared/ui.js';
 import { applyCategorySelectionState, openHierarchicalCategoryDrawer } from '../shared/categories.js';
 import { fetchInitialData } from '../core/data-loader.js';
 import {
@@ -23,6 +23,7 @@ import Drawer from '../shared/drawer.js';
 let purchaseFormInitialized = false;
 let productDrawerInitialized = false;
 let voiceExpenseInitialized = false;
+let voiceExpenseModalClosing = false;
 let productDrawerTags = {};
 
 // Stan lokalny formularza (przeniesiony z core/state.js)
@@ -1163,8 +1164,13 @@ function initVoiceExpense() {
         voiceState.discardOnStop = false;
     }
 
-    function closeVoiceExpenseModal() {
-        if (voiceState.isBusy) return;
+    function closeVoiceExpenseModal(options = {}) {
+        if (voiceState.isBusy || voiceExpenseModalClosing) return false;
+        if (overlay.classList.contains('hidden') && modal.classList.contains('hidden')) return false;
+
+        voiceExpenseModalClosing = true;
+        releaseOverlayNavigationLock({ skipHistoryBack: options.skipHistoryBack === true });
+
         const wasRecording = voiceState.mediaRecorder?.state === 'recording';
         if (wasRecording) {
             voiceState.discardOnStop = true;
@@ -1178,7 +1184,10 @@ function initVoiceExpense() {
             overlay.classList.add('hidden');
             modal.classList.add('hidden');
             renderStep('intro');
+            voiceExpenseModalClosing = false;
         }, 300);
+
+        return true;
     }
 
     async function blobToBase64(blob) {
@@ -1337,8 +1346,13 @@ function initVoiceExpense() {
         }
     });
 
-    closeBtn.addEventListener('click', closeVoiceExpenseModal);
-    overlay.addEventListener('click', closeVoiceExpenseModal);
+    registerBlockingOverlay('voice-expense', {
+        isVisible: () => !voiceExpenseModalClosing && !overlay.classList.contains('hidden') && !modal.classList.contains('hidden'),
+        onBack: () => closeVoiceExpenseModal({ skipHistoryBack: true })
+    });
+
+    closeBtn.addEventListener('click', () => closeVoiceExpenseModal());
+    overlay.addEventListener('click', () => closeVoiceExpenseModal());
 
     renderStep('intro');
 }
@@ -1348,6 +1362,12 @@ export function openVoiceExpenseModal() {
     const overlay = el('voice-expense-overlay');
     const modal = el('voice-expense-modal');
     if (!overlay || !modal) return;
+
+    const wasClosed = overlay.classList.contains('hidden') || modal.classList.contains('hidden');
+    if (wasClosed) {
+        voiceExpenseModalClosing = false;
+        acquireOverlayNavigationLock();
+    }
 
     overlay.classList.remove('hidden');
     modal.classList.remove('hidden');
