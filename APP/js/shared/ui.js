@@ -25,6 +25,7 @@ export const VIEW_DEPTH = {
     'settings': 2,
     'edit-purchase': 2,
     'settings-categories': 3,
+    'settings-tags': 3,
     'settings-budget': 3,
     'settings-special': 3,
     'settings-recurring': 3
@@ -38,13 +39,14 @@ export const NAV_TITLES = {
     'special-budgets': 'Budżety specjalne',
     'more': 'Więcej',
     'settings': 'Ustawienia',
-    'settings-categories': 'Zarządzaj kategoriami i tagami',
+    'settings-categories': 'Kategorie wydatków',
+    'settings-tags': 'Tagi produktów',
     'settings-budget': 'Miesięczny Budżet',
     'settings-special': 'Zarządzaj budżetami',
     'settings-recurring': 'Stałe Opłaty',
 };
 
-const TABS_WITH_BACK = ['special-budgets', 'settings', 'settings-categories', 'settings-budget', 'settings-special', 'settings-recurring'];
+const TABS_WITH_BACK = ['special-budgets', 'settings', 'settings-categories', 'settings-tags', 'settings-budget', 'settings-special', 'settings-recurring'];
 const registeredBlockingOverlays = new Map();
 
 export function updateNavbar(tabName) {
@@ -446,6 +448,12 @@ export function navigateToCategoryManagementFromDrawer() {
     Drawer.closeAll({ skipHistoryBack: true });
     replaceOverlayLockWithCurrentTabState();
     switchTab('settings-categories');
+}
+
+export function navigateToTagManagementFromDrawer() {
+    Drawer.closeAll({ skipHistoryBack: true });
+    replaceOverlayLockWithCurrentTabState();
+    switchTab('settings-tags');
 }
 
 document.addEventListener('DOMContentLoaded', () => {

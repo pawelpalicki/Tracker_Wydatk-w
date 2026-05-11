@@ -129,6 +129,7 @@ function setupInlineClickHandlers() {
     // Settings - przyciski nawigacji
     const settingsButtons = [
         { id: 'settings-categories-link', tab: 'settings-categories' },
+        { id: 'settings-tags-link', tab: 'settings-tags' },
         { id: 'settings-budget-link', tab: 'settings-budget' },
         { id: 'settings-special-link', tab: 'settings-special' },
         { id: 'settings-recurring-link', tab: 'settings-recurring' }

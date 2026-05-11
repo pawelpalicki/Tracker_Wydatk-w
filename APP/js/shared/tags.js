@@ -9,7 +9,7 @@
  * - Formatowanie i budowanie opisów tagów w UI (buildTagsSummary, getTagGroupLabel)
  */
 import state from '../core/state.js';
-import { openSelectionDrawer } from './ui.js';
+import { openSelectionDrawer, navigateToTagManagementFromDrawer } from './ui.js';
 import Drawer from './drawer.js';
 
 export function getTagOptions(group) {
@@ -118,7 +118,15 @@ export function openTagsDrawer(currentTags, onConfirm, isFilter = false) {
         `;
     });
     
-    contentHtml += '</div>';
+    contentHtml += `
+            <div class="border-t border-white/10 pt-4 mt-2">
+                <button type="button" id="tags-drawer-manage-link"
+                    class="w-full py-3.5 px-4 bg-white/5 border border-dashed border-white/20 rounded-2xl text-sm text-gray-400 hover:text-white hover:bg-white/10 transition-all flex items-center justify-center gap-2">
+                    <i class="fas fa-sliders-h text-xs"></i>
+                    <span>Zarządzaj tagami</span>
+                </button>
+            </div>
+        </div>`;
 
     Drawer.open({
         title: 'Wybierz tagi',
@@ -134,6 +142,11 @@ export function openTagsDrawer(currentTags, onConfirm, isFilter = false) {
 
     setTimeout(() => {
         const content = document.getElementById('tags-selection-content');
+        document.getElementById('tags-drawer-manage-link')?.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            navigateToTagManagementFromDrawer();
+        }, { once: true });
         if (content) {
             content.addEventListener('click', (e) => {
                 const btn = e.target.closest('.tag-select-btn');

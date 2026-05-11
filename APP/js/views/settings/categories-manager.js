@@ -156,7 +156,7 @@ function setupListEvents(container) {
     });
 
     container.querySelectorAll('.cat-v2-delete-parent-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => { e.stopPropagation(); deleteCategory(btn.dataset.id, true); });
+        btn.addEventListener('click', (e) => { e.stopPropagation(); deleteCategory(btn.dataset.id, true, btn); });
     });
 
     container.querySelectorAll('.cat-v2-edit-sub-btn').forEach(btn => {
@@ -164,7 +164,7 @@ function setupListEvents(container) {
     });
 
     container.querySelectorAll('.cat-v2-delete-sub-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => { e.stopPropagation(); deleteCategory(btn.dataset.id, false); });
+        btn.addEventListener('click', (e) => { e.stopPropagation(); deleteCategory(btn.dataset.id, false, btn); });
     });
 }
 
@@ -377,7 +377,7 @@ async function saveSubCategory() {
     renderCategoriesListV2();
 }
 
-async function deleteCategory(id, isParent) {
+async function deleteCategory(id, isParent, btn) {
     const cat = state.structuredCategories.find(c => c.id === id);
     if (!cat) return;
 
@@ -387,11 +387,20 @@ async function deleteCategory(id, isParent) {
 
     if (!confirm(msg)) return;
 
+    const originalContent = btn ? btn.innerHTML : '';
     try {
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner animate-spin text-xs"></i>';
+        }
         await apiCall(`/api/categories/v2/${id}`, 'DELETE');
         await fetchInitialData(false);
         renderCategoriesListV2();
     } catch (err) {
         alert('Błąd: ' + err.message);
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = originalContent;
+        }
     }
 }

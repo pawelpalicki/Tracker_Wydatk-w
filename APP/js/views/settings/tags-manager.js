@@ -72,21 +72,23 @@ function renderTagGroupSection(group) {
         `).join('');
 
     return `
-        <div class="bg-white/5 border border-white/10 rounded-2xl p-3" data-tag-group="${group}">
-            <div class="flex items-center justify-between mb-2">
-                <div class="flex items-center gap-2">
-                    <h4 class="text-sm font-semibold text-white">${groupLabel}</h4>
-                    ${isBuiltin ? '<span class="text-[10px] text-gray-600 px-1.5 py-0.5 rounded bg-white/5">wbudowana</span>' : ''}
+        <div class="w-full p-3.5 bg-white/5 hover:bg-white/10 rounded-xl border border-white/5 transition-all" data-tag-group="${group}">
+            <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-2 min-w-0">
+                    <h4 class="text-sm font-semibold text-white truncate">${groupLabel}</h4>
+                    ${isBuiltin ? '<span class="text-[10px] text-gray-600 px-1.5 py-0.5 rounded bg-white/5 shrink-0">wbudowana</span>' : ''}
                 </div>
                 <div class="flex items-center gap-1">
-                    <button class="add-tag-in-group-btn px-2.5 py-1.5 text-xs rounded-lg bg-brand-600 hover:bg-brand-700 text-white transition-colors"
-                        data-group="${group}">Dodaj</button>
+                    <button type="button" class="add-tag-in-group-btn p-1.5 rounded-lg text-gray-400 hover:text-green-400 hover:bg-white/5 transition-colors"
+                        data-group="${group}" title="Dodaj tag">
+                        <i class="fas fa-plus text-xs"></i>
+                    </button>
                     ${!isBuiltin ? `
-                        <button class="edit-tag-group-btn p-1.5 rounded-lg text-gray-500 hover:text-blue-400 hover:bg-white/5 transition-colors" data-group="${group}" title="Edytuj nazwę grupy">
-                            <i class="fas fa-edit text-xs"></i>
+                        <button class="edit-tag-group-btn p-1.5 rounded-lg text-gray-400 hover:text-blue-400 hover:bg-white/5 transition-colors" data-group="${group}" title="Edytuj nazwę grupy">
+                            <i class="fas fa-pen text-xs"></i>
                         </button>
-                        <button class="delete-tag-group-btn p-1.5 rounded-lg text-gray-500 hover:text-red-400 hover:bg-white/5 transition-colors" data-group="${group}" title="Usuń grupę">
-                            <i class="fas fa-times text-xs"></i>
+                        <button class="delete-tag-group-btn p-1.5 rounded-lg text-gray-400 hover:text-red-400 hover:bg-white/5 transition-colors" data-group="${group}" title="Usuń grupę">
+                            <i class="fas fa-trash text-xs"></i>
                         </button>
                     ` : ''}
                 </div>
@@ -224,19 +226,29 @@ async function saveTagFromModal() {
     }
 }
 
+function setTagDeleteButtonLoading(btn, loading) {
+    if (!btn) return;
+    if (loading) {
+        btn._deleteOriginalHtml = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner animate-spin text-xs"></i>';
+    } else {
+        btn.disabled = false;
+        if (btn._deleteOriginalHtml != null) btn.innerHTML = btn._deleteOriginalHtml;
+        delete btn._deleteOriginalHtml;
+    }
+}
+
 async function deleteTagConfirm(group, value, btn) {
     if (!confirm(`Usunąć tag "${value}"?`)) return;
-    const originalContent = btn.innerHTML;
+    setTagDeleteButtonLoading(btn, true);
     try {
-        btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner animate-spin"></i>';
         await apiCall(`/api/tags/${group}/${encodeURIComponent(value)}`, 'DELETE');
         await fetchInitialData(false);
         renderTagsManager();
     } catch (err) {
         alert('Błąd: ' + err.message);
-        btn.disabled = false;
-        btn.innerHTML = originalContent;
+        setTagDeleteButtonLoading(btn, false);
     }
 }
 
@@ -337,16 +349,13 @@ async function saveTagGroup() {
 
 async function deleteTagGroup(group, btn) {
     if (!confirm(`Usunąć grupę "${group}"?`)) return;
-    const originalContent = btn.innerHTML;
+    setTagDeleteButtonLoading(btn, true);
     try {
-        btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner animate-spin"></i>';
         await apiCall(`/api/tags/groups/${encodeURIComponent(group)}`, 'DELETE');
         await fetchInitialData(false);
         renderTagsManager();
     } catch (err) {
         alert('Błąd: ' + err.message);
-        btn.disabled = false;
-        btn.innerHTML = originalContent;
+        setTagDeleteButtonLoading(btn, false);
     }
 }
