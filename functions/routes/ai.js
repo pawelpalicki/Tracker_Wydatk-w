@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const { getFirestore } = require('firebase-admin/firestore');
+const { getFirestore, FieldValue } = require('firebase-admin/firestore');
 const { authMiddleware, asyncHandler } = require('../middleware');
 const { 
-    generateInsights, 
+    generateInsights,
+    generateInsightsRange,
     extractAndCategorizePurchase, 
     transcribeAudio, 
     analyzeVoiceExpenseText 
@@ -13,6 +14,33 @@ const { validateDate, convertCurrencyToPLN } = require('../utils');
 
 const db = getFirestore();
 const notificationsCollection = db.collection('notifications');
+const aiAnalysisRangeQuota = db.collection('aiAnalysisRangeQuota');
+
+const ANALYSIS_AI_RANGE_DAILY_LIMIT = 8;
+const ANALYSIS_AI_RANGE_MONTHLY_LIMIT = 50;
+
+function getAnalysisRangeQuotaDateKeys() {
+    const todayKey = new Date().toISOString().substring(0, 10);
+    const monthYm = todayKey.substring(0, 7);
+    return { todayKey, monthYm };
+}
+
+async function getAnalysisRangeQuotaStatus(userId) {
+    const { todayKey, monthYm } = getAnalysisRangeQuotaDateKeys();
+    const dailyRef = aiAnalysisRangeQuota.doc(`${userId}_${todayKey}`);
+    const monthlyRef = aiAnalysisRangeQuota.doc(`${userId}_m_${monthYm}`);
+    const [dSnap, mSnap] = await Promise.all([dailyRef.get(), monthlyRef.get()]);
+    return {
+        daily: {
+            used: dSnap.exists ? Number(dSnap.data().count || 0) : 0,
+            limit: ANALYSIS_AI_RANGE_DAILY_LIMIT
+        },
+        monthly: {
+            used: mSnap.exists ? Number(mSnap.data().count || 0) : 0,
+            limit: ANALYSIS_AI_RANGE_MONTHLY_LIMIT
+        }
+    };
+}
 
 // --- AI (stara ścieżka: /api/analysis/insights i /api/analyze-receipt itp.) ---
 
@@ -32,6 +60,92 @@ router.post('/analysis/insights', authMiddleware, asyncHandler(async (req, res) 
     const { currentMonthData, previousMonthData, categories } = req.body;
     const insights = await generateInsights(req.userId, currentMonthData, previousMonthData, categories);
     res.json(insights);
+}));
+
+router.get('/analysis/insights-range/quota', authMiddleware, asyncHandler(async (req, res) => {
+    const quota = await getAnalysisRangeQuotaStatus(req.userId);
+    res.json(quota);
+}));
+
+router.post('/analysis/insights-range', authMiddleware, asyncHandler(async (req, res) => {
+    const payload = req.body;
+    if (!payload || typeof payload !== 'object') {
+        return res.status(400).json({ error: 'Brak danych analizy.' });
+    }
+    if (!payload.range || typeof payload.range.startDate !== 'string' || typeof payload.range.endDate !== 'string') {
+        return res.status(400).json({ error: 'Nieprawidłowy zakres dat.' });
+    }
+
+    const { todayKey, monthYm } = getAnalysisRangeQuotaDateKeys();
+    const dailyRef = aiAnalysisRangeQuota.doc(`${req.userId}_${todayKey}`);
+    const monthlyRef = aiAnalysisRangeQuota.doc(`${req.userId}_m_${monthYm}`);
+
+    await db.runTransaction(async (tx) => {
+        const dSnap = await tx.get(dailyRef);
+        const mSnap = await tx.get(monthlyRef);
+        const dCount = dSnap.exists ? Number(dSnap.data().count || 0) : 0;
+        const mCount = mSnap.exists ? Number(mSnap.data().count || 0) : 0;
+        if (dCount >= ANALYSIS_AI_RANGE_DAILY_LIMIT) {
+            const err = new Error(`Dzienny limit analiz AI (${ANALYSIS_AI_RANGE_DAILY_LIMIT}) został wykorzystany. Spróbuj jutro.`);
+            err.statusCode = 429;
+            throw err;
+        }
+        if (mCount >= ANALYSIS_AI_RANGE_MONTHLY_LIMIT) {
+            const err = new Error(`Miesięczny limit analiz AI (${ANALYSIS_AI_RANGE_MONTHLY_LIMIT}) został wykorzystany.`);
+            err.statusCode = 429;
+            throw err;
+        }
+        tx.set(dailyRef, {
+            count: dCount + 1,
+            userId: req.userId,
+            day: todayKey,
+            updatedAt: FieldValue.serverTimestamp()
+        }, { merge: true });
+        tx.set(monthlyRef, {
+            count: mCount + 1,
+            userId: req.userId,
+            month: monthYm,
+            updatedAt: FieldValue.serverTimestamp()
+        }, { merge: true });
+    });
+
+    try {
+        const result = await generateInsightsRange(req.userId, payload);
+        const insights = Array.isArray(result.insights) ? result.insights : [];
+        if (insights.length === 0) {
+            const err = new Error('Model nie zwrócił wniosków. Spróbuj ponownie.');
+            err.statusCode = 502;
+            throw err;
+        }
+        const quota = await getAnalysisRangeQuotaStatus(req.userId);
+        res.json({ insights, quota });
+    } catch (e) {
+        try {
+            await db.runTransaction(async (tx) => {
+                const dSnap = await tx.get(dailyRef);
+                const mSnap = await tx.get(monthlyRef);
+                const dCount = dSnap.exists ? Number(dSnap.data().count || 0) : 0;
+                const mCount = mSnap.exists ? Number(mSnap.data().count || 0) : 0;
+                if (dCount > 0) {
+                    tx.set(dailyRef, {
+                        count: dCount - 1,
+                        userId: req.userId,
+                        updatedAt: FieldValue.serverTimestamp()
+                    }, { merge: true });
+                }
+                if (mCount > 0) {
+                    tx.set(monthlyRef, {
+                        count: mCount - 1,
+                        userId: req.userId,
+                        updatedAt: FieldValue.serverTimestamp()
+                    }, { merge: true });
+                }
+            });
+        } catch (rollbackErr) {
+            console.error('Rollback quota aiAnalysisRangeQuota:', rollbackErr);
+        }
+        throw e;
+    }
 }));
 
 router.post('/analyze-receipt', authMiddleware, asyncHandler(async (req, res) => {

@@ -8,7 +8,8 @@ import { apiCall } from '../core/api.js';
 import { formatAmount } from '../shared/format.js';
 import { renderCategoryDetailsModal, openSelectionDrawer } from '../shared/ui.js';
 import { getParentCategoryByName, getSubCategoryByName, applyCategorySelectionState } from '../shared/categories.js';
-import { buildTagsSummary, openTagsDrawer } from '../shared/tags.js';
+import { buildTagsSummary, openTagsDrawer, getTagGroups, getTagLabel, getTagGroupLabel } from '../shared/tags.js';
+import Drawer from '../shared/drawer.js';
 
 // =====================================================================
 // STAN LOKALNY MODUŁU — Variables
@@ -42,6 +43,9 @@ const ANALYSIS_MONTH_NAMES_SHORT = ['sty', 'lut', 'mar', 'kwi', 'maj', 'cze', 'l
 const ANALYSIS_WEEKDAY_LABELS = ['Pon', 'Wt', 'Sr', 'Czw', 'Pt', 'Sob', 'Nd'];
 
 let shopBarChart = null;
+
+/** Kontekst ostatniego renderu wykresu — do payloadu AI (zakres + filtry + pozycje). */
+let lastAnalysisInsightContext = null;
 
 // =====================================================================
 // HELPERY DATY
@@ -197,14 +201,19 @@ function getFilteredPurchaseItems(purchases) {
 
                 return true;
             })
-            .map(item => ({
-                name: item.name || 'Wydatek',
-                price: Number(item.price || 0),
-                category: item.category || 'inne',
-                subCategory: item.subCategory || '',
-                purchaseDate: purchase.date,
-                shop: purchase.shop || ''
-            }));
+            .map(item => {
+                const itemTags = item.tags && typeof item.tags === 'object' ? item.tags : {};
+                const mergedTags = { ...purchaseTags, ...itemTags };
+                return {
+                    name: item.name || 'Wydatek',
+                    price: Number(item.price || 0),
+                    category: item.category || 'inne',
+                    subCategory: item.subCategory || '',
+                    purchaseDate: purchase.date,
+                    shop: purchase.shop || '',
+                    tags: mergedTags
+                };
+            });
     });
 }
 
@@ -617,6 +626,337 @@ function openComparisonBucketDetails(bucket) {
     renderCategoryDetailsModal(bucket.title || bucket.label || 'Szczegoly', bucket.items || [], false);
 }
 
+function round2(n) {
+    return Math.round((Number(n) || 0) * 100) / 100;
+}
+
+function captureAnalysisInsightContext(filteredItems, enrichedBuckets, startDate, endDate) {
+    const totalSpending = enrichedBuckets.reduce((s, b) => s + (Number(b.spending) || 0), 0);
+    const totalBudget = enrichedBuckets.reduce((s, b) => s + (Number(b.budget) || 0), 0);
+    const bucketSeries = enrichedBuckets.map(b => ({
+        key: b.key,
+        label: b.label,
+        monthKey: b.monthKey || null,
+        startDate: b.startDate,
+        endDate: b.endDate,
+        spending: round2(b.spending),
+        budget: round2(b.budget)
+    }));
+    const tagFilterDescription = [];
+    for (const [g, v] of Object.entries(currentComparisonTags || {})) {
+        if (!v) continue;
+        tagFilterDescription.push({ group: getTagGroupLabel(g), value: getTagLabel(g, v) });
+    }
+    lastAnalysisInsightContext = {
+        filteredItems,
+        bucketSeries,
+        range: {
+            startDate,
+            endDate,
+            label: getDisplayedComparisonRangeText(enrichedBuckets),
+            periodType: comparisonPeriod,
+            toDateMode: shouldUseToDateMode()
+        },
+        filtersApplied: {
+            category: currentComparisonCategory || null,
+            subCategory: currentComparisonSubCategory || null,
+            tags: tagFilterDescription
+        },
+        totals: {
+            spending: round2(totalSpending),
+            budget: round2(totalBudget),
+            difference: round2(totalBudget - totalSpending)
+        }
+    };
+}
+
+function buildAnalysisRangeApiPayload() {
+    const ctx = lastAnalysisInsightContext;
+    if (!ctx?.filteredItems?.length) return null;
+    const items = ctx.filteredItems;
+    const spendTotal = ctx.totals.spending || 0;
+
+    const catMap = {};
+    const subMap = {};
+    const shopMap = {};
+    for (const it of items) {
+        const c = it.category || 'inne';
+        catMap[c] = (catMap[c] || 0) + it.price;
+        const sub = (it.subCategory || '').trim();
+        if (sub) {
+            const path = `${c} / ${sub}`;
+            subMap[path] = (subMap[path] || 0) + it.price;
+        }
+        const sh = (it.shop || '').trim();
+        if (sh && !sh.toLowerCase().startsWith('wydatek cykliczny')) {
+            shopMap[sh] = (shopMap[sh] || 0) + it.price;
+        }
+    }
+
+    const topFromMap = (map, n) => Object.entries(map)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, n)
+        .map(([name, amount]) => {
+            const a = round2(amount);
+            return {
+                name,
+                amount: a,
+                pctOfSpend: spendTotal > 0 ? round2((a / spendTotal) * 100) : 0
+            };
+        });
+
+    const tagSpendByGroup = {};
+    for (const group of getTagGroups()) {
+        const valMap = {};
+        for (const it of items) {
+            const tags = it.tags || {};
+            const val = tags[group];
+            if (val == null || val === '') continue;
+            const key = String(val);
+            valMap[key] = (valMap[key] || 0) + it.price;
+        }
+        const entries = Object.entries(valMap).sort((a, b) => b[1] - a[1]).slice(0, 8);
+        if (entries.length > 0) {
+            tagSpendByGroup[getTagGroupLabel(group)] = entries.map(([value, amount]) => {
+                const am = round2(amount);
+                return {
+                    value,
+                    label: getTagLabel(group, value),
+                    amount: am,
+                    pctOfSpend: spendTotal > 0 ? round2((am / spendTotal) * 100) : 0
+                };
+            });
+        }
+    }
+
+    const spends = ctx.bucketSeries.map(b => b.spending);
+    const mean = spends.length ? spends.reduce((a, b) => a + b, 0) / spends.length : 0;
+    let volatilityPct = 0;
+    if (spends.length > 1 && mean > 0) {
+        const variance = spends.reduce((a, s) => a + (s - mean) ** 2, 0) / spends.length;
+        volatilityPct = round2((Math.sqrt(variance) / mean) * 100);
+    }
+
+    let maxB = null;
+    let minB = null;
+    for (const b of ctx.bucketSeries) {
+        if (!maxB || b.spending > maxB.spending) maxB = b;
+        if (!minB || b.spending < minB.spending) minB = b;
+    }
+
+    const startD = parseLocalDate(ctx.range.startDate);
+    const endD = parseLocalDate(ctx.range.endDate);
+    const daySpan = Math.max(1, Math.floor((endD - startD) / 86400000) + 1);
+    const activeDays = new Set(items.map(i => i.purchaseDate)).size;
+
+    return {
+        locale: 'pl-PL',
+        currency: 'PLN',
+        range: ctx.range,
+        filtersApplied: ctx.filtersApplied,
+        totals: ctx.totals,
+        bucketSeries: ctx.bucketSeries,
+        aggregates: {
+            lineItemCount: items.length,
+            activeSpendDays: activeDays,
+            calendarDaysInRange: daySpan,
+            avgSpendingPerDay: round2(spendTotal / daySpan),
+            topCategories: topFromMap(catMap, 12),
+            topSubcategoryPaths: topFromMap(subMap, 12),
+            topShops: topFromMap(shopMap, 12),
+            tagSpendByGroup,
+            bucketVolatilityPct: volatilityPct,
+            richestPeriod: maxB ? { label: maxB.label, spending: maxB.spending } : null,
+            leanestPeriod: minB ? { label: minB.label, spending: minB.spending } : null
+        }
+    };
+}
+
+function escapeHtmlInsight(s) {
+    return String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
+const ANALYSIS_AI_LS_PREFIX = 'tw_analysis_ai_v1_';
+
+function hashDjb2(str) {
+    let hash = 5381;
+    for (let i = 0; i < str.length; i++) {
+        hash = ((hash << 5) + hash) ^ str.charCodeAt(i);
+    }
+    return hash >>> 0;
+}
+
+function analysisAiStorageKey(payload) {
+    return `${ANALYSIS_AI_LS_PREFIX}${hashDjb2(JSON.stringify(payload)).toString(36)}`;
+}
+
+function readAnalysisAiCache(storageKey, payload) {
+    try {
+        const raw = localStorage.getItem(storageKey);
+        if (!raw) return null;
+        const data = JSON.parse(raw);
+        if (data.v !== 1 || data.fingerprint !== hashDjb2(JSON.stringify(payload))) return null;
+        if (!Array.isArray(data.insights) || data.insights.length === 0) return null;
+        return { insights: data.insights, quota: data.quota || null };
+    } catch {
+        return null;
+    }
+}
+
+function writeAnalysisAiCache(storageKey, payload, { insights, quota }) {
+    try {
+        const entry = {
+            v: 1,
+            fingerprint: hashDjb2(JSON.stringify(payload)),
+            savedAt: Date.now(),
+            insights,
+            quota: quota || null
+        };
+        localStorage.setItem(storageKey, JSON.stringify(entry));
+    } catch (e) {
+        console.warn('Zapis cache analizy AI:', e);
+    }
+}
+
+function formatQuotaLine(quota) {
+    if (!quota || !quota.daily || !quota.monthly) return '';
+    const d = quota.daily;
+    const m = quota.monthly;
+    return `Dzisiaj: ${d.used}/${d.limit} · W tym miesiącu: ${m.used}/${m.limit}`;
+}
+
+function buildAnalysisInsightsListHtml(insights) {
+    return insights.map((ins) => {
+        const icon = (ins.icon && /^fa-[\w-]+$/.test(ins.icon)) ? ins.icon : 'fa-lightbulb';
+        const text = escapeHtmlInsight(ins.text || '');
+        return `
+                <div class="flex gap-3 p-3 rounded-xl border border-white/10 bg-white/5 mb-2">
+                    <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-500/15 text-brand-400">
+                        <i class="fas ${icon}"></i>
+                    </div>
+                    <p class="text-sm leading-relaxed text-gray-200">${text}</p>
+                </div>
+            `;
+    }).join('');
+}
+
+function buildAnalysisInsightsDrawerContent(insights, quota, { fromCache = false } = {}) {
+    const quotaText = formatQuotaLine(quota);
+    const cacheBanner = fromCache
+        ? `<p class="text-[11px] text-brand-300/90 mb-2 rounded-lg border border-brand-500/20 bg-brand-500/10 px-3 py-2">Ten sam zestaw danych co przy ostatniej analizie — wynik z pamięci podręcznej przeglądarki. <strong>Limit API nie został zużyty.</strong></p>`
+        : '';
+    const quotaBlock = `
+            <div id="analysis-ai-quota-line" class="text-[11px] text-gray-400 border border-white/10 rounded-xl px-3 py-2 bg-white/[0.03] mb-2">
+                <span class="text-gray-500">Wykorzystanie limitu:</span>
+                ${quotaText ? ` <span id="analysis-ai-quota-values">${escapeHtmlInsight(quotaText)}</span>` : ' <span id="analysis-ai-quota-values">Ładowanie…</span>'}
+            </div>`;
+    return `
+        <div class="pb-safe space-y-1 max-h-[70vh] overflow-y-auto pr-1">
+            ${cacheBanner}
+            ${quotaBlock}
+            <div class="space-y-1">${buildAnalysisInsightsListHtml(insights)}</div>
+        </div>
+    `;
+}
+
+async function refreshAnalysisAiQuotaLine() {
+    try {
+        const q = await apiCall('/api/analysis/insights-range/quota', 'GET');
+        const wrap = document.getElementById('analysis-ai-quota-line');
+        const slot = document.getElementById('analysis-ai-quota-values');
+        const line = formatQuotaLine(q);
+        if (slot) slot.textContent = line || '—';
+        else if (wrap && line) wrap.innerHTML = `<span class="text-gray-500">Wykorzystanie limitu:</span> ${escapeHtmlInsight(line)}`;
+    } catch (e) {
+        console.warn('Pobieranie limitu AI:', e);
+        const slot = document.getElementById('analysis-ai-quota-values');
+        if (slot) slot.textContent = 'nie udało się odczytać';
+    }
+}
+
+function updateAnalysisAiInsightButtonState() {
+    const btn = document.getElementById('analysis-ai-insight-btn');
+    if (!btn) return;
+    const count = lastAnalysisInsightContext?.filteredItems?.length || 0;
+    const enabled = count > 0;
+    btn.disabled = !enabled;
+    btn.classList.toggle('opacity-40', !enabled);
+    btn.classList.toggle('cursor-not-allowed', !enabled);
+    btn.title = enabled
+        ? 'Wnioski AI dla zakresu wykresu i aktywnych filtrów'
+        : 'Brak pozycji w wybranym zakresie (po filtrach)';
+}
+
+async function runAnalysisRangeAiInsight() {
+    const btn = document.getElementById('analysis-ai-insight-btn');
+    if (!btn || btn.disabled) return;
+
+    const payload = buildAnalysisRangeApiPayload();
+    if (!payload) {
+        alert('Brak danych do analizy AI w tym zakresie.');
+        return;
+    }
+
+    const storageKey = analysisAiStorageKey(payload);
+    const cached = readAnalysisAiCache(storageKey, payload);
+
+    const originalHtml = btn.innerHTML;
+    try {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin text-sm"></i>';
+
+        let insights = [];
+        let quota = null;
+        let fromCache = false;
+
+        if (cached) {
+            insights = cached.insights;
+            quota = cached.quota;
+            fromCache = true;
+        } else {
+            const data = await apiCall('/api/analysis/insights-range', 'POST', payload);
+            insights = data && Array.isArray(data.insights) ? data.insights : [];
+            quota = data && data.quota ? data.quota : null;
+            if (insights.length === 0) {
+                alert('Model nie zwrócił wniosków. Spróbuj ponownie.');
+                return;
+            }
+            writeAnalysisAiCache(storageKey, payload, { insights, quota });
+        }
+
+        if (insights.length === 0) {
+            alert('Brak wniosków do wyświetlenia.');
+            return;
+        }
+
+        Drawer.open({
+            title: 'Wnioski AI — analiza okresu',
+            content: buildAnalysisInsightsDrawerContent(insights, quota, { fromCache }),
+            size: 'md',
+            showCloseBtn: true
+        });
+
+        refreshAnalysisAiQuotaLine();
+    } catch (err) {
+        console.error('runAnalysisRangeAiInsight:', err);
+        alert(err.message || 'Nie udało się wygenerować analizy AI.');
+    } finally {
+        btn.innerHTML = originalHtml;
+        updateAnalysisAiInsightButtonState();
+    }
+}
+
+function initAnalysisAiInsightButton() {
+    const btn = document.getElementById('analysis-ai-insight-btn');
+    if (!btn || btn.dataset.initialized === 'true') return;
+    btn.dataset.initialized = 'true';
+    btn.addEventListener('click', () => runAnalysisRangeAiInsight());
+}
+
 // =====================================================================
 // BUDOWANIE WYKRESÓW
 // =====================================================================
@@ -831,6 +1171,8 @@ async function renderUnifiedComparisonChart() {
     if (!buckets.length) {
         buildComparisonChart([]);
         buildShopChart([]);
+        lastAnalysisInsightContext = null;
+        updateAnalysisAiInsightButtonState();
         return;
     }
 
@@ -852,6 +1194,8 @@ async function renderUnifiedComparisonChart() {
 
     buildComparisonChart(enrichedBuckets);
     buildShopChart(filteredItems);
+    captureAnalysisInsightContext(filteredItems, enrichedBuckets, startDate, endDate);
+    updateAnalysisAiInsightButtonState();
 }
 
 function buildShopChart(filteredItems) {
@@ -1315,6 +1659,7 @@ export async function initializeLongTermBudget() {
     await ensureComparisonAvailableMonths();
     initializeComparisonPeriodControls();
     initializeAnalysisTagFilter();
+    initAnalysisAiInsightButton();
     updateAnalysisTagFilterUI();
 
     longTermBudgetInitialized = true;

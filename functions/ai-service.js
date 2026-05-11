@@ -206,9 +206,56 @@ async function generateInsights(userId, currentMonthData, previousMonthData, cat
     }
 }
 
+/**
+ * Wnioski AI dla widoku Analizy (dłuższy okres, bogatszy kontekst JSON).
+ */
+async function generateInsightsRange(userId, payload) {
+    const safe = typeof payload === 'object' && payload !== null ? payload : {};
+    const dataJson = JSON.stringify(safe, null, 0);
+    if (dataJson.length > 120000) {
+        throw new Error('Zbyt obszerny zestaw danych do analizy AI.');
+    }
+
+    const prompt = `
+Jesteś asystentem finansowym w aplikacji do śledzenia wydatków (Polska, waluta PLN).
+Przeanalizuj WYŁĄCZNIE dane z JSON poniżej — nie zmyślaj kwot, kategorii ani trendów, których nie ma w danych.
+Użytkownik widzi wykres dla okresu i filtrów opisanych w polu "range" i "filtersApplied".
+
+ZADANIE:
+- Zbuduj tablicę "insights" z minimum 5 pozycjami (zalecenie: 5–7).
+- Pozycje od pierwszej do przedostatniej: konkretne obserwacje (trend w czasie, kategorie, sklepy, tagi, budżet vs wydatki, nieregularności itd.).
+- **Ostatnia pozycja** w tablicy MUSI być praktyczną radą działania: co użytkownik może zmienić lub nad czym popracować (nawyki, planowanie, jedna konkretna zmiana), o ile dane JSON na to pozwalają. Jeśli dane są zbyt ubogie lub niejednoznaczne, ostatni wniosek krótko wyjaśnij (np. żeby dłużej zbierać dane albo rozważyć szerszy zakres) — bez wymyślania liczb.
+- Ton: bezpośredni, pomocny, bez moralizowania.
+- Każdy wniosek max 220 znaków, po polsku.
+- Odwołuj się do liczb z JSON tylko tam, gdzie są dostępne.
+
+DANE JSON:
+${dataJson}
+
+Zwróć WYŁĄCZNIE poprawny JSON (bez markdown) w schemacie:
+{
+  "insights": [
+    { "icon": "fa-chart-line", "text": "..." }
+  ]
+}
+Użyj ikon Font Awesome 5 (prefiks fa-), np. fa-chart-line, fa-store, fa-tags, fa-piggy-bank, fa-seedling (ostatnia rada).
+`;
+
+    try {
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        const text = response.text();
+        return extractJsonFromText(text);
+    } catch (error) {
+        console.error('Błąd generateInsightsRange:', error);
+        throw error;
+    }
+}
+
 module.exports = {
     analyzeVoiceExpenseText,
     extractAndCategorizePurchase,
     generateInsights,
+    generateInsightsRange,
     transcribeAudio
 };
