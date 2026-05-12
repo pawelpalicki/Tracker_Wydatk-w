@@ -1,46 +1,30 @@
-const CACHE_NAME = 'tracker-wydatkow-cache-v12'; // Zwiększona wersja
+const CACHE_NAME = 'tracker-wydatkow-cache-v13';
+
+// Tylko pliki faktycznie serwowane z hostingu (APP/). Brak 404 = cala instalacja SW nie pada.
 const urlsToCache = [
     '/',
     '/index.html',
     '/css/styles.css',
-    '/js/api.js',
-    '/js/auth.js',
-    '/js/ui.js',
-    '/js/budget.js',
-    '/js/statistics.js',
-    '/js/purchases.js',
-    '/js/long-term-budget.js',
-    '/js/special-budgets.js',
-    '/js/categories-v2.js',
-    '/js/analysis-animation.js',
-    '/js/app.js',
-    '/icon-new.svg',
-    '/manifest.json'
+    '/css/drawer.css',
+    '/js/main.js',
+    '/dist/output.css',
+    '/manifest.json',
+    '/icon-new.svg'
 ];
 
-// Instalacja Service Workera i cache'owanie zasobów
 self.addEventListener('install', event => {
-    self.skipWaiting(); // Wymuś aktywację bez czekania
+    self.skipWaiting();
     event.waitUntil(
-        caches.open(CACHE_NAME)
-            .then(cache => {
-                console.log('Otwarto cache:', CACHE_NAME);
-                return cache.addAll(urlsToCache);
-            })
-    );
-});
-
-// Aktywacja Service Workera i czyszczenie starych cache'y
-self.addEventListener('activate', event => {
-    event.waitUntil(self.clients.claim()); // Przejmij kontrolę nad wszystkimi klientami od razu
-    const cacheWhitelist = [CACHE_NAME];
-    event.waitUntil(
-        caches.keys().then(cacheNames => {
-            return Promise.all(
-                cacheNames.map(cacheName => {
-                    if (cacheWhitelist.indexOf(cacheName) === -1) {
-                        console.log('Usuwanie starego cache:', cacheName);
-                        return caches.delete(cacheName);
+        caches.open(CACHE_NAME).then(async cache => {
+            console.log('Otwarto cache:', CACHE_NAME);
+            await Promise.all(
+                urlsToCache.map(async url => {
+                    try {
+                        const res = await fetch(url);
+                        if (res.ok) await cache.put(url, res);
+                        else console.warn('[SW] Pominieto (odpowiedz nie OK):', url, res.status);
+                    } catch (e) {
+                        console.warn('[SW] Pominieto (brak pliku lub siec):', url, e && e.message);
                     }
                 })
             );
@@ -48,13 +32,25 @@ self.addEventListener('activate', event => {
     );
 });
 
-// Przechwytywanie zapytań sieciowych
+self.addEventListener('activate', event => {
+    event.waitUntil(self.clients.claim());
+    const cacheWhitelist = [CACHE_NAME];
+    event.waitUntil(
+        caches.keys().then(cacheNames =>
+            Promise.all(
+                cacheNames.map(cacheName => {
+                    if (cacheWhitelist.indexOf(cacheName) === -1) {
+                        console.log('Usuwanie starego cache:', cacheName);
+                        return caches.delete(cacheName);
+                    }
+                })
+            )
+        )
+    );
+});
+
 self.addEventListener('fetch', event => {
     event.respondWith(
-        // Najpierw spróbuj pobrać z sieci, aby zawsze mieć najnowszą wersję
-        fetch(event.request).catch(() => {
-            // Jeśli sieć zawiedzie, spróbuj pobrać z cache
-            return caches.match(event.request);
-        })
+        fetch(event.request).catch(() => caches.match(event.request))
     );
 });

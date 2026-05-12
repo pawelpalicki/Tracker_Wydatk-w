@@ -11,49 +11,52 @@ const recurringExpensesCollection = db.collection('recurringExpenses');
 
 // --- Zakupy (stara ścieżka: /api/purchases) ---
 
+function applyPurchaseFilters(purchases, { keyword, category, subCategory, shop, budget, minAmount, maxAmount }) {
+    let out = purchases;
+    if (shop) out = out.filter(p => p.shop === shop);
+    if (budget) {
+        if (budget === 'monthly') out = out.filter(p => !p.specialBudgetId);
+        else out = out.filter(p => p.specialBudgetId === budget);
+    }
+    if (minAmount) out = out.filter(p => p.totalAmount >= parseFloat(minAmount));
+    if (maxAmount) out = out.filter(p => p.totalAmount <= parseFloat(maxAmount));
+    if (keyword) {
+        const lowerKeyword = String(keyword).toLowerCase();
+        out = out.filter(p => (p.items || []).some(item => (item.name || '').toLowerCase().includes(lowerKeyword)));
+    }
+    if (category || subCategory) {
+        out = out.filter(p => (p.items || []).some(item => {
+            const matchesCategory = !category || item.category === category;
+            const matchesSubCategory = !subCategory || (item.subCategory || '') === subCategory;
+            return matchesCategory && matchesSubCategory;
+        }));
+    }
+    return out;
+}
+
 router.get('/purchases', authMiddleware, asyncHandler(async (req, res) => {
     const { lastVisible, keyword, category, subCategory, shop, budget, minAmount, maxAmount, startDate, endDate } = req.query;
     const limit = 30;
-    const isAnyFilterActive = keyword || category || subCategory || shop || budget || minAmount || maxAmount || startDate || endDate;
+    const isAnyFilterActive = Boolean(keyword || category || subCategory || shop || budget || minAmount || maxAmount || startDate || endDate);
 
     let query = purchasesCollection.where('userId', '==', req.userId);
     if (startDate) query = query.where('date', '>=', startDate);
     if (endDate) query = query.where('date', '<=', endDate);
 
-    if (isAnyFilterActive) {
-        const snapshot = await query.orderBy('date', 'desc').get();
-        let purchases = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
-        if (shop) purchases = purchases.filter(p => p.shop === shop);
-        if (budget) {
-            if (budget === 'monthly') purchases = purchases.filter(p => !p.specialBudgetId);
-            else purchases = purchases.filter(p => p.specialBudgetId === budget);
-        }
-        if (minAmount) purchases = purchases.filter(p => p.totalAmount >= parseFloat(minAmount));
-        if (maxAmount) purchases = purchases.filter(p => p.totalAmount <= parseFloat(maxAmount));
-        if (keyword) {
-            const lowerKeyword = keyword.toLowerCase();
-            purchases = purchases.filter(p => p.items.some(item => item.name.toLowerCase().includes(lowerKeyword)));
-        }
-        if (category || subCategory) {
-            purchases = purchases.filter(p => p.items.some(item => {
-                const matchesCategory = !category || item.category === category;
-                const matchesSubCategory = !subCategory || (item.subCategory || '') === subCategory;
-                return matchesCategory && matchesSubCategory;
-            }));
-        }
-        res.json({ purchases, nextCursor: null });
-    } else {
-        let paginatedQuery = query.orderBy('date', 'desc').limit(limit);
-        if (lastVisible) {
-            const lastDocSnapshot = await purchasesCollection.doc(lastVisible).get();
-            if (lastDocSnapshot.exists) paginatedQuery = paginatedQuery.startAfter(lastDocSnapshot);
-        }
-        const snapshot = await paginatedQuery.get();
-        const purchases = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        const nextCursor = snapshot.docs.length === limit ? snapshot.docs[snapshot.docs.length - 1].id : null;
-        res.json({ purchases, nextCursor });
+    let paginatedQuery = query.orderBy('date', 'desc').limit(limit);
+    if (lastVisible) {
+        const lastDocSnapshot = await purchasesCollection.doc(lastVisible).get();
+        if (lastDocSnapshot.exists) paginatedQuery = paginatedQuery.startAfter(lastDocSnapshot);
     }
+    const snapshot = await paginatedQuery.get();
+    let purchases = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+    if (isAnyFilterActive) {
+        purchases = applyPurchaseFilters(purchases, { keyword, category, subCategory, shop, budget, minAmount, maxAmount });
+    }
+
+    const nextCursor = snapshot.docs.length === limit ? snapshot.docs[snapshot.docs.length - 1].id : null;
+    res.json({ purchases, nextCursor });
 }));
 
 router.post('/purchases', authMiddleware, asyncHandler(async (req, res) => {

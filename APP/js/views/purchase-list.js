@@ -22,6 +22,42 @@ function el(id) {
     return document.getElementById(id);
 }
 
+const PURCHASES_LOAD_MORE_SENTINEL_ID = 'purchases-load-more-sentinel';
+let purchasesListLoadMoreIO = null;
+
+function teardownPurchasesLoadMoreObserver() {
+    if (purchasesListLoadMoreIO) {
+        purchasesListLoadMoreIO.disconnect();
+        purchasesListLoadMoreIO = null;
+    }
+    el(PURCHASES_LOAD_MORE_SENTINEL_ID)?.remove();
+}
+
+function setupPurchasesLoadMoreObserver() {
+    teardownPurchasesLoadMoreObserver();
+    if (!state.nextPurchaseCursor) return;
+    const list = el('purchases-list');
+    if (!list) return;
+
+    const sentinel = document.createElement('div');
+    sentinel.id = PURCHASES_LOAD_MORE_SENTINEL_ID;
+    sentinel.className = 'h-px w-full shrink-0';
+    sentinel.setAttribute('aria-hidden', 'true');
+    list.appendChild(sentinel);
+
+    purchasesListLoadMoreIO = new IntersectionObserver(
+        (entries) => {
+            for (const entry of entries) {
+                if (!entry.isIntersecting) continue;
+                if (!el('list-tab')?.classList.contains('active')) continue;
+                fetchMorePurchases();
+            }
+        },
+        { root: null, rootMargin: '320px 0px', threshold: 0 }
+    );
+    purchasesListLoadMoreIO.observe(sentinel);
+}
+
 // Delegacja klikniec zostaje na kontenerze listy, dzieki czemu dziala tez dla kolejnych stron.
 export function initPurchaseList() {
     if (purchaseListInitialized) return;
@@ -304,34 +340,18 @@ export const handleInfiniteScroll = () => {
 
 export async function handleFilterChange() {
     const queryString = getFilterQueryParams();
-
-    if (!queryString) {
-        addEventListener('scroll', handleInfiniteScroll);
-        await loadInitialPurchases();
-        if (state.structuredCategories.length === 0 && state.allCategories.length > 0) {
-            const refetchedStructuredCategories = await apiCall('/api/categories/v2');
-            if (Array.isArray(refetchedStructuredCategories) && refetchedStructuredCategories.length > 0) {
-                state.structuredCategories = refetchedStructuredCategories;
-            }
-        }
-        return;
+    const list = el('purchases-list');
+    if (queryString && list) {
+        list.innerHTML = '<div class="text-center py-12">Filtrowanie...</div>';
     }
 
-    removeEventListener('scroll', handleInfiniteScroll);
-    state.isLoadingPurchases = true;
-    const list = el('purchases-list');
-    if (list) list.innerHTML = '<div class="text-center py-12">Filtrowanie...</div>';
+    await loadInitialPurchases();
 
-    try {
-        const { purchases } = await apiCall(`/api/purchases?${queryString}`);
-        state.allPurchases = purchases || [];
-        state.nextPurchaseCursor = null;
-        renderPurchasesList(state.allPurchases, false);
-    } catch (error) {
-        console.error('Blad podczas filtrowania zakupow:', error);
-        if (list) list.innerHTML = '<div class="text-center py-12 text-red-500">Wystapil blad podczas filtrowania.</div>';
-    } finally {
-        state.isLoadingPurchases = false;
+    if (state.structuredCategories.length === 0 && state.allCategories.length > 0) {
+        const refetchedStructuredCategories = await apiCall('/api/categories/v2');
+        if (Array.isArray(refetchedStructuredCategories) && refetchedStructuredCategories.length > 0) {
+            state.structuredCategories = refetchedStructuredCategories;
+        }
     }
 }
 
@@ -354,21 +374,58 @@ export function getFilterQueryParams() {
     return params.toString();
 }
 
+function purchasesListUrl(params) {
+    const qs = params.toString();
+    return qs ? `/api/purchases?${qs}` : '/api/purchases';
+}
+
 export async function loadInitialPurchases() {
     state.isLoadingPurchases = true;
     removeEventListener('scroll', handleInfiniteScroll);
+    teardownPurchasesLoadMoreObserver();
     try {
         const query = getFilterQueryParams();
-        const suffix = query ? `?${query}` : '';
-        const { purchases, nextCursor } = await apiCall(`/api/purchases${suffix}`);
-        state.allPurchases = purchases || [];
-        state.nextPurchaseCursor = nextCursor || null;
-        renderPurchasesList(state.allPurchases);
+        const hasFilters = Boolean(query);
+        const maxPrefetch = hasFilters ? 25 : 1;
+        state.allPurchases = [];
+        let lastCursorParam = '';
+        let lastNext = null;
+
+        for (let i = 0; i < maxPrefetch; i++) {
+            const params = new URLSearchParams(query);
+            if (lastCursorParam) params.set('lastVisible', lastCursorParam);
+            const { purchases, nextCursor } = await apiCall(purchasesListUrl(params));
+            const batch = purchases || [];
+            lastNext = nextCursor || null;
+            state.allPurchases.push(...batch);
+            lastCursorParam = lastNext || '';
+
+            if (!hasFilters) break;
+            if (!lastNext) break;
+            if (batch.length > 0) break;
+        }
+
+        state.nextPurchaseCursor = lastNext || null;
+        if (state.allPurchases.length === 0 && state.nextPurchaseCursor) {
+            const list = el('purchases-list');
+            if (list) {
+                list.innerHTML = '<div class="text-center py-12"><svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg><h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">Brak wynikow na pierwszych stronach</h3><p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Trwa szukanie w starszych zakupach albo przewin w dol.</p></div>';
+            }
+        } else {
+            renderPurchasesList(state.allPurchases, false);
+        }
         if (state.nextPurchaseCursor) {
             addEventListener('scroll', handleInfiniteScroll);
+            setupPurchasesLoadMoreObserver();
         }
     } catch (error) {
         console.error('Blad ladowania poczatkowych zakupow:', error);
+        const list = el('purchases-list');
+        if (list) list.innerHTML = '<div class="text-center py-12 text-red-500">Wystapil blad podczas ladowania listy zakupow.</div>';
+        state.allPurchases = [];
+        state.nextPurchaseCursor = null;
+        teardownPurchasesLoadMoreObserver();
+        removeEventListener('scroll', handleInfiniteScroll);
     } finally {
         state.isLoadingPurchases = false;
     }
@@ -379,19 +436,39 @@ export async function fetchMorePurchases() {
 
     state.isLoadingPurchases = true;
     try {
-        const query = getFilterQueryParams();
-        const queryPart = query ? `&${query}` : '';
-        const { purchases, nextCursor } = await apiCall(`/api/purchases?lastVisible=${state.nextPurchaseCursor}${queryPart}`);
-        if (purchases && purchases.length > 0) {
-            state.allPurchases.push(...purchases);
-            renderPurchasesList(purchases, true);
+        const maxEmptySkips = 25;
+        let emptySkips = 0;
+        while (state.nextPurchaseCursor && emptySkips < maxEmptySkips) {
+            const params = new URLSearchParams(getFilterQueryParams());
+            params.set('lastVisible', state.nextPurchaseCursor);
+            const { purchases, nextCursor } = await apiCall(purchasesListUrl(params));
+            const batch = purchases || [];
+            state.nextPurchaseCursor = nextCursor || null;
+
+            if (batch.length > 0) {
+                const hadNoRows = state.allPurchases.length === 0;
+                state.allPurchases.push(...batch);
+                if (hadNoRows) {
+                    renderPurchasesList(state.allPurchases, false);
+                } else {
+                    renderPurchasesList(batch, true);
+                }
+                break;
+            }
+            if (!state.nextPurchaseCursor) break;
+            emptySkips++;
         }
-        state.nextPurchaseCursor = nextCursor || null;
-        if (!state.nextPurchaseCursor) {
+        if (state.nextPurchaseCursor) {
+            setupPurchasesLoadMoreObserver();
+        } else {
             removeEventListener('scroll', handleInfiniteScroll);
+            teardownPurchasesLoadMoreObserver();
         }
     } catch (error) {
         console.error('Blad doladowywania zakupow:', error);
+        removeEventListener('scroll', handleInfiniteScroll);
+        teardownPurchasesLoadMoreObserver();
+        state.nextPurchaseCursor = null;
     } finally {
         state.isLoadingPurchases = false;
     }
