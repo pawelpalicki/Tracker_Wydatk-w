@@ -5,7 +5,7 @@ const { getPrompt, getVoiceExpensePrompt } = require('./prompt.js');
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const gemini = new GoogleGenerativeAI(GEMINI_API_KEY, { apiVersion: 'v1beta' });
-const model = gemini.getGenerativeModel({ model: 'gemini-3.1-flash-lite-preview' });
+const model = gemini.getGenerativeModel({ model: 'gemini-3.1-flash-lite' });
 
 const speechAuth = new GoogleAuth({
     scopes: ['https://www.googleapis.com/auth/cloud-platform']
