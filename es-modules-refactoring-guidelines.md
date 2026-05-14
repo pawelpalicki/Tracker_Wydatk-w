@@ -97,10 +97,10 @@ const x = 1
 
 ## Szybka checklista przed commitem
 
-- [ ] Brak `window.xxx =` poza uzasadnionymi wyjątkami
-- [ ] Brak `onclick=`, `onchange=` i innych inline handlerów w HTML
-- [ ] Brak `typeof x === 'function'` jako guardu wewnętrznego API
-- [ ] Brak `var`
-- [ ] Brak `require()`
-- [ ] Brak IIFE bez wyraźnego powodu
-- [ ] Wszystkie `<script>` mają `type="module"`
+- [x] Brak `window.xxx =` poza uzasadnionymi wyjątkami
+- [x] Brak `onclick=`, `onchange=` i innych inline handlerów w HTML
+- [x] Brak `typeof x === 'function'` jako guardu wewnętrznego API
+- [x] Brak `var`
+- [x] Brak `require()` (w kodzie frontendowym)
+- [x] Brak IIFE bez wyraźnego powodu
+- [x] Wszystkie `<script>` mają `type="module"`

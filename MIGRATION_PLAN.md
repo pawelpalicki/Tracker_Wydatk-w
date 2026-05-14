@@ -23,24 +23,24 @@
 
 ---
 
-## ETAP 4 — Porządki końcowe (W TRAKCIE)
+## ETAP 4 — Porządki końcowe (ZAKOŃCZONE)
 
 Po zakończeniu wszystkich kroków 3A–3K:
 
 ### 1. `shared/ui.js` — usunąć martwe funkcje (ZROBIONE)
 - `openDrawer()` / `closeDrawer()`
 - `openOverlay()` / `closeOverlay()`
-- `renderCategoryDetailsModal()` (przeniesiona logika do drawera)
+- `renderCategoryDetailsModal()` (zaktualizowana do Drawer.open)
 - `closeCategoryDetailsDrawer()`
 - Uproszczenie `hasVisibleBlockingOverlay()`
 
-### 2. `styles.css` — usunąć sekcję "Drawer & Bottom Sheet" (W TRAKCIE)
-- Linie 295–447 (selektory wszystkich starych drawerów)
-- Linie 604–658 (notif-swipe style — przenieść do drawer.css lub zostawić)
+### 2. `styles.css` — usunąć sekcję "Drawer & Bottom Sheet" (ZROBIONE)
+- Linie 295–447 (selektory starych drawerów usunięte, layouty treści przeniesione do `drawer.css`)
+- Linie 604–658 (notif-swipe style przeniesione do `drawer.css`)
 
 ### 3. `index.html` — weryfikacja (ZROBIONE)
-- Potwierdzić brak osieroconych `id` (stare overlay/panel)
-- Sprawdzić że `#voice-expense-modal` i `#voice-expense-overlay` nadal istnieją
+- Potwierdzony brak osieroconych `id` (stare overlay/panel)
+- `#voice-expense-modal` i `#voice-expense-overlay` zachowane (zgodnie z planem)
 
 ---
 

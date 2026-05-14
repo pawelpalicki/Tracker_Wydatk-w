@@ -2,6 +2,7 @@
   "name": "tracker-wydatkow-frontend",
   "version": "1.0.0",
   "description": "Frontend aplikacji do śledzenia wydatków",
+  "type": "module",
   "main": "index.html",
   "scripts": {
     "build-css": "tailwindcss -i ./src/input.css -o ./dist/output.css --watch",
