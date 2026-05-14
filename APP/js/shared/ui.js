@@ -412,18 +412,16 @@ export function renderCategoryDetailsModal(category, items, isSubCategoryView = 
 
             const subLabel = item.subCategory ? `<span class="text-[10px] bg-white/10 px-1.5 py-0.5 rounded text-gray-400 mr-2">${item.subCategory}</span>` : '';
             return `
-                <div class="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/10 mb-2">
-                    <div class="flex flex-col overflow-hidden mr-3">
-                        <span class="text-sm font-medium text-white truncate w-full">${item.name}</span>
-                        <div class="flex items-center text-xs text-gray-400 mt-1 space-x-2">
-                            ${isSubCategoryView ? '' : subLabel}
-                            <span class="truncate max-w-[80px]">${item.shop || 'Inny'}</span>
-                            <span>*</span>
-                            <span>${dateStr}</span>
-                        </div>
+                <div class="p-3 rounded-xl bg-white/5 border border-white/10 mb-2">
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="text-sm font-medium text-white truncate mr-2">${item.name}</span>
+                        <span class="text-sm font-bold text-white flex-shrink-0">${formatAmount(item.price || 0)}</span>
                     </div>
-                    <div class="text-right flex-shrink-0">
-                        <span class="text-sm font-bold text-white">${formatAmount(item.price || 0)}</span>
+                    <div class="flex items-center text-xs text-gray-400 space-x-2">
+                        ${isSubCategoryView ? '' : subLabel}
+                        <span class="truncate">${item.shop || 'Inny'}</span>
+                        <span>*</span>
+                        <span class="flex-shrink-0">${dateStr}</span>
                     </div>
                 </div>
             `;
