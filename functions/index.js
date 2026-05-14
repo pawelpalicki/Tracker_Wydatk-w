@@ -26,6 +26,7 @@ const budgetRoutes = require('./routes/budgets');
 const statisticsRoutes = require('./routes/statistics');
 const aiRoutes = require('./routes/ai');
 const notificationsRoutes = require('./routes/notifications');
+const initRoutes = require('./routes/init');
 
 // Importy serwisów
 const { shouldAddExpenseToday } = require('./recurring-service');
@@ -46,6 +47,7 @@ apiRouter.use(budgetRoutes);
 apiRouter.use(statisticsRoutes);
 apiRouter.use(aiRoutes);
 apiRouter.use(notificationsRoutes);
+apiRouter.use(initRoutes);
 
 // Rejestracja routerów w aplikacji
 app.use('/auth', authRoutes);

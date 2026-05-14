@@ -24,9 +24,13 @@ export function initNotifications() {
     document.getElementById('ai-insight-btn')?.addEventListener('click', generateAIInsights);
 }
 
-export async function loadNotifications() {
+export async function loadNotifications(prefetchedNotifications = null) {
     try {
-        currentNotifications = await apiCall('/api/notifications');
+        if (prefetchedNotifications) {
+            currentNotifications = prefetchedNotifications;
+        } else {
+            currentNotifications = await apiCall('/api/notifications');
+        }
         updateNotificationBadge();
         renderNotifications();
     } catch (err) {

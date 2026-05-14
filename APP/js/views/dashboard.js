@@ -15,12 +15,25 @@ let homeSwipeInitialized = false;
 
 // Glowne odswiezenie kokpitu: ustala aktywny miesiac, renderuje popup wyboru miesiaca, summary i ostatnie transakcje.
 
-export async function renderDashboard() {
+/**
+ * Renderuje dashboard.
+ * @param {Object} [initData] - Opcjonalne dane z /api/init. Jeśli podane, pomija API calls.
+ *   initData.availableMonths, initData.dashboard.budgets, initData.dashboard.purchases,
+ *   initData.dashboard.comparison, initData.dashboard.recentTransactions
+ */
+export async function renderDashboard(initData = null) {
     try {
-        const stats = await apiCall('/api/statistics');
+        let availableMonths;
 
-        if (stats.availableMonths && stats.availableMonths.length > 0) {
-            homeAvailableMonths = [...stats.availableMonths].sort().reverse();
+        if (initData && initData.availableMonths) {
+            availableMonths = initData.availableMonths;
+        } else {
+            const stats = await apiCall('/api/statistics');
+            availableMonths = stats.availableMonths;
+        }
+
+        if (availableMonths && availableMonths.length > 0) {
+            homeAvailableMonths = [...availableMonths].sort().reverse();
         } else if (homeAvailableMonths.length === 0) {
             homeAvailableMonths = [new Date().toISOString().substring(0, 7)];
         }
@@ -34,8 +47,10 @@ export async function renderDashboard() {
 
         updateHomeMonthLabel();
         buildHomeMonthPickerPopup();
-        await renderHomeSummary();
-        renderHomeRecentTransactions();
+
+        const dashboardData = initData ? initData.dashboard : null;
+        await renderHomeSummary(dashboardData);
+        renderHomeRecentTransactions(dashboardData ? dashboardData.recentTransactions : null);
     } catch (err) {
         console.error('Blad renderowania kokpitu:', err);
     }
@@ -153,7 +168,7 @@ function buildHomeMonthPickerPopup() {
     renderYearView(homeDashboardPickerYear);
 }
 
-async function renderHomeSummary() {
+async function renderHomeSummary(dashboardData = null) {
     const month = homeDashboardMonth;
     if (!month) return;
 
@@ -173,11 +188,21 @@ async function renderHomeSummary() {
     const mtdParam = isCurrentMonth ? 'true' : 'false';
 
     try {
-        const [budgetData, purchaseData, comparisonData] = await Promise.all([
-            apiCall(`/api/budgets/${year}/${mon.padStart(2, '0')}`),
-            apiCall(`/api/purchases?startDate=${startDate}&endDate=${endDate}`),
-            apiCall(`/api/statistics/comparison?mode=6months&mtd=${mtdParam}`)
-        ]);
+        let budgetData, purchaseData, comparisonData;
+
+        if (dashboardData && month === dashboardData.currentMonth) {
+            // Użyj danych z /api/init (bez API calls)
+            budgetData = { budgets: dashboardData.budgets };
+            purchaseData = { purchases: dashboardData.purchases };
+            comparisonData = dashboardData.comparison;
+        } else {
+            // Fallback: pobierz dane z API (zmiana miesiąca)
+            [budgetData, purchaseData, comparisonData] = await Promise.all([
+                apiCall(`/api/budgets/${year}/${mon.padStart(2, '0')}`),
+                apiCall(`/api/purchases?startDate=${startDate}&endDate=${endDate}`),
+                apiCall(`/api/statistics/comparison?mode=6months&mtd=${mtdParam}`)
+            ]);
+        }
 
         const purchases = purchaseData.purchases || [];
         const totalSpent = purchases.reduce((sum, p) => sum + (p.totalAmount || 0), 0);
@@ -482,14 +507,19 @@ function renderHomeSubCategoryTiles(purchases) {
     });
 }
 
-async function renderHomeRecentTransactions() {
+async function renderHomeRecentTransactions(prefetchedPurchases = null) {
     const container = document.getElementById('home-recent-transactions');
     const noData = document.getElementById('home-no-transactions');
     if (!container) return;
 
     try {
-        const { purchases } = await apiCall('/api/purchases?limit=10');
-        const recent = (purchases || []).slice(0, 10);
+        let recent;
+        if (prefetchedPurchases) {
+            recent = prefetchedPurchases.slice(0, 10);
+        } else {
+            const { purchases } = await apiCall('/api/purchases?limit=10');
+            recent = (purchases || []).slice(0, 10);
+        }
 
         container.innerHTML = '';
         if (recent.length === 0) {

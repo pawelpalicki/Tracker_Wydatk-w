@@ -8,8 +8,6 @@
  * - Aktualizację salda miesięcznego
  */
 
-import state from './state.js';
-import { apiCall } from './api.js';
 import { auth } from './config.js';
 import {
     switchTab,
@@ -18,7 +16,6 @@ import {
     reapplyOverlayNavigationLock,
     handleBlockingOverlayBackNavigation
 } from '../shared/ui.js';
-import { formatAmount } from '../shared/format.js';
 
 // Importy widoków i ich inicjalizacji
 import { initPurchaseForm, exitEditMode } from '../views/purchase-form.js';
@@ -34,7 +31,7 @@ import { initNotifications } from '../shared/notifications.js';
 import { initHomeDashboardControls } from '../views/dashboard.js';
 
 // Importy serwisu danych
-import { fetchInitialData } from './data-loader.js';
+import { fetchInitialDataFast } from './data-loader.js';
 
 let appEventListenersInitialized = false;
 
@@ -153,15 +150,8 @@ export async function initializeApp() {
     const currentTab = document.querySelector('.bottom-nav-btn.active')?.dataset.tab || 'home';
     history.replaceState({ type: 'tab', id: currentTab }, "", "");
 
-    // Dodaj małe opóźnienie, żeby token Firebase Auth był gotowy
-    await new Promise(resolve => setTimeout(resolve, 100));
-    await fetchInitialData();
-    
-    // Safety check for new users: if categories were initialized in backend, they might have been empty in the first fetch
-    if (state.structuredCategories.length === 0 && state.allCategories.length === 0) {
-        console.log("Re-fetching data for new user...");
-        await fetchInitialData(false);
-    }
+    // Szybkie ładowanie z jednego endpointu (bez sztucznego opóźnienia)
+    await fetchInitialDataFast();
 
     exitEditMode();
     initHomeDashboardControls();

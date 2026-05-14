@@ -4,7 +4,7 @@
 import state from './state.js';
 import { apiCall } from './api.js';
 import { switchTab } from '../shared/ui.js';
-import { loadInitialPurchases } from '../views/purchase-list.js';
+import { loadInitialPurchases, renderPurchasesList } from '../views/purchase-list.js';
 import { renderAnalysisTagFilterButton } from '../views/analysis.js';
 import { renderDashboard } from '../views/dashboard.js';
 import { renderSpecialBudgetsList, populateBudgetTypeSelect, renderSpecialBudgetsTab } from '../views/special-budgets.js';
@@ -106,7 +106,88 @@ export async function renderAll() {
 }
 
 /**
- * Pobiera początkowe dane aplikacji.
+ * NOWA FUNKCJA: Szybkie ładowanie danych z jednego endpointu /api/init.
+ * Zastępuje fetchInitialData() przy pierwszym ładowaniu aplikacji.
+ */
+export async function fetchInitialDataFast() {
+    try {
+        console.time('[perf] fetchInitialDataFast');
+
+        // Jedno zapytanie zamiast 12+
+        const initData = await apiCall('/api/init');
+
+        // Zapisz dane core do state
+        state.allCategories = initData.categories || [];
+        state.structuredCategories = initData.structuredCategories || [];
+        state.allShops = initData.shops || [];
+        state.allSpecialBudgets = initData.specialBudgets || [];
+        state.allRecurringExpenses = initData.recurringExpenses || [];
+        state.tagDefinitions = initData.tagDefinitions || {};
+
+        // Auto-migracja kategorii jeśli potrzebna
+        if (state.structuredCategories.length === 0 && state.allCategories.length > 0) {
+            await migrateToStructuredCategories();
+        }
+
+        // Safety check for new users
+        if (state.structuredCategories.length === 0 && state.allCategories.length === 0) {
+            console.log("Re-fetching data for new user...");
+            const refetch = await apiCall('/api/init');
+            state.allCategories = refetch.categories || [];
+            state.structuredCategories = refetch.structuredCategories || [];
+            state.allShops = refetch.shops || [];
+            state.allSpecialBudgets = refetch.specialBudgets || [];
+            state.allRecurringExpenses = refetch.recurringExpenses || [];
+            state.tagDefinitions = refetch.tagDefinitions || {};
+        }
+
+        // Renderuj listę tagów do analizy
+        renderAnalysisTagFilterButton();
+
+        // Zapisz dane listy zakupów do state
+        const listData = initData.purchasesList || {};
+        state.allPurchases = listData.purchases || [];
+        state.nextPurchaseCursor = listData.nextCursor || null;
+
+        // Renderuj listę zakupów z danych init (bez API call)
+        renderPurchasesList(state.allPurchases, false);
+
+        // Renderuj dashboard z danych init (bez API calls)
+        await renderDashboard(initData);
+
+        // Przełącz na zakładkę home
+        switchTab('home');
+
+        console.timeEnd('[perf] fetchInitialDataFast');
+
+        // --- Odroczone operacje (niewidoczne widoki) ---
+        const deferred = () => {
+            populateBudgetMonthSelector();
+            renderRecurringExpenses();
+            renderSpecialBudgetsList();
+            populateBudgetTypeSelect();
+        };
+
+        if (typeof requestIdleCallback === 'function') {
+            requestIdleCallback(deferred);
+        } else {
+            setTimeout(deferred, 0);
+        }
+
+        // Powiadomienia — zapisz i zaktualizuj badge (nie blokujemy renderowania)
+        loadNotifications(initData.notifications);
+
+    } catch (error) {
+        console.error('Błąd fetchInitialDataFast:', error);
+        // Fallback: użyj starego mechanizmu
+        console.log('Fallback do fetchInitialData...');
+        await fetchInitialData();
+    }
+}
+
+/**
+ * Pobiera początkowe dane aplikacji (stary mechanizm — używany jako fallback
+ * i przez inne operacje, np. usunięcie zakupu).
  */
 export async function fetchInitialData(shouldSwitchToDefault = true) {
     try {
@@ -146,3 +227,4 @@ export async function fetchInitialData(shouldSwitchToDefault = true) {
         alert(error.message);
     }
 }
+
