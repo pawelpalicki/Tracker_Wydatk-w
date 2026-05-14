@@ -131,40 +131,20 @@ async function ensureComparisonAvailableMonths() {
     return comparisonAvailableMonths;
 }
 
-async function fetchAllPurchasesInRange(startDate, endDate) {
-    let lastVisible = '';
-    let hasMore = true;
-    const purchases = [];
-
-    while (hasMore) {
-        const params = new URLSearchParams({ startDate, endDate });
-        if (lastVisible) params.append('lastVisible', lastVisible);
-
-        const response = await apiCall(`/api/purchases?${params.toString()}`);
-        const page = Array.isArray(response.purchases) ? response.purchases : [];
-        purchases.push(...page.filter(purchase => !purchase.specialBudgetId));
-
-        lastVisible = response.nextCursor || '';
-        hasMore = Boolean(lastVisible);
-    }
-
-    return purchases;
-}
-
-async function fetchBudgetMapForMonths(monthKeys) {
+/**
+ * Pobiera wszystkie dane potrzebne do wykresu analizy w jednym zapytaniu.
+ * Zastępuje: fetchAllPurchasesInRange (paginacja N×30) + fetchBudgetMapForMonths (6× budgets).
+ */
+async function fetchAnalysisData(startDate, endDate, monthKeys) {
     const uniqueMonths = Array.from(new Set(monthKeys.filter(Boolean)));
-    const entries = await Promise.all(uniqueMonths.map(async (monthKey) => {
-        const [year, month] = monthKey.split('-');
-        try {
-            const response = await apiCall(`/api/budgets/${year}/${month}`);
-            return [monthKey, response && typeof response.budgets === 'object' ? response.budgets : {}];
-        } catch (error) {
-            console.warn(`Brak budzetu dla ${monthKey}:`, error);
-            return [monthKey, {}];
-        }
-    }));
-
-    return new Map(entries);
+    const monthsParam = uniqueMonths.join(',');
+    const response = await apiCall(`/api/analysis/data?startDate=${startDate}&endDate=${endDate}&months=${monthsParam}`);
+    
+    const purchases = Array.isArray(response.purchases) ? response.purchases : [];
+    const budgetsObj = response.budgets || {};
+    const budgetMap = new Map(Object.entries(budgetsObj));
+    
+    return { purchases, budgetMap };
 }
 
 function getBudgetValueForMonth(budgetMap, monthKey) {
@@ -1178,10 +1158,16 @@ async function renderUnifiedComparisonChart() {
 
     const startDate = buckets[0].startDate;
     const endDate = buckets[buckets.length - 1].endDate;
-    const purchases = await fetchAllPurchasesInRange(startDate, endDate);
-    const filteredItems = getFilteredPurchaseItems(purchases);
     const monthKeys = buckets.map(bucket => bucket.monthKey);
-    const budgetMap = canShowBudgetComparison() ? await fetchBudgetMapForMonths(monthKeys) : new Map();
+    
+    // Pobierz zakupy i budzety w jednym zapytaniu do /api/analysis/data
+    const { purchases, budgetMap } = await fetchAnalysisData(
+        startDate, 
+        endDate, 
+        canShowBudgetComparison() ? monthKeys : []
+    );
+    
+    const filteredItems = getFilteredPurchaseItems(purchases);
 
     let enrichedBuckets = [];
     if (comparisonPeriod === 'week') {
