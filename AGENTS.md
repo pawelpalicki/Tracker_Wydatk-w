@@ -1,51 +1,62 @@
 # Repository Guidelines
 
-A Firebase-based expense tracking application consisting of a web frontend and Cloud Functions backend.
+A Firebase-based expense tracking application consisting of a modular web frontend and a Cloud Functions backend.
 
 ## Project Structure & Module Organization
 
-- **APP/**: Frontend application assets and logic.
+- **APP/**: Frontend application (ES Modules).
   - **js/**: Modular JavaScript implementation.
-    - `app.js`: Main application entry point and state coordination.
-    - `api.js`: Communication layer with backend functions.
-    - `auth.js`: User authentication logic.
-    - `categories-v2.js`: Hierarchical category management.
-    - `ui.js`: DOM manipulation and UI component management.
-    - Specialized modules: `budget.js`, `purchases.js`, `statistics.js`, `special-budgets.js`, `long-term-budget.js`.
-  - **css/**: Stylesheets, primarily managed via Tailwind CSS.
+    - `main.js`: Main entry point (Type="module"). Manages Auth state and initialization.
+    - **core/**: Essential application logic.
+      - `bootstrap.js`: App initialization, event listeners setup.
+      - `state.js`: Global application state management.
+      - `api.js`: Communication layer with backend functions.
+      - `config.js`: Firebase configuration and constants.
+      - `data-loader.js`: Initial data fetching logic.
+    - **shared/**: Reusable UI components and utilities.
+      - `drawer.js`: Unified Drawer system (`Drawer.open()`).
+      - `ui.js`: Common UI logic (navigation, tabs, navbar).
+      - `format.js`: Formatting utilities (currency, dates).
+      - `notifications.js`: Notifications and AI insights system.
+      - `categories.js`, `tags.js`: Shared data helpers.
+    - **views/**: Feature-specific views (Lazy loaded where possible).
+      - `dashboard.js`, `analysis.js`, `purchase-form.js`, `purchase-list.js`, `special-budgets.js`.
+      - **settings/**: Sub-views for app configuration.
+  - **css/**: Stylesheets.
+    - `styles.css`: Global styles and typography.
+    - `drawer.css`: Specific styles for the unified Drawer and Swipe components.
 - **functions/**: Firebase Cloud Functions (Node.js 22).
-  - `index.js`: Express-based API handling Firestore operations and external integrations.
-  - `prompt.js`: AI prompt definitions for Gemini AI integration.
-- **Root**: Configuration files for Firebase (`firebase.json`, `.firebaserc`), Firestore (`firestore.rules`, `firestore.indexes.json`), and project-wide settings.
+  - Uses CommonJS (`require`).
+  - `index.js`: Express-based API entry point.
+  - `prompt.js`: AI prompt definitions for Gemini AI.
 
-## Build, Test, and Development Commands
+## Build and Development Commands
 
 ### Frontend (APP/)
 - `npm run build`: Builds and minifies CSS using Tailwind.
 - `npm run build-css`: Watches for changes and builds CSS for development.
 
 ### Backend (functions/)
-- `npm run serve`: Starts Firebase emulators for local function testing.
-- `npm run shell`: Launches the Firebase functions interactive shell.
+- `npm run serve`: Starts Firebase emulators for local testing.
 - `npm run deploy`: Deploys Cloud Functions to Firebase.
-- `npm run logs`: Streams logs from deployed Firebase functions.
 
 ## Coding Style & Naming Conventions
 
-- **Frontend**: Uses standard ES6+ JavaScript. Styling is strictly managed through Tailwind CSS classes.
-- **Backend**: Node.js 22 environment using CommonJS (`require`).
-- **CSS**: Custom styles should be added to `APP/src/input.css` (if exists) or managed via Tailwind.
+- **Frontend**: **Strictly ES Modules**. No global variables on `window`. No inline event handlers (onclick) in HTML — use `addEventListener`.
+- **UI Components**: Use the unified `Drawer` system for all modals and panels.
+- **Backend**: Node.js 22 using CommonJS.
 
 ## Architecture Overview
 
-- **Database**: Firestore is used for data storage (collections: `users`, `expenses`, `recurringExpenses`).
-- **API**: Frontend requests to `/api/**` are rewritten to the `api_v2` Cloud Function via `firebase.json`.
-- **AI Integration**: Integrates with Google Generative AI (Gemini) for advanced expense analysis and categorization.
+- **Database**: Firestore (collections: `users`, `expenses`, `recurringExpenses`).
+- **AI Integration**: Google Generative AI (Gemini) for receipt analysis and voice expenses.
+- **Navigation**: Single Page Application (SPA) using hash-less history state for tab management.
 
 ## Commit Guidelines
 
 Follow conventional commit prefixes:
 - `feat:` for new features.
 - `fix:` for bug fixes.
-- `refactor:` for code restructuring without changing behavior.
-- `UI/UX:` for visual and user experience improvements.
+- `refactor:` for code restructuring.
+- `UI/UX:` for visual improvements.
+- `chore:` for maintenance tasks.
