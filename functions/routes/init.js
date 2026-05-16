@@ -121,7 +121,7 @@ router.get('/init', authMiddleware, asyncHandler(async (req, res) => {
         const month = p.date.substring(0, 7);
         const amount = p.totalAmount || 0;
         if (amount === 0) return acc;
-        if (isMtdMode && month === currentMonthKey && new Date(p.date).getDate() > today) return acc;
+        if (isMtdMode && new Date(p.date).getDate() > today) return acc;
         acc[month] = (acc[month] || 0) + amount;
         return acc;
     }, {});
