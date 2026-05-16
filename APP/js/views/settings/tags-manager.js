@@ -59,7 +59,7 @@ function renderTagGroupSection(group) {
                     <div class="text-[10px] text-gray-500 mt-0.5">${tag.value}</div>
                 </div>
                 <div class="flex items-center gap-1 ml-2">
-                    <button class="tag-edit-btn p-1.5 rounded-lg text-gray-400 hover:text-blue-400 hover:bg-white/5 transition-colors"
+                    <button class="tag-edit-btn p-1.5 rounded-lg text-gray-400 hover:text-brand-400 hover:bg-white/5 transition-colors"
                         data-group="${group}" data-value="${tag.value}" title="Edytuj">
                         <i class="fas fa-pen text-xs"></i>
                     </button>
@@ -84,7 +84,7 @@ function renderTagGroupSection(group) {
                         <i class="fas fa-plus text-xs"></i>
                     </button>
                     ${!isBuiltin ? `
-                        <button class="edit-tag-group-btn p-1.5 rounded-lg text-gray-400 hover:text-blue-400 hover:bg-white/5 transition-colors" data-group="${group}" title="Edytuj nazwę grupy">
+                        <button class="edit-tag-group-btn p-1.5 rounded-lg text-gray-400 hover:text-brand-400 hover:bg-white/5 transition-colors" data-group="${group}" title="Edytuj nazwę grupy">
                             <i class="fas fa-pen text-xs"></i>
                         </button>
                         <button class="delete-tag-group-btn p-1.5 rounded-lg text-gray-400 hover:text-red-400 hover:bg-white/5 transition-colors" data-group="${group}" title="Usuń grupę">

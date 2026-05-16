@@ -138,8 +138,8 @@ function notificationTemplate(n) {
     const dateStr = n.date || new Date().toISOString();
     const date = new Date(dateStr).toLocaleDateString('pl-PL', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
     let icon = 'fa-info-circle';
-    let color = 'text-blue-400';
-    let bgColor = 'bg-blue-500/10';
+    let color = 'text-brand-400';
+    let bgColor = 'bg-brand-500/10';
 
     if (n.type === 'budget_80' || n.type?.startsWith('budget_cat_80')) {
         icon = 'fa-triangle-exclamation'; color = 'text-yellow-400'; bgColor = 'bg-yellow-500/10';

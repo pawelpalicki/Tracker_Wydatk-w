@@ -4,12 +4,6 @@
     --bg-main: #0a0a0a;
     --bg-card: #141414;
     --bg-nav: #0f0f0f;
-    --accent: #38bdf8;
-    --accent-hover: #7dd3fc;
-    --primary: #38bdf8;
-    --primary-hover: #7dd3fc;
-    --brand-500: #38bdf8;
-    --brand-600: #0ea5e9;
     --border-subtle: rgba(255, 255, 255, 0.08);
     --border-active: rgba(255, 255, 255, 0.18);
     --text-muted: #94a3b8;
@@ -182,7 +176,7 @@ h6 {
     height: 0.55rem;
     border-radius: 9999px;
     background: currentColor;
-    box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.45);
+    box-shadow: 0 0 0 0 rgba(var(--color-brand-400), 0.45);
 }
 
 .voice-recording-pulse {
@@ -223,7 +217,7 @@ h6 {
     padding: 0.5rem 0.75rem;
     min-height: 36px;
     background: var(--accent);
-    box-shadow: 0 2px 5px rgba(56, 189, 248, 0.25);
+    box-shadow: 0 2px 5px rgba(var(--color-brand-400), 0.25);
     color: #0a0a0a !important;
     border: 1px solid var(--accent);
     font-weight: 600;
@@ -233,7 +227,7 @@ h6 {
 .btn-primary:hover {
     background: var(--accent-hover);
     border-color: var(--accent-hover);
-    box-shadow: 0 6px 20px rgba(56, 189, 248, 0.35);
+    box-shadow: 0 6px 20px rgba(var(--color-brand-400), 0.35);
     transform: translateY(-2px);
 }
 
@@ -251,7 +245,7 @@ h6 {
 }
 
 .btn-secondary:hover {
-    background: rgba(56, 189, 248, 0.08);
+    background: rgba(var(--color-brand-400), 0.08);
     border-color: var(--accent-hover);
     color: var(--accent-hover) !important;
     transform: translateY(-2px);
@@ -341,7 +335,7 @@ input:-webkit-autofill {
     background: var(--accent);
     color: #0a0a0a;
     font-weight: 700;
-    box-shadow: 0 4px 16px rgba(56, 189, 248, 0.25);
+    box-shadow: 0 4px 16px rgba(var(--color-brand-400), 0.25);
 }
 
 #comparison-chart-container canvas {
@@ -420,7 +414,7 @@ input:-webkit-autofill {
     background: var(--accent);
     color: #0a0a0a;
     font-weight: 700;
-    box-shadow: 0 4px 12px rgba(56, 189, 248, 0.3);
+    box-shadow: 0 4px 12px rgba(var(--color-brand-400), 0.3);
 }
 
 .month-picker-item:disabled {

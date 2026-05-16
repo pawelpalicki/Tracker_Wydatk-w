@@ -93,7 +93,7 @@ export function renderCategoriesListV2() {
                             data-parent-id="${parent.id}" title="Dodaj podkategorię">
                         <i class="fas fa-plus text-xs"></i>
                     </button>
-                    <button class="cat-v2-edit-parent-btn p-1.5 rounded-lg text-gray-400 hover:text-blue-400 hover:bg-white/5 transition-colors"
+                    <button class="cat-v2-edit-parent-btn p-1.5 rounded-lg text-gray-400 hover:text-brand-400 hover:bg-white/5 transition-colors"
                             data-id="${parent.id}" title="Edytuj">
                         <i class="fas fa-pen text-xs"></i>
                     </button>
@@ -117,7 +117,7 @@ export function renderCategoriesListV2() {
                         }
                         <span class="flex-1 text-sm text-gray-300">${sub.name}</span>
                         <div class="flex items-center gap-1">
-                            <button class="cat-v2-edit-sub-btn p-1.5 rounded-lg text-gray-500 hover:text-blue-400 hover:bg-white/5 transition-colors"
+                            <button class="cat-v2-edit-sub-btn p-1.5 rounded-lg text-gray-500 hover:text-brand-400 hover:bg-white/5 transition-colors"
                                     data-id="${sub.id}" data-parent-id="${parent.id}" title="Edytuj">
                                 <i class="fas fa-pen text-xs"></i>
                             </button>

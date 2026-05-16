@@ -532,7 +532,7 @@ async function renderHomeRecentTransactions(prefetchedPurchases = null) {
             const total = (purchase.items || []).reduce((sum, item) => sum + (item.price || 0), 0);
             const specialBudgetName = purchase.specialBudgetId ? (state.allSpecialBudgets.find(b => b.id === purchase.specialBudgetId) || {}).name : null;
             const specialBudgetIcon = specialBudgetName
-                ? `<p class="text-[9px] text-blue-400 font-bold uppercase tracking-wider flex items-center gap-1 mb-1"><i class="fas fa-piggy-bank text-[8px]"></i><span>${specialBudgetName}</span></p>`
+                ? `<p class="text-[9px] text-brand-400 font-bold uppercase tracking-wider flex items-center gap-1 mb-1"><i class="fas fa-piggy-bank text-[8px]"></i><span>${specialBudgetName}</span></p>`
                 : '';
             const date = new Date(purchase.date).toLocaleDateString('pl-PL', { day: 'numeric', month: 'short' });
             const shopName = purchase.shop || 'Nieznany';

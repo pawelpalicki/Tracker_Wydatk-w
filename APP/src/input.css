@@ -15,6 +15,14 @@
     --color-brand-700: 3 105 161;
     --color-brand-800: 7 89 133;
     --color-brand-900: 12 74 110;
+
+    /* Legacy mapping */
+    --accent: rgb(var(--color-brand-400));
+    --accent-hover: rgb(var(--color-brand-300));
+    --primary: rgb(var(--color-brand-500));
+    --primary-hover: rgb(var(--color-brand-400));
+    --brand-500: rgb(var(--color-brand-500));
+    --brand-600: rgb(var(--color-brand-600));
   }
 
   [data-theme="emerald"] {
