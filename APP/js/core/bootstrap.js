@@ -29,6 +29,7 @@ import { initCategoriesManager } from '../views/settings/categories-manager.js';
 import { initTagsManager } from '../views/settings/tags-manager.js';
 import { initNotifications } from '../shared/notifications.js';
 import { initHomeDashboardControls } from '../views/dashboard.js';
+import { initThemeSettings } from '../views/settings/theme.js';
 
 // Importy serwisu danych
 import { fetchInitialDataFast } from './data-loader.js';
@@ -129,7 +130,8 @@ function setupInlineClickHandlers() {
         { id: 'settings-tags-link', tab: 'settings-tags' },
         { id: 'settings-budget-link', tab: 'settings-budget' },
         { id: 'settings-special-link', tab: 'settings-special' },
-        { id: 'settings-recurring-link', tab: 'settings-recurring' }
+        { id: 'settings-recurring-link', tab: 'settings-recurring' },
+        { id: 'settings-theme-link', tab: 'settings-theme' }
     ];
 
     settingsButtons.forEach(({ id, tab }) => {
@@ -155,4 +157,5 @@ export async function initializeApp() {
 
     exitEditMode();
     initHomeDashboardControls();
+    initThemeSettings();
 }

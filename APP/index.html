@@ -650,6 +650,22 @@
                         <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 ml-1">Ustawienia
                         </p>
 
+                        <!-- Wygląd aplikacji -->
+                        <button id="settings-theme-link"
+                            class="w-full flex items-center justify-between p-4 bg-white/5 hover:bg-white/10 rounded-xl border border-white/5 transition-all group">
+                            <div class="flex items-center space-x-3 text-white">
+                                <svg xmlns="http://www.w3.org/2000/svg"
+                                    class="h-5 w-5 opacity-70 group-hover:opacity-100 transition-opacity" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+                                </svg>
+                                <span class="font-medium text-sm">Wygląd aplikacji</span>
+                            </div>
+                            <i
+                                class="fas fa-chevron-right text-gray-600 group-hover:text-white transition-colors text-[10px]"></i>
+                        </button>
+
                         <!-- Kategorie wydatków -->
                         <button id="settings-categories-link"
                             class="w-full flex items-center justify-between p-4 bg-white/5 hover:bg-white/10 rounded-xl border border-white/5 transition-all group">
@@ -749,6 +765,20 @@
                 </div>
             </div>
             <!-- End More tab -->
+
+            <!-- Settings: Theme tab -->
+            <div id="settings-theme-tab" class="tab-content px-2 pt-1">
+                <div class="flex flex-col h-[calc(100vh-10rem)]">
+                    <div class="flex items-center justify-between mb-2 px-1 shrink-0">
+                        <h3 class="text-xs font-bold text-gray-500 uppercase tracking-widest">Motyw kolorystyczny</h3>
+                    </div>
+                    <p class="text-xs text-gray-500 px-1 mb-4 shrink-0">Wybierz wiodący akcent kolorystyczny aplikacji.</p>
+                    <div id="theme-options-list" class="flex-1 space-y-3 overflow-y-auto pr-2 pb-4 scrollbar-hide">
+                        <!-- Generowane przez JS -->
+                    </div>
+                </div>
+            </div>
+            <!-- End Settings: Theme tab -->
 
             <!-- Special Budgets tab -->
             <div id="special-budgets-tab" class="tab-content pt-1">

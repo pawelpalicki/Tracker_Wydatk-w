@@ -6,6 +6,10 @@
 import { auth } from './core/config.js';
 import { setupAuthEventListeners } from './core/auth.js';
 import { initializeApp } from './core/bootstrap.js';
+import { loadSavedTheme } from './views/settings/theme.js';
+
+// Aplikuj motyw jak najszybciej
+loadSavedTheme();
 
 // Importy dla inicjalizacji DOM (te moduły same podpinają listenery jeśli trzeba, 
 // lub są wywoływane w initializeApp)
