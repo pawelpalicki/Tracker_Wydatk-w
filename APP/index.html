@@ -376,40 +376,18 @@
             <!-- Add Purchase tab -->
             <div id="add-tab" class="tab-content pt-1">
                 <div id="scanner-container" class="glass-card rounded-2xl p-6 mb-6 hidden relative overflow-hidden">
-                    <h3 class="text-lg font-semibold mb-4 text-white">Skanowanie paragonu</h3>
+                    <h3 id="scanner-title" class="text-lg font-semibold mb-4 text-white">Skanowanie paragonu</h3>
 
-                    <!-- Animation Container within the card -->
-                    <div id="analysis-animation-container"
-                        style="display: none; height: 350px; min-height: 350px; width: 100%; width: -webkit-fill-available; background: #0a0a0a;"
-                        class="relative flex flex-col items-center justify-center rounded-xl backdrop-blur-sm mb-4">
-                        <div id="wrap"
-                            class="mx-auto flex flex-col items-center justify-center gap-3 w-full max-w-md px-1 sm:px-2">
-                            <canvas id="analysis-scan-canvas"></canvas>
-                            <div id="label" class="text-xs text-brand-500/80 tracking-widest uppercase font-medium">
-                                analizuje paragon<span id="dots" class="text-brand-500"></span>
-                            </div>
-                        </div>
-                    </div>
+                    <input type="file" id="receipt-file-input" accept="image/*,application/pdf" class="hidden">
 
-                    <div id="scanner-controls" class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
-                        <div>
-                            <input type="file" id="receipt-file-input" accept="image/*,application/pdf"
-                                class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-brand-500/10 file:text-brand-500 hover:file:bg-brand-500/20">
-                        </div>
-                        <div class="flex items-center space-x-2">
-                            <button id="analyze-receipt-btn"
-                                class="w-full btn-primary rounded-xl whitespace-nowrap">Analizuj
-                                paragon</button>
-                            <button id="start-camera-btn" class="w-full btn-secondary rounded-xl whitespace-nowrap">Użyj
-                                aparatu</button>
-                        </div>
-                    </div>
-                    <div id="image-preview-container" class="hidden mt-4">
+                    <div id="image-preview-container" class="hidden mb-4">
                         <img id="image-preview" class="max-h-48 mx-auto rounded-lg" alt="Podgląd paragonu" />
                     </div>
-                    <div id="analysis-spinner" class="hidden text-center mt-4">
-                        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-brand-500"></div>
-                        <p class="text-gray-600 dark:text-gray-300">Analizuję dane z paragonu, proszę czekać...</p>
+                    
+                    <div id="analysis-spinner" class="hidden text-center py-4">
+                        <div class="inline-block animate-spin rounded-full h-10 w-10 border-b-2 border-brand-500 mb-3"></div>
+                        <p class="text-gray-300 font-medium">Analizuję paragon przy pomocy AI...</p>
+                        <p class="text-gray-500 text-sm mt-1">To może potrwać kilka sekund</p>
                     </div>
                     <div id="camera-view" class="hidden mt-4">
                         <video id="camera-stream" class="w-full rounded-lg" autoplay></video>

@@ -32,9 +32,6 @@ let currentFile = null;
 let cameraStream = null;
 let budgetTypeSelectValue = 'monthly';
 
-// Animacja jest lokalna dla formularza, bo uruchamia sie tylko podczas analizy paragonu.
-const analysisAnimation = createAnalysisAnimation();
-
 function el(id) {
     return document.getElementById(id);
 }
@@ -75,9 +72,7 @@ export function initPurchaseForm() {
         }
     });
 
-    el('analyze-receipt-btn')?.addEventListener('click', handleAnalyzeReceipt);
     el('receipt-file-input')?.addEventListener('change', handleFileSelect);
-    el('start-camera-btn')?.addEventListener('click', startCamera);
     el('cancel-camera-btn')?.addEventListener('click', stopCamera);
     el('capture-photo-btn')?.addEventListener('click', capturePhoto);
 
@@ -530,44 +525,27 @@ export async function handleAnalyzeReceipt() {
     if (globalLoader) globalLoader.classList.remove('hidden');
 
     const scannerContainer = el('scanner-container');
-    const scannerControls = el('scanner-controls');
     const analysisSpinnerEl = el('analysis-spinner');
-    const imagePreview = el('image-preview-container');
-    const animationContainer = el('analysis-animation-container');
+    const imagePreviewContainer = el('image-preview-container');
+    const imagePreview = el('image-preview');
 
     if (scannerContainer) {
         scannerContainer.classList.remove('hidden');
-        scannerContainer.style.minHeight = '350px';
+    }
+    
+    // Pokaż miniaturkę zdjęcia i spinner (jeśli zdjęcie istnieje)
+    if (imagePreviewContainer && currentFile.type.startsWith('image/')) {
+        imagePreviewContainer.classList.remove('hidden');
+        if (imagePreview) {
+            imagePreview.src = URL.createObjectURL(currentFile);
+        }
+    } else if (imagePreviewContainer) {
+        imagePreviewContainer.classList.add('hidden');
     }
 
-    if (animationContainer) {
-        scannerControls?.classList.add('hidden');
-        analysisSpinnerEl?.classList.add('hidden');
-        imagePreview?.classList.add('hidden');
-        Object.assign(animationContainer.style, {
-            display: 'flex',
-            position: 'absolute',
-            top: '-1.5rem',
-            left: '0.2rem',
-            right: '0.2rem',
-            bottom: '0.5rem',
-            width: 'calc(100% )',
-            height: 'calc(100% )',
-            minHeight: '0',
-            padding: '0',
-            margin: '0',
-            maxWidth: 'none',
-            border: 'none',
-            background: 'rgba(15, 23, 42, 0.94)',
-            backdropFilter: 'blur(10px)',
-            zIndex: '10',
-            boxSizing: 'border-box'
-        });
+    if (analysisSpinnerEl) {
+        analysisSpinnerEl.classList.remove('hidden');
     }
-
-    analysisAnimation.start();
-    el('analyze-receipt-btn')?.setAttribute('disabled', 'disabled');
-    el('image-preview-container')?.classList.add('hidden');
 
     try {
         let fileToSend = currentFile;
@@ -580,16 +558,12 @@ export async function handleAnalyzeReceipt() {
         alert('Wystapil blad podczas analizy paragonu. Sprobuj ponownie. Blad: ' + error.message);
     } finally {
         if (globalLoader) globalLoader.classList.add('hidden');
-        if (animationContainer) animationContainer.style.display = 'none';
-        analysisAnimation.stop();
+        if (analysisSpinnerEl) analysisSpinnerEl.classList.add('hidden');
 
-        const analyzeBtn = el('analyze-receipt-btn');
-        if (analyzeBtn) analyzeBtn.disabled = false;
         const receiptInput = el('receipt-file-input');
         if (receiptInput) receiptInput.value = '';
         currentFile = null;
         if (scannerContainer) {
-            scannerContainer.style.minHeight = '';
             scannerContainer.classList.add('hidden');
         }
     }
@@ -716,14 +690,15 @@ export async function startCamera() {
     try {
         cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
         el('scanner-container')?.classList.remove('hidden');
-        el('scanner-controls')?.classList.add('hidden');
+        el('image-preview-container')?.classList.add('hidden');
         el('camera-view')?.classList.remove('hidden');
         const cameraStreamEl = el('camera-stream');
         if (cameraStreamEl) cameraStreamEl.srcObject = cameraStream;
 
         setTimeout(() => el('capture-photo-btn')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100);
     } catch (err) {
-        alert('Nie udalo sie uzyskac dostepu do aparatu. Sprawdz uprawnienia w przegladarce.');
+        console.error('Błąd dostępu do aparatu:', err);
+        alert('Nie udalo sie uzyskac dostepu do aparatu. Sprawdz uprawnienia w przegladarce. Detale: ' + err.message);
     }
 }
 
@@ -732,7 +707,7 @@ export function stopCamera() {
         cameraStream.getTracks().forEach(track => track.stop());
     }
     el('camera-view')?.classList.add('hidden');
-    el('scanner-controls')?.classList.remove('hidden');
+    el('scanner-container')?.classList.add('hidden');
     cameraStream = null;
 }
 
@@ -869,116 +844,7 @@ function initFabActions() {
     });
 }
 
-function createAnalysisAnimation() {
-    let canvas;
-    let ctx;
-    let rafId = null;
-    let dotsIntervalId = null;
-    let t = 0;
 
-    function draw() {
-        if (!ctx || !canvas) return;
-        const w = canvas.width;
-        const h = canvas.height;
-        t += 1;
-
-        ctx.clearRect(0, 0, w, h);
-        const gradient = ctx.createLinearGradient(0, 0, w, h);
-        gradient.addColorStop(0, '#0f172a');
-        gradient.addColorStop(1, '#111827');
-        ctx.fillStyle = gradient;
-        ctx.fillRect(0, 0, w, h);
-
-        ctx.fillStyle = '#f8fafc';
-        roundRect(ctx, 44, 22, 130, 164, 18);
-        ctx.fill();
-
-        const scanY = 50 + ((t * 2) % 118);
-        ctx.fillStyle = 'rgba(96, 165, 250, 0.16)';
-        ctx.fillRect(54, 48, 110, scanY - 48);
-        ctx.strokeStyle = '#67e8f9';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(52, scanY);
-        ctx.lineTo(166, scanY);
-        ctx.stroke();
-
-        ctx.fillStyle = '#475569';
-        ctx.font = '700 10px monospace';
-        ctx.fillText('PARAGON', 60, 44);
-        for (let i = 0; i < 8; i += 1) {
-            const y = 66 + i * 14;
-            const width = 56 + ((i * 17) % 46);
-            ctx.globalAlpha = y < scanY ? 0.9 : 0.25;
-            roundRect(ctx, 60, y, width, 4, 3);
-            ctx.fill();
-        }
-        ctx.globalAlpha = 1;
-
-        const robotX = 250;
-        const robotY = 102 + Math.sin(t * 0.05) * 4;
-        ctx.strokeStyle = 'rgba(103, 232, 249, 0.35)';
-        ctx.lineWidth = 7;
-        ctx.beginPath();
-        ctx.moveTo(robotX - 20, robotY);
-        ctx.lineTo(174, scanY);
-        ctx.stroke();
-
-        ctx.fillStyle = '#1a2436';
-        roundRect(ctx, robotX - 36, robotY - 32, 72, 52, 18);
-        ctx.fill();
-        ctx.fillStyle = '#38bdf8';
-        roundRect(ctx, robotX - 22, robotY - 18, 44, 20, 10);
-        ctx.fill();
-        ctx.fillStyle = '#0f172a';
-        ctx.beginPath();
-        ctx.arc(robotX - 10, robotY - 8, 3, 0, Math.PI * 2);
-        ctx.arc(robotX + 10, robotY - 8, 3, 0, Math.PI * 2);
-        ctx.fill();
-
-        rafId = requestAnimationFrame(draw);
-    }
-
-    return {
-        start() {
-            canvas = el('analysis-scan-canvas');
-            if (!canvas) return;
-            ctx = canvas.getContext('2d');
-            canvas.width = 360;
-            canvas.height = 208;
-            t = 0;
-            if (rafId) cancelAnimationFrame(rafId);
-            draw();
-
-            const dotsEl = el('dots');
-            let dotState = 0;
-            if (dotsIntervalId) clearInterval(dotsIntervalId);
-            dotsIntervalId = setInterval(() => {
-                if (dotsEl) {
-                    dotState = (dotState + 1) % 4;
-                    dotsEl.textContent = ['.', '..', '...', ''][dotState];
-                }
-            }, 500);
-        },
-        stop() {
-            if (rafId) cancelAnimationFrame(rafId);
-            if (dotsIntervalId) clearInterval(dotsIntervalId);
-            rafId = null;
-            dotsIntervalId = null;
-            if (ctx && canvas) ctx.clearRect(0, 0, canvas.width, canvas.height);
-        }
-    };
-}
-
-function roundRect(ctx, x, y, width, height, radius) {
-    ctx.beginPath();
-    ctx.moveTo(x + radius, y);
-    ctx.arcTo(x + width, y, x + width, y + height, radius);
-    ctx.arcTo(x + width, y + height, x, y + height, radius);
-    ctx.arcTo(x, y + height, x, y, radius);
-    ctx.arcTo(x, y, x + width, y, radius);
-    ctx.closePath();
-}
 
 // Przeplyw glosowy ma wlasny maly state machine: intro -> recording -> review -> analyzing.
 function initVoiceExpense() {
@@ -1377,4 +1243,3 @@ export function openVoiceExpenseModal() {
     });
 }
 
-export { analysisAnimation };
