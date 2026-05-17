@@ -254,7 +254,7 @@ function getNaturalSearchParsePrompt(categoriesData, context = {}) {
         1. Nie wymyslaj sklepu, kategorii, tagu ani kwoty, jesli nie wynika z pytania.
         2. Dopasuj kategorie i podkategorie do najblizszych nazw z listy.
         3. Dla pytan typu "ile wydalem na jedzenie" ustaw category, nie keyword.
-        4. Dla nazw konkretnych produktow/uslug ustaw keyword.
+        4. Dla nazw konkretnych produktow/uslug ustaw keyword. Slowo kluczowe (keyword) ZAWSZE podawaj w formie podstawowej (mianownik liczby pojedynczej, np. "banan" zamiast "banany", "piwo" zamiast "piwa", "bulka" zamiast "bulki").
         5. Kwoty minAmount/maxAmount dotycza sumy zakupu.
         6. Daty zawsze zwracaj w formacie YYYY-MM-DD.
     `;

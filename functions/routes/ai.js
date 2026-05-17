@@ -67,20 +67,52 @@ function amountOrNull(value) {
     return Number.isFinite(number) ? number : null;
 }
 
-function sanitizeNaturalSearchFilters(rawFilters = {}, localDate) {
+function sanitizeNaturalSearchFilters(rawFilters = {}, localDate, categoriesObj = {}) {
     const defaultStartDate = addMonthsToDateKey(localDate, -6);
     const startDate = validateDate(rawFilters.startDate) || defaultStartDate;
     const endDate = validateDate(rawFilters.endDate) || localDate;
     const minAmount = amountOrNull(rawFilters.minAmount);
     const maxAmount = amountOrNull(rawFilters.maxAmount);
 
+    let category = String(rawFilters.category || '').trim();
+    let subCategory = String(rawFilters.subCategory || '').trim();
+    let keyword = String(rawFilters.keyword || '').trim();
+
+    // Pobieramy prawdziwe kategorie i podkategorie użytkownika z obiektu
+    const validCategories = Array.isArray(categoriesObj.flat) ? categoriesObj.flat : [];
+    const validSubcategories = Array.isArray(categoriesObj.structured)
+        ? categoriesObj.structured.filter(c => c.parentId).map(c => c.name)
+        : [];
+
+    const normValidCats = validCategories.map(c => normalizeSearchText(c));
+    const normValidSubs = validSubcategories.map(s => normalizeSearchText(s));
+
+    // Jeśli Gemini zaklasyfikowało słowo (np. "piwo") jako kategorię, a taka nie istnieje,
+    // to przenosimy ją do pola słowa kluczowego (keyword).
+    if (category && !normValidCats.includes(normalizeSearchText(category))) {
+        if (!keyword) {
+            keyword = category;
+        }
+        category = '';
+    }
+
+    // Analogicznie dla podkategorii
+    if (subCategory && !normValidSubs.includes(normalizeSearchText(subCategory))) {
+        if (!keyword) {
+            keyword = subCategory;
+        } else if (!normalizeSearchText(keyword).includes(normalizeSearchText(subCategory))) {
+            keyword = `${keyword} ${subCategory}`;
+        }
+        subCategory = '';
+    }
+
     return {
         startDate: startDate <= endDate ? startDate : endDate,
         endDate: endDate >= startDate ? endDate : startDate,
         shop: String(rawFilters.shop || '').trim(),
-        category: String(rawFilters.category || '').trim(),
-        subCategory: String(rawFilters.subCategory || '').trim(),
-        keyword: String(rawFilters.keyword || '').trim(),
+        category,
+        subCategory,
+        keyword,
         tagFilters: rawFilters.tagFilters && typeof rawFilters.tagFilters === 'object' ? rawFilters.tagFilters : {},
         minAmount,
         maxAmount,
@@ -102,7 +134,18 @@ function itemMatchesNaturalFilters(item, filters) {
 
     if (keyword) {
         const itemText = normalizeSearchText(`${item.name || ''} ${item.category || ''} ${item.subCategory || ''}`);
-        if (!itemText.includes(keyword)) return false;
+        let matched = itemText.includes(keyword);
+
+        // Lekki polski stemming dla dopasowania liczby mnogiej i przypadków (np. piwo / piwa, banan / banany)
+        if (!matched && keyword.length >= 4) {
+            const stemLength = keyword.length === 4 ? 3 : (keyword.length <= 6 ? keyword.length - 1 : keyword.length - 2);
+            const stem = keyword.substring(0, stemLength);
+            if (stem.length >= 3 && itemText.includes(stem)) {
+                matched = true;
+            }
+        }
+
+        if (!matched) return false;
     }
     if (category && normalizeSearchText(item.category) !== category) return false;
     if (subCategory && normalizeSearchText(item.subCategory) !== subCategory) return false;
@@ -302,7 +345,7 @@ router.post('/ai/natural-search', authMiddleware, asyncHandler(async (req, res) 
     const timezone = req.body.timezone || 'Europe/Warsaw';
     const categories = await getUserCategories(req.userId);
     const parsedFilters = await parseNaturalSearchQuery(queryText, categories, { localDate, timezone });
-    const filters = sanitizeNaturalSearchFilters(parsedFilters, localDate);
+    const filters = sanitizeNaturalSearchFilters(parsedFilters, localDate, categories);
 
     const snapshot = await purchasesCollection
         .where('userId', '==', req.userId)
