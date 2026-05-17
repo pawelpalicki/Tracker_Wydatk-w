@@ -199,7 +199,7 @@ async function renderHomeSummary(dashboardData = null) {
             // Fallback: pobierz dane z API (zmiana miesiąca)
             [budgetData, purchaseData, comparisonData] = await Promise.all([
                 apiCall(`/api/budgets/${year}/${mon.padStart(2, '0')}`),
-                apiCall(`/api/purchases?startDate=${startDate}&endDate=${endDate}`),
+                apiCall(`/api/purchases?startDate=${startDate}&endDate=${endDate}&limit=1000`),
                 apiCall(`/api/statistics/comparison?mode=6months&mtd=${mtdParam}`)
             ]);
         }

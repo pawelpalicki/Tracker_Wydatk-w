@@ -35,8 +35,14 @@ function applyPurchaseFilters(purchases, { keyword, category, subCategory, shop,
 }
 
 router.get('/purchases', authMiddleware, asyncHandler(async (req, res) => {
-    const { lastVisible, keyword, category, subCategory, shop, budget, minAmount, maxAmount, startDate, endDate } = req.query;
-    const limit = 30;
+    const { lastVisible, keyword, category, subCategory, shop, budget, minAmount, maxAmount, startDate, endDate, limit: queryLimit } = req.query;
+    
+    let limit = 30;
+    if (queryLimit) {
+        const parsed = parseInt(queryLimit, 10);
+        if (!isNaN(parsed) && parsed > 0) limit = parsed;
+    }
+
     const isAnyFilterActive = Boolean(keyword || category || subCategory || shop || budget || minAmount || maxAmount || startDate || endDate);
 
     let query = purchasesCollection.where('userId', '==', req.userId);
