@@ -265,6 +265,38 @@ select {
 /* Fix for search input padding with icon */
 #filter-keyword {
     padding-left: 2.75rem !important;
+    padding-right: 5.75rem !important;
+}
+
+#natural-search-shell.ai-search-active #filter-keyword {
+    border-color: rgba(var(--color-brand-400), 0.35) !important;
+    box-shadow: 0 0 0 1px rgba(var(--color-brand-400), 0.2), 0 0 22px rgba(var(--color-brand-400), 0.12);
+}
+
+#natural-search-shell.ai-search-recording #filter-keyword {
+    border-color: rgba(251, 113, 133, 0.65) !important;
+    box-shadow: 0 0 0 1px rgba(251, 113, 133, 0.35), 0 0 26px rgba(251, 113, 133, 0.22);
+    animation: searchRecordingGlow 1.4s ease-in-out infinite;
+}
+
+#search-ai-mode-btn.ai-search-active {
+    color: rgb(var(--color-brand-300));
+    background: rgba(var(--color-brand-400), 0.14);
+}
+
+#search-voice-btn.ai-search-recording {
+    color: #fb7185;
+    background: rgba(251, 113, 133, 0.14);
+}
+
+@keyframes searchRecordingGlow {
+    0%, 100% {
+        box-shadow: 0 0 0 1px rgba(251, 113, 133, 0.25), 0 0 18px rgba(251, 113, 133, 0.15);
+    }
+
+    50% {
+        box-shadow: 0 0 0 2px rgba(251, 113, 133, 0.45), 0 0 32px rgba(251, 113, 133, 0.28);
+    }
 }
 
 input[type="date"]::-webkit-calendar-picker-indicator {

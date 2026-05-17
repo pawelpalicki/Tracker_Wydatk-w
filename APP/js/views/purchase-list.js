@@ -17,9 +17,67 @@ let purchaseListInitialized = false;
 let filtersInitialized = false;
 let currentFilterType = null;
 let currentFilterOnApply = null;
+let aiSearchMode = false;
+let aiSearchRequestId = 0;
+let aiSearchResult = null;
+
+const AI_SEARCH_PLACEHOLDER = 'Zapytaj AI i nacisnij Enter, np. Ile wydalem na slodycze?';
+const DEFAULT_SEARCH_PLACEHOLDER = 'Szukaj produktu...';
+const AI_SEARCH_MIN_LENGTH = 3;
+const AI_SEARCH_MAX_RECORDING_MS = 20000;
+const AI_SEARCH_SILENCE_GRACE_MS = 1200;
+const AI_SEARCH_SILENCE_STOP_MS = 1700;
+const AI_SEARCH_SILENCE_RMS_THRESHOLD = 0.012;
+
+const aiVoiceState = {
+    mediaRecorder: null,
+    mediaStream: null,
+    audioChunks: [],
+    audioBlob: null,
+    mimeType: '',
+    isRecording: false,
+    isBusy: false,
+    discardOnStop: false,
+    autoStopTimeoutId: null,
+    silenceCheckIntervalId: null,
+    silenceStartedAt: 0,
+    recordingStartedAt: 0,
+    audioContext: null,
+    analyser: null
+};
 
 function el(id) {
     return document.getElementById(id);
+}
+
+function escapeHtml(value = '') {
+    return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
+function localDateContext() {
+    const now = new Date();
+    return {
+        localDate: `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'Europe/Warsaw'
+    };
+}
+
+function buildAiSearchFallbackAnswer(summary = {}) {
+    const total = typeof summary.totalAmount === 'number' ? formatAmount(summary.totalAmount) : null;
+    const purchaseCount = typeof summary.purchaseCount === 'number' ? summary.purchaseCount : 0;
+    const itemCount = typeof summary.itemCount === 'number' ? summary.itemCount : 0;
+
+    if (!purchaseCount) {
+        return 'Nie znalazlem pasujacych transakcji dla tego pytania.';
+    }
+
+    const itemPart = itemCount ? `, obejmujacych ${itemCount} pasujacych pozycji` : '';
+    return `Wynik: ${total || '0,00 zl'} w ${purchaseCount} zakupach${itemPart}.`;
 }
 
 const PURCHASES_LOAD_MORE_SENTINEL_ID = 'purchases-load-more-sentinel';
@@ -114,6 +172,8 @@ export function initPurchaseListFilters() {
     const dateBtn = el('filter-date-btn');
     const amountBtn = el('filter-amount-btn');
     const keywordInput = el('filter-keyword');
+    const aiModeBtn = el('search-ai-mode-btn');
+    const voiceBtn = el('search-voice-btn');
     const clearBtn = el('clear-filters-btn');
 
     const categoryClear = categoryBtn?.querySelector('.filter-clear');
@@ -234,8 +294,33 @@ export function initPurchaseListFilters() {
         });
     });
 
-    keywordInput?.addEventListener('input', () => handleFilterChange());
+    keywordInput?.addEventListener('input', () => {
+        if (aiSearchMode) {
+            aiSearchRequestId += 1;
+            if (aiSearchResult) {
+                aiSearchResult = null;
+                renderPurchasesList(state.allPurchases || [], false);
+            }
+            return;
+        }
+        handleFilterChange();
+    });
+    keywordInput?.addEventListener('keydown', (event) => {
+        if (!aiSearchMode || event.key !== 'Enter') return;
+        event.preventDefault();
+        runNaturalSearch(keywordInput.value.trim());
+    });
+    aiModeBtn?.addEventListener('click', () => toggleAiSearchMode(!aiSearchMode));
+    voiceBtn?.addEventListener('click', () => {
+        if (aiVoiceState.isBusy) return;
+        if (aiVoiceState.isRecording) stopAiSearchRecording(false);
+        else startAiSearchRecording();
+    });
     clearBtn?.addEventListener('click', () => {
+        if (aiSearchMode) {
+            resetAiSearchMode({ clearInput: true, reloadList: true });
+            return;
+        }
         if (keywordInput) keywordInput.value = '';
         state.filterCategoryValue = '';
         state.filterSubCategoryValue = '';
@@ -263,7 +348,306 @@ export function initPurchaseListFilters() {
         handleFilterChange();
     });
 
+    updateAiSearchUi();
+}
 
+function updateAiSearchUi(status = '') {
+    const searchShell = el('natural-search-shell');
+    const keywordInput = el('filter-keyword');
+    const aiModeBtn = el('search-ai-mode-btn');
+    const voiceBtn = el('search-voice-btn');
+
+    searchShell?.classList.toggle('ai-search-active', aiSearchMode);
+    searchShell?.classList.toggle('ai-search-recording', aiVoiceState.isRecording);
+    aiModeBtn?.classList.toggle('ai-search-active', aiSearchMode);
+    voiceBtn?.classList.toggle('hidden', !aiSearchMode);
+    voiceBtn?.classList.toggle('flex', aiSearchMode);
+    voiceBtn?.classList.toggle('ai-search-recording', aiVoiceState.isRecording);
+
+    if (keywordInput) {
+        keywordInput.placeholder = status || (aiSearchMode ? AI_SEARCH_PLACEHOLDER : DEFAULT_SEARCH_PLACEHOLDER);
+    }
+    if (voiceBtn) {
+        voiceBtn.disabled = !aiSearchMode || aiVoiceState.isBusy;
+        voiceBtn.title = aiVoiceState.isRecording ? 'Zakoncz nagrywanie' : 'Zapytaj glosem';
+        voiceBtn.setAttribute('aria-label', voiceBtn.title);
+        voiceBtn.innerHTML = aiVoiceState.isBusy
+            ? '<i class="fas fa-spinner animate-spin text-sm"></i>'
+            : '<i class="fas fa-microphone text-sm"></i>';
+    }
+}
+
+function toggleAiSearchMode(enabled) {
+    if (enabled === aiSearchMode) return;
+    aiSearchMode = enabled;
+    aiSearchResult = null;
+    if (!enabled) {
+        aiSearchRequestId += 1;
+        stopAiSearchRecording(true);
+        const keywordInput = el('filter-keyword');
+        if (keywordInput) keywordInput.value = '';
+        updateAiSearchUi();
+        handleFilterChange();
+        return;
+    }
+    updateAiSearchUi();
+    const keywordInput = el('filter-keyword');
+    keywordInput?.focus();
+}
+
+function resetAiSearchMode({ clearInput = false, reloadList = false } = {}) {
+    aiSearchRequestId += 1;
+    aiSearchResult = null;
+    stopAiSearchRecording(true);
+    if (clearInput) {
+        const keywordInput = el('filter-keyword');
+        if (keywordInput) keywordInput.value = '';
+    }
+    updateAiSearchUi();
+    if (reloadList) handleFilterChange();
+}
+
+async function runNaturalSearch(query) {
+    if (!aiSearchMode || !query) return;
+    if (query.trim().length < AI_SEARCH_MIN_LENGTH) return;
+    const requestId = ++aiSearchRequestId;
+    const list = el('purchases-list');
+    aiSearchResult = {
+        loading: true,
+        answer: 'Analizuje pytanie i szukam pasujacych transakcji...',
+        summary: null
+    };
+    removeEventListener('scroll', handleInfiniteScroll);
+    teardownPurchasesLoadMoreObserver();
+    if (list) renderPurchasesList([], false);
+
+    try {
+        const context = localDateContext();
+        const response = await apiCall('/api/ai/natural-search', 'POST', {
+            query,
+            localDate: context.localDate,
+            timezone: context.timezone
+        });
+        if (requestId !== aiSearchRequestId) return;
+
+        aiSearchResult = {
+            loading: false,
+            answer: response.answer || buildAiSearchFallbackAnswer(response.summary),
+            summary: response.summary || null
+        };
+        state.allPurchases = Array.isArray(response.purchases) ? response.purchases : [];
+        state.nextPurchaseCursor = null;
+        renderPurchasesList(state.allPurchases, false);
+    } catch (error) {
+        if (requestId !== aiSearchRequestId) return;
+        aiSearchResult = {
+            loading: false,
+            error: true,
+            answer: `Nie udalo sie wykonac wyszukiwania AI. ${error.message}`,
+            summary: null
+        };
+        state.allPurchases = [];
+        state.nextPurchaseCursor = null;
+        renderPurchasesList([], false);
+    }
+}
+
+function supportedSearchRecordingMimeType() {
+    if (typeof MediaRecorder === 'undefined') return '';
+    return [
+        'audio/webm;codecs=opus',
+        'audio/webm',
+        'audio/ogg;codecs=opus',
+        'audio/ogg'
+    ].find(type => MediaRecorder.isTypeSupported(type)) || '';
+}
+
+function stopAiSearchMediaStream() {
+    if (aiVoiceState.mediaStream) {
+        aiVoiceState.mediaStream.getTracks().forEach(track => track.stop());
+        aiVoiceState.mediaStream = null;
+    }
+    if (aiVoiceState.autoStopTimeoutId) {
+        clearTimeout(aiVoiceState.autoStopTimeoutId);
+        aiVoiceState.autoStopTimeoutId = null;
+    }
+    if (aiVoiceState.silenceCheckIntervalId) {
+        clearInterval(aiVoiceState.silenceCheckIntervalId);
+        aiVoiceState.silenceCheckIntervalId = null;
+    }
+    if (aiVoiceState.audioContext) {
+        aiVoiceState.audioContext.close().catch(() => {});
+        aiVoiceState.audioContext = null;
+    }
+    aiVoiceState.analyser = null;
+    aiVoiceState.silenceStartedAt = 0;
+}
+
+function resetAiVoiceState() {
+    stopAiSearchMediaStream();
+    aiVoiceState.mediaRecorder = null;
+    aiVoiceState.audioChunks = [];
+    aiVoiceState.audioBlob = null;
+    aiVoiceState.mimeType = '';
+    aiVoiceState.isRecording = false;
+    aiVoiceState.isBusy = false;
+    aiVoiceState.discardOnStop = false;
+    aiVoiceState.recordingStartedAt = 0;
+}
+
+function readMicrophoneRms(analyser) {
+    const samples = new Uint8Array(analyser.fftSize);
+    analyser.getByteTimeDomainData(samples);
+    let total = 0;
+    for (const sample of samples) {
+        const normalized = (sample - 128) / 128;
+        total += normalized * normalized;
+    }
+    return Math.sqrt(total / samples.length);
+}
+
+function startAiSearchSilenceAutoStop(stream) {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) return;
+
+    try {
+        const audioContext = new AudioContextClass();
+        const source = audioContext.createMediaStreamSource(stream);
+        const analyser = audioContext.createAnalyser();
+        analyser.fftSize = 1024;
+        source.connect(analyser);
+
+        aiVoiceState.audioContext = audioContext;
+        aiVoiceState.analyser = analyser;
+        aiVoiceState.silenceStartedAt = 0;
+        aiVoiceState.silenceCheckIntervalId = setInterval(() => {
+            if (!aiVoiceState.isRecording || aiVoiceState.mediaRecorder?.state !== 'recording') return;
+            if (Date.now() - aiVoiceState.recordingStartedAt < AI_SEARCH_SILENCE_GRACE_MS) return;
+
+            const rms = readMicrophoneRms(analyser);
+            if (rms < AI_SEARCH_SILENCE_RMS_THRESHOLD) {
+                if (!aiVoiceState.silenceStartedAt) aiVoiceState.silenceStartedAt = Date.now();
+                if (Date.now() - aiVoiceState.silenceStartedAt >= AI_SEARCH_SILENCE_STOP_MS) {
+                    stopAiSearchRecording(false);
+                }
+                return;
+            }
+
+            aiVoiceState.silenceStartedAt = 0;
+        }, 250);
+    } catch (error) {
+        console.warn('Nie udalo sie wlaczyc automatycznego zatrzymania po ciszy:', error);
+    }
+}
+
+async function blobToBase64(blob) {
+    return await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve((reader.result || '').toString().split(',')[1] || '');
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+    });
+}
+
+async function transcribeAiSearchAudio() {
+    if (!aiVoiceState.audioBlob) throw new Error('Brak nagrania do transkrypcji.');
+    const base64 = await blobToBase64(aiVoiceState.audioBlob);
+    const extension = aiVoiceState.mimeType.includes('ogg') ? 'ogg' : 'webm';
+    const response = await apiCall('/api/transcribe-audio', 'POST', {
+        audio: base64,
+        mimetype: aiVoiceState.mimeType,
+        filename: `natural-search.${extension}`,
+        size: aiVoiceState.audioBlob.size,
+        languageCode: 'pl-PL'
+    });
+    return response.transcript || '';
+}
+
+async function startAiSearchRecording() {
+    if (!aiSearchMode) return;
+    if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
+        alert('Ta przegladarka nie obsluguje nagrywania audio dla wyszukiwania.');
+        return;
+    }
+    const mimeType = supportedSearchRecordingMimeType();
+    if (!mimeType) {
+        alert('Ta przegladarka nie obsluguje wymaganego formatu nagrania audio.');
+        return;
+    }
+
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const recorder = new MediaRecorder(stream, { mimeType });
+        aiVoiceState.mediaStream = stream;
+        aiVoiceState.mediaRecorder = recorder;
+        aiVoiceState.audioChunks = [];
+        aiVoiceState.audioBlob = null;
+        aiVoiceState.mimeType = mimeType;
+        aiVoiceState.discardOnStop = false;
+
+        recorder.addEventListener('dataavailable', event => {
+            if (event.data && event.data.size > 0) aiVoiceState.audioChunks.push(event.data);
+        });
+        recorder.addEventListener('stop', async () => {
+            stopAiSearchMediaStream();
+            aiVoiceState.isRecording = false;
+            if (aiVoiceState.discardOnStop) {
+                resetAiVoiceState();
+                updateAiSearchUi();
+                return;
+            }
+            if (!aiVoiceState.audioChunks.length) {
+                resetAiVoiceState();
+                updateAiSearchUi();
+                alert('Nagranie jest puste. Sprobuj jeszcze raz.');
+                return;
+            }
+            aiVoiceState.audioBlob = new Blob(aiVoiceState.audioChunks, { type: aiVoiceState.mimeType });
+            aiVoiceState.isBusy = true;
+            updateAiSearchUi('Przetwarzam nagranie...');
+            try {
+                const transcript = await transcribeAiSearchAudio();
+                const keywordInput = el('filter-keyword');
+                if (keywordInput) keywordInput.value = transcript;
+                aiVoiceState.isBusy = false;
+                updateAiSearchUi();
+                await runNaturalSearch(transcript);
+            } catch (error) {
+                aiVoiceState.isBusy = false;
+                updateAiSearchUi();
+                alert(`Nie udalo sie rozpoznac pytania. ${error.message}`);
+            } finally {
+                resetAiVoiceState();
+                updateAiSearchUi();
+            }
+        });
+        recorder.addEventListener('error', () => {
+            resetAiVoiceState();
+            updateAiSearchUi();
+            alert('Wystapil problem podczas nagrywania audio. Sprobuj ponownie.');
+        });
+
+        recorder.start();
+        aiVoiceState.isRecording = true;
+        aiVoiceState.recordingStartedAt = Date.now();
+        aiVoiceState.autoStopTimeoutId = setTimeout(() => stopAiSearchRecording(false), AI_SEARCH_MAX_RECORDING_MS);
+        startAiSearchSilenceAutoStop(stream);
+        updateAiSearchUi('Slucham... zatrzymam po ciszy albo kliknij mikrofon');
+    } catch (error) {
+        resetAiVoiceState();
+        updateAiSearchUi();
+        alert('Nie udalo sie uzyskac dostepu do mikrofonu. Sprawdz uprawnienia w przegladarce.');
+    }
+}
+
+function stopAiSearchRecording(discard = false) {
+    if (aiVoiceState.mediaRecorder?.state === 'recording') {
+        aiVoiceState.discardOnStop = discard;
+        aiVoiceState.mediaRecorder.stop();
+        return;
+    }
+    if (discard) resetAiVoiceState();
+    updateAiSearchUi();
 }
 
 function setText(id, text) {
@@ -332,6 +716,7 @@ export function closeFilterDrawer() {
 }
 
 export const handleInfiniteScroll = () => {
+    if (aiSearchMode) return;
     if (!el('list-tab')?.classList.contains('active')) return;
     if ((innerHeight + scrollY) >= document.body.offsetHeight - 200) {
         fetchMorePurchases();
@@ -339,6 +724,9 @@ export const handleInfiniteScroll = () => {
 };
 
 export async function handleFilterChange() {
+    if (aiSearchMode) {
+        aiSearchResult = null;
+    }
     const queryString = getFilterQueryParams();
     const list = el('purchases-list');
     if (queryString && list) {
@@ -359,7 +747,7 @@ export async function handleFilterChange() {
 export function getFilterQueryParams() {
     const params = new URLSearchParams();
     const keyword = el('filter-keyword')?.value;
-    if (keyword) params.append('keyword', keyword);
+    if (keyword && !aiSearchMode) params.append('keyword', keyword);
     if (state.filterCategoryValue) params.append('category', state.filterCategoryValue);
     if (state.filterSubCategoryValue) params.append('subCategory', state.filterSubCategoryValue);
     if (state.filterBudgetValue) params.append('budget', state.filterBudgetValue);
@@ -432,6 +820,7 @@ export async function loadInitialPurchases() {
 }
 
 export async function fetchMorePurchases() {
+    if (aiSearchMode) return;
     if (state.isLoadingPurchases || !state.nextPurchaseCursor) return;
 
     state.isLoadingPurchases = true;
@@ -479,17 +868,50 @@ export function renderPurchasesList(purchasesToRender, append = false) {
     if (!list) return;
 
     if (!append) list.innerHTML = '';
+    let renderedAiCard = false;
+    if (!append && aiSearchMode && aiSearchResult) {
+        list.insertAdjacentHTML('beforeend', renderAiSearchAnswerCard());
+        renderedAiCard = true;
+        if (aiSearchResult.loading) return;
+    }
     if (purchasesToRender.length === 0 && !append) {
-        list.innerHTML = '<div class="text-center py-12"><svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg><h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">Brak zakupow</h3><p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Brak wynikow dla podanych kryteriow.</p></div>';
+        list.insertAdjacentHTML('beforeend', '<div class="text-center py-12"><svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg><h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">Brak zakupow</h3><p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Brak wynikow dla podanych kryteriow.</p></div>');
         return;
     }
 
     const newContent = purchasesToRender.map(renderPurchaseCard).join('');
     if (append) {
         list.insertAdjacentHTML('beforeend', newContent);
+    } else if (renderedAiCard) {
+        list.insertAdjacentHTML('beforeend', newContent);
     } else {
         list.innerHTML = newContent;
     }
+}
+
+function renderAiSearchAnswerCard() {
+    const icon = aiSearchResult.error ? 'fa-triangle-exclamation' : (aiSearchResult.loading ? 'fa-spinner animate-spin' : 'fa-wand-magic-sparkles');
+    const accentClass = aiSearchResult.error ? 'text-red-300 bg-red-500/10 border-red-500/20' : 'text-brand-300 bg-brand-500/10 border-brand-500/20';
+    const summary = aiSearchResult.summary || {};
+    const chips = [];
+    if (typeof summary.totalAmount === 'number') chips.push(formatAmount(summary.totalAmount));
+    if (typeof summary.purchaseCount === 'number') chips.push(`${summary.purchaseCount} zakupow`);
+    if (summary.truncated) chips.push('pokazano pierwsze wyniki');
+
+    return `
+        <div class="glass-card rounded-2xl mb-4 p-4 border border-white/10">
+            <div class="flex items-start gap-3">
+                <div class="h-10 w-10 rounded-xl border ${accentClass} flex items-center justify-center shrink-0">
+                    <i class="fas ${icon}"></i>
+                </div>
+                <div class="min-w-0 flex-1">
+                    <div class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">Asystent AI</div>
+                    <p class="text-sm text-white leading-6">${escapeHtml(aiSearchResult.answer || '')}</p>
+                    ${chips.length ? `<div class="flex flex-wrap gap-2 mt-3">${chips.map(chip => `<span class="text-[11px] text-gray-300 bg-white/5 border border-white/10 rounded-full px-2.5 py-1">${escapeHtml(chip)}</span>`).join('')}</div>` : ''}
+                </div>
+            </div>
+        </div>
+    `;
 }
 
 function renderPurchaseCard(purchase) {

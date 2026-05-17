@@ -1,7 +1,12 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const { GoogleAuth } = require('google-auth-library');
 const { retryWithBackoff } = require('./utils');
-const { getPrompt, getVoiceExpensePrompt } = require('./prompt.js');
+const {
+    getNaturalSearchAnswerPrompt,
+    getNaturalSearchParsePrompt,
+    getPrompt,
+    getVoiceExpensePrompt
+} = require('./prompt.js');
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const gemini = new GoogleGenerativeAI(GEMINI_API_KEY, { apiVersion: 'v1beta' });
@@ -71,6 +76,26 @@ function extractTranscriptFromSpeechResponse(payload = {}) {
         .filter(Boolean);
 
     return transcripts.join(' ').replace(/\s+/g, ' ').trim();
+}
+
+async function parseNaturalSearchQuery(query, categories, context = {}) {
+    const prompt = getNaturalSearchParsePrompt(categories, context);
+    const fullPrompt = `${prompt}\n\nPYTANIE UZYTKOWNIKA:\n${query}`;
+
+    const generationFn = () => model.generateContent(fullPrompt);
+    const result = await retryWithBackoff(generationFn);
+    const rawText = result.response.text();
+
+    console.log('Surowa odpowiedz AI dla wyszukiwania naturalnego:', rawText);
+
+    return extractJsonFromText(rawText);
+}
+
+async function generateNaturalSearchAnswer(summaryData) {
+    const prompt = getNaturalSearchAnswerPrompt(summaryData);
+    const generationFn = () => model.generateContent(prompt);
+    const result = await retryWithBackoff(generationFn);
+    return result.response.text().trim();
 }
 
 /**
@@ -255,7 +280,9 @@ Użyj ikon Font Awesome 5 (prefiks fa-), np. fa-chart-line, fa-store, fa-tags, f
 module.exports = {
     analyzeVoiceExpenseText,
     extractAndCategorizePurchase,
+    generateNaturalSearchAnswer,
     generateInsights,
     generateInsightsRange,
+    parseNaturalSearchQuery,
     transcribeAudio
 };

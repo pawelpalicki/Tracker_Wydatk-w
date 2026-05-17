@@ -212,7 +212,74 @@ function getVoiceExpensePrompt(categoriesData, tagDefinitions = {}, context = {}
     `;
 }
 
+function getNaturalSearchParsePrompt(categoriesData, context = {}) {
+  const { hierarchyString, tagDescriptions } = buildCategoryContext(categoriesData, categoriesData.tags || {});
+  const referenceDate = context.localDate || 'nieznana';
+  const referenceTimezone = context.timezone || 'Europe/Warsaw';
+
+  return `
+        Interpretujesz polskie pytanie uzytkownika o wydatki i zamieniasz je na filtry wyszukiwania.
+        Odpowiedz WYLACZNIE poprawnym JSON-em. Nie dodawaj markdownu ani komentarzy.
+
+        KONTEKST CZASOWY:
+        - Lokalna data uzytkownika: ${referenceDate}
+        - Strefa czasowa uzytkownika: ${referenceTimezone}
+        - Wyrazenia wzgledne interpretuj wzgledem lokalnej daty uzytkownika.
+        - "dzisiaj" = ${referenceDate}
+        - "w tym tygodniu" = aktualny tydzien od poniedzialku do niedzieli.
+        - "w zeszlym miesiacu" = pelny poprzedni miesiac kalendarzowy.
+        - Jesli uzytkownik nie poda zakresu dat, ustaw startDate i endDate na pusty ciag.
+
+        DOSTEPNE KATEGORIE I PODKATEGORIE:
+        ${hierarchyString}
+
+        DOSTEPNE TAGI:
+        ${tagDescriptions.join('\n')}
+
+        SCHEMAT JSON:
+        {
+          "startDate": "YYYY-MM-DD albo pusty ciag",
+          "endDate": "YYYY-MM-DD albo pusty ciag",
+          "shop": "nazwa sklepu albo pusty ciag",
+          "category": "kategoria nadrzedna z listy albo pusty ciag",
+          "subCategory": "podkategoria z listy albo pusty ciag",
+          "keyword": "slowo kluczowe produktu/uslugi albo pusty ciag",
+          "tagFilters": { "nazwaGrupy": "wartoscTagu" },
+          "minAmount": "liczba albo null",
+          "maxAmount": "liczba albo null",
+          "intent": "krotki opis intencji po polsku"
+        }
+
+        ZASADY:
+        1. Nie wymyslaj sklepu, kategorii, tagu ani kwoty, jesli nie wynika z pytania.
+        2. Dopasuj kategorie i podkategorie do najblizszych nazw z listy.
+        3. Dla pytan typu "ile wydalem na jedzenie" ustaw category, nie keyword.
+        4. Dla nazw konkretnych produktow/uslug ustaw keyword.
+        5. Kwoty minAmount/maxAmount dotycza sumy zakupu.
+        6. Daty zawsze zwracaj w formacie YYYY-MM-DD.
+    `;
+}
+
+function getNaturalSearchAnswerPrompt(summaryData = {}) {
+  return `
+        Jestes pomocnym asystentem finansowym w polskiej aplikacji do sledzenia wydatkow.
+        Napisz krotka, naturalna odpowiedz po polsku na podstawie danych JSON.
+
+        DANE:
+        ${JSON.stringify(summaryData, null, 2)}
+
+        ZASADY:
+        - Nie dodawaj liczb, ktorych nie ma w danych.
+        - Jesli liczba wynikow wynosi 0, wyjasnij krotko, ze nie znaleziono pasujacych transakcji.
+        - Jesli sa wyniki, podaj laczna kwote, liczbe zakupow i najwazniejszy kontekst (np. sklep/kategoria/zakres dat), gdy jest dostepny.
+        - Maksymalnie 2 zdania.
+        - Bez markdownu, list i emoji.
+    `;
+}
+
 module.exports = {
+  getNaturalSearchAnswerPrompt,
+  getNaturalSearchParsePrompt,
   getPrompt,
   getVoiceExpensePrompt
 };
