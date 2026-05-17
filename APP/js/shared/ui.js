@@ -28,7 +28,8 @@ export const VIEW_DEPTH = {
     'settings-tags': 3,
     'settings-budget': 3,
     'settings-special': 3,
-    'settings-recurring': 3
+    'settings-recurring': 3,
+    'settings-theme': 3
 };
 
 export const NAV_TITLES = {
@@ -44,9 +45,10 @@ export const NAV_TITLES = {
     'settings-budget': 'Miesięczny Budżet',
     'settings-special': 'Zarządzaj budżetami',
     'settings-recurring': 'Stałe Opłaty',
+    'settings-theme': 'Wygląd aplikacji',
 };
 
-const TABS_WITH_BACK = ['special-budgets', 'settings', 'settings-categories', 'settings-tags', 'settings-budget', 'settings-special', 'settings-recurring'];
+const TABS_WITH_BACK = ['special-budgets', 'settings', 'settings-categories', 'settings-tags', 'settings-budget', 'settings-special', 'settings-recurring', 'settings-theme'];
 const registeredBlockingOverlays = new Map();
 
 export function updateNavbar(tabName) {
