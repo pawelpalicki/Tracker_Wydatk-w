@@ -299,9 +299,6 @@ async function checkAndRenderSurplus() {
             
             <!-- Collapsible Body -->
             <div id="surplus-history-body" class="${isHiddenClass} mt-3">
-                <p class="text-[10px] text-gray-500 mb-3 leading-normal border-t border-white/5 pt-2">
-                    Tutaj możesz podejrzeć i zaoszczędzić niewykorzystane środki z ostatnich 5 zamkniętych miesięcy:
-                </p>
                 <div id="surplus-months-loader" class="space-y-2 py-4 flex flex-col items-center justify-center">
                     <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-brand-500"></div>
                 </div>
@@ -327,68 +324,93 @@ async function checkAndRenderSurplus() {
     });
 
     try {
-        const prevMonths = getPreviousClosedMonths(5);
+        // Pobierz rozliczone miesiące z Firestore
+        const settledMonths = await apiCall('/api/savings-goals/settled');
+        const settledSet = new Set(settledMonths.map(s => s.month));
+
+        // Skanujemy 12 zamkniętych miesięcy wstecz
+        const prevMonths = getPreviousClosedMonths(12);
         
-        // Pobierz dane dla wszystkich miesięcy równolegle (bardzo szybko)
+        // Pobierz dane dla wszystkich miesięcy równolegle
         const promises = prevMonths.map(async (m) => {
             try {
                 const res = await apiCall(`/api/savings-goals/surplus?month=${m.value}`);
                 return { ...m, ...res };
             } catch (err) {
                 console.error(`Błąd pobierania nadwyżki dla ${m.value}:`, err);
-                return { ...m, surplus: 0, totalBudget: 0, totalSpent: 0, error: true };
+                return { ...m, surplus: 0, deficit: 0, totalBudget: 0, totalSpent: 0, error: true };
             }
         });
         
         const results = await Promise.all(promises);
-        const userId = state.userId || 'guest';
+        
+        // Filtrujemy tylko te miesiące, które wymagają akcji (posiadają nadwyżkę/deficyt > 0 i nie są rozliczone)
+        const actionableResults = results.filter(res => (res.surplus > 0 || res.deficit > 0) && !settledSet.has(res.month));
         
         let listHtml = '';
-        let pendingSurplusCount = 0;
 
-        results.forEach(res => {
-            const storageKey = `allocated_surplus_${userId}_${res.month}`;
-            const isAllocated = localStorage.getItem(storageKey) === 'true';
-            
-            let statusActionHtml = '';
-            if (res.surplus <= 0) {
-                statusActionHtml = `<span class="px-2.5 py-1 bg-white/5 text-gray-500 border border-white/5 rounded-lg text-[9px] font-bold uppercase shrink-0">Brak</span>`;
-            } else if (isAllocated) {
-                statusActionHtml = `
-                    <span class="px-2.5 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-lg text-[9px] font-bold flex items-center gap-1 shrink-0">
-                        <i class="fas fa-check text-[8px]"></i>
-                        <span>Zaoszczędzone</span>
-                    </span>
-                `;
-            } else {
-                pendingSurplusCount++;
-                statusActionHtml = `
-                    <button class="allocate-surplus-item-btn px-2.5 py-1.5 bg-brand-500 hover:bg-brand-600 text-white rounded-lg text-[10px] font-extrabold transition-all flex items-center gap-1 shrink-0 active:scale-95 shadow-md" 
-                            data-month="${res.month}" 
-                            data-surplus="${res.surplus}">
-                        <span>Zaalokuj</span>
-                        <i class="fas fa-arrow-right text-[8px]"></i>
-                    </button>
-                `;
-            }
-
-            listHtml += `
-                <div class="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 transition-all gap-2">
-                    <div class="space-y-0.5 overflow-hidden">
-                        <span class="text-xs font-bold text-white block truncate">${res.label}</span>
-                        <div class="text-[10px] text-gray-500 truncate font-medium">Budżet: ${formatAmount(res.totalBudget)} • Wydano: ${formatAmount(res.totalSpent)}</div>
+        if (actionableResults.length === 0) {
+            listHtml = `
+                <div class="flex flex-col items-center justify-center py-6 text-center border-t border-white/5 mt-2">
+                    <div class="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-400 mb-2.5 border border-emerald-500/20">
+                        <i class="fas fa-check text-sm"></i>
                     </div>
-                    
-                    <div class="flex items-center space-x-3 shrink-0">
-                        <div class="text-right">
-                            <div class="text-xs font-extrabold text-white">${formatAmount(res.surplus)}</div>
-                            <div class="text-[9px] text-gray-400">nadwyżki</div>
-                        </div>
-                        ${statusActionHtml}
-                    </div>
+                    <span class="text-xs font-bold text-white mb-0.5">Wszystko rozliczone!</span>
+                    <span class="text-[10px] text-gray-500 max-w-[220px] leading-normal">Wszystkie zeszłe miesiące są w pełni rozliczone. Dobra robota! 🎉</span>
                 </div>
             `;
-        });
+        } else {
+            actionableResults.forEach(res => {
+                let statusActionHtml = '';
+                let amountHtml = '';
+                
+                if (res.surplus > 0) {
+                    amountHtml = `
+                        <div class="text-right">
+                            <div class="text-xs font-extrabold text-emerald-400">${formatAmount(res.surplus)}</div>
+                            <div class="text-[9px] text-gray-400">nadwyżki</div>
+                        </div>
+                    `;
+                    statusActionHtml = `
+                        <button class="allocate-surplus-item-btn px-2.5 py-1.5 bg-brand-500 hover:bg-brand-600 text-white rounded-lg text-[10px] font-extrabold transition-all flex items-center gap-1 shrink-0 active:scale-95 shadow-md" 
+                                data-month="${res.month}" 
+                                data-surplus="${res.surplus}">
+                            <span>Zaalokuj</span>
+                            <i class="fas fa-arrow-right text-[8px]"></i>
+                        </button>
+                    `;
+                } else if (res.deficit > 0) {
+                    amountHtml = `
+                        <div class="text-right">
+                            <div class="text-xs font-extrabold text-red-400">-${formatAmount(res.deficit)}</div>
+                            <div class="text-[9px] text-gray-400">przekroczenia</div>
+                        </div>
+                    `;
+                    statusActionHtml = `
+                        <button class="cover-deficit-item-btn px-2.5 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 rounded-lg text-[10px] font-extrabold transition-all flex items-center gap-1 shrink-0 active:scale-95" 
+                                data-month="${res.month}" 
+                                data-deficit="${res.deficit}">
+                            <span>Pokryj deficyt</span>
+                            <i class="fas fa-exclamation-triangle text-[8px]"></i>
+                        </button>
+                    `;
+                }
+
+                listHtml += `
+                    <div class="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 transition-all gap-2">
+                        <div class="space-y-0.5 overflow-hidden">
+                            <span class="text-xs font-bold text-white block truncate">${res.label}</span>
+                            <div class="text-[10px] text-gray-500 truncate font-medium">Budżet: ${formatAmount(res.totalBudget)} • Wydano: ${formatAmount(res.totalSpent)}</div>
+                        </div>
+                        
+                        <div class="flex items-center space-x-3 shrink-0">
+                            ${amountHtml}
+                            ${statusActionHtml}
+                        </div>
+                    </div>
+                `;
+            });
+        }
 
         // Ukryj loader, pokaż listę
         const loader = el('surplus-months-loader');
@@ -398,7 +420,7 @@ async function checkAndRenderSurplus() {
             listContainer.innerHTML = listHtml;
             listContainer.classList.remove('hidden');
             
-            // Podłącz listenery transakcyjne do przycisków alokacji
+            // Podłącz listenery do przycisków alokacji
             listContainer.querySelectorAll('.allocate-surplus-item-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     const targetBtn = e.currentTarget;
@@ -407,13 +429,23 @@ async function checkAndRenderSurplus() {
                     openAllocateSurplusDrawer(surplusVal, monthVal);
                 });
             });
+
+            // Podłącz listenery do przycisków pokrywania deficytów
+            listContainer.querySelectorAll('.cover-deficit-item-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const targetBtn = e.currentTarget;
+                    const deficitVal = parseFloat(targetBtn.dataset.deficit);
+                    const monthVal = targetBtn.dataset.month;
+                    openCoverDeficitDrawer(deficitVal, monthVal);
+                });
+            });
         }
 
-        // Pokaż pulsing badge "Oczekuje", jeśli są wolne nadwyżki do zatwierdzenia
+        // Pokaż pulsing badge "Oczekuje", jeśli są wolne nadwyżki/deficyty do zatwierdzenia
         const pendingBadge = el('surplus-pending-badge');
         if (pendingBadge) {
-            if (pendingSurplusCount > 0) {
-                pendingBadge.textContent = `${pendingSurplusCount} NOWE`;
+            if (actionableResults.length > 0) {
+                pendingBadge.textContent = `${actionableResults.length} NOWE`;
                 pendingBadge.classList.remove('hidden');
             } else {
                 pendingBadge.classList.add('hidden');
@@ -459,6 +491,57 @@ function openAddEditGoalDrawer(goal = null) {
         `;
     });
 
+    // Renderuj historię transakcji, jeśli jesteśmy w trybie edycji
+    let historyHtml = '';
+    if (isEdit) {
+        const historyList = goal.history || [];
+        if (historyList.length === 0) {
+            historyHtml = `<div class="text-[11px] text-gray-500 italic py-3 text-center border border-white/5 rounded-xl bg-white/5">Brak historii transakcji</div>`;
+        } else {
+            const sortedHistory = [...historyList].sort((a, b) => new Date(b.date) - new Date(a.date));
+            sortedHistory.forEach(item => {
+                const isPositive = item.type === 'deposit' || item.type === 'transfer_in';
+                const amtClass = isPositive ? 'text-emerald-400 font-extrabold' : 'text-red-400 font-extrabold';
+                const amtSign = isPositive ? '+' : '-';
+                let dateObj = new Date();
+                if (item.date) {
+                    if (typeof item.date === 'string') {
+                        dateObj = new Date(item.date);
+                    } else if (item.date._seconds !== undefined) {
+                        dateObj = new Date(item.date._seconds * 1000);
+                    } else if (item.date.seconds !== undefined) {
+                        dateObj = new Date(item.date.seconds * 1000);
+                    } else if (typeof item.date.toDate === 'function') {
+                        dateObj = item.date.toDate();
+                    } else {
+                        dateObj = new Date(item.date);
+                    }
+                }
+                const formattedDate = dateObj.toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+                
+                let iconClass = 'fa-arrow-down text-emerald-400';
+                if (item.type === 'withdraw') iconClass = 'fa-arrow-up text-red-400';
+                else if (item.type === 'transfer_in') iconClass = 'fa-exchange-alt text-emerald-400';
+                else if (item.type === 'transfer_out') iconClass = 'fa-exchange-alt text-red-400';
+
+                historyHtml += `
+                    <div class="flex items-center justify-between p-2 rounded-xl bg-white/5 border border-white/5 text-[11px] gap-2">
+                        <div class="flex items-center space-x-2 overflow-hidden">
+                            <div class="w-6 h-6 rounded-lg bg-white/5 flex items-center justify-center shrink-0">
+                                <i class="fas ${iconClass} text-[10px]"></i>
+                            </div>
+                            <div class="overflow-hidden">
+                                <span class="text-white font-semibold block truncate leading-normal">${item.note || 'Transakcja'}</span>
+                                <span class="text-[9px] text-gray-500 block leading-none mt-0.5">${formattedDate}</span>
+                            </div>
+                        </div>
+                        <span class="${amtClass} shrink-0 text-right">${amtSign}${formatAmount(item.amount)}</span>
+                    </div>
+                `;
+            });
+        }
+    }
+
     const contentHtml = `
         <form id="goal-drawer-form" class="space-y-4 pt-2">
             <div>
@@ -498,11 +581,22 @@ function openAddEditGoalDrawer(goal = null) {
             </div>
 
             ${isEdit ? `
-                <div class="pt-4 border-t border-white/5">
+                <div class="pt-4 border-t border-white/5 space-y-2">
+                    <button type="button" id="transfer-goal-funds-btn" class="w-full py-3 bg-brand-500/10 hover:bg-brand-500/20 text-brand-400 border border-brand-500/20 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2">
+                        <i class="fas fa-exchange-alt"></i>
+                        <span>Przelej do innego celu</span>
+                    </button>
                     <button type="button" id="delete-goal-btn" class="w-full py-3 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2">
                         <i class="fas fa-trash-alt"></i>
                         <span>Usuń cel oszczędnościowy</span>
                     </button>
+                </div>
+                
+                <div class="pt-4 border-t border-white/5">
+                    <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Historia transakcji</label>
+                    <div class="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+                        ${historyHtml}
+                    </div>
                 </div>
             ` : ''}
         </form>
@@ -569,6 +663,11 @@ function openAddEditGoalDrawer(goal = null) {
         btn.classList.add('border-white', 'scale-105');
         btn.innerHTML = '<i class="fas fa-check text-[10px] text-white"></i>';
         el('selected-goal-color').value = btn.dataset.color;
+    });
+
+    // Przelew środków
+    el('transfer-goal-funds-btn')?.addEventListener('click', () => {
+        openTransferBetweenGoalsDrawer(goal);
     });
 
     // Usuwanie celu
@@ -737,18 +836,207 @@ function openAllocateSurplusDrawer(surplus, month) {
             }
 
             try {
-                // Wykonaj wpłatę na cel
-                await apiCall(`/api/savings-goals/${goalId}/deposit`, 'POST', { amount });
+                // Wykonaj wpłatę na cel wraz z notatką transakcyjną
+                await apiCall(`/api/savings-goals/${goalId}/deposit`, 'POST', {
+                    amount,
+                    note: `Alokacja nadwyżki za ${month}`
+                });
                 
-                // Zapisz w localStorage, że nadwyżka dla tego miesiąca została zaalokowana
-                const userId = state.userId || 'guest';
-                localStorage.setItem(`allocated_surplus_${userId}_${month}`, 'true');
+                // Zapisz rozliczenie miesiąca w Firestore (zsynchronizowane na wszystkich urządzeniach!)
+                await apiCall('/api/savings-goals/settled', 'POST', {
+                    month,
+                    type: 'surplus'
+                });
 
                 // Odśwież widok
                 await renderSavingsGoalsTab();
                 Drawer.close();
             } catch (err) {
                 alert('Błąd alokacji nadwyżki: ' + err.message);
+                throw err;
+            }
+        }
+    });
+}
+
+/**
+ * Szuflada (Drawer): Pokrycie deficytu budżetowego z zeszłego miesiąca
+ */
+function openCoverDeficitDrawer(deficit, month) {
+    const activeGoals = (state.allSavingsGoals || []).filter(g => g.currentAmount > 0);
+
+    if (activeGoals.length === 0) {
+        alert('Nie masz środków w żadnym celu oszczędnościowym, aby pokryć ten deficyt. Wpłać najpierw środki do skarbonki.');
+        return;
+    }
+
+    let goalOptionsHtml = '';
+    activeGoals.forEach((goal, idx) => {
+        goalOptionsHtml += `
+            <label class="flex items-center justify-between p-3.5 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 cursor-pointer group transition-all">
+                <div class="flex items-center space-x-3">
+                    <input type="radio" name="deficit-source-goal" value="${goal.id}" ${idx === 0 ? 'checked' : ''} class="w-4 h-4 text-red-500 focus:ring-red-500 border-white/10 bg-white/5">
+                    <div class="flex items-center space-x-2">
+                        <i class="fas ${goal.icon || 'fa-piggy-bank'}" style="color: ${goal.color}"></i>
+                        <span class="text-white text-sm font-semibold">${goal.name}</span>
+                    </div>
+                </div>
+                <span class="text-xs text-gray-400 font-medium">Zgromadzono: ${formatAmount(goal.currentAmount)}</span>
+            </label>
+        `;
+    });
+
+    const contentHtml = `
+        <form id="deficit-drawer-form" class="space-y-4 pt-2">
+            <div class="p-4 rounded-xl border border-red-500/20 bg-red-500/5 text-xs space-y-1">
+                <div class="flex justify-between">
+                    <span class="text-red-300 font-semibold">Deficyt do pokrycia za ${month}:</span>
+                    <span class="text-white font-extrabold text-sm">${formatAmount(deficit)}</span>
+                </div>
+            </div>
+
+            <div>
+                <label for="deficit-amount" class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Kwota pobrania (zł) *</label>
+                <input type="number" id="deficit-amount" value="${deficit.toFixed(2)}" step="0.01" min="0.01" max="${deficit}" required
+                    class="block w-full rounded-xl border-white/10 bg-white/5 text-white py-3 px-4 focus:bg-white/10 transition-all text-sm font-semibold">
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Pobierz środki z celu *</label>
+                <div class="space-y-2">
+                    ${goalOptionsHtml}
+                </div>
+            </div>
+        </form>
+    `;
+
+    Drawer.open({
+        title: 'Pokryj deficyt budżetowy',
+        content: contentHtml,
+        size: 'sm',
+        confirmLabel: 'Pokryj deficyt',
+        cancelLabel: 'Anuluj',
+        onConfirm: async () => {
+            const form = el('deficit-drawer-form');
+            if (!form.reportValidity()) return;
+
+            const amount = parseFloat(el('deficit-amount').value);
+            const goalId = document.querySelector('input[name="deficit-source-goal"]:checked')?.value;
+
+            if (!goalId) {
+                alert('Proszę wybrać cel oszczędnościowy.');
+                return;
+            }
+
+            const chosenGoal = activeGoals.find(g => g.id === goalId);
+            if (chosenGoal.currentAmount < amount) {
+                alert(`Wybrany cel posiada niewystarczające środki (${formatAmount(chosenGoal.currentAmount)}).`);
+                return;
+            }
+
+            try {
+                // Wykonaj wypłatę z celu z notatką o pokryciu deficytu
+                await apiCall(`/api/savings-goals/${goalId}/withdraw`, 'POST', {
+                    amount,
+                    note: `Pokrycie deficytu za ${month}`
+                });
+                
+                // Zapisz rozliczenie deficytu w Firestore
+                await apiCall('/api/savings-goals/settled', 'POST', {
+                    month,
+                    type: 'deficit'
+                });
+
+                // Odśwież widok
+                await renderSavingsGoalsTab();
+                Drawer.close();
+            } catch (err) {
+                alert('Błąd pokrywania deficytu: ' + err.message);
+                throw err;
+            }
+        }
+    });
+}
+
+/**
+ * Szuflada (Drawer): Przelew bezpośredni między celami oszczędnościowymi
+ */
+function openTransferBetweenGoalsDrawer(sourceGoal) {
+    const activeGoals = (state.allSavingsGoals || []).filter(g => g.id !== sourceGoal.id && g.currentAmount < g.targetAmount);
+
+    if (activeGoals.length === 0) {
+        alert('Nie masz innych aktywnych celów oszczędnościowych, do których możesz przelać środki. Stwórz najpierw inny cel!');
+        return;
+    }
+
+    let goalOptionsHtml = '';
+    activeGoals.forEach((goal, idx) => {
+        goalOptionsHtml += `
+            <label class="flex items-center justify-between p-3.5 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 cursor-pointer group transition-all">
+                <div class="flex items-center space-x-3">
+                    <input type="radio" name="transfer-target-goal" value="${goal.id}" ${idx === 0 ? 'checked' : ''} class="w-4 h-4 text-brand-500 focus:ring-brand-500 border-white/10 bg-white/5">
+                    <div class="flex items-center space-x-2">
+                        <i class="fas ${goal.icon || 'fa-piggy-bank'}" style="color: ${goal.color}"></i>
+                        <span class="text-white text-sm font-semibold">${goal.name}</span>
+                    </div>
+                </div>
+                <span class="text-xs text-gray-400 font-medium">${formatAmount(goal.currentAmount)} / ${formatAmount(goal.targetAmount)}</span>
+            </label>
+        `;
+    });
+
+    const contentHtml = `
+        <form id="transfer-drawer-form" class="space-y-4 pt-2">
+            <div class="p-4 rounded-xl border border-white/5 bg-white/5 flex justify-between items-center text-xs">
+                <span class="text-gray-400 font-medium">Środki w celu źródłowym (${sourceGoal.name}):</span>
+                <span class="text-white font-bold text-sm">${formatAmount(sourceGoal.currentAmount)}</span>
+            </div>
+
+            <div>
+                <label for="transfer-amount" class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Kwota przelewu (zł) *</label>
+                <input type="number" id="transfer-amount" step="0.01" min="0.01" max="${sourceGoal.currentAmount}" required
+                    class="block w-full rounded-xl border-white/10 bg-white/5 text-white py-3 px-4 focus:bg-white/10 transition-all text-sm font-semibold"
+                    placeholder="0.00">
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Wybierz cel docelowy *</label>
+                <div class="space-y-2">
+                    ${goalOptionsHtml}
+                </div>
+            </div>
+        </form>
+    `;
+
+    Drawer.open({
+        title: 'Przelej środki między celami',
+        content: contentHtml,
+        size: 'sm',
+        confirmLabel: 'Przelej środki',
+        cancelLabel: 'Anuluj',
+        onConfirm: async () => {
+            const form = el('transfer-drawer-form');
+            if (!form.reportValidity()) return;
+
+            const amount = parseFloat(el('transfer-amount').value);
+            const targetGoalId = document.querySelector('input[name="transfer-target-goal"]:checked')?.value;
+
+            if (!targetGoalId) {
+                alert('Proszę wybrać cel docelowy.');
+                return;
+            }
+
+            try {
+                await apiCall('/api/savings-goals/transfer', 'POST', {
+                    sourceGoalId: sourceGoal.id,
+                    targetGoalId,
+                    amount
+                });
+                
+                await renderSavingsGoalsTab();
+                Drawer.close();
+            } catch (err) {
+                alert('Błąd przelewu: ' + err.message);
                 throw err;
             }
         }

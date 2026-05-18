@@ -7,6 +7,7 @@ const db = getFirestore();
 const savingsGoalsCollection = db.collection('savingsGoals');
 const budgetsCollection = db.collection('budgets');
 const purchasesCollection = db.collection('expenses');
+const settledMonthsCollection = db.collection('settledMonths');
 
 // --- 1. Pobieranie celów oszczędnościowych ---
 router.get('/savings-goals', authMiddleware, asyncHandler(async (req, res) => {
@@ -39,6 +40,7 @@ router.post('/savings-goals', authMiddleware, asyncHandler(async (req, res) => {
         deadline: deadline || null,
         icon: icon || 'fa-piggy-bank',
         color: color || '#10b981',
+        history: [],
         createdAt: new Date()
     };
 
@@ -106,12 +108,20 @@ router.post('/savings-goals/:id/deposit', authMiddleware, asyncHandler(async (re
         return res.status(403).json({ error: 'Brak uprawnień.' });
     }
 
+    const { note } = req.body;
     const currentAmount = parseFloat(doc.data().currentAmount || 0);
     const newAmount = Math.max(0, currentAmount + parsedAmount);
 
+    const now = new Date();
     await ref.update({
         currentAmount: newAmount,
-        updatedAt: new Date()
+        updatedAt: now,
+        history: FieldValue.arrayUnion({
+            type: 'deposit',
+            amount: parsedAmount,
+            date: now,
+            note: note || 'Wpłata własna'
+        })
     });
 
     res.json({ success: true, currentAmount: newAmount });
@@ -134,6 +144,7 @@ router.post('/savings-goals/:id/withdraw', authMiddleware, asyncHandler(async (r
         return res.status(403).json({ error: 'Brak uprawnień.' });
     }
 
+    const { note } = req.body;
     const currentAmount = parseFloat(doc.data().currentAmount || 0);
     if (currentAmount < parsedAmount) {
         return res.status(400).json({ error: `Niewystarczające środki w skarbonce. Zgromadzono tylko: ${currentAmount} zł.` });
@@ -141,9 +152,16 @@ router.post('/savings-goals/:id/withdraw', authMiddleware, asyncHandler(async (r
 
     const newAmount = Math.max(0, currentAmount - parsedAmount);
 
+    const now = new Date();
     await ref.update({
         currentAmount: newAmount,
-        updatedAt: new Date()
+        updatedAt: now,
+        history: FieldValue.arrayUnion({
+            type: 'withdraw',
+            amount: parsedAmount,
+            date: now,
+            note: note || 'Wypłata własna'
+        })
     });
 
     res.json({ success: true, currentAmount: newAmount });
@@ -188,14 +206,100 @@ router.get('/savings-goals/surplus', authMiddleware, asyncHandler(async (req, re
         }
     });
 
-    const surplus = Math.max(0, totalBudget - totalSpent);
+    const difference = totalBudget - totalSpent;
+    const surplus = difference > 0 ? parseFloat(difference.toFixed(2)) : 0;
+    const deficit = difference < 0 ? parseFloat(Math.abs(difference).toFixed(2)) : 0;
 
     res.json({
         month,
         totalBudget,
         totalSpent,
-        surplus
+        surplus,
+        deficit
     });
+}));
+
+// --- 8. Rozliczone miesiące (settledMonths) ---
+router.get('/savings-goals/settled', authMiddleware, asyncHandler(async (req, res) => {
+    const snapshot = await settledMonthsCollection.where('userId', '==', req.userId).get();
+    const settled = snapshot.docs.map(doc => doc.data());
+    res.json(settled);
+}));
+
+router.post('/savings-goals/settled', authMiddleware, asyncHandler(async (req, res) => {
+    const { month, type } = req.body;
+    if (!month || !type) {
+        return res.status(400).json({ error: 'Miesiąc i typ są wymagane.' });
+    }
+    const docId = `${req.userId}_${month}`;
+    await settledMonthsCollection.doc(docId).set({
+        userId: req.userId,
+        month,
+        type,
+        settledAt: new Date()
+    });
+    res.json({ success: true });
+}));
+
+// --- 9. Bezpośredni przelew między celami ---
+router.post('/savings-goals/transfer', authMiddleware, asyncHandler(async (req, res) => {
+    const { sourceGoalId, targetGoalId, amount } = req.body;
+    const parsedAmount = parseFloat(amount);
+
+    if (isNaN(parsedAmount) || parsedAmount <= 0) {
+        return res.status(400).json({ error: 'Podaj poprawną kwotę przelewu.' });
+    }
+    if (!sourceGoalId || !targetGoalId || sourceGoalId === targetGoalId) {
+        return res.status(400).json({ error: 'Nieprawidłowe cele przelewu.' });
+    }
+
+    const sourceRef = savingsGoalsCollection.doc(sourceGoalId);
+    const targetRef = savingsGoalsCollection.doc(targetGoalId);
+
+    const sourceDoc = await sourceRef.get();
+    const targetDoc = await targetRef.get();
+
+    if (!sourceDoc.exists || sourceDoc.data().userId !== req.userId ||
+        !targetDoc.exists || targetDoc.data().userId !== req.userId) {
+        return res.status(403).json({ error: 'Brak uprawnień do jednego z celów.' });
+    }
+
+    const sourceAmount = parseFloat(sourceDoc.data().currentAmount || 0);
+    if (sourceAmount < parsedAmount) {
+        return res.status(400).json({ error: 'Niewystarczające środki w celu źródłowym.' });
+    }
+
+    const sourceNewAmount = Math.max(0, sourceAmount - parsedAmount);
+    const targetAmountVal = parseFloat(targetDoc.data().currentAmount || 0);
+    const targetNewAmount = targetAmountVal + parsedAmount;
+
+    const now = new Date();
+
+    // 1. Zdejmij ze źródła
+    await sourceRef.update({
+        currentAmount: sourceNewAmount,
+        updatedAt: now,
+        history: FieldValue.arrayUnion({
+            type: 'transfer_out',
+            amount: parsedAmount,
+            date: now,
+            note: `Przelew do: ${targetDoc.data().name}`
+        })
+    });
+
+    // 2. Dodaj do celu docelowego
+    await targetRef.update({
+        currentAmount: targetNewAmount,
+        updatedAt: now,
+        history: FieldValue.arrayUnion({
+            type: 'transfer_in',
+            amount: parsedAmount,
+            date: now,
+            note: `Przelew z: ${sourceDoc.data().name}`
+        })
+    });
+
+    res.json({ success: true, sourceAmount: sourceNewAmount, targetAmount: targetNewAmount });
 }));
 
 module.exports = router;
