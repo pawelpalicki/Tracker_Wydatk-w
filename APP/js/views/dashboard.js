@@ -204,7 +204,9 @@ async function renderHomeSummary(dashboardData = null) {
             ]);
         }
 
-        const purchases = purchaseData.purchases || [];
+        const allPurchases = purchaseData.purchases || [];
+        // Wykluczamy transakcje przypisane do budżetów specjalnych z głównego podsumowania miesięcznego i budżetów
+        const purchases = allPurchases.filter(p => !p.specialBudgetId);
         const totalSpent = purchases.reduce((sum, p) => sum + (p.totalAmount || 0), 0);
         const budgets = budgetData.budgets || {};
         const totalBudget = Object.values(budgets).reduce((a, b) => a + b, 0);
