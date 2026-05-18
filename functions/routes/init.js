@@ -23,6 +23,7 @@ const budgetsCollection = db.collection('budgets');
 const specialBudgetsCollection = db.collection('specialBudgets');
 const recurringExpensesCollection = db.collection('recurringExpenses');
 const notificationsCollection = db.collection('notifications');
+const savingsGoalsCollection = db.collection('savingsGoals');
 
 router.get('/init', authMiddleware, asyncHandler(async (req, res) => {
     const userId = req.userId;
@@ -43,7 +44,8 @@ router.get('/init', authMiddleware, asyncHandler(async (req, res) => {
         purchaseListSnapshot,
         specialBudgetsSnapshot,
         recurringSnapshot,
-        notificationsSnapshot
+        notificationsSnapshot,
+        savingsGoalsSnapshot
     ] = await Promise.all([
         // 1. Metadane użytkownika (kategorie, tagi, sklepy, miesiące) — 1 read
         getUserMetadata(userId),
@@ -90,6 +92,11 @@ router.get('/init', authMiddleware, asyncHandler(async (req, res) => {
         notificationsCollection
             .where('userId', '==', userId)
             .limit(100)
+            .get(),
+
+        // 9. Cele oszczędnościowe — 1 query
+        savingsGoalsCollection
+            .where('userId', '==', userId)
             .get()
     ]);
 
@@ -180,6 +187,17 @@ router.get('/init', authMiddleware, asyncHandler(async (req, res) => {
         ...doc.data()
     }));
 
+    // Cele oszczędnościowe (Skarbonka)
+    const savingsGoals = savingsGoalsSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+    }));
+    savingsGoals.sort((a, b) => {
+        const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt || 0);
+        const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt || 0);
+        return dateB - dateA;
+    });
+
     // Powiadomienia (ta sama logika co GET /notifications)
     const nowMs = Date.now();
     const sevenDays = 7 * 24 * 60 * 60 * 1000;
@@ -202,6 +220,7 @@ router.get('/init', authMiddleware, asyncHandler(async (req, res) => {
         availableMonths: metadata.availableMonths || [],
         specialBudgets: specialBudgetsWithSpent,
         recurringExpenses,
+        savingsGoals,
 
         // Dashboard
         dashboard: {

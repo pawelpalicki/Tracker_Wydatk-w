@@ -103,6 +103,9 @@ export async function renderAll() {
     if (document.getElementById('special-budgets-tab')?.classList.contains('active')) {
         renderSpecialBudgetsTab();
     }
+    if (document.getElementById('savings-goals-tab')?.classList.contains('active')) {
+        import('../views/savings-goals.js').then(m => m.renderSavingsGoalsTab());
+    }
 }
 
 /**
@@ -122,6 +125,7 @@ export async function fetchInitialDataFast() {
         state.allShops = initData.shops || [];
         state.allSpecialBudgets = initData.specialBudgets || [];
         state.allRecurringExpenses = initData.recurringExpenses || [];
+        state.allSavingsGoals = initData.savingsGoals || [];
         state.tagDefinitions = initData.tagDefinitions || {};
 
         // Auto-migracja kategorii jeśli potrzebna
@@ -138,6 +142,7 @@ export async function fetchInitialDataFast() {
             state.allShops = refetch.shops || [];
             state.allSpecialBudgets = refetch.specialBudgets || [];
             state.allRecurringExpenses = refetch.recurringExpenses || [];
+            state.allSavingsGoals = refetch.savingsGoals || [];
             state.tagDefinitions = refetch.tagDefinitions || {};
         }
 
@@ -191,21 +196,25 @@ export async function fetchInitialDataFast() {
  */
 export async function fetchInitialData(shouldSwitchToDefault = true) {
     try {
+        let savingsGoalsData;
         [
             state.allCategories,
             state.structuredCategories,
             state.allShops,
             state.allSpecialBudgets,
             state.allRecurringExpenses,
-            state.tagDefinitions
+            state.tagDefinitions,
+            savingsGoalsData
         ] = await Promise.all([
             apiCall('/api/categories'),
             apiCall('/api/categories/v2'),
             apiCall('/api/shops'),
             apiCall('/api/special-budgets'),
             apiCall('/api/recurring-expenses'),
-            apiCall('/api/tags')
+            apiCall('/api/tags'),
+            apiCall('/api/savings-goals')
         ]);
+        state.allSavingsGoals = savingsGoalsData || [];
 
         renderAnalysisTagFilterButton();
         await loadInitialPurchases();

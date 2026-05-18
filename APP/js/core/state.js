@@ -13,6 +13,7 @@ const state = {
     allShops: [],
     allSpecialBudgets: [],
     allRecurringExpenses: [],
+    allSavingsGoals: [],
     tagDefinitions: {
         nature: [
             { value: 'zmienny', label: 'Zmienny', icon: '📊' },

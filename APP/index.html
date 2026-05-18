@@ -641,6 +641,20 @@
                     <!-- Sekcja: Pozostałe -->
                     <div class="space-y-2">
                         <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 ml-1">Pozostałe</p>
+                        
+                        <!-- Cele oszczędnościowe (Skarbonka) -->
+                        <button id="more-savings-btn"
+                            class="w-full flex items-center justify-between p-4 bg-white/5 hover:bg-white/10 rounded-xl border border-white/5 transition-all group">
+                            <div class="flex items-center space-x-3 text-white">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 opacity-70 group-hover:opacity-100 transition-opacity" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <span class="font-medium text-sm">Cele oszczędnościowe (Skarbonka)</span>
+                            </div>
+                            <i
+                                class="fas fa-chevron-right text-gray-600 group-hover:text-white transition-colors text-[10px]"></i>
+                        </button>
+
                         <button id="more-special-budgets-btn"
                             class="w-full flex items-center justify-between p-4 bg-white/5 hover:bg-white/10 rounded-xl border border-white/5 transition-all group">
                             <div class="flex items-center space-x-3 text-white">
@@ -737,6 +751,7 @@
                                 class="fas fa-chevron-right text-gray-600 group-hover:text-white transition-colors text-[10px]"></i>
                         </button>
 
+
                         <!-- Stałe opłaty -->
                         <button id="settings-recurring-link"
                             class="w-full flex items-center justify-between p-4 bg-white/5 hover:bg-white/10 rounded-xl border border-white/5 transition-all group">
@@ -797,6 +812,12 @@
                 <!-- Treść zostanie wyrenderowana przez special-budgets.js -->
             </div>
             <!-- End Special Budgets tab -->
+
+            <!-- Savings Goals tab -->
+            <div id="savings-goals-tab" class="tab-content pt-1">
+                <!-- Treść zostanie wyrenderowana przez savings-goals.js -->
+            </div>
+            <!-- End Savings Goals tab -->
 
             <!-- Settings: Categories -->
             <div id="settings-categories-tab" class="tab-content px-2 pt-1">

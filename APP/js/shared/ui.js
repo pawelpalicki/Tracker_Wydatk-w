@@ -21,6 +21,7 @@ export const VIEW_DEPTH = {
     'add': 1,
     'analysis': 1,
     'special-budgets': 2,
+    'savings-goals': 2,
     'more': 1,
     'settings': 2,
     'edit-purchase': 2,
@@ -38,6 +39,7 @@ export const NAV_TITLES = {
     'add': 'Dodaj zakup',
     'analysis': 'Analiza',
     'special-budgets': 'Budżety specjalne',
+    'savings-goals': 'Skarbonka',
     'more': 'Więcej',
     'settings': 'Ustawienia',
     'settings-categories': 'Kategorie wydatków',
@@ -48,7 +50,7 @@ export const NAV_TITLES = {
     'settings-theme': 'Wygląd aplikacji',
 };
 
-const TABS_WITH_BACK = ['special-budgets', 'settings', 'settings-categories', 'settings-tags', 'settings-budget', 'settings-special', 'settings-recurring', 'settings-theme'];
+const TABS_WITH_BACK = ['special-budgets', 'savings-goals', 'settings', 'settings-categories', 'settings-tags', 'settings-budget', 'settings-special', 'settings-recurring', 'settings-theme'];
 const registeredBlockingOverlays = new Map();
 
 export function updateNavbar(tabName) {
@@ -120,6 +122,10 @@ export function switchTab(tabName, pushToHistory = true) {
 
     if (tabName === 'special-budgets') {
         import('../views/special-budgets.js').then(m => m.renderSpecialBudgetsTab());
+    }
+
+    if (tabName === 'savings-goals') {
+        import('../views/savings-goals.js').then(m => m.renderSavingsGoalsTab());
     }
 
     if (tabName === 'settings' || tabName.startsWith('settings-')) {

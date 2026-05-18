@@ -131,7 +131,8 @@ function setupInlineClickHandlers() {
         { id: 'settings-budget-link', tab: 'settings-budget' },
         { id: 'settings-special-link', tab: 'settings-special' },
         { id: 'settings-recurring-link', tab: 'settings-recurring' },
-        { id: 'settings-theme-link', tab: 'settings-theme' }
+        { id: 'settings-theme-link', tab: 'settings-theme' },
+        { id: 'more-savings-btn', tab: 'savings-goals' }
     ];
 
     settingsButtons.forEach(({ id, tab }) => {
