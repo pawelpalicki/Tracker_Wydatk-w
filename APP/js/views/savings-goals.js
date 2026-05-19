@@ -136,7 +136,7 @@ function updateSavingsGoalsList() {
     goals.forEach(goal => {
         const percent = Math.min(100, Math.round((goal.currentAmount / goal.targetAmount) * 100));
         const isCompleted = goal.currentAmount >= goal.targetAmount;
-        
+
         // Dopasuj kolor presetu
         const preset = COLOR_PRESETS.find(p => p.value === goal.color) || COLOR_PRESETS[0];
 
@@ -144,12 +144,12 @@ function updateSavingsGoalsList() {
         let deadlineHtml = '';
         if (goal.deadline) {
             const today = new Date();
-            today.setHours(0,0,0,0);
+            today.setHours(0, 0, 0, 0);
             const dlDate = new Date(goal.deadline);
-            dlDate.setHours(0,0,0,0);
+            dlDate.setHours(0, 0, 0, 0);
             const diffTime = dlDate.getTime() - today.getTime();
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-            
+
             if (isCompleted) {
                 deadlineHtml = `<span class="text-brand-400 font-bold"><i class="fas fa-check-circle mr-1"></i> Zrealizowano!</span>`;
             } else if (diffDays > 0) {
@@ -261,7 +261,7 @@ function getPreviousClosedMonths(count = 5) {
         const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
         const yyyy = d.getFullYear();
         const mm = String(d.getMonth() + 1).padStart(2, '0');
-        
+
         // Uzyskaj polską nazwę miesiąca (np. Kwiecień 2026)
         const label = d.toLocaleDateString('pl-PL', { month: 'long', year: 'numeric' });
         months.push({
@@ -311,7 +311,7 @@ async function checkAndRenderSurplus() {
     el('toggle-surplus-history-btn')?.addEventListener('click', () => {
         surplusHistoryCollapsed = !surplusHistoryCollapsed;
         localStorage.setItem('surplus_history_collapsed', surplusHistoryCollapsed);
-        
+
         const body = el('surplus-history-body');
         const chevron = el('surplus-chevron');
         if (body) {
@@ -330,7 +330,7 @@ async function checkAndRenderSurplus() {
 
         // Skanujemy 12 zamkniętych miesięcy wstecz
         const prevMonths = getPreviousClosedMonths(12);
-        
+
         // Pobierz dane dla wszystkich miesięcy równolegle
         const promises = prevMonths.map(async (m) => {
             try {
@@ -341,12 +341,12 @@ async function checkAndRenderSurplus() {
                 return { ...m, surplus: 0, deficit: 0, totalBudget: 0, totalSpent: 0, error: true };
             }
         });
-        
+
         const results = await Promise.all(promises);
-        
+
         // Filtrujemy tylko te miesiące, które wymagają akcji (posiadają nadwyżkę/deficyt > 0 i nie są rozliczone)
         const actionableResults = results.filter(res => (res.surplus > 0 || res.deficit > 0) && !settledSet.has(res.month));
-        
+
         let listHtml = '';
 
         if (actionableResults.length === 0) {
@@ -363,7 +363,7 @@ async function checkAndRenderSurplus() {
             actionableResults.forEach(res => {
                 let statusActionHtml = '';
                 let amountHtml = '';
-                
+
                 if (res.surplus > 0) {
                     amountHtml = `
                         <div class="text-right">
@@ -419,7 +419,7 @@ async function checkAndRenderSurplus() {
         if (listContainer) {
             listContainer.innerHTML = listHtml;
             listContainer.classList.remove('hidden');
-            
+
             // Podłącz listenery do przycisków alokacji
             listContainer.querySelectorAll('.allocate-surplus-item-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => {
@@ -518,7 +518,7 @@ function openAddEditGoalDrawer(goal = null) {
                     }
                 }
                 const formattedDate = dateObj.toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-                
+
                 let iconClass = 'fa-arrow-down text-emerald-400';
                 if (item.type === 'withdraw') iconClass = 'fa-arrow-up text-red-400';
                 else if (item.type === 'transfer_in') iconClass = 'fa-exchange-alt text-emerald-400';
@@ -605,7 +605,7 @@ function openAddEditGoalDrawer(goal = null) {
     Drawer.open({
         title,
         content: contentHtml,
-        size: 'sm',
+        size: 'lg',
         confirmLabel: isEdit ? 'Zapisz zmiany' : 'Stwórz cel',
         cancelLabel: 'Anuluj',
         onConfirm: async () => {
@@ -624,7 +624,7 @@ function openAddEditGoalDrawer(goal = null) {
                 } else {
                     await apiCall('/api/savings-goals', 'POST', { name, targetAmount, deadline, icon, color });
                 }
-                
+
                 // Odśwież i zamknij
                 await renderSavingsGoalsTab();
                 Drawer.close();
@@ -692,7 +692,7 @@ function openDepositWithdrawDrawer(goal, mode = 'deposit') {
     const isDeposit = mode === 'deposit';
     const title = isDeposit ? `Wpłać do: ${goal.name}` : `Wypłać z: ${goal.name}`;
     const actionLabel = isDeposit ? 'Wpłać środki' : 'Wypłać środki';
-    
+
     const quickAmounts = isDeposit ? [20, 50, 100, 200, 500] : [20, 50, 100, 200];
     let quickButtonsHtml = '';
     quickAmounts.forEach(amt => {
@@ -729,7 +729,7 @@ function openDepositWithdrawDrawer(goal, mode = 'deposit') {
     Drawer.open({
         title,
         content: contentHtml,
-        size: 'sm',
+        size: 'md',
         confirmLabel: actionLabel,
         cancelLabel: 'Anuluj',
         onConfirm: async () => {
@@ -741,7 +741,7 @@ function openDepositWithdrawDrawer(goal, mode = 'deposit') {
             try {
                 const endpoint = `/api/savings-goals/${goal.id}/${mode}`;
                 await apiCall(endpoint, 'POST', { amount });
-                
+
                 // Odśwież widok
                 await renderSavingsGoalsTab();
                 Drawer.close();
@@ -820,7 +820,7 @@ function openAllocateSurplusDrawer(surplus, month) {
     Drawer.open({
         title: 'Przelej nadwyżkę budżetową',
         content: contentHtml,
-        size: 'sm',
+        size: 'md',
         confirmLabel: 'Przelej oszczędności',
         cancelLabel: 'Anuluj',
         onConfirm: async () => {
@@ -841,7 +841,7 @@ function openAllocateSurplusDrawer(surplus, month) {
                     amount,
                     note: `Alokacja nadwyżki za ${month}`
                 });
-                
+
                 // Zapisz rozliczenie miesiąca w Firestore (zsynchronizowane na wszystkich urządzeniach!)
                 await apiCall('/api/savings-goals/settled', 'POST', {
                     month,
@@ -913,7 +913,7 @@ function openCoverDeficitDrawer(deficit, month) {
     Drawer.open({
         title: 'Pokryj deficyt budżetowy',
         content: contentHtml,
-        size: 'sm',
+        size: 'md',
         confirmLabel: 'Pokryj deficyt',
         cancelLabel: 'Anuluj',
         onConfirm: async () => {
@@ -940,7 +940,7 @@ function openCoverDeficitDrawer(deficit, month) {
                     amount,
                     note: `Pokrycie deficytu za ${month}`
                 });
-                
+
                 // Zapisz rozliczenie deficytu w Firestore
                 await apiCall('/api/savings-goals/settled', 'POST', {
                     month,
@@ -1011,7 +1011,7 @@ function openTransferBetweenGoalsDrawer(sourceGoal) {
     Drawer.open({
         title: 'Przelej środki między celami',
         content: contentHtml,
-        size: 'sm',
+        size: 'md',
         confirmLabel: 'Przelej środki',
         cancelLabel: 'Anuluj',
         onConfirm: async () => {
@@ -1032,7 +1032,7 @@ function openTransferBetweenGoalsDrawer(sourceGoal) {
                     targetGoalId,
                     amount
                 });
-                
+
                 await renderSavingsGoalsTab();
                 Drawer.close();
             } catch (err) {
