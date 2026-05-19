@@ -56,7 +56,7 @@ export async function renderSavingsGoalsTab() {
                         <p class="text-xs text-gray-400 font-semibold uppercase tracking-wider">Suma wszystkich oszczędności</p>
                         <h2 id="total-savings-amount" class="text-3xl font-extrabold text-white mt-1">0.00 zł</h2>
                     </div>
-                    <button id="add-savings-goal-btn" class="flex items-center gap-1.5 px-3 py-1.5 bg-brand-500/10 hover:bg-brand-500/20 text-brand-500 rounded-lg border border-brand-500/20 transition-all text-xs font-bold active:scale-95">
+                    <button id="add-savings-goal-btn" class="flex items-center gap-1.5 px-3 py-1.5 bg-brand-500/10 hover:bg-brand-500/20 text-brand-400 rounded-lg border border-brand-500/20 transition-all text-xs font-bold active:scale-95">
                         <i class="fas fa-plus text-[10px]"></i>
                         <span>Nowy Cel</span>
                     </button>
@@ -67,13 +67,16 @@ export async function renderSavingsGoalsTab() {
                 </div>
             </div>
 
-            <!-- Surplus History Container -->
-            <div id="savings-surplus-history-container" class="shrink-0"></div>
+            <!-- Scrollable Content Area -->
+            <div class="flex-1 overflow-y-auto pr-1 pb-4 scrollbar-hide space-y-4">
+                <!-- Surplus History Container -->
+                <div id="savings-surplus-history-container"></div>
 
-            <!-- Goals List -->
-            <div id="savings-goals-list" class="flex-1 space-y-4 overflow-y-auto pr-1 pb-4 scrollbar-hide">
-                <div class="flex items-center justify-center py-10">
-                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-500"></div>
+                <!-- Goals List -->
+                <div id="savings-goals-list" class="space-y-4">
+                    <div class="flex items-center justify-center py-10">
+                        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-500"></div>
+                    </div>
                 </div>
             </div>
         </div>
