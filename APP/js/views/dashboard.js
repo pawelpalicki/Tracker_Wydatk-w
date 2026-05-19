@@ -348,17 +348,25 @@ function renderHomeMobilizationInsights(purchases, totalBudget, isCurrentMonth) 
     const dailyLimitEl = document.getElementById('insight-daily-limit');
     const projectionEl = document.getElementById('insight-projection');
     const wantsEl = document.getElementById('insight-wants');
+    const diffEl = document.getElementById('insight-projection-diff');
 
     if (dailyLimitEl) dailyLimitEl.textContent = formatAmount(dailyLimit);
     if (projectionEl) projectionEl.textContent = formatAmount(projection);
     if (wantsEl) wantsEl.textContent = formatAmount(wants);
 
-    const diffEl = document.getElementById('insight-projection-diff');
+    const diff = totalBudget - projection;
     if (diffEl) {
-        const diff = totalBudget - projection;
         diffEl.textContent = `${formatAmount(Math.abs(diff))} ${diff >= 0 ? 'zapasu' : 'przekroczenia'}`;
         diffEl.className = `text-[9px] font-bold leading-tight mt-0.5 break-words ${diff >= 0 ? 'text-green-400' : 'text-red-400'}`;
     }
+
+    // Zapisz do cache'u w state dla innych widoków (np. Skarbonki)
+    state.monthlyProjectionCache = {
+        month: now.toISOString().substring(0, 7),
+        projectedTotal: projection,
+        diff: diff,
+        timestamp: Date.now()
+    };
 
     const textContainer = document.getElementById('insight-text-container');
     if (textContainer) {

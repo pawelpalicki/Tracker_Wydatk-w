@@ -327,28 +327,114 @@ async function checkAndRenderSurplus() {
     });
 
     try {
-        // Pobierz rozliczone miesiące z Firestore
-        const settledMonths = await apiCall('/api/savings-goals/settled');
+        // 1. Pobierz dane dla bieżącego miesiąca (prognoza)
+        const now = new Date();
+        const currentMonthValue = now.toISOString().substring(0, 7);
+        const currentMonthLabel = now.toLocaleDateString('pl-PL', { month: 'long', year: 'numeric' });
+        
+        let projectionHtml = '';
+        try {
+            const currentMonthKey = now.toISOString().substring(0, 7);
+            const cache = state.monthlyProjectionCache;
+            
+            let projectedTotal, diff;
+            const isCacheFresh = cache && cache.month === currentMonthKey && (Date.now() - cache.timestamp < 5 * 60 * 1000);
+
+            if (isCacheFresh) {
+                // Użyj danych ze state (oszczędność zapytań API)
+                projectedTotal = cache.projectedTotal;
+                diff = cache.diff;
+            } else {
+                // Pobierz i przelicz, jeśli cache jest stary lub go brak
+                const [budgetData, purchaseData] = await Promise.all([
+                    apiCall(`/api/budgets/${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}`),
+                    apiCall(`/api/purchases?startDate=${currentMonthKey}-01&limit=1000`)
+                ]);
+
+                const budgets = budgetData.budgets || {};
+                const totalBudget = Object.values(budgets).reduce((a, b) => a + b, 0);
+                const purchases = (purchaseData.purchases || []).filter(p => !p.specialBudgetId);
+
+                const day = now.getDate();
+                const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+                const rem = daysInMonth - day;
+
+                let fixed = 0, flexible = 0, oneTime = 0;
+                purchases.forEach(p => (p.items || []).forEach(i => {
+                    const nature = (i.tags?.nature || '').toLowerCase().trim();
+                    const cat = (i.category || 'inne').toLowerCase().trim();
+                    const isFixed = p.isRecurring === true || 
+                                    ['staly', 'stały', 'stałe', 'stale'].includes(nature) || 
+                                    ['media(prad/gaz/woda)', 'media(prąd/gaz/woda)', 'czynsz', 'finanse', 'rachunki', 'oplaty', 'opłaty'].includes(cat);
+                    const isOneTime = nature === 'jednorazowy';
+                    if (isFixed) fixed += i.price || 0;
+                    else if (isOneTime) oneTime += i.price || 0;
+                    else flexible += i.price || 0;
+                }));
+
+                let upcoming = 0;
+                if (Array.isArray(state.allRecurringExpenses)) {
+                    state.allRecurringExpenses.forEach(r => {
+                        const alreadyPaid = purchases.some(p => 
+                            (p.items || []).some(item => item.name.toLowerCase().includes(r.name.toLowerCase()))
+                        );
+                        if (!alreadyPaid) upcoming += r.amount || 0;
+                    });
+                }
+                projectedTotal = fixed + upcoming + oneTime + flexible + (day > 0 ? (flexible / day) * rem : 0);
+                diff = totalBudget - projectedTotal;
+            }
+
+            const isSurplus = diff > 0;
+
+            projectionHtml = `
+                <div class="flex items-center justify-between p-3 rounded-xl bg-brand-500/5 border border-brand-500/10 border-dashed mb-2 relative overflow-hidden group">
+                    <div class="absolute inset-0 bg-gradient-to-r from-brand-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    <div class="space-y-0.5 overflow-hidden z-10">
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-[10px] font-extrabold text-brand-400 uppercase tracking-tight">Bieżący miesiąc</span>
+                            <span class="px-1 py-0.5 bg-brand-500/10 text-brand-400 text-[8px] font-bold rounded uppercase">W toku</span>
+                        </div>
+                        <span class="text-xs font-bold text-white block truncate">${currentMonthLabel.charAt(0).toUpperCase() + currentMonthLabel.slice(1)}</span>
+                        <div class="text-[9px] text-gray-500 font-medium">Prognozowane wydatki: ~${formatAmount(projectedTotal)}</div>
+                    </div>
+                    
+                    <div class="text-right z-10">
+                        <div class="text-xs font-extrabold ${isSurplus ? 'text-emerald-400' : 'text-red-400'}">
+                            ${isSurplus ? '≈ ' + formatAmount(diff) : '≈ -' + formatAmount(Math.abs(diff))}
+                        </div>
+                        <div class="text-[9px] text-gray-400">${isSurplus ? 'szacowanej nadwyżki' : 'szacowanego deficytu'}</div>
+                    </div>
+                </div>
+            `;
+        } catch (e) {
+            console.error('Błąd obliczania prognozy:', e);
+        }
+
+        // 2. Pobierz rozliczone miesiące i dane nadwyżek zbiorczo
+        const [settledMonths, surplusBatch] = await Promise.all([
+            apiCall('/api/savings-goals/settled'),
+            state.monthlySurplusCache ? Promise.resolve(state.monthlySurplusCache) : apiCall('/api/savings-goals/surplus-batch')
+        ]);
+
+        // Zapisz w pamięci podręcznej, jeśli pobraliśmy z API
+        if (!state.monthlySurplusCache) {
+            state.monthlySurplusCache = surplusBatch;
+        }
+
         const settledSet = new Set(settledMonths.map(s => s.month));
 
         // Skanujemy 12 zamkniętych miesięcy wstecz
         const prevMonths = getPreviousClosedMonths(12);
 
-        // Pobierz dane dla wszystkich miesięcy równolegle
-        const promises = prevMonths.map(async (m) => {
-            try {
-                const res = await apiCall(`/api/savings-goals/surplus?month=${m.value}`);
-                return { ...m, ...res };
-            } catch (err) {
-                console.error(`Błąd pobierania nadwyżki dla ${m.value}:`, err);
-                return { ...m, surplus: 0, deficit: 0, totalBudget: 0, totalSpent: 0, error: true };
-            }
-        });
+        // Łączymy dane z etykietami miesięcy i filtrujemy te, które nie są rozliczone
+        const mappedResults = prevMonths.map(m => {
+            const data = surplusBatch.find(r => r.month === m.value) || { surplus: 0, deficit: 0, totalBudget: 0, totalSpent: 0 };
+            return { ...m, ...data };
+        }).filter(m => !settledSet.has(m.value));
 
-        const results = await Promise.all(promises);
-
-        // Filtrujemy tylko te miesiące, które wymagają akcji (posiadają nadwyżkę/deficyt > 0 i nie są rozliczone)
-        const actionableResults = results.filter(res => (res.surplus > 0 || res.deficit > 0) && !settledSet.has(res.month));
+        // Filtrujemy tylko te miesiące, które wymagają akcji (posiadają nadwyżkę/deficyt > 0)
+        const actionableResults = mappedResults.filter(res => (res.surplus > 0 || res.deficit > 0));
 
         let listHtml = '';
 
@@ -420,7 +506,7 @@ async function checkAndRenderSurplus() {
         const listContainer = el('surplus-months-list');
         if (loader) loader.classList.add('hidden');
         if (listContainer) {
-            listContainer.innerHTML = listHtml;
+            listContainer.innerHTML = projectionHtml + listHtml;
             listContainer.classList.remove('hidden');
 
             // Podłącz listenery do przycisków alokacji
@@ -467,7 +553,7 @@ async function checkAndRenderSurplus() {
 /**
  * Szuflada (Drawer): Dodawanie i Edycja Skarbonki
  */
-function openAddEditGoalDrawer(goal = null) {
+async function openAddEditGoalDrawer(goal = null) {
     const isEdit = !!goal;
     const title = isEdit ? 'Edytuj cel oszczędnościowy' : 'Nowy cel oszczędnościowy';
 
@@ -496,8 +582,14 @@ function openAddEditGoalDrawer(goal = null) {
 
     // Renderuj historię transakcji, jeśli jesteśmy w trybie edycji
     let historyHtml = '';
+    let historyList = [];
     if (isEdit) {
-        const historyList = goal.history || [];
+        try {
+            historyList = await apiCall(`/api/savings-goals/${goal.id}/history`);
+        } catch (err) {
+            console.error('Błąd pobierania historii transakcji:', err);
+        }
+
         if (historyList.length === 0) {
             historyHtml = `<div class="text-[11px] text-gray-500 italic py-3 text-center border border-white/5 rounded-xl bg-white/5">Brak historii transakcji</div>`;
         } else {
@@ -745,7 +837,8 @@ function openDepositWithdrawDrawer(goal, mode = 'deposit') {
                 const endpoint = `/api/savings-goals/${goal.id}/${mode}`;
                 await apiCall(endpoint, 'POST', { amount });
 
-                // Odśwież widok
+                // Odśwież widok i inwaliduj cache
+                state.monthlySurplusCache = null;
                 await renderSavingsGoalsTab();
                 Drawer.close();
             } catch (err) {
@@ -851,7 +944,8 @@ function openAllocateSurplusDrawer(surplus, month) {
                     type: 'surplus'
                 });
 
-                // Odśwież widok
+                // Odśwież widok i inwaliduj cache
+                state.monthlySurplusCache = null;
                 await renderSavingsGoalsTab();
                 Drawer.close();
             } catch (err) {
@@ -950,7 +1044,8 @@ function openCoverDeficitDrawer(deficit, month) {
                     type: 'deficit'
                 });
 
-                // Odśwież widok
+                // Odśwież widok i inwaliduj cache
+                state.monthlySurplusCache = null;
                 await renderSavingsGoalsTab();
                 Drawer.close();
             } catch (err) {
@@ -1036,6 +1131,7 @@ function openTransferBetweenGoalsDrawer(sourceGoal) {
                     amount
                 });
 
+                state.monthlySurplusCache = null;
                 await renderSavingsGoalsTab();
                 Drawer.close();
             } catch (err) {

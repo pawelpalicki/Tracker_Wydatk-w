@@ -97,6 +97,7 @@ router.get('/init', authMiddleware, asyncHandler(async (req, res) => {
         // 9. Cele oszczędnościowe — 1 query
         savingsGoalsCollection
             .where('userId', '==', userId)
+            .select('userId', 'name', 'targetAmount', 'currentAmount', 'deadline', 'icon', 'color', 'createdAt', 'updatedAt')
             .get()
     ]);
 

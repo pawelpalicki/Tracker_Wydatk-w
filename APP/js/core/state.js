@@ -51,9 +51,15 @@ const state = {
     filterMaxAmount: '',
 
     // =====================================================================
-    // CACHE DANYCH
+    // CACHE DANYCH I PROGNOZ
     // =====================================================================
     availableMonthsList: [], // Wykorzystywane w analizie długoterminowej
+    monthlyProjectionCache: {
+        month: null,        // format YYYY-MM
+        projectedTotal: 0,
+        diff: 0,
+        timestamp: 0        // czas ostatniej aktualizacji
+    },
 
     // =====================================================================
     // FLAGI SYSTEMOWE
