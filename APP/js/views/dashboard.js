@@ -224,21 +224,81 @@ async function renderHomeSummary(dashboardData = null) {
         }
 
         updateHomeComparisonBadge(comparisonData.monthlyTotals, month, prevMonthKey, isCurrentMonth);
-        renderHomeMobilizationInsights(purchases, totalBudget, isCurrentMonth);
+        await renderHomeMobilizationInsights(purchases, totalBudget, isCurrentMonth);
+        await renderHomeSavings();
+
+        // Pobierz dane o rezerwacjach (blokadach) z cache'u prognozy
+        const projection = state.monthlyProjectionCache;
+        const reservationsTotal = (isCurrentMonth && projection) ? (projection.reservationsTotal || 0) : 0;
+
+        const resWrapper = document.getElementById('home-budget-reservations-wrapper');
+        const resSignEl = document.getElementById('home-budget-reservations-sign');
+        const resAmountEl = document.getElementById('home-budget-reservations-amount');
+        const resLabelEl = document.getElementById('home-budget-reservations-label');
+        const resPctEl = document.getElementById('home-budget-reservations-pct');
+        const resBarEl = document.getElementById('home-budget-reservations-bar');
+
+        if (resWrapper && isCurrentMonth && reservationsTotal !== 0) {
+            resWrapper.classList.remove('hidden');
+            const isNegative = reservationsTotal < 0;
+            if (resSignEl) resSignEl.textContent = isNegative ? '- ' : '+ ';
+            if (resAmountEl) resAmountEl.textContent = formatAmount(Math.abs(reservationsTotal));
+            if (resLabelEl) resLabelEl.textContent = isNegative ? 'zwolnione z celów' : 'odłożone na cele';
+        } else if (resWrapper) {
+            resWrapper.classList.add('hidden');
+        }
 
         const barWrapper = document.getElementById('home-budget-bar-wrapper');
         const progressEl = document.getElementById('home-budget-progress');
         const pctEl = document.getElementById('home-budget-pct');
+        
         if (totalBudget > 0) {
-            const pct = Math.round((totalSpent / totalBudget) * 100);
-            const isOver = totalSpent > totalBudget;
+            const spentPct = Math.round((totalSpent / totalBudget) * 100);
+            const resPctValue = Math.round((reservationsTotal / totalBudget) * 100);
+            const totalPct = spentPct + resPctValue;
 
             if (barWrapper) barWrapper.classList.remove('hidden');
+            
+            // Pasek wydatków (na wierzchu)
             if (progressEl) {
-                progressEl.style.width = Math.min(pct, 100) + '%';
-                progressEl.className = `h-2 rounded-full transition-all duration-500 ${isOver ? 'bg-red-500' : pct >= 80 ? 'bg-yellow-400' : 'bg-brand-500'}`;
+                // Jeśli wypłata (ujemna rezerwacja), pokazujemy "efektywny" postęp jako główny pasek
+                const mainPct = reservationsTotal < 0 ? totalPct : spentPct;
+                progressEl.style.width = Math.min(mainPct, 100) + '%';
+                progressEl.className = `h-full rounded-full transition-all duration-700 absolute left-0 top-0 z-10 ${totalSpent > totalBudget ? 'bg-red-500' : spentPct >= 80 ? 'bg-yellow-400' : 'bg-brand-500'}`;
             }
-            if (pctEl) pctEl.textContent = pct + '%';
+
+            // Pasek rezerwacji / zwrotu
+            if (resBarEl) {
+                if (isCurrentMonth && reservationsTotal !== 0) {
+                    if (reservationsTotal > 0) {
+                        // Wpłata: Pasek rezerwacji wystaje POZA pasek wydatków
+                        resBarEl.style.width = Math.min(totalPct, 100) + '%';
+                        resBarEl.style.left = '0';
+                        resBarEl.className = 'h-full transition-all duration-700 bg-brand-700/60 absolute top-0 z-0';
+                    } else {
+                        // Wypłata: Pokazujemy "ducha" (ghost) tam gdzie wydatki były wcześniej
+                        resBarEl.style.width = Math.min(spentPct, 100) + '%';
+                        resBarEl.style.left = '0';
+                        resBarEl.className = 'h-full transition-all duration-700 bg-brand-500/20 border-r border-brand-500/30 border-dashed absolute top-0 z-0';
+                    }
+                    resBarEl.classList.remove('hidden');
+                } else {
+                    resBarEl.classList.add('hidden');
+                }
+            }
+
+            // Wyświetlanie procentów: Spent% (Total%)
+            if (pctEl) {
+                if (isCurrentMonth && reservationsTotal !== 0) {
+                    pctEl.textContent = `${spentPct}% (${totalPct}%)`;
+                } else {
+                    pctEl.textContent = spentPct + '%';
+                }
+            }
+            
+            // Ukrywamy stary element resPctEl, bo teraz mamy połączony widok
+            if (resPctEl) resPctEl.classList.add('hidden');
+            
         } else if (barWrapper) {
             barWrapper.classList.add('hidden');
         }
@@ -329,6 +389,66 @@ async function renderHomeMobilizationInsights(purchases, totalBudget, isCurrentM
     } catch (err) {
         console.error('Błąd renderowania mobilizacji:', err);
     }
+}
+
+/**
+ * Renderuje sekcję Mini Skarbonki na Dashboardzie
+ */
+async function renderHomeSavings() {
+    const section = document.getElementById('home-savings-section');
+    const container = document.getElementById('home-savings-goals');
+    const link = document.getElementById('home-savings-link');
+
+    if (!section || !container) return;
+
+    // Podłącz link do przejścia do pełnego widoku
+    if (link && !link.dataset.listener) {
+        link.onclick = (e) => {
+            e.preventDefault();
+            switchTab('savings-goals');
+        };
+        link.dataset.listener = 'true';
+    }
+
+    const goals = state.allSavingsGoals || [];
+    const activeGoals = goals.filter(g => (parseFloat(g.currentAmount) || 0) < (parseFloat(g.targetAmount) || 1));
+
+    if (activeGoals.length === 0) {
+        section.classList.add('hidden');
+        return;
+    }
+
+    section.classList.remove('hidden');
+
+    let html = '';
+    activeGoals.forEach(goal => {
+        const currentAmount = parseFloat(goal.currentAmount) || 0;
+        const targetAmount = parseFloat(goal.targetAmount) || 1;
+        const percent = Math.min(100, Math.round((currentAmount / targetAmount) * 100));
+
+        html += `
+            <div class="flex-none w-32 snap-start" onclick="document.dispatchEvent(new CustomEvent('switchTab', {detail: 'savings-goals'}))">
+                <div class="glass-card p-3 border border-white/5 rounded-2xl bg-white/5 hover:bg-white/10 transition-all active:scale-95 cursor-pointer">
+                    <div class="flex items-center gap-2 mb-2">
+                        <div class="w-7 h-7 rounded-lg bg-white/5 flex items-center justify-center shrink-0" style="color: ${goal.color}">
+                            <i class="fas ${goal.icon || 'fa-piggy-bank'} text-xs"></i>
+                        </div>
+                        <div class="min-w-0">
+                            <p class="text-[10px] font-bold text-white truncate leading-tight">${goal.name}</p>
+                            <p class="text-[8px] text-gray-400 font-medium">${percent}%</p>
+                        </div>
+                    </div>
+                    
+                    <div class="w-full bg-white/5 h-1 rounded-full overflow-hidden border border-white/5">
+                        <div class="h-full rounded-full transition-all duration-1000" 
+                             style="width: ${percent}%; background: ${goal.color}"></div>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+
+    container.innerHTML = html;
 }
 
 function renderHomeCategoryTiles(purchases, budgets = {}) {

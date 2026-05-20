@@ -194,6 +194,14 @@
                                             <i class="fas fa-wand-magic-sparkles text-lg animate-pulse"></i>
                                         </button>
                                     </div>
+                                    <div id="home-budget-reservations-wrapper" class="hidden flex items-center gap-1.5 mt-0.5">
+                                        <span class="text-[10px] text-brand-300 font-bold uppercase tracking-wider">
+                                            <span id="home-budget-reservations-sign">+</span>
+                                            <span id="home-budget-reservations-amount">0.00 zł</span>
+                                        </span>
+                                        <span id="home-budget-reservations-label" class="text-[9px] text-brand-400/60 font-medium">odłożone na cele</span>
+                                    </div>
+
                                     <div class="flex items-center justify-start gap-2 mt-1">
                                         <span id="home-budget-info"
                                             class="text-xs text-brand-200/60 font-medium italic hidden">Brak
@@ -206,12 +214,18 @@
                                     <div
                                         class="flex justify-between text-[10px] text-brand-300/70 mb-2 uppercase tracking-wider font-bold">
                                         <span>Postęp budżetu</span>
-                                        <span id="home-budget-pct">0%</span>
+                                        <div class="flex items-center gap-2">
+                                            <span id="home-budget-reservations-pct" class="text-brand-400 hidden">+0%</span>
+                                            <span id="home-budget-pct">0%</span>
+                                        </div>
                                     </div>
                                     <div
-                                        class="w-full bg-white/10 rounded-full h-2 overflow-hidden backdrop-blur-sm border border-white/5">
+                                        class="w-full bg-white/10 rounded-full h-2 overflow-hidden backdrop-blur-sm border border-white/5 relative">
                                         <div id="home-budget-progress"
-                                            class="h-full rounded-full transition-all duration-700 shadow-[0_0_15px_rgba(56,189,248,0.35)]"
+                                            class="h-full rounded-full transition-all duration-700 shadow-[0_0_15px_rgba(56,189,248,0.35)] absolute left-0 top-0 z-10"
+                                            style="width:0%"></div>
+                                        <div id="home-budget-reservations-bar"
+                                            class="h-full transition-all duration-700 bg-brand-700/60 absolute left-0 top-0 z-0"
                                             style="width:0%"></div>
                                     </div>
                                     <div class="flex justify-end mt-1.5">
@@ -288,6 +302,18 @@
                                 <i class="fas fa-chart-pie"></i>
                             </button>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Mini Skarbonka (Cele Oszczędnościowe) -->
+                <div id="home-savings-section" class="hidden px-1 mb-6">
+                    <div class="flex justify-between items-center mb-3 ml-1 pr-1">
+                        <h3 class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Twoje cele</h3>
+                        <button id="home-savings-link" class="text-[10px] font-bold text-brand-500 uppercase tracking-widest hover:text-brand-300 transition-colors">Pełna skarbonka &rarr;</button>
+                    </div>
+                    <div id="home-savings-goals"
+                        class="flex gap-3 overflow-x-auto pb-2 scrollbar-hide snap-x snap-mandatory">
+                        <!-- Rendered by JS -->
                     </div>
                 </div>
 

@@ -13,7 +13,7 @@
 
 const express = require('express');
 const router = express.Router();
-const { getFirestore } = require('firebase-admin/firestore');
+const { getFirestore, FieldValue } = require('firebase-admin/firestore');
 const { authMiddleware, asyncHandler } = require('../middleware');
 const { getUserMetadata } = require('../categories-service');
 
@@ -240,6 +240,75 @@ router.get('/init', authMiddleware, asyncHandler(async (req, res) => {
 
         // Powiadomienia
         notifications: notifications.slice(0, 50)
+    });
+}));
+
+// --- 3. Naprawa sald skarbonek (na podstawie historii) ---
+router.post('/maintenance/fix-savings-balances', authMiddleware, asyncHandler(async (req, res) => {
+    const goalsRef = db.collection('savingsGoals');
+    const snapshot = await goalsRef.where('userId', '==', req.userId).get();
+    
+    const results = [];
+    const debug = []; // Tablica na logi debugowania
+    const batch = db.batch();
+
+    snapshot.forEach(doc => {
+        const data = doc.data();
+        const history = data.history || [];
+        
+        let calculatedAmount = 0;
+        const historyDetails = [];
+
+        history.forEach((tx, idx) => {
+            const amt = parseFloat(tx.amount) || 0;
+            const type = (tx.type || '').toLowerCase();
+            
+            let change = 0;
+            if (type === 'deposit' || type === 'transfer_in') {
+                change = amt;
+            } else if (type === 'withdraw' || type === 'transfer_out') {
+                change = -amt;
+            }
+            
+            calculatedAmount += change;
+            historyDetails.push({ idx, type, amt, change });
+        });
+
+        // Zaokrąglij do 2 miejsc po przecinku
+        calculatedAmount = Math.round(calculatedAmount * 100) / 100;
+        const currentAmount = parseFloat(data.currentAmount) || 0;
+
+        debug.push({
+            name: data.name,
+            dbCurrentAmount: data.currentAmount,
+            parsedCurrentAmount: currentAmount,
+            calculatedAmount: calculatedAmount,
+            historyCount: history.length,
+            historyDetails: historyDetails
+        });
+
+        // Użyj małego marginesu błędu dla porównania floatów
+        if (Math.abs(currentAmount - calculatedAmount) > 0.001) {
+            batch.update(doc.ref, { 
+                currentAmount: calculatedAmount,
+                updatedAt: FieldValue.serverTimestamp()
+            });
+            results.push({
+                name: data.name,
+                old: currentAmount,
+                new: calculatedAmount
+            });
+        }
+    });
+
+    if (results.length > 0) {
+        await batch.commit();
+    }
+
+    res.json({
+        message: `Zaktualizowano ${results.length} skarbonek.`,
+        changes: results,
+        debug: debug // Zwracamy debug do klienta
     });
 }));
 

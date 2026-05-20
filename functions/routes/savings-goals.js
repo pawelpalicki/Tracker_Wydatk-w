@@ -43,6 +43,34 @@ router.get('/savings-goals/:id/history', authMiddleware, asyncHandler(async (req
     res.json(doc.data().history || []);
 }));
 
+// --- 1c. Pobieranie historii ze wszystkich celów zbiorczo ---
+router.get('/savings-goals/all-history', authMiddleware, asyncHandler(async (req, res) => {
+    const snapshot = await savingsGoalsCollection
+        .where('userId', '==', req.userId)
+        .select('name', 'history')
+        .get();
+    
+    const allHistory = [];
+    snapshot.forEach(doc => {
+        const data = doc.data();
+        const goalHistory = (data.history || []).map(h => ({
+            ...h,
+            goalId: doc.id,
+            goalName: data.name
+        }));
+        allHistory.push(...goalHistory);
+    });
+
+    // Sortuj wg daty malejąco
+    allHistory.sort((a, b) => {
+        const dateA = a.date ? (a.date.toDate ? a.date.toDate() : new Date(a.date)) : new Date(0);
+        const dateB = b.date ? (b.date.toDate ? b.date.toDate() : new Date(b.date)) : new Date(0);
+        return dateB - dateA;
+    });
+
+    res.json(allHistory);
+}));
+
 // --- 2. Dodawanie nowego celu ---
 router.post('/savings-goals', authMiddleware, asyncHandler(async (req, res) => {
     const { name, targetAmount, deadline, icon, color } = req.body;

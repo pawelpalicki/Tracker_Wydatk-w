@@ -96,6 +96,11 @@ function setupAppEventListeners() {
     initCategoriesManager();
     initTagsManager();
 
+    // Globalny listener dla zdarzeń zmiany zakładki (używany przez dynamiczne komponenty)
+    document.addEventListener('switchTab', (e) => {
+        if (e.detail) switchTab(e.detail);
+    });
+
     // Dynamic Navbar buttons
     document.getElementById('nav-back-btn')?.addEventListener('click', () => {
         history.back();

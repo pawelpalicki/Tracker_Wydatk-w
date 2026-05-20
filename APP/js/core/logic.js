@@ -5,6 +5,26 @@ import state from './state.js';
 import { apiCall } from './api.js';
 
 /**
+ * Pomocnicza funkcja obliczająca sumę rezerwacji z historii skarbonek.
+ */
+function calculateReservations(history, monthKey) {
+    let total = 0;
+    history.forEach(tx => {
+        const txDate = new Date(tx.date?._seconds ? tx.date._seconds * 1000 : tx.date);
+        const txMonthKey = txDate.toISOString().substring(0, 7);
+
+        if (txMonthKey === monthKey) {
+            const isSystemAllocation = tx.note && (tx.note.includes('Alokacja nadwyżki') || tx.note.includes('Pokrycie deficytu'));
+            if (!isSystemAllocation) {
+                if (tx.type === 'deposit') total += tx.amount || 0;
+                if (tx.type === 'withdraw') total -= tx.amount || 0;
+            }
+        }
+    });
+    return total;
+}
+
+/**
  * Oblicza prognozę wydatków dla bieżącego miesiąca (z uwzględnieniem cache'u).
  * Używane przez Kokpit oraz Skarbonkę.
  * 
@@ -23,19 +43,28 @@ export async function getMonthlyProjection(providedData = null) {
     }
 
     try {
-        let purchases, totalBudget;
+        let purchases, totalBudget, reservationsTotal = 0;
 
         if (providedData) {
             purchases = providedData.purchases;
             totalBudget = providedData.totalBudget;
+            // Jeśli mamy dane wejściowe, ale cache jest pusty/stary, musimy dociągnąć historię skarbonek
+            if (!isCacheFresh) {
+                const savingsHistory = await apiCall(`/api/savings-goals/all-history`);
+                reservationsTotal = calculateReservations(savingsHistory, currentMonthKey);
+            } else {
+                reservationsTotal = cache.reservationsTotal || 0;
+            }
         } else {
-            const [budgetData, purchaseData] = await Promise.all([
+            const [budgetData, purchaseData, savingsHistory] = await Promise.all([
                 apiCall(`/api/budgets/${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}`),
-                apiCall(`/api/purchases?startDate=${currentMonthKey}-01&limit=1000`)
+                apiCall(`/api/purchases?startDate=${currentMonthKey}-01&limit=1000`),
+                apiCall(`/api/savings-goals/all-history`)
             ]);
             const budgets = budgetData.budgets || {};
             totalBudget = Object.values(budgets).reduce((a, b) => a + b, 0);
             purchases = (purchaseData.purchases || []).filter(p => !p.specialBudgetId);
+            reservationsTotal = calculateReservations(savingsHistory, currentMonthKey);
         }
 
         const day = now.getDate();
@@ -71,13 +100,15 @@ export async function getMonthlyProjection(providedData = null) {
             });
         }
 
+        // Rezerwacje odejmujemy od dostępnej kwoty, tak jakby były wydatkiem (ale bez statystyk kategorii)
         const projectedTotal = fixed + upcoming + oneTime + flexible + (day > 0 ? (flexible / day) * rem : 0);
-        const diff = totalBudget - projectedTotal;
-        const dailyLimit = Math.max(0, totalBudget - fixed - upcoming - oneTime - flexible) / (rem + 1);
+        const diff = totalBudget - projectedTotal - reservationsTotal;
+        const dailyLimit = Math.max(0, totalBudget - fixed - upcoming - oneTime - flexible - reservationsTotal) / (rem + 1);
 
         const result = {
             month: currentMonthKey,
             projectedTotal,
+            reservationsTotal,
             diff,
             dailyLimit,
             wants,

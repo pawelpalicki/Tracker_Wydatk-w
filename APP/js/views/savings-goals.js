@@ -126,6 +126,28 @@ async function updateSavingsGoalsList() {
     if (activeCountEl) activeCountEl.textContent = activeCount;
     if (completedCountEl) completedCountEl.textContent = completedCount;
 
+    // Dodaj przycisk naprawy sald (tylko jeśli są cele)
+    const statsContainer = document.querySelector('#savings-goals-tab .flex.gap-4.mt-4.text-xs.text-gray-400');
+    if (statsContainer && goals.length > 0 && !el('fix-balances-btn')) {
+        const fixBtn = document.createElement('button');
+        fixBtn.id = 'fix-balances-btn';
+        fixBtn.className = 'w-5 h-5 flex items-center justify-center text-gray-500 hover:text-brand-400 transition-colors ml-auto';
+        fixBtn.title = 'Synchronizuj salda z historią';
+        fixBtn.innerHTML = '<i class="fas fa-sync-alt text-[10px]"></i>';
+        fixBtn.onclick = async () => {
+            if (!confirm('Czy chcesz przeliczyć salda skarbonek na podstawie ich historii transakcji?')) return;
+            try {
+                const res = await apiCall('/api/maintenance/fix-savings-balances', 'POST');
+                console.log('[DEBUG] Wynik synchronizacji:', res);
+                alert(res.message);
+                await renderSavingsGoalsTab();
+            } catch (e) {
+                alert('Błąd synchronizacji: ' + e.message);
+            }
+        };
+        statsContainer.appendChild(fixBtn);
+    }
+
     if (goals.length === 0) {
         listContainer.innerHTML = `
             <div class="flex flex-col items-center justify-center py-12 text-center">
@@ -843,8 +865,9 @@ function openDepositWithdrawDrawer(goal, mode = 'deposit') {
                 const endpoint = `/api/savings-goals/${goal.id}/${mode}`;
                 await apiCall(endpoint, 'POST', { amount });
 
-                // Odśwież widok i inwaliduj cache
+                // Odśwież widok i inwaliduj cache (także prognozy dla Kokpitu)
                 state.monthlySurplusCache = null;
+                state.monthlyProjectionCache = null;
                 await renderSavingsGoalsTab();
                 Drawer.close();
             } catch (err) {
