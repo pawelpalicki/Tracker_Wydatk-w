@@ -7,6 +7,7 @@ import {
     initNotifications,
     checkAndGenerateNotifications
 } from '../shared/notifications.js';
+import { getMonthlyProjection } from '../core/logic.js';
 
 let homeDashboardMonth = null;
 let homeAvailableMonths = [];
@@ -288,98 +289,46 @@ function updateHomeComparisonBadge(monthlyTotals, currentKey, prevKey, isCurrent
     if (labelEl) labelEl.classList.remove('hidden');
 }
 
-function renderHomeMobilizationInsights(purchases, totalBudget, isCurrentMonth) {
+async function renderHomeMobilizationInsights(purchases, totalBudget, isCurrentMonth) {
     const section = document.getElementById('home-mobilization-section');
     if (!section || !isCurrentMonth || totalBudget <= 0) {
         if (section) section.classList.add('hidden');
         return;
     }
 
-    const now = new Date();
-    const day = now.getDate();
-    const days = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-    const rem = days - day;
-    let fixed = 0;
-    let flexible = 0;
-    let wants = 0;
-    let oneTime = 0;
+    try {
+        const projectionData = await getMonthlyProjection({ purchases, totalBudget });
+        const { projectedTotal, diff, dailyLimit, wants } = projectionData;
 
-    purchases.forEach(p => (p.items || []).forEach(i => {
-        const nature = (i.tags?.nature || '').toLowerCase().trim();
-        const cat = (i.category || 'inne').toLowerCase().trim();
-        const isFixed = p.isRecurring === true ||
-            nature === 'staly' ||
-            nature === 'stale' ||
-            nature === 'stały' ||
-            nature === 'stałe' ||
-            ['media(prad/gaz/woda)', 'media(prąd/gaz/woda)', 'czynsz', 'finanse', 'rachunki', 'oplaty', 'opłaty'].includes(cat);
-        const isOneTime = nature === 'jednorazowy';
+        const dailyLimitEl = document.getElementById('insight-daily-limit');
+        const projectionEl = document.getElementById('insight-projection');
+        const wantsEl = document.getElementById('insight-wants');
+        const diffEl = document.getElementById('insight-projection-diff');
 
-        if (isFixed) {
-            fixed += i.price || 0;
-        } else if (isOneTime) {
-            oneTime += i.price || 0;
-        } else {
-            flexible += i.price || 0;
-            if (i.tags?.purpose === 'przyjemność' || i.tags?.purpose === 'przyjemnosc') {
-                wants += i.price || 0;
+        if (dailyLimitEl) dailyLimitEl.textContent = formatAmount(dailyLimit);
+        if (projectionEl) projectionEl.textContent = formatAmount(projectedTotal);
+        if (wantsEl) wantsEl.textContent = formatAmount(wants);
+
+        if (diffEl) {
+            diffEl.textContent = `${formatAmount(Math.abs(diff))} ${diff >= 0 ? 'zapasu' : 'przekroczenia'}`;
+            diffEl.className = `text-[9px] font-bold leading-tight mt-0.5 break-words ${diff >= 0 ? 'text-green-400' : 'text-red-400'}`;
+        }
+
+        const textContainer = document.getElementById('insight-text-container');
+        if (textContainer) {
+            textContainer.innerHTML = '';
+            if (projectedTotal > totalBudget) {
+                const warning = document.createElement('div');
+                warning.className = 'text-[8px] text-red-300 font-bold flex items-center gap-1';
+                warning.innerHTML = `<i class="fas fa-triangle-exclamation"></i> Przekroczysz o ~${formatAmount(projectedTotal - totalBudget)}`;
+                textContainer.appendChild(warning);
             }
         }
-    }));
 
-    let upcoming = 0;
-    if (Array.isArray(state.allRecurringExpenses)) {
-        const currentMonthStr = now.toISOString().substring(0, 7);
-        state.allRecurringExpenses.forEach(r => {
-            const alreadyPaid = purchases.some(p =>
-                p.date.substring(0, 7) === currentMonthStr &&
-                (p.items || []).some(item => item.name.toLowerCase().includes(r.name.toLowerCase()))
-            );
-
-            if (!alreadyPaid) {
-                upcoming += r.amount || 0;
-            }
-        });
+        section.classList.remove('hidden');
+    } catch (err) {
+        console.error('Błąd renderowania mobilizacji:', err);
     }
-
-    const projection = fixed + upcoming + oneTime + flexible + (day > 0 ? flexible / day * rem : 0);
-    const dailyLimit = Math.max(0, totalBudget - fixed - upcoming - oneTime - flexible) / (rem + 1);
-
-    const dailyLimitEl = document.getElementById('insight-daily-limit');
-    const projectionEl = document.getElementById('insight-projection');
-    const wantsEl = document.getElementById('insight-wants');
-    const diffEl = document.getElementById('insight-projection-diff');
-
-    if (dailyLimitEl) dailyLimitEl.textContent = formatAmount(dailyLimit);
-    if (projectionEl) projectionEl.textContent = formatAmount(projection);
-    if (wantsEl) wantsEl.textContent = formatAmount(wants);
-
-    const diff = totalBudget - projection;
-    if (diffEl) {
-        diffEl.textContent = `${formatAmount(Math.abs(diff))} ${diff >= 0 ? 'zapasu' : 'przekroczenia'}`;
-        diffEl.className = `text-[9px] font-bold leading-tight mt-0.5 break-words ${diff >= 0 ? 'text-green-400' : 'text-red-400'}`;
-    }
-
-    // Zapisz do cache'u w state dla innych widoków (np. Skarbonki)
-    state.monthlyProjectionCache = {
-        month: now.toISOString().substring(0, 7),
-        projectedTotal: projection,
-        diff: diff,
-        timestamp: Date.now()
-    };
-
-    const textContainer = document.getElementById('insight-text-container');
-    if (textContainer) {
-        textContainer.innerHTML = '';
-        if (projection > totalBudget) {
-            const warning = document.createElement('div');
-            warning.className = 'text-[8px] text-red-300 font-bold flex items-center gap-1';
-            warning.innerHTML = `<i class="fas fa-triangle-exclamation"></i> Przekroczysz o ~${formatAmount(projection - totalBudget)}`;
-            textContainer.appendChild(warning);
-        }
-    }
-
-    section.classList.remove('hidden');
 }
 
 function renderHomeCategoryTiles(purchases, budgets = {}) {

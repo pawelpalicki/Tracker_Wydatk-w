@@ -9,6 +9,7 @@ import { formatAmount } from '../shared/format.js';
 import { switchTab } from '../shared/ui.js';
 import Drawer from '../shared/drawer.js';
 import { fetchInitialData } from '../core/data-loader.js';
+import { getMonthlyProjection } from '../core/logic.js';
 
 let savingsGoalsInitialized = false;
 
@@ -94,7 +95,7 @@ export async function renderSavingsGoalsTab() {
     }
 
     // Wyrenderuj zawartość celów
-    updateSavingsGoalsList();
+    await updateSavingsGoalsList();
 
     // Sprawdź nadwyżkę budżetową z zeszłych miesięcy
     checkAndRenderSurplus();
@@ -103,7 +104,7 @@ export async function renderSavingsGoalsTab() {
 /**
  * Aktualizuje listę celów i statystyki w nagłówku
  */
-function updateSavingsGoalsList() {
+async function updateSavingsGoalsList() {
     const listContainer = el('savings-goals-list');
     const totalAmountEl = el('total-savings-amount');
     const activeCountEl = el('active-goals-count');
@@ -112,6 +113,9 @@ function updateSavingsGoalsList() {
     if (!listContainer) return;
 
     const goals = state.allSavingsGoals || [];
+    
+    // Pobierz dane prognozy dla bieżącego miesiąca
+    const { diff } = await getMonthlyProjection();
 
     // Oblicz statystyki
     const totalSavings = goals.reduce((sum, g) => sum + (parseFloat(g.currentAmount) || 0), 0);
@@ -137,8 +141,31 @@ function updateSavingsGoalsList() {
 
     let html = '';
     goals.forEach(goal => {
-        const percent = Math.min(100, Math.round((goal.currentAmount / goal.targetAmount) * 100));
-        const isCompleted = goal.currentAmount >= goal.targetAmount;
+        const currentAmount = parseFloat(goal.currentAmount) || 0;
+        const targetAmount = parseFloat(goal.targetAmount) || 1; // Unikaj dzielenia przez 0
+        const percent = Math.min(100, Math.round((currentAmount / targetAmount) * 100));
+        const isCompleted = currentAmount >= targetAmount;
+
+        // Oblicz "potencjał" na podstawie nadwyżki
+        let potentialPercent = 0;
+        let potentialDiff = 0;
+        let isDeficit = false;
+
+        if (!isCompleted && diff !== 0) {
+            if (diff > 0) {
+                // Nadwyżka: pokaż ile % można zyskać (zakładamy, że cała nadwyżka idzie w ten cel dla wizualizacji)
+                potentialDiff = diff;
+                const newTotal = Math.min(targetAmount, currentAmount + diff);
+                potentialPercent = Math.round((newTotal / targetAmount) * 100) - percent;
+            } else {
+                // Deficyt: pokaż ile % "brakuje" lub jest zagrożone
+                isDeficit = true;
+                potentialDiff = Math.abs(diff);
+                // Pokazujemy deficyt jako "wycięcie" z obecnego paska lub ostrzeżenie przed nim
+                const reducedAmount = Math.max(0, currentAmount - potentialDiff);
+                potentialPercent = percent - Math.round((reducedAmount / targetAmount) * 100);
+            }
+        }
 
         // Dopasuj kolor presetu
         const preset = COLOR_PRESETS.find(p => p.value === goal.color) || COLOR_PRESETS[0];
@@ -187,16 +214,45 @@ function updateSavingsGoalsList() {
                 <!-- Progress Section -->
                 <div class="space-y-1.5 mb-4">
                     <div class="flex justify-between text-xs font-semibold">
-                        <span class="text-gray-300">${formatAmount(goal.currentAmount)} / <span class="text-gray-400 font-normal">${formatAmount(goal.targetAmount)}</span></span>
-                        <span style="color: ${goal.color}">${percent}%</span>
+                        <span class="text-gray-300">${formatAmount(currentAmount)} / <span class="text-gray-400 font-normal">${formatAmount(targetAmount)}</span></span>
+                        <div class="flex items-center gap-1.5">
+                            ${!isCompleted && potentialPercent > 0 ? `
+                                <span class="text-[10px] ${isDeficit ? 'text-red-400' : 'text-emerald-400'} animate-pulse">
+                                    ${isDeficit ? '-' : '+'}${potentialPercent}%
+                                </span>
+                            ` : ''}
+                            <span style="color: ${goal.color}">${percent}%</span>
+                        </div>
                     </div>
                     
                     <!-- Progress Bar Container -->
-                    <div class="w-full bg-white/5 h-2.5 rounded-full overflow-hidden border border-white/5">
-                        <div class="progress-bar-fill h-full rounded-full transition-all duration-1000 ease-out" 
+                    <div class="w-full bg-white/5 h-2.5 rounded-full overflow-hidden border border-white/5 relative">
+                        <!-- Actual Progress Bar -->
+                        <div class="progress-bar-fill h-full rounded-full transition-all duration-1000 ease-out absolute left-0 top-0 z-10" 
                              style="width: 0%; background: ${goal.color}" 
-                             data-target-width="${percent}%"></div>
+                             data-target-width="${isDeficit ? (percent - potentialPercent) : percent}%"></div>
+                        
+                        <!-- Potential/Deficit Bar -->
+                        ${!isCompleted && potentialPercent > 0 ? `
+                            <div class="h-full transition-all duration-1000 ease-out absolute top-0 ${isDeficit ? 'progress-bar-deficit' : 'progress-bar-potential'} z-0" 
+                                 style="width: 0%; left: ${isDeficit ? (percent - potentialPercent) : percent}%; background: ${isDeficit ? '#ef4444' : goal.color}; opacity: ${isDeficit ? 0.6 : 0.4}" 
+                                 data-target-width="${potentialPercent}%"></div>
+                        ` : ''}
                     </div>
+                    
+                    <!-- Motivation Tip -->
+                    ${!isCompleted && diff > 0 ? `
+                        <p class="text-[10px] text-emerald-400/80 font-medium flex items-center gap-1 mt-1">
+                            <i class="fas fa-chart-line text-[9px]"></i>
+                            <span>Prognozowana nadwyżka ${formatAmount(diff)} może przyśpieszyć ten cel!</span>
+                        </p>
+                    ` : ''}
+                    ${!isCompleted && diff < 0 ? `
+                        <p class="text-[10px] text-red-400/80 font-medium flex items-center gap-1 mt-1">
+                            <i class="fas fa-exclamation-triangle text-[9px]"></i>
+                            <span>Uwaga: prognozowany deficyt ${formatAmount(Math.abs(diff))} może spowolnić oszczędzanie.</span>
+                        </p>
+                    ` : ''}
                 </div>
 
                 <!-- Actions -->
@@ -218,7 +274,7 @@ function updateSavingsGoalsList() {
 
     // Uruchomienie mikro-animacji paska postępu
     setTimeout(() => {
-        listContainer.querySelectorAll('.progress-bar-fill').forEach(fill => {
+        listContainer.querySelectorAll('.progress-bar-fill, .progress-bar-potential, .progress-bar-deficit').forEach(fill => {
             fill.style.width = fill.dataset.targetWidth;
         });
     }, 50);
@@ -248,6 +304,7 @@ function updateSavingsGoalsList() {
         });
     });
 }
+
 
 /**
  * Sprawdza i renderuje banner o nadwyżce budżetowej z zeszłego miesiąca
@@ -329,62 +386,11 @@ async function checkAndRenderSurplus() {
     try {
         // 1. Pobierz dane dla bieżącego miesiąca (prognoza)
         const now = new Date();
-        const currentMonthValue = now.toISOString().substring(0, 7);
         const currentMonthLabel = now.toLocaleDateString('pl-PL', { month: 'long', year: 'numeric' });
         
         let projectionHtml = '';
         try {
-            const currentMonthKey = now.toISOString().substring(0, 7);
-            const cache = state.monthlyProjectionCache;
-            
-            let projectedTotal, diff;
-            const isCacheFresh = cache && cache.month === currentMonthKey && (Date.now() - cache.timestamp < 5 * 60 * 1000);
-
-            if (isCacheFresh) {
-                // Użyj danych ze state (oszczędność zapytań API)
-                projectedTotal = cache.projectedTotal;
-                diff = cache.diff;
-            } else {
-                // Pobierz i przelicz, jeśli cache jest stary lub go brak
-                const [budgetData, purchaseData] = await Promise.all([
-                    apiCall(`/api/budgets/${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}`),
-                    apiCall(`/api/purchases?startDate=${currentMonthKey}-01&limit=1000`)
-                ]);
-
-                const budgets = budgetData.budgets || {};
-                const totalBudget = Object.values(budgets).reduce((a, b) => a + b, 0);
-                const purchases = (purchaseData.purchases || []).filter(p => !p.specialBudgetId);
-
-                const day = now.getDate();
-                const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-                const rem = daysInMonth - day;
-
-                let fixed = 0, flexible = 0, oneTime = 0;
-                purchases.forEach(p => (p.items || []).forEach(i => {
-                    const nature = (i.tags?.nature || '').toLowerCase().trim();
-                    const cat = (i.category || 'inne').toLowerCase().trim();
-                    const isFixed = p.isRecurring === true || 
-                                    ['staly', 'stały', 'stałe', 'stale'].includes(nature) || 
-                                    ['media(prad/gaz/woda)', 'media(prąd/gaz/woda)', 'czynsz', 'finanse', 'rachunki', 'oplaty', 'opłaty'].includes(cat);
-                    const isOneTime = nature === 'jednorazowy';
-                    if (isFixed) fixed += i.price || 0;
-                    else if (isOneTime) oneTime += i.price || 0;
-                    else flexible += i.price || 0;
-                }));
-
-                let upcoming = 0;
-                if (Array.isArray(state.allRecurringExpenses)) {
-                    state.allRecurringExpenses.forEach(r => {
-                        const alreadyPaid = purchases.some(p => 
-                            (p.items || []).some(item => item.name.toLowerCase().includes(r.name.toLowerCase()))
-                        );
-                        if (!alreadyPaid) upcoming += r.amount || 0;
-                    });
-                }
-                projectedTotal = fixed + upcoming + oneTime + flexible + (day > 0 ? (flexible / day) * rem : 0);
-                diff = totalBudget - projectedTotal;
-            }
-
+            const { projectedTotal, diff } = await getMonthlyProjection();
             const isSurplus = diff > 0;
 
             projectionHtml = `

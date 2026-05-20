@@ -320,6 +320,42 @@ input:-webkit-autofill {
 
 /* ===== View-Specific Styles ===== */
 
+/* Progress Bar Animations */
+.progress-bar-potential {
+    background-image: linear-gradient(
+        45deg,
+        rgba(255, 255, 255, 0.15) 25%,
+        transparent 25%,
+        transparent 50%,
+        rgba(255, 255, 255, 0.15) 50%,
+        rgba(255, 255, 255, 0.15) 75%,
+        transparent 75%,
+        transparent
+    );
+    background-size: 1rem 1rem;
+    animation: progress-stripe 2s linear infinite;
+}
+
+.progress-bar-deficit {
+    background-image: linear-gradient(
+        45deg,
+        rgba(239, 68, 68, 0.3) 25%,
+        transparent 25%,
+        transparent 50%,
+        rgba(239, 68, 68, 0.3) 50%,
+        rgba(239, 68, 68, 0.3) 75%,
+        transparent 75%,
+        transparent
+    );
+    background-size: 1rem 1rem;
+    animation: progress-stripe 2s linear infinite;
+}
+
+@keyframes progress-stripe {
+    from { background-position: 1rem 0; }
+    to { background-position: 0 0; }
+}
+
 /* Home Tab (Kokpit) */
 #home-category-tiles,
 #home-subcategory-tiles {
