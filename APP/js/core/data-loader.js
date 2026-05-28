@@ -104,7 +104,7 @@ export async function renderAll() {
         renderSpecialBudgetsTab();
     }
     if (document.getElementById('savings-goals-tab')?.classList.contains('active')) {
-        import('../views/savings-goals.js').then(m => m.renderSavingsGoalsTab());
+        import('../views/savings-goals.js?v=20260528-1').then(m => m.renderSavingsGoalsTab());
     }
 }
 

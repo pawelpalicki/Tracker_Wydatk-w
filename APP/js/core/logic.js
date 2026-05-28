@@ -17,7 +17,7 @@ function calculateReservations(history, monthKey) {
             const isSystemAllocation = tx.note && (tx.note.includes('Alokacja nadwyżki') || tx.note.includes('Pokrycie deficytu'));
             if (!isSystemAllocation) {
                 if (tx.type === 'deposit') total += tx.amount || 0;
-                if (tx.type === 'withdraw') total -= tx.amount || 0;
+                if (tx.type === 'withdraw' || tx.type === 'realization') total -= tx.amount || 0;
             }
         }
     });

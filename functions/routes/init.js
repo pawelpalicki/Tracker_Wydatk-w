@@ -97,7 +97,7 @@ router.get('/init', authMiddleware, asyncHandler(async (req, res) => {
         // 9. Cele oszczędnościowe — 1 query
         savingsGoalsCollection
             .where('userId', '==', userId)
-            .select('userId', 'name', 'targetAmount', 'currentAmount', 'deadline', 'icon', 'color', 'createdAt', 'updatedAt')
+            .select('userId', 'name', 'targetAmount', 'currentAmount', 'deadline', 'icon', 'color', 'status', 'realizedAt', 'realizedAmount', 'createdAt', 'updatedAt')
             .get()
     ]);
 
@@ -266,7 +266,7 @@ router.post('/maintenance/fix-savings-balances', authMiddleware, asyncHandler(as
             let change = 0;
             if (type === 'deposit' || type === 'transfer_in') {
                 change = amt;
-            } else if (type === 'withdraw' || type === 'transfer_out') {
+            } else if (type === 'withdraw' || type === 'transfer_out' || type === 'realization') {
                 change = -amt;
             }
             

@@ -9,11 +9,52 @@ const budgetsCollection = db.collection('budgets');
 const purchasesCollection = db.collection('expenses');
 const settledMonthsCollection = db.collection('settledMonths');
 
+function getHistoryDate(tx) {
+    if (!tx.date) return null;
+    if (typeof tx.date.toDate === 'function') return tx.date.toDate();
+    if (tx.date._seconds !== undefined) return new Date(tx.date._seconds * 1000);
+    if (tx.date.seconds !== undefined) return new Date(tx.date.seconds * 1000);
+    return new Date(tx.date);
+}
+
+function getHistoryMonth(tx) {
+    const date = getHistoryDate(tx);
+    if (!date || Number.isNaN(date.getTime())) return null;
+    return date.toISOString().substring(0, 7);
+}
+
+function shouldAdjustSavingsBalance(tx) {
+    const note = tx.note || '';
+    return !note.includes('Alokacja nadwyżki') && !note.includes('Pokrycie deficytu');
+}
+
+function getSavingsBalanceDelta(tx) {
+    if (!shouldAdjustSavingsBalance(tx)) return 0;
+    const amount = parseFloat(tx.amount || 0);
+    if (!amount) return 0;
+    if (tx.type === 'deposit') return amount;
+    if (tx.type === 'withdraw' || tx.type === 'realization') return -amount;
+    return 0;
+}
+
+function buildSavingsAdjustmentsMap(snapshot, allowedMonths = null) {
+    const adjustments = {};
+    snapshot.forEach(doc => {
+        const history = doc.data().history || [];
+        history.forEach(tx => {
+            const month = getHistoryMonth(tx);
+            if (!month || (allowedMonths && !allowedMonths.includes(month))) return;
+            adjustments[month] = (adjustments[month] || 0) + getSavingsBalanceDelta(tx);
+        });
+    });
+    return adjustments;
+}
+
 // --- 1. Pobieranie celów oszczędnościowych (Zoptymalizowane: bez historii transakcji) ---
 router.get('/savings-goals', authMiddleware, asyncHandler(async (req, res) => {
     const snapshot = await savingsGoalsCollection
         .where('userId', '==', req.userId)
-        .select('userId', 'name', 'targetAmount', 'currentAmount', 'deadline', 'icon', 'color', 'createdAt', 'updatedAt')
+        .select('userId', 'name', 'targetAmount', 'currentAmount', 'deadline', 'icon', 'color', 'status', 'realizedAt', 'realizedAmount', 'createdAt', 'updatedAt')
         .get();
     const goals = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     
@@ -87,6 +128,7 @@ router.post('/savings-goals', authMiddleware, asyncHandler(async (req, res) => {
         deadline: deadline || null,
         icon: icon || 'fa-piggy-bank',
         color: color || '#10b981',
+        status: 'active',
         history: [],
         createdAt: new Date()
     };
@@ -167,6 +209,10 @@ router.post('/savings-goals/:id/deposit', authMiddleware, asyncHandler(async (re
                 throw new Error('Unauthorized');
             }
 
+            if (doc.data().status === 'realized') {
+                throw new Error('GoalRealized');
+            }
+
             const currentAmount = parseFloat(doc.data().currentAmount || 0);
             const newAmount = parseFloat((currentAmount + parsedAmount).toFixed(2));
 
@@ -191,6 +237,9 @@ router.post('/savings-goals/:id/deposit', authMiddleware, asyncHandler(async (re
         }
         if (err.message === 'Unauthorized') {
             return res.status(403).json({ error: 'Brak uprawnień.' });
+        }
+        if (err.message === 'GoalRealized') {
+            return res.status(400).json({ error: 'Ten cel jest już zrealizowany.' });
         }
         throw err;
     }
@@ -217,6 +266,10 @@ router.post('/savings-goals/:id/withdraw', authMiddleware, asyncHandler(async (r
             }
             if (doc.data().userId !== req.userId) {
                 throw new Error('Unauthorized');
+            }
+
+            if (doc.data().status === 'realized') {
+                throw new Error('GoalRealized');
             }
 
             const currentAmount = parseFloat(doc.data().currentAmount || 0);
@@ -248,8 +301,72 @@ router.post('/savings-goals/:id/withdraw', authMiddleware, asyncHandler(async (r
         if (err.message === 'Unauthorized') {
             return res.status(403).json({ error: 'Brak uprawnień.' });
         }
+        if (err.message === 'GoalRealized') {
+            return res.status(400).json({ error: 'Ten cel jest już zrealizowany.' });
+        }
         if (err.message === 'InsufficientFunds') {
             return res.status(400).json({ error: 'Niewystarczające środki w skarbonce.' });
+        }
+        throw err;
+    }
+}));
+
+// --- 6b. Realizacja celu: wypłaca całe saldo i przenosi cel do historii ---
+router.post('/savings-goals/:id/realize', authMiddleware, asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const { note } = req.body || {};
+    const ref = savingsGoalsCollection.doc(id);
+    const now = new Date();
+
+    try {
+        const result = await db.runTransaction(async (transaction) => {
+            const doc = await transaction.get(ref);
+            if (!doc.exists) {
+                throw new Error('GoalNotFound');
+            }
+            if (doc.data().userId !== req.userId) {
+                throw new Error('Unauthorized');
+            }
+            if (doc.data().status === 'realized') {
+                throw new Error('GoalRealized');
+            }
+
+            const currentAmount = parseFloat(doc.data().currentAmount || 0);
+            if (currentAmount <= 0) {
+                throw new Error('EmptyGoal');
+            }
+
+            const realizedAmount = parseFloat(currentAmount.toFixed(2));
+            transaction.update(ref, {
+                currentAmount: 0,
+                status: 'realized',
+                realizedAt: now,
+                realizedAmount,
+                updatedAt: now,
+                history: FieldValue.arrayUnion({
+                    type: 'realization',
+                    amount: realizedAmount,
+                    date: now,
+                    note: note || 'Realizacja celu'
+                })
+            });
+
+            return { realizedAmount };
+        });
+
+        res.json({ success: true, currentAmount: 0, realizedAmount: result.realizedAmount });
+    } catch (err) {
+        if (err.message === 'GoalNotFound') {
+            return res.status(404).json({ error: 'Cel oszczędnościowy nie istnieje.' });
+        }
+        if (err.message === 'Unauthorized') {
+            return res.status(403).json({ error: 'Brak uprawnień.' });
+        }
+        if (err.message === 'GoalRealized') {
+            return res.status(400).json({ error: 'Ten cel jest już zrealizowany.' });
+        }
+        if (err.message === 'EmptyGoal') {
+            return res.status(400).json({ error: 'Nie można zrealizować pustego celu.' });
         }
         throw err;
     }
@@ -278,12 +395,16 @@ router.get('/savings-goals/surplus-batch', authMiddleware, asyncHandler(async (r
     const budgetDocRefs = months.map(m => budgetsCollection.doc(`${req.userId}_${m}`));
 
     // Pobierz wszystkie budżety i wydatki w sposób zoptymalizowany (równolegle, db.getAll + 1 query)
-    const [budgetSnapshots, purchasesSnapshot] = await Promise.all([
+    const [budgetSnapshots, purchasesSnapshot, savingsSnapshot] = await Promise.all([
         db.getAll(...budgetDocRefs),
         purchasesCollection
             .where('userId', '==', req.userId)
             .where('date', '>=', startDate)
             .where('date', '<=', endDate)
+            .get(),
+        savingsGoalsCollection
+            .where('userId', '==', req.userId)
+            .select('history')
             .get()
     ]);
 
@@ -312,10 +433,13 @@ router.get('/savings-goals/surplus-batch', authMiddleware, asyncHandler(async (r
     });
 
     // Obliczamy nadwyżki / deficyty
+    const savingsAdjustmentsMap = buildSavingsAdjustmentsMap(savingsSnapshot, months);
+
     const results = months.map(month => {
         const totalBudget = budgetsMap[month] || 0;
         const totalSpent = spentMap[month] || 0;
-        const difference = totalBudget - totalSpent;
+        const savingsAdjustment = parseFloat((savingsAdjustmentsMap[month] || 0).toFixed(2));
+        const difference = totalBudget - totalSpent - savingsAdjustment;
         const surplus = difference > 0 ? parseFloat(difference.toFixed(2)) : 0;
         const deficit = difference < 0 ? parseFloat(Math.abs(difference).toFixed(2)) : 0;
 
@@ -323,6 +447,7 @@ router.get('/savings-goals/surplus-batch', authMiddleware, asyncHandler(async (r
             month,
             totalBudget,
             totalSpent,
+            savingsAdjustment,
             surplus,
             deficit
         };
@@ -352,11 +477,17 @@ router.get('/savings-goals/surplus', authMiddleware, asyncHandler(async (req, re
     const startDate = `${month}-01`;
     const endDate = `${month}-31`;
 
-    const purchasesSnapshot = await purchasesCollection
-        .where('userId', '==', req.userId)
-        .where('date', '>=', startDate)
-        .where('date', '<=', endDate)
-        .get();
+    const [purchasesSnapshot, savingsSnapshot] = await Promise.all([
+        purchasesCollection
+            .where('userId', '==', req.userId)
+            .where('date', '>=', startDate)
+            .where('date', '<=', endDate)
+            .get(),
+        savingsGoalsCollection
+            .where('userId', '==', req.userId)
+            .select('history')
+            .get()
+    ]);
 
     let totalSpent = 0;
     purchasesSnapshot.forEach(doc => {
@@ -366,7 +497,9 @@ router.get('/savings-goals/surplus', authMiddleware, asyncHandler(async (req, re
         }
     });
 
-    const difference = totalBudget - totalSpent;
+    const savingsAdjustmentsMap = buildSavingsAdjustmentsMap(savingsSnapshot, [month]);
+    const savingsAdjustment = parseFloat((savingsAdjustmentsMap[month] || 0).toFixed(2));
+    const difference = totalBudget - totalSpent - savingsAdjustment;
     const surplus = difference > 0 ? parseFloat(difference.toFixed(2)) : 0;
     const deficit = difference < 0 ? parseFloat(Math.abs(difference).toFixed(2)) : 0;
 
@@ -374,6 +507,7 @@ router.get('/savings-goals/surplus', authMiddleware, asyncHandler(async (req, re
         month,
         totalBudget,
         totalSpent,
+        savingsAdjustment,
         surplus,
         deficit
     });
@@ -428,6 +562,9 @@ router.post('/savings-goals/transfer', authMiddleware, asyncHandler(async (req, 
             if (sourceDoc.data().userId !== req.userId || targetDoc.data().userId !== req.userId) {
                 throw new Error('Unauthorized');
             }
+            if (sourceDoc.data().status === 'realized' || targetDoc.data().status === 'realized') {
+                throw new Error('GoalRealized');
+            }
 
             const sourceAmount = parseFloat(sourceDoc.data().currentAmount || 0);
             if (sourceAmount < parsedAmount) {
@@ -472,6 +609,9 @@ router.post('/savings-goals/transfer', authMiddleware, asyncHandler(async (req, 
         }
         if (err.message === 'Unauthorized') {
             return res.status(403).json({ error: 'Brak uprawnień do jednego z celów.' });
+        }
+        if (err.message === 'GoalRealized') {
+            return res.status(400).json({ error: 'Nie można przelewać środków z lub do zrealizowanego celu.' });
         }
         if (err.message === 'InsufficientFunds') {
             return res.status(400).json({ error: 'Niewystarczające środki w celu źródłowym.' });

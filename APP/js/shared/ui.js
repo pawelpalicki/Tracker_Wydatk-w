@@ -125,7 +125,7 @@ export function switchTab(tabName, pushToHistory = true) {
     }
 
     if (tabName === 'savings-goals') {
-        import('../views/savings-goals.js').then(m => m.renderSavingsGoalsTab());
+        import('../views/savings-goals.js?v=20260528-1').then(m => m.renderSavingsGoalsTab());
     }
 
     if (tabName === 'settings' || tabName.startsWith('settings-')) {

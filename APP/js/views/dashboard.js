@@ -411,7 +411,7 @@ async function renderHomeSavings() {
     }
 
     const goals = state.allSavingsGoals || [];
-    const activeGoals = goals.filter(g => (parseFloat(g.currentAmount) || 0) < (parseFloat(g.targetAmount) || 1));
+    const activeGoals = goals.filter(g => g.status !== 'realized' && (parseFloat(g.currentAmount) || 0) < (parseFloat(g.targetAmount) || 1));
 
     if (activeGoals.length === 0) {
         section.classList.add('hidden');

@@ -113,14 +113,16 @@ async function updateSavingsGoalsList() {
     if (!listContainer) return;
 
     const goals = state.allSavingsGoals || [];
+    const activeGoals = goals.filter(g => g.status !== 'realized');
+    const realizedGoals = goals.filter(g => g.status === 'realized');
     
     // Pobierz dane prognozy dla bieżącego miesiąca
     const { diff } = await getMonthlyProjection();
 
     // Oblicz statystyki
-    const totalSavings = goals.reduce((sum, g) => sum + (parseFloat(g.currentAmount) || 0), 0);
-    const activeCount = goals.filter(g => g.currentAmount < g.targetAmount).length;
-    const completedCount = goals.filter(g => g.currentAmount >= g.targetAmount).length;
+    const totalSavings = activeGoals.reduce((sum, g) => sum + (parseFloat(g.currentAmount) || 0), 0);
+    const activeCount = activeGoals.length;
+    const completedCount = realizedGoals.length;
 
     if (totalAmountEl) totalAmountEl.textContent = formatAmount(totalSavings);
     if (activeCountEl) activeCountEl.textContent = activeCount;
@@ -162,11 +164,12 @@ async function updateSavingsGoalsList() {
     }
 
     let html = '';
-    goals.forEach(goal => {
+    activeGoals.forEach(goal => {
         const currentAmount = parseFloat(goal.currentAmount) || 0;
         const targetAmount = parseFloat(goal.targetAmount) || 1; // Unikaj dzielenia przez 0
         const percent = Math.min(100, Math.round((currentAmount / targetAmount) * 100));
         const isCompleted = currentAmount >= targetAmount;
+        const canRealize = currentAmount > 0;
 
         // Oblicz "potencjał" na podstawie nadwyżki
         let potentialPercent = 0;
@@ -203,7 +206,7 @@ async function updateSavingsGoalsList() {
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
             if (isCompleted) {
-                deadlineHtml = `<span class="text-brand-400 font-bold"><i class="fas fa-check-circle mr-1"></i> Zrealizowano!</span>`;
+                deadlineHtml = `<span class="text-brand-400 font-bold"><i class="fas fa-check-circle mr-1"></i> Gotowy do realizacji</span>`;
             } else if (diffDays > 0) {
                 deadlineHtml = `<span class="text-gray-400 font-medium"><i class="far fa-clock mr-1"></i> Zostało ${diffDays} dni</span>`;
             } else if (diffDays === 0) {
@@ -212,7 +215,7 @@ async function updateSavingsGoalsList() {
                 deadlineHtml = `<span class="text-red-400 font-bold"><i class="fas fa-exclamation-circle mr-1"></i> Po terminie o ${Math.abs(diffDays)} dni</span>`;
             }
         } else if (isCompleted) {
-            deadlineHtml = `<span class="text-brand-400 font-bold"><i class="fas fa-check-circle mr-1"></i> Zrealizowano!</span>`;
+            deadlineHtml = `<span class="text-brand-400 font-bold"><i class="fas fa-check-circle mr-1"></i> Gotowy do realizacji</span>`;
         }
 
         html += `
@@ -278,7 +281,7 @@ async function updateSavingsGoalsList() {
                 </div>
 
                 <!-- Actions -->
-                <div class="flex items-center gap-2 pt-1">
+                <div class="grid ${canRealize ? 'grid-cols-3' : 'grid-cols-2'} gap-2 pt-1">
                     <button class="deposit-btn flex-1 py-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1 active:scale-[0.97]">
                         <i class="fas fa-plus text-[9px]"></i>
                         <span>Wpłać</span>
@@ -287,10 +290,66 @@ async function updateSavingsGoalsList() {
                         <i class="fas fa-minus text-[9px]"></i>
                         <span>Wypłać</span>
                     </button>
+                    ${canRealize ? `
+                        <button class="realize-btn flex-1 py-2 bg-brand-500/10 hover:bg-brand-500/20 text-brand-400 border border-brand-500/20 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1 active:scale-[0.97]">
+                            <i class="fas fa-check text-[9px]"></i>
+                            <span>Zrealizuj</span>
+                        </button>
+                    ` : ''}
                 </div>
             </div>
         `;
     });
+
+    if (realizedGoals.length > 0) {
+        html += `
+            <div class="pt-2">
+                <div class="flex items-center justify-between px-1 pb-2">
+                    <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Zrealizowane cele</h3>
+                    <span class="text-[10px] text-gray-500">${realizedGoals.length}</span>
+                </div>
+                <div class="space-y-2">
+        `;
+
+        realizedGoals.forEach(goal => {
+            const preset = COLOR_PRESETS.find(p => p.value === goal.color) || COLOR_PRESETS[0];
+            const realizedAmount = parseFloat(goal.realizedAmount || goal.targetAmount || 0);
+            let realizedDate = '';
+            if (goal.realizedAt) {
+                const date = goal.realizedAt._seconds ? new Date(goal.realizedAt._seconds * 1000) : new Date(goal.realizedAt);
+                if (!Number.isNaN(date.getTime())) {
+                    realizedDate = date.toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                }
+            }
+
+            html += `
+                <div class="glass-card p-3 border border-white/5 rounded-2xl bg-gradient-to-br ${preset.bg} opacity-80" data-id="${goal.id}">
+                    <div class="flex items-center justify-between gap-3">
+                        <div class="flex items-center space-x-3 min-w-0">
+                            <div class="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0" style="color: ${goal.color}">
+                                <i class="fas ${goal.icon || 'fa-piggy-bank'} text-sm"></i>
+                            </div>
+                            <div class="min-w-0">
+                                <h4 class="font-bold text-white text-sm leading-tight truncate">${goal.name}</h4>
+                                <p class="text-[10px] text-gray-400 mt-0.5">${realizedDate ? `Zrealizowano ${realizedDate}` : 'Zrealizowano'}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 shrink-0">
+                            <span class="text-xs font-extrabold text-brand-400">${formatAmount(realizedAmount)}</span>
+                            <button class="manage-goal-btn w-8 h-8 rounded-lg bg-white/5 border border-white/5 hover:bg-white/10 text-gray-400 hover:text-white flex items-center justify-center transition-colors active:scale-95" title="Zarządzaj">
+                                <i class="fas fa-cog text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+
+        html += `
+                </div>
+            </div>
+        `;
+    }
 
     listContainer.innerHTML = html;
 
@@ -315,6 +374,14 @@ async function updateSavingsGoalsList() {
             const id = e.target.closest('[data-id]').dataset.id;
             const goal = goals.find(g => g.id === id);
             if (goal) openDepositWithdrawDrawer(goal, 'withdraw');
+        });
+    });
+
+    listContainer.querySelectorAll('.realize-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const id = e.target.closest('[data-id]').dataset.id;
+            const goal = goals.find(g => g.id === id);
+            if (goal) openRealizeGoalDrawer(goal);
         });
     });
 
@@ -583,6 +650,7 @@ async function checkAndRenderSurplus() {
  */
 async function openAddEditGoalDrawer(goal = null) {
     const isEdit = !!goal;
+    const isRealized = goal?.status === 'realized';
     const title = isEdit ? 'Edytuj cel oszczędnościowy' : 'Nowy cel oszczędnościowy';
 
     // Wygeneruj opcje ikon
@@ -644,6 +712,7 @@ async function openAddEditGoalDrawer(goal = null) {
 
                 let iconClass = 'fa-arrow-down text-emerald-400';
                 if (item.type === 'withdraw') iconClass = 'fa-arrow-up text-red-400';
+                else if (item.type === 'realization') iconClass = 'fa-check text-brand-400';
                 else if (item.type === 'transfer_in') iconClass = 'fa-exchange-alt text-emerald-400';
                 else if (item.type === 'transfer_out') iconClass = 'fa-exchange-alt text-red-400';
 
@@ -705,10 +774,12 @@ async function openAddEditGoalDrawer(goal = null) {
 
             ${isEdit ? `
                 <div class="pt-4 border-t border-white/5 space-y-2">
-                    <button type="button" id="transfer-goal-funds-btn" class="w-full py-3 bg-brand-500/10 hover:bg-brand-500/20 text-brand-400 border border-brand-500/20 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2">
-                        <i class="fas fa-exchange-alt"></i>
-                        <span>Przelej do innego celu</span>
-                    </button>
+                    ${!isRealized ? `
+                        <button type="button" id="transfer-goal-funds-btn" class="w-full py-3 bg-brand-500/10 hover:bg-brand-500/20 text-brand-400 border border-brand-500/20 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2">
+                            <i class="fas fa-exchange-alt"></i>
+                            <span>Przelej do innego celu</span>
+                        </button>
+                    ` : ''}
                     <button type="button" id="delete-goal-btn" class="w-full py-3 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2">
                         <i class="fas fa-trash-alt"></i>
                         <span>Usuń cel oszczędnościowy</span>
@@ -811,6 +882,56 @@ async function openAddEditGoalDrawer(goal = null) {
 /**
  * Szuflada (Drawer): Wpłata / Wypłata środków
  */
+function openRealizeGoalDrawer(goal) {
+    const currentAmount = parseFloat(goal.currentAmount) || 0;
+    if (currentAmount <= 0) {
+        alert('Ten cel nie ma środków do wypłaty.');
+        return;
+    }
+
+    const contentHtml = `
+        <form id="realize-goal-form" class="space-y-4 pt-2">
+            <div class="p-4 rounded-xl border border-brand-500/20 bg-brand-500/5 text-xs space-y-2">
+                <div class="flex justify-between gap-3">
+                    <span class="text-brand-300 font-semibold">Kwota realizacji:</span>
+                    <span class="text-white font-extrabold text-sm">${formatAmount(currentAmount)}</span>
+                </div>
+                <p class="text-[11px] text-gray-400 leading-normal">
+                    Cel zostanie przeniesiony do zrealizowanych, a cała kwota wróci do wirtualnego bilansu bieżącego miesiąca.
+                </p>
+            </div>
+
+            <div>
+                <label for="realize-note" class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Notatka</label>
+                <input type="text" id="realize-note" value="Realizacja celu: ${goal.name}" maxlength="80"
+                    class="block w-full rounded-xl border-white/10 bg-white/5 text-white py-3 px-4 focus:bg-white/10 transition-all text-sm font-medium">
+            </div>
+        </form>
+    `;
+
+    Drawer.open({
+        title: `Zrealizuj: ${goal.name}`,
+        content: contentHtml,
+        size: 'md',
+        confirmLabel: 'Zrealizuj cel',
+        cancelLabel: 'Anuluj',
+        onConfirm: async () => {
+            try {
+                const note = el('realize-note')?.value.trim() || `Realizacja celu: ${goal.name}`;
+                await apiCall(`/api/savings-goals/${goal.id}/realize`, 'POST', { note });
+
+                state.monthlySurplusCache = null;
+                state.monthlyProjectionCache = null;
+                await renderSavingsGoalsTab();
+                Drawer.close();
+            } catch (err) {
+                alert('Błąd realizacji celu: ' + err.message);
+                throw err;
+            }
+        }
+    });
+}
+
 function openDepositWithdrawDrawer(goal, mode = 'deposit') {
     const isDeposit = mode === 'deposit';
     const title = isDeposit ? `Wpłać do: ${goal.name}` : `Wypłać z: ${goal.name}`;
@@ -895,7 +1016,7 @@ function openDepositWithdrawDrawer(goal, mode = 'deposit') {
  * Szuflada (Drawer): Alokacja nadwyżki budżetowej z zeszłego miesiąca
  */
 function openAllocateSurplusDrawer(surplus, month) {
-    const activeGoals = (state.allSavingsGoals || []).filter(g => g.currentAmount < g.targetAmount);
+    const activeGoals = (state.allSavingsGoals || []).filter(g => g.status !== 'realized' && g.currentAmount < g.targetAmount);
 
     if (activeGoals.length === 0) {
         alert('Nie masz aktywnych celów oszczędnościowych, do których możesz przelać nadwyżkę. Stwórz najpierw cel!');
@@ -989,7 +1110,7 @@ function openAllocateSurplusDrawer(surplus, month) {
  * Szuflada (Drawer): Pokrycie deficytu budżetowego z zeszłego miesiąca
  */
 function openCoverDeficitDrawer(deficit, month) {
-    const activeGoals = (state.allSavingsGoals || []).filter(g => g.currentAmount > 0);
+    const activeGoals = (state.allSavingsGoals || []).filter(g => g.status !== 'realized' && g.currentAmount > 0);
 
     if (activeGoals.length === 0) {
         alert('Nie masz środków w żadnym celu oszczędnościowym, aby pokryć ten deficyt. Wpłać najpierw środki do skarbonki.');
@@ -1089,7 +1210,7 @@ function openCoverDeficitDrawer(deficit, month) {
  * Szuflada (Drawer): Przelew bezpośredni między celami oszczędnościowymi
  */
 function openTransferBetweenGoalsDrawer(sourceGoal) {
-    const activeGoals = (state.allSavingsGoals || []).filter(g => g.id !== sourceGoal.id && g.currentAmount < g.targetAmount);
+    const activeGoals = (state.allSavingsGoals || []).filter(g => g.status !== 'realized' && g.id !== sourceGoal.id && g.currentAmount < g.targetAmount);
 
     if (activeGoals.length === 0) {
         alert('Nie masz innych aktywnych celów oszczędnościowych, do których możesz przelać środki. Stwórz najpierw inny cel!');
