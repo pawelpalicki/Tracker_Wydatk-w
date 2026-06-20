@@ -47,7 +47,7 @@ router.post('/categories/v2', authMiddleware, asyncHandler(async (req, res) => {
 
 router.put('/categories/v2/:id', authMiddleware, asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const { name, icon, color } = req.body;
+    const { name, icon, color, excludeFromExpenses } = req.body;
     const userRef = usersCollection.doc(req.userId);
     const userData = (await userRef.get()).data() || {};
     let cats = userData.structuredCategories || [];
@@ -62,6 +62,7 @@ router.put('/categories/v2/:id', authMiddleware, asyncHandler(async (req, res) =
     if (name !== undefined) updatedCat.name = name;
     if (icon !== undefined) updatedCat.icon = icon;
     if (color !== undefined) updatedCat.color = color;
+    if (excludeFromExpenses !== undefined) updatedCat.excludeFromExpenses = excludeFromExpenses;
     
     cats[idx] = updatedCat;
     

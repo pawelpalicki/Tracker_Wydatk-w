@@ -3,6 +3,7 @@
  */
 import state from './state.js';
 import { apiCall } from './api.js';
+import { isCategoryExcluded } from '../shared/categories.js';
 
 /**
  * Pomocnicza funkcja obliczająca sumę rezerwacji z historii skarbonek.
@@ -62,7 +63,10 @@ export async function getMonthlyProjection(providedData = null) {
                 apiCall(`/api/savings-goals/all-history`)
             ]);
             const budgets = budgetData.budgets || {};
-            totalBudget = Object.values(budgets).reduce((a, b) => a + b, 0);
+            totalBudget = Object.entries(budgets).reduce((sum, [catName, val]) => {
+                if (isCategoryExcluded(catName)) return sum;
+                return sum + (val || 0);
+            }, 0);
             purchases = (purchaseData.purchases || []).filter(p => !p.specialBudgetId);
             reservationsTotal = calculateReservations(savingsHistory, currentMonthKey);
         }
@@ -73,6 +77,9 @@ export async function getMonthlyProjection(providedData = null) {
 
         let fixed = 0, flexible = 0, oneTime = 0, wants = 0;
         purchases.forEach(p => (p.items || []).forEach(i => {
+            // Pomijamy pozycje z wykluczonych kategorii (np. Inwestycje i oszczędności)
+            if (isCategoryExcluded(i.category || 'inne', i.subCategory || '')) return;
+
             const nature = (i.tags?.nature || '').toLowerCase().trim();
             const cat = (i.category || 'inne').toLowerCase().trim();
             const purpose = (i.tags?.purpose || '').toLowerCase().trim();

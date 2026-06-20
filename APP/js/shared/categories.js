@@ -133,3 +133,14 @@ export function openHierarchicalCategoryDrawer(row, currentCategory, currentSubC
 
     openStep1();
 }
+
+export function isCategoryExcluded(parentName, subCategoryName = '') {
+    if (!parentName) return false;
+    const parent = getParentCategoryByName(parentName);
+    if (parent && parent.excludeFromExpenses) return true;
+    if (subCategoryName) {
+        const sub = getSubCategoryByName(parentName, subCategoryName);
+        if (sub && sub.excludeFromExpenses) return true;
+    }
+    return false;
+}

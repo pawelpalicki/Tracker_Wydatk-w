@@ -84,9 +84,10 @@ export function renderCategoriesListV2() {
                      style="background-color:${color}25; color:${color}">
                     <i class="fas ${icon} text-sm"></i>
                 </div>
-                <div class="flex-1 min-w-0">
+                <div class="flex-1 min-w-0 flex items-center gap-1.5 flex-wrap">
                     <span class="font-semibold text-white text-sm">${parent.name}</span>
-                    <span class="text-xs text-gray-500 ml-2">${subs.length} podkat.</span>
+                    ${parent.excludeFromExpenses ? '<span class="text-[9px] font-extrabold text-brand-400 bg-brand-500/10 border border-brand-500/20 px-1.5 py-0.5 rounded-lg uppercase tracking-wider shrink-0">Wyklucz.</span>' : ''}
+                    <span class="text-xs text-gray-500 font-medium shrink-0">${subs.length} podkat.</span>
                 </div>
                 <div class="flex items-center gap-1 ml-2">
                     <button class="cat-v2-add-sub-btn p-1.5 rounded-lg text-gray-400 hover:text-green-400 hover:bg-white/5 transition-colors"
@@ -115,7 +116,10 @@ export function renderCategoriesListV2() {
                                </div>`
                             : `<div class="w-1.5 h-1.5 rounded-full mr-3 flex-shrink-0" style="background-color:${color}"></div>`
                         }
-                        <span class="flex-1 text-sm text-gray-300">${sub.name}</span>
+                        <span class="flex-1 text-sm text-gray-300 flex items-center gap-1.5 flex-wrap">
+                            <span>${sub.name}</span>
+                            ${sub.excludeFromExpenses ? '<span class="text-[8px] font-extrabold text-brand-400 bg-brand-500/10 border border-brand-500/20 px-1 py-0.5 rounded-lg uppercase tracking-wider shrink-0">Wyklucz.</span>' : ''}
+                        </span>
                         <div class="flex items-center gap-1">
                             <button class="cat-v2-edit-sub-btn p-1.5 rounded-lg text-gray-500 hover:text-brand-400 hover:bg-white/5 transition-colors"
                                     data-id="${sub.id}" data-parent-id="${parent.id}" title="Edytuj">
@@ -232,12 +236,26 @@ function showParentCategoryForm(editId = null) {
     const currentName = cat ? cat.name : '';
     const currentIcon = cat ? (cat.icon || 'fa-tag') : 'fa-tag';
     const currentColor = cat ? (cat.color || '#3b82f6') : '#3b82f6';
+    const currentExclude = cat ? !!cat.excludeFromExpenses : false;
 
     const contentHtml = `
         <div id="cat-v2-parent-form" class="space-y-4 pb-safe">
             <input type="hidden" id="cat-v2-edit-id" value="${editId || ''}">
             <input type="text" id="cat-v2-name-input" value="${currentName}" placeholder="Nazwa kategorii (np. Spożywcze)"
                 class="block w-full rounded-xl border-white/10 bg-white/5 text-white py-3 px-4 focus:bg-white/10 transition-all text-sm font-medium">
+            
+            <!-- Wykluczenie z wydatków -->
+            <div class="flex items-center justify-between p-3 rounded-xl border border-white/10 bg-white/5">
+                <div class="flex flex-col pr-4">
+                    <span class="text-sm font-semibold text-white">Wyklucz z ogólnej sumy wydatków</span>
+                    <span class="text-xs text-gray-400 mt-0.5">Transakcje z tej kategorii nie będą wliczane do głównego budżetu i wykresów wydatków.</span>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer align-middle shrink-0">
+                    <input type="checkbox" id="cat-v2-exclude-input" class="sr-only peer" ${currentExclude ? 'checked' : ''}>
+                    <div class="w-9 h-5 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-brand-600"></div>
+                </label>
+            </div>
+
             <!-- Wybór ikony -->
             <div>
                 <p class="text-xs text-gray-400 mb-2 font-semibold uppercase tracking-wider">Wybierz ikonę</p>
@@ -288,6 +306,7 @@ function showSubCategoryForm(parentId, editId = null) {
     const title = isEdit ? 'Edytuj podkategorię' : `Nowa podkategoria → ${parentName}`;
     const currentName = sub ? sub.name : '';
     const currentIcon = (sub && sub.icon) ? sub.icon : '';
+    const currentExclude = sub ? !!sub.excludeFromExpenses : false;
 
     const contentHtml = `
         <div id="cat-v2-sub-form" class="space-y-4 pb-safe">
@@ -295,6 +314,18 @@ function showSubCategoryForm(parentId, editId = null) {
             <input type="hidden" id="cat-v2-sub-edit-id" value="${editId || ''}">
             <input type="text" id="cat-v2-sub-name-input" value="${currentName}" placeholder="Nazwa podkategorii (np. Nabiał)"
                 class="block w-full rounded-xl border-white/10 bg-white/5 text-white py-3 px-4 focus:bg-white/10 transition-all text-sm font-medium">
+
+            <!-- Wykluczenie z wydatków -->
+            <div class="flex items-center justify-between p-3 rounded-xl border border-white/10 bg-white/5">
+                <div class="flex flex-col pr-4">
+                    <span class="text-sm font-semibold text-white">Wyklucz z ogólnej sumy wydatków</span>
+                    <span class="text-xs text-gray-400 mt-0.5">Transakcje z tej podkategorii nie będą wliczane do głównego budżetu i wykresów wydatków.</span>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer align-middle shrink-0">
+                    <input type="checkbox" id="cat-v2-sub-exclude-input" class="sr-only peer" ${currentExclude ? 'checked' : ''}>
+                    <div class="w-9 h-5 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-brand-600"></div>
+                </label>
+            </div>
 
             <!-- Wybór ikony dla podkategorii -->
             <div>
@@ -336,6 +367,7 @@ async function saveParentCategory() {
     const editId = el('cat-v2-edit-id')?.value;
     const icon = el('cat-v2-icon-value')?.value;
     const color = el('cat-v2-color-value')?.value;
+    const excludeFromExpenses = el('cat-v2-exclude-input')?.checked || false;
 
     if (!name) { 
         alert('Podaj nazwę kategorii.'); 
@@ -343,9 +375,9 @@ async function saveParentCategory() {
     }
 
     if (editId) {
-        await apiCall(`/api/categories/v2/${editId}`, 'PUT', { name, icon, color });
+        await apiCall(`/api/categories/v2/${editId}`, 'PUT', { name, icon, color, excludeFromExpenses });
     } else {
-        const newStructured = [...state.structuredCategories, { id: generateId(), name, parentId: null, icon, color }];
+        const newStructured = [...state.structuredCategories, { id: generateId(), name, parentId: null, icon, color, excludeFromExpenses }];
         await apiCall('/api/categories/v2', 'POST', { structuredCategories: newStructured });
     }
     
@@ -359,6 +391,7 @@ async function saveSubCategory() {
     const parentId = el('cat-v2-sub-parent-id')?.value;
     const editId = el('cat-v2-sub-edit-id')?.value;
     const icon = el('cat-v2-sub-icon-value')?.value;
+    const excludeFromExpenses = el('cat-v2-sub-exclude-input')?.checked || false;
 
     if (!name) { 
         alert('Podaj nazwę podkategorii.'); 
@@ -366,9 +399,9 @@ async function saveSubCategory() {
     }
 
     if (editId) {
-        await apiCall(`/api/categories/v2/${editId}`, 'PUT', { name, icon });
+        await apiCall(`/api/categories/v2/${editId}`, 'PUT', { name, icon, excludeFromExpenses });
     } else {
-        const newStructured = [...state.structuredCategories, { id: generateId(), name, parentId, icon }];
+        const newStructured = [...state.structuredCategories, { id: generateId(), name, parentId, icon, excludeFromExpenses }];
         await apiCall('/api/categories/v2', 'POST', { structuredCategories: newStructured });
     }
     

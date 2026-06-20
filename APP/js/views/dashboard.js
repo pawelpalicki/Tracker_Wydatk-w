@@ -3,6 +3,7 @@ import { apiCall } from '../core/api.js';
 import { formatAmount } from '../shared/format.js';
 import { getTagGroups, getTagGroupLabel, getTagLabel } from '../shared/tags.js';
 import { renderCategoryDetailsModal, switchTab } from '../shared/ui.js';
+import { isCategoryExcluded } from '../shared/categories.js';
 import {
     initNotifications,
     checkAndGenerateNotifications
@@ -206,11 +207,26 @@ async function renderHomeSummary(dashboardData = null) {
         }
 
         const allPurchases = purchaseData.purchases || [];
-        // Wykluczamy transakcje przypisane do budżetów specjalnych z głównego podsumowania miesięcznego i budżetów
+        // Wykluczemy transakcje przypisane do budżetów specjalnych z głównego podsumowania miesięcznego i budżetów
         const purchases = allPurchases.filter(p => !p.specialBudgetId);
-        const totalSpent = purchases.reduce((sum, p) => sum + (p.totalAmount || 0), 0);
+        const totalSpent = purchases.reduce((sum, p) => {
+            const items = p.items || [];
+            if (items.length === 0) return sum + (p.totalAmount || 0);
+            const nonExcludedSum = items.reduce((itemSum, item) => {
+                if (isCategoryExcluded(item.category || 'inne', item.subCategory || '')) {
+                    return itemSum;
+                }
+                return itemSum + (item.price || 0);
+            }, 0);
+            return sum + nonExcludedSum;
+        }, 0);
         const budgets = budgetData.budgets || {};
-        const totalBudget = Object.values(budgets).reduce((a, b) => a + b, 0);
+        const totalBudget = Object.entries(budgets).reduce((sum, [catName, budgetVal]) => {
+            if (isCategoryExcluded(catName)) {
+                return sum;
+            }
+            return sum + (budgetVal || 0);
+        }, 0);
 
         const totalEl = document.getElementById('home-total-spent');
         const budgetTotalEl = document.getElementById('home-budget-total');
@@ -460,11 +476,13 @@ function renderHomeCategoryTiles(purchases, budgets = {}) {
     purchases.forEach(p => {
         (p.items || []).forEach(item => {
             const cat = item.category || 'inne';
+            if (isCategoryExcluded(cat, item.subCategory || '')) return;
             byParentCategory[cat] = (byParentCategory[cat] || 0) + (item.price || 0);
         });
     });
 
     Object.keys(budgets).forEach(cat => {
+        if (isCategoryExcluded(cat)) return;
         if (typeof byParentCategory[cat] !== 'number') byParentCategory[cat] = 0;
     });
 
@@ -535,11 +553,10 @@ function renderHomeSubCategoryTiles(purchases) {
         (p.items || []).forEach(item => {
             if (item.subCategory) {
                 const subCat = item.subCategory;
+                const parentCatName = item.category || 'inne';
+                if (isCategoryExcluded(parentCatName, subCat)) return;
                 if (!bySubCategory[subCat]) {
-                    bySubCategory[subCat] = {
-                        amount: 0,
-                        parentCategory: item.category || 'inne'
-                    };
+                    bySubCategory[subCat] = { amount: 0, parentCategory: parentCatName };
                 }
                 bySubCategory[subCat].amount += item.price || 0;
             }

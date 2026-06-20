@@ -7,7 +7,7 @@ import state from '../core/state.js';
 import { apiCall } from '../core/api.js';
 import { formatAmount } from '../shared/format.js';
 import { renderCategoryDetailsModal, openSelectionDrawer } from '../shared/ui.js';
-import { getParentCategoryByName, getSubCategoryByName, applyCategorySelectionState } from '../shared/categories.js';
+import { getParentCategoryByName, getSubCategoryByName, applyCategorySelectionState, isCategoryExcluded } from '../shared/categories.js';
 import { buildTagsSummary, openTagsDrawer, getTagGroups, getTagLabel, getTagGroupLabel } from '../shared/tags.js';
 import Drawer from '../shared/drawer.js';
 
@@ -152,7 +152,11 @@ function getBudgetValueForMonth(budgetMap, monthKey) {
     if (currentComparisonCategory) {
         return Number(monthBudget[currentComparisonCategory] || 0);
     }
-    return Object.values(monthBudget).reduce((sum, value) => sum + (Number(value) || 0), 0);
+    // Wyklucz budżety dla kategorii oznaczonych jako wykluczone
+    return Object.entries(monthBudget).reduce((sum, [catName, value]) => {
+        if (isCategoryExcluded(catName)) return sum;
+        return sum + (Number(value) || 0);
+    }, 0);
 }
 
 // =====================================================================
@@ -169,6 +173,14 @@ function getFilteredPurchaseItems(purchases) {
                 }
                 if (currentComparisonSubCategory && (item.subCategory || '') !== currentComparisonSubCategory) {
                     return false;
+                }
+
+                // Wyklucz pozycje z kategorii oznaczonych jako wykluczonych, chyba że
+                // użytkownik aktywnie filtruje właśnie po tej kategorii/podkategorii
+                if (!currentComparisonCategory && !currentComparisonSubCategory) {
+                    if (isCategoryExcluded(item.category || 'inne', item.subCategory || '')) {
+                        return false;
+                    }
                 }
 
                 for (const [group, expectedValue] of Object.entries(currentComparisonTags || {})) {
