@@ -4,7 +4,7 @@ const fs = require('fs');
 async function run() {
     try {
         console.log('--- ROZPOCZYNAM CZYSZCZENIE UŻYTKOWNIKÓW TESTOWYCH ---');
-        
+
         const serviceAccountPath = './service-account.json';
         if (!fs.existsSync(serviceAccountPath)) {
             console.error('BŁĄD: Brak pliku service-account.json. Pobierz go z Firebase Console.');
@@ -20,17 +20,19 @@ async function run() {
 
         const db = admin.firestore();
         const auth = admin.auth();
-        
+
         const emails = [
-            'pawelpalicki2@wp.pl', 
-            'pawelpali1cki@wp.pl', 
-            'pawelpalicki@wp.pl'
+            'wf1.917947ad.102751.a@outlook.com',
+            'grader917947d8497721782550000@gmail.com',
+            'caas.review.20260627.0949@gmail.com',
+            'grader176@ex.com',
+            'grader917947ad2f094297@xample.com'
         ];
 
         for (const email of emails) {
             try {
                 console.log(`\nPrzetwarzam: ${email}...`);
-                
+
                 // 1. Znajdź użytkownika w Auth
                 let userRecord;
                 try {
