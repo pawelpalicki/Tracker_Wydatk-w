@@ -16,6 +16,7 @@ const router = express.Router();
 const { getFirestore, FieldValue } = require('firebase-admin/firestore');
 const { authMiddleware, asyncHandler } = require('../middleware');
 const { getUserMetadata } = require('../categories-service');
+const { getExcludeChecker } = require('../utils');
 
 const db = getFirestore();
 const purchasesCollection = db.collection('expenses');
@@ -103,6 +104,8 @@ router.get('/init', authMiddleware, asyncHandler(async (req, res) => {
 
     // --- Faza 2: Przetwarzanie danych ---
 
+    const isExcluded = getExcludeChecker(metadata.structuredCategories);
+
     // Budżet
     const budgets = budgetDoc.exists ? (budgetDoc.data().budgets || {}) : {};
 
@@ -127,7 +130,15 @@ router.get('/init', authMiddleware, asyncHandler(async (req, res) => {
 
     const monthlyTotalsMap = sixMonthPurchases.reduce((acc, p) => {
         const month = p.date.substring(0, 7);
-        const amount = p.totalAmount || 0;
+        
+        // Sumujemy tylko pozycje z niewykluczonych kategorii
+        const amount = (p.items || []).reduce((sum, item) => {
+            if (isExcluded(item.category || 'inne', item.subCategory || '')) {
+                return sum;
+            }
+            return sum + (item.price || 0);
+        }, 0);
+
         if (amount === 0) return acc;
         if (isMtdMode && new Date(p.date).getDate() > today) return acc;
         acc[month] = (acc[month] || 0) + amount;

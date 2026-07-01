@@ -2,12 +2,51 @@ const express = require('express');
 const router = express.Router();
 const { getFirestore, FieldValue } = require('firebase-admin/firestore');
 const { authMiddleware, asyncHandler } = require('../middleware');
+const { getUserCategories } = require('../categories-service');
+const { namesEqualCI } = require('../utils');
 
 const db = getFirestore();
 const savingsGoalsCollection = db.collection('savingsGoals');
 const budgetsCollection = db.collection('budgets');
 const purchasesCollection = db.collection('expenses');
 const settledMonthsCollection = db.collection('settledMonths');
+
+function getExcludeChecker(structuredCategories) {
+    if (!structuredCategories || !Array.isArray(structuredCategories)) {
+        return () => false;
+    }
+
+    const parentMap = new Map();
+    const subMap = new Map(); // klucz: "parentName:subName"
+
+    structuredCategories.forEach(c => {
+        if (!c.parentId) {
+            parentMap.set(c.name.toLowerCase(), c);
+        }
+    });
+
+    structuredCategories.forEach(c => {
+        if (c.parentId) {
+            const parent = structuredCategories.find(p => p.id === c.parentId);
+            if (parent) {
+                subMap.set(`${parent.name.toLowerCase()}:${c.name.toLowerCase()}`, c);
+            }
+        }
+    });
+
+    return (category, subCategory = '') => {
+        const pName = (category || 'inne').toLowerCase();
+        const parent = parentMap.get(pName);
+        if (parent && parent.excludeFromExpenses) return true;
+        
+        if (subCategory) {
+            const sName = subCategory.toLowerCase();
+            const sub = subMap.get(`${pName}:${sName}`);
+            if (sub && sub.excludeFromExpenses) return true;
+        }
+        return false;
+    };
+}
 
 function getHistoryDate(tx) {
     if (!tx.date) return null;
@@ -394,8 +433,8 @@ router.get('/savings-goals/surplus-batch', authMiddleware, asyncHandler(async (r
 
     const budgetDocRefs = months.map(m => budgetsCollection.doc(`${req.userId}_${m}`));
 
-    // Pobierz wszystkie budżety i wydatki w sposób zoptymalizowany (równolegle, db.getAll + 1 query)
-    const [budgetSnapshots, purchasesSnapshot, savingsSnapshot] = await Promise.all([
+    // Pobierz wszystkie budżety, wydatki i kategorie w sposób zoptymalizowany
+    const [budgetSnapshots, purchasesSnapshot, savingsSnapshot, categoriesData] = await Promise.all([
         db.getAll(...budgetDocRefs),
         purchasesCollection
             .where('userId', '==', req.userId)
@@ -405,8 +444,11 @@ router.get('/savings-goals/surplus-batch', authMiddleware, asyncHandler(async (r
         savingsGoalsCollection
             .where('userId', '==', req.userId)
             .select('history')
-            .get()
+            .get(),
+        getUserCategories(req.userId)
     ]);
+
+    const isExcluded = getExcludeChecker(categoriesData.structured);
 
     // Mapujemy budżety
     const budgetsMap = {};
@@ -415,7 +457,10 @@ router.get('/savings-goals/surplus-batch', authMiddleware, asyncHandler(async (r
         let totalBudget = 0;
         if (doc.exists) {
             const budgets = doc.data().budgets || {};
-            totalBudget = Object.values(budgets).reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
+            totalBudget = Object.entries(budgets).reduce((sum, [catName, val]) => {
+                if (isExcluded(catName)) return sum;
+                return sum + (parseFloat(val) || 0);
+            }, 0);
         }
         budgetsMap[month] = totalBudget;
     });
@@ -427,7 +472,15 @@ router.get('/savings-goals/surplus-batch', authMiddleware, asyncHandler(async (r
         if (!data.specialBudgetId && data.date) {
             const month = data.date.substring(0, 7);
             if (months.includes(month)) {
-                spentMap[month] = (spentMap[month] || 0) + parseFloat(data.totalAmount || 0);
+                // Sumujemy tylko pozycje z niewykluczonych kategorii
+                const itemsSum = (data.items || []).reduce((sum, item) => {
+                    if (isExcluded(item.category || 'inne', item.subCategory || '')) {
+                        return sum;
+                    }
+                    return sum + parseFloat(item.price || 0);
+                }, 0);
+                
+                spentMap[month] = (spentMap[month] || 0) + itemsSum;
             }
         }
     });
@@ -466,18 +519,11 @@ router.get('/savings-goals/surplus', authMiddleware, asyncHandler(async (req, re
         month = prevMonthDate.toISOString().substring(0, 7);
     }
 
-    const budgetDoc = await budgetsCollection.doc(`${req.userId}_${month}`).get();
-    let totalBudget = 0;
-    
-    if (budgetDoc.exists) {
-        const budgets = budgetDoc.data().budgets || {};
-        totalBudget = Object.values(budgets).reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
-    }
-
     const startDate = `${month}-01`;
     const endDate = `${month}-31`;
 
-    const [purchasesSnapshot, savingsSnapshot] = await Promise.all([
+    const [budgetDoc, purchasesSnapshot, savingsSnapshot, categoriesData] = await Promise.all([
+        budgetsCollection.doc(`${req.userId}_${month}`).get(),
         purchasesCollection
             .where('userId', '==', req.userId)
             .where('date', '>=', startDate)
@@ -486,14 +532,34 @@ router.get('/savings-goals/surplus', authMiddleware, asyncHandler(async (req, re
         savingsGoalsCollection
             .where('userId', '==', req.userId)
             .select('history')
-            .get()
+            .get(),
+        getUserCategories(req.userId)
     ]);
+
+    const isExcluded = getExcludeChecker(categoriesData.structured);
+
+    let totalBudget = 0;
+    if (budgetDoc.exists) {
+        const budgets = budgetDoc.data().budgets || {};
+        totalBudget = Object.entries(budgets).reduce((sum, [catName, val]) => {
+            if (isExcluded(catName)) return sum;
+            return sum + (parseFloat(val) || 0);
+        }, 0);
+    }
 
     let totalSpent = 0;
     purchasesSnapshot.forEach(doc => {
         const data = doc.data();
         if (!data.specialBudgetId) {
-            totalSpent += parseFloat(data.totalAmount || 0);
+            // Sumujemy tylko pozycje z niewykluczonych kategorii
+            const itemsSum = (data.items || []).reduce((sum, item) => {
+                if (isExcluded(item.category || 'inne', item.subCategory || '')) {
+                    return sum;
+                }
+                return sum + parseFloat(item.price || 0);
+            }, 0);
+            
+            totalSpent += itemsSum;
         }
     });
 

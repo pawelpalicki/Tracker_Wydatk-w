@@ -26,6 +26,55 @@ function calculateReservations(history, monthKey) {
 }
 
 /**
+ * Oblicza ile razy dany wydatek cykliczny powinien wystąpić w podanym miesiącu.
+ */
+function countExpectedOccurrences(r, year, month) {
+    if (!r.schedule) return 0;
+    
+    switch (r.schedule.type) {
+        case 'monthly':
+            return 1;
+            
+        case 'weekly': {
+            let count = 0;
+            const d = new Date(year, month, 1);
+            while (d.getMonth() === month) {
+                if (d.getDay() === r.schedule.dayOfWeek) count++;
+                d.setDate(d.getDate() + 1);
+            }
+            return count;
+        }
+            
+        case 'daily_interval': {
+            let count = 0;
+            const startDate = new Date(r.schedule.startDate);
+            const monthStart = new Date(year, month, 1);
+            const monthEnd = new Date(year, month + 1, 0);
+            
+            // Znajdź pierwsze wystąpienie od daty startu
+            let current = new Date(startDate);
+            
+            // Jeśli start jest po końcu miesiąca - 0 wystąpień
+            if (current > monthEnd) return 0;
+
+            // Przesuń się do przodu aż do osiągnięcia badanego miesiąca
+            while (current < monthStart) {
+                current.setDate(current.getDate() + r.schedule.interval);
+            }
+
+            // Licz wystąpienia wewnątrz miesiąca
+            while (current <= monthEnd) {
+                if (current >= monthStart) count++;
+                current.setDate(current.getDate() + r.schedule.interval);
+            }
+            return count;
+        }
+        default:
+            return 0;
+    }
+}
+
+/**
  * Oblicza prognozę wydatków dla bieżącego miesiąca (z uwzględnieniem cache'u).
  * Używane przez Kokpit oraz Skarbonkę.
  * 
@@ -99,11 +148,24 @@ export async function getMonthlyProjection(providedData = null) {
 
         let upcoming = 0;
         if (Array.isArray(state.allRecurringExpenses)) {
+            const currentYear = now.getFullYear();
+            const currentMonth = now.getMonth();
+
             state.allRecurringExpenses.forEach(r => {
-                const alreadyPaid = purchases.some(p => 
+                // POMIŃ: Jeśli wydatek cykliczny jest w kategorii wykluczonej z analizy
+                if (isCategoryExcluded(r.category || 'inne', r.subCategory || '')) return;
+
+                // 1. Oblicz ile razy wydatek powinien wystąpić w tym miesiącu
+                const expected = countExpectedOccurrences(r, currentYear, currentMonth);
+                
+                // 2. Policz ile razy już został zarejestrowany
+                const actualCount = purchases.filter(p => 
                     (p.items || []).some(item => item.name.toLowerCase().includes(r.name.toLowerCase()))
-                );
-                if (!alreadyPaid) upcoming += r.amount || 0;
+                ).length;
+
+                // 3. Dodaj brakujące kwoty do prognozy
+                const missing = Math.max(0, expected - actualCount);
+                upcoming += missing * (r.amount || 0);
             });
         }
 

@@ -455,9 +455,9 @@ async function renderHomeSavings() {
                         </div>
                     </div>
                     
-                    <div class="w-full bg-white/5 h-1 rounded-full overflow-hidden border border-white/5">
-                        <div class="h-full rounded-full transition-all duration-1000" 
-                             style="width: ${percent}%; background: ${goal.color}"></div>
+                    <div class="w-full bg-white/10 h-1.5 rounded-full overflow-hidden border border-white/5">
+                        <div class="h-full rounded-full transition-all duration-1000 shadow-[0_0_10px_rgba(255,255,255,0.1)]" 
+                             style="width: ${percent}%; background-color: ${goal.color || '#10b981'}"></div>
                     </div>
                 </div>
             </div>

@@ -3,7 +3,7 @@ const router = express.Router();
 const { getFirestore } = require('firebase-admin/firestore');
 const { authMiddleware, asyncHandler } = require('../middleware');
 const { getUserMetadata } = require('../categories-service');
-const { normalizeTagValue } = require('../utils');
+const { normalizeTagValue, getExcludeChecker } = require('../utils');
 
 const db = getFirestore();
 const purchasesCollection = db.collection('expenses');
@@ -23,8 +23,17 @@ router.get('/statistics', authMiddleware, asyncHandler(async (req, res) => {
         .where('date', '<=', end)
         .get();
         
+    const isExcluded = getExcludeChecker(metadata.structuredCategories);
     const monthlyPurchases = snapshot.docs.map(doc => doc.data()).filter(p => !p.specialBudgetId);
-    const monthlyTotal = monthlyPurchases.reduce((sum, p) => sum + (p.totalAmount || 0), 0);
+    
+    const monthlyTotal = monthlyPurchases.reduce((sum, p) => {
+        const purchaseAmount = (p.items || []).reduce((itemSum, item) => {
+            if (isExcluded(item.category || 'inne', item.subCategory || '')) return itemSum;
+            return itemSum + (item.price || 0);
+        }, 0);
+        return sum + purchaseAmount;
+    }, 0);
+
     const spendingByCategory = monthlyPurchases.flatMap(p => p.items || []).reduce((acc, item) => {
         const cat = item.category || 'inne';
         acc[cat] = (acc[cat] || 0) + (item.price || 0);
@@ -39,6 +48,8 @@ router.get('/statistics/comparison', authMiddleware, asyncHandler(async (req, re
     const isMtdMode = mtd === 'true' || mode === 'mtd';
     const today = new Date();
     const targetDay = today.getDate();
+    const metadata = await getUserMetadata(req.userId);
+    const isExcluded = getExcludeChecker(metadata.structuredCategories);
     let startDateStr, endDateStr, expectedMonths = [];
 
     if (mode === '6months') {
@@ -97,7 +108,11 @@ router.get('/statistics/comparison', authMiddleware, asyncHandler(async (req, re
                 return match;
             }).reduce((sum, item) => sum + (item.price || 0), 0);
         } else {
-            amount = p.totalAmount || 0;
+            // Sumujemy tylko pozycje z niewykluczonych kategorii
+            amount = (p.items || []).reduce((sum, item) => {
+                if (isExcluded(item.category || 'inne', item.subCategory || '')) return sum;
+                return sum + (item.price || 0);
+            }, 0);
         }
 
         if (amount === 0) return acc;

@@ -208,6 +208,46 @@ function renameNameCI(existing = [], oldName = '', newName = '') {
     return mergeUniqueNamesCI(withoutOld, [newName]);
 }
 
+/**
+ * Zwraca funkcję sprawdzającą, czy dana kategoria/podkategoria jest wykluczona z analizy.
+ */
+function getExcludeChecker(structuredCategories) {
+    if (!structuredCategories || !Array.isArray(structuredCategories)) {
+        return () => false;
+    }
+
+    const parentMap = new Map();
+    const subMap = new Map(); // klucz: "parentName:subName"
+
+    structuredCategories.forEach(c => {
+        if (!c.parentId) {
+            parentMap.set(c.name.toLowerCase(), c);
+        }
+    });
+
+    structuredCategories.forEach(c => {
+        if (c.parentId) {
+            const parent = structuredCategories.find(p => p.id === c.parentId);
+            if (parent) {
+                subMap.set(`${parent.name.toLowerCase()}:${c.name.toLowerCase()}`, c);
+            }
+        }
+    });
+
+    return (category, subCategory = '') => {
+        const pName = (category || 'inne').toLowerCase();
+        const parent = parentMap.get(pName);
+        if (parent && parent.excludeFromExpenses) return true;
+        
+        if (subCategory) {
+            const sName = subCategory.toLowerCase();
+            const sub = subMap.get(`${pName}:${sName}`);
+            if (sub && sub.excludeFromExpenses) return true;
+        }
+        return false;
+    };
+}
+
 module.exports = {
     isValidGroupName,
     normalizeTagValue,
@@ -223,5 +263,6 @@ module.exports = {
     namesEqualCI,
     mergeUniqueNamesCI,
     removeNameCI,
-    renameNameCI
+    renameNameCI,
+    getExcludeChecker
 };

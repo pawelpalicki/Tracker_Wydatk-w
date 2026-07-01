@@ -356,6 +356,27 @@ input:-webkit-autofill {
     to { background-position: 0 0; }
 }
 
+@keyframes growProgressBar {
+    from { width: 0; }
+}
+
+.animate-grow {
+    animation: growProgressBar 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Force height and visibility on desktop */
+.progress-bar-fill, 
+.progress-bar-potential, 
+.progress-bar-deficit {
+    display: block !important;
+    min-height: 12px !important;
+}
+
+.progress-container-fixed {
+    height: 12px !important;
+    min-height: 12px !important;
+}
+
 /* Home Tab (Kokpit) */
 #home-category-tiles,
 #home-subcategory-tiles {
