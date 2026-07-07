@@ -35,6 +35,7 @@ const { shouldAddExpenseToday } = require('./recurring-service');
 
 // --- Konfiguracja Express ---
 const app = express();
+app.set('trust proxy', 1); // Zaufaj proxy Google Cloud dla poprawnego IP w rate-limit
 app.use(cors({ origin: true }));
 app.use(express.json({ limit: '10mb' }));
 

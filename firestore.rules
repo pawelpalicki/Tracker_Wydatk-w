@@ -3,10 +3,7 @@ service cloud.firestore {
   match /databases/{database}/documents {
     // Users can read, create and write their own document
     match /users/{userId} {
-      // Pozwól na tworzenie dokumentu użytkownika podczas rejestracji (bez auth)
-      allow create: if true;
-      // Pozwól na czytanie i aktualizację tylko swoich danych
-      allow read, update: if request.auth != null && request.auth.uid == userId;
+      allow create, read, update: if request.auth != null && request.auth.uid == userId;
     }
 
     // Users can only read and write their own expenses  

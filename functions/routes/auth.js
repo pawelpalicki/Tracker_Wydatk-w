@@ -3,12 +3,22 @@ const router = express.Router();
 const { getAuth } = require('firebase-admin/auth');
 const { getFirestore } = require('firebase-admin/firestore');
 const { authMiddleware, asyncHandler } = require('../middleware');
+const rateLimit = require('express-rate-limit');
 
 const db = getFirestore();
 const usersCollection = db.collection('users');
 
+// Konfiguracja rate limiting dla rejestracji
+const registerLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000, // 1 godzina
+    max: 5, // Limit 5 rejestracji na godzinę z jednego adresu IP
+    message: { success: false, error: 'Zbyt wiele prób rejestracji z tego adresu IP. Spróbuj ponownie za godzinę.' },
+    standardHeaders: true, // Zwróć info o limicie w nagłówkach `RateLimit-*`
+    legacyHeaders: false, // Wyłącz nagłówki `X-RateLimit-*`
+});
+
 // Obsługuje /auth/register (gdy montowany pod /auth)
-router.post('/register', asyncHandler(async (req, res) => {
+router.post('/register', registerLimiter, asyncHandler(async (req, res) => {
     const { email, password } = req.body;
     if (!email || !password) {
         return res.status(400).json({ success: false, error: 'Email i hasło są wymagane.' });
