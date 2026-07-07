@@ -140,9 +140,10 @@ export async function getMonthlyProjection(providedData = null) {
 
             if (isFixed) fixed += i.price || 0;
             else if (isOneTime) oneTime += i.price || 0;
-            else {
-                flexible += i.price || 0;
-                if (purpose === 'przyjemność' || purpose === 'przyjemnosc') wants += i.price || 0;
+            else flexible += i.price || 0;
+
+            if (purpose === 'przyjemność' || purpose === 'przyjemnosc') {
+                wants += i.price || 0;
             }
         }));
 
