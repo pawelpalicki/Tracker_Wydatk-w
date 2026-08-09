@@ -5,7 +5,7 @@ import state from '../../core/state.js';
 import { apiCall } from '../../core/api.js';
 import { openSelectionDrawer } from '../../shared/ui.js';
 import Drawer from '../../shared/drawer.js';
-import { formatNumber } from '../../shared/format.js';
+import { formatNumber, escapeHTML } from '../../shared/format.js';
 import { renderDashboard } from '../dashboard.js';
 
 let budgetMonthValue = '';
@@ -137,7 +137,7 @@ export async function renderBudgetInputs() {
                         <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-sm" style="background-color: ${color}20; color: ${color}">
                             <i class="fas ${icon} text-sm"></i>
                         </div>
-                        <span class="text-sm font-bold text-gray-200 truncate tracking-tight">${displayName}</span>
+                        <span class="text-sm font-bold text-gray-200 truncate tracking-tight">${escapeHTML(displayName)}</span>
                     </div>
                     <div class="flex items-baseline gap-1.5 shrink-0">
                         <input type="text" inputmode="decimal" id="budget-${cat}" data-category="${cat}"

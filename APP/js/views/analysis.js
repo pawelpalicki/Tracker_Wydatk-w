@@ -5,7 +5,7 @@
 
 import state from '../core/state.js';
 import { apiCall } from '../core/api.js';
-import { formatAmount } from '../shared/format.js';
+import { formatAmount, escapeHTML } from '../shared/format.js';
 import { renderCategoryDetailsModal, openSelectionDrawer } from '../shared/ui.js';
 import { getParentCategoryByName, getSubCategoryByName, applyCategorySelectionState, isCategoryExcluded } from '../shared/categories.js';
 import { buildTagsSummary, openTagsDrawer, getTagGroups, getTagLabel, getTagGroupLabel } from '../shared/tags.js';
@@ -394,7 +394,7 @@ function renderComparisonCategoryChips() {
                 <span class="flex h-5 w-5 items-center justify-center rounded-full text-[10px]" style="background:${isActive ? color : `${color}22`}; color:${isActive ? '#ffffff' : color};">
                     <i class="fas ${icon}"></i>
                 </span>
-                <span>${label}</span>
+                <span>${escapeHTML(label)}</span>
             </span>
         `;
         button.addEventListener('pointerdown', (event) => {

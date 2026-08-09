@@ -4,6 +4,7 @@
 import state from '../../core/state.js';
 import { apiCall } from '../../core/api.js';
 import Drawer from '../../shared/drawer.js';
+import { escapeHTML } from '../../shared/format.js';
 import { fetchInitialData } from '../../core/data-loader.js';
 
 // =====================================================================
@@ -85,7 +86,7 @@ export function renderCategoriesListV2() {
                     <i class="fas ${icon} text-sm"></i>
                 </div>
                 <div class="flex-1 min-w-0 flex items-center gap-1.5 flex-wrap">
-                    <span class="font-semibold text-white text-sm">${parent.name}</span>
+                    <span class="font-semibold text-white text-sm">${escapeHTML(parent.name)}</span>
                     ${parent.excludeFromExpenses ? '<span class="text-[9px] font-extrabold text-brand-400 bg-brand-500/10 border border-brand-500/20 px-1.5 py-0.5 rounded-lg uppercase tracking-wider shrink-0">Wyklucz.</span>' : ''}
                     <span class="text-xs text-gray-500 font-medium shrink-0">${subs.length} podkat.</span>
                 </div>
@@ -117,7 +118,7 @@ export function renderCategoriesListV2() {
                             : `<div class="w-1.5 h-1.5 rounded-full mr-3 flex-shrink-0" style="background-color:${color}"></div>`
                         }
                         <span class="flex-1 text-sm text-gray-300 flex items-center gap-1.5 flex-wrap">
-                            <span>${sub.name}</span>
+                            <span>${escapeHTML(sub.name)}</span>
                             ${sub.excludeFromExpenses ? '<span class="text-[8px] font-extrabold text-brand-400 bg-brand-500/10 border border-brand-500/20 px-1 py-0.5 rounded-lg uppercase tracking-wider shrink-0">Wyklucz.</span>' : ''}
                         </span>
                         <div class="flex items-center gap-1">

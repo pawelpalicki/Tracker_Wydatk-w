@@ -5,7 +5,7 @@
 
 import state from '../core/state.js';
 import { apiCall } from '../core/api.js';
-import { formatAmount } from '../shared/format.js';
+import { formatAmount, escapeHTML } from '../shared/format.js';
 import { switchTab } from '../shared/ui.js';
 import Drawer from '../shared/drawer.js';
 import { fetchInitialData } from '../core/data-loader.js';
@@ -115,7 +115,7 @@ async function updateSavingsGoalsList() {
     const goals = state.allSavingsGoals || [];
     const activeGoals = goals.filter(g => g.status !== 'realized');
     const realizedGoals = goals.filter(g => g.status === 'realized');
-    
+
     // Pobierz dane prognozy dla bieżącego miesiąca
     const { diff } = await getMonthlyProjection();
 
@@ -226,7 +226,7 @@ async function updateSavingsGoalsList() {
                             <i class="fas ${goal.icon || 'fa-piggy-bank'} text-lg"></i>
                         </div>
                         <div>
-                            <h3 class="font-bold text-white text-sm sm:text-base leading-tight">${goal.name}</h3>
+                            <h3 class="font-bold text-white text-sm sm:text-base leading-tight">${escapeHTML(goal.name)}</h3>
                             <div class="text-[11px] mt-1">${deadlineHtml}</div>
                         </div>
                     </div>
@@ -330,7 +330,7 @@ async function updateSavingsGoalsList() {
                                 <i class="fas ${goal.icon || 'fa-piggy-bank'} text-sm"></i>
                             </div>
                             <div class="min-w-0">
-                                <h4 class="font-bold text-white text-sm leading-tight truncate">${goal.name}</h4>
+                                <h4 class="font-bold text-white text-sm leading-tight truncate">${escapeHTML(goal.name)}</h4>
                                 <p class="text-[10px] text-gray-400 mt-0.5">${realizedDate ? `Zrealizowano ${realizedDate}` : 'Zrealizowano'}</p>
                             </div>
                         </div>
@@ -476,7 +476,7 @@ async function checkAndRenderSurplus() {
         // 1. Pobierz dane dla bieżącego miesiąca (prognoza)
         const now = new Date();
         const currentMonthLabel = now.toLocaleDateString('pl-PL', { month: 'long', year: 'numeric' });
-        
+
         let projectionHtml = '';
         try {
             const { projectedTotal, diff } = await getMonthlyProjection();

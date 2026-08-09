@@ -4,6 +4,7 @@
 import state from '../../core/state.js';
 import { apiCall } from '../../core/api.js';
 import { getTagGroups, getTagGroupLabel, getTagOptions } from '../../shared/tags.js';
+import { escapeHTML } from '../../shared/format.js';
 import { fetchInitialData } from '../../core/data-loader.js';
 import Drawer from '../../shared/drawer.js';
 
@@ -55,8 +56,8 @@ function renderTagGroupSection(group) {
         : tags.map(tag => `
             <div class="flex items-center justify-between px-3 py-2 rounded-xl bg-white/5 border border-white/10">
                 <div class="min-w-0">
-                    <div class="text-sm text-white truncate">${tag.icon || ''} ${tag.label || tag.value}</div>
-                    <div class="text-[10px] text-gray-500 mt-0.5">${tag.value}</div>
+                    <div class="text-sm text-white truncate">${escapeHTML(tag.icon || '')} ${escapeHTML(tag.label || tag.value)}</div>
+                    <div class="text-[10px] text-gray-500 mt-0.5">${escapeHTML(tag.value)}</div>
                 </div>
                 <div class="flex items-center gap-1 ml-2">
                     <button class="tag-edit-btn p-1.5 rounded-lg text-gray-400 hover:text-brand-400 hover:bg-white/5 transition-colors"
@@ -75,7 +76,7 @@ function renderTagGroupSection(group) {
         <div class="w-full p-3.5 bg-white/5 hover:bg-white/10 rounded-xl border border-white/5 transition-all" data-tag-group="${group}">
             <div class="flex items-center justify-between mb-3">
                 <div class="flex items-center gap-2 min-w-0">
-                    <h4 class="text-sm font-semibold text-white truncate">${groupLabel}</h4>
+                    <h4 class="text-sm font-semibold text-white truncate">${escapeHTML(groupLabel)}</h4>
                     ${isBuiltin ? '<span class="text-[10px] text-gray-600 px-1.5 py-0.5 rounded bg-white/5 shrink-0">wbudowana</span>' : ''}
                 </div>
                 <div class="flex items-center gap-1">

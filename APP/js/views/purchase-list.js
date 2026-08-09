@@ -915,7 +915,8 @@ function renderAiSearchAnswerCard() {
 }
 
 function renderPurchaseCard(purchase) {
-    const specialBudgetName = purchase.specialBudgetId ? (state.allSpecialBudgets.find(b => b.id === purchase.specialBudgetId) || {}).name : null;
+    const rawBudgetName = purchase.specialBudgetId ? (state.allSpecialBudgets.find(b => b.id === purchase.specialBudgetId) || {}).name : null;
+    const specialBudgetName = rawBudgetName ? escapeHtml(rawBudgetName) : null;
     const budgetIcon = specialBudgetName
         ? `<p class="text-xs text-brand-400 mb-1 flex items-center gap-1">
              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline-block" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a1 1 0 011-1h5a.997.997 0 01.707.293l7 7zM5 6a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" /></svg>
@@ -924,17 +925,17 @@ function renderPurchaseCard(purchase) {
         : '';
 
     return `
-        <div class="glass-card rounded-2xl mb-4" data-purchase-id="${purchase.id}">
+        <div class="glass-card rounded-2xl mb-4" data-purchase-id="${escapeHtml(purchase.id)}">
             <div class="purchase-header p-4 cursor-pointer">
                 ${budgetIcon ? `<div class="mb-3 w-full border-b border-white/5 pb-1">${budgetIcon}</div>` : ''}
                 <div class="flex items-end w-full">
                     <div class="flex-1 min-w-0">
                         <div class="flex justify-between items-end w-full mb-1">
-                            <span class="font-bold text-lg text-white truncate pr-2 leading-none">${purchase.shop}</span>
+                            <span class="font-bold text-lg text-white truncate pr-2 leading-none">${escapeHtml(purchase.shop)}</span>
                             <span class="font-bold text-xl text-white whitespace-nowrap leading-none">${formatAmount(purchase.totalAmount || 0)}</span>
                         </div>
                         <div class="flex justify-between items-end w-full">
-                            <span class="text-sm text-gray-400 leading-none">${purchase.date}</span>
+                            <span class="text-sm text-gray-400 leading-none">${escapeHtml(purchase.date)}</span>
                             <div class="flex items-center gap-2 shrink-0 leading-none">
                                 <span class="text-[10px] text-gray-500 uppercase tracking-tighter">${(purchase.items || []).length} poz.</span>
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 toggle-arrow text-gray-500 transition-transform transform" viewBox="0 0 20 20" fill="currentColor">
@@ -973,8 +974,8 @@ function renderPurchaseTags(purchase) {
             ${getTagGroups().map(group => {
                 const val = purchase.tags[group];
                 if (!val) return '';
-                const groupLabel = String(getTagGroupLabel(group) || group || '');
-                const tagLabel = getTagLabel(group, val) || val;
+                const groupLabel = escapeHtml(String(getTagGroupLabel(group) || group || ''));
+                const tagLabel = escapeHtml(getTagLabel(group, val) || val);
                 return `
                     <div class="flex flex-col">
                         <span class="text-[10px] text-gray-500 uppercase tracking-widest">${groupLabel.charAt(0)}</span>
@@ -993,12 +994,12 @@ function renderPurchaseItem(item) {
     const subCat = parentCat ? state.structuredCategories.find(c => c.name === subName && c.parentId === parentCat.id) : null;
     const icon = (subCat && subCat.icon) || (parentCat && parentCat.icon) || 'fa-tag';
     const color = (parentCat && parentCat.color) || '#6b7280';
-    const labelText = subName ? `${catName} / ${subName}` : catName;
+    const labelText = escapeHtml(subName ? `${catName} / ${subName}` : catName);
     const itemTagsHtml = getTagGroups().map(group => {
         const val = item.tags && item.tags[group];
         if (!val) return '';
-        const groupLabel = String(getTagGroupLabel(group) || group || '');
-        const tagLabel = getTagLabel(group, val) || val;
+        const groupLabel = escapeHtml(String(getTagGroupLabel(group) || group || ''));
+        const tagLabel = escapeHtml(getTagLabel(group, val) || val);
         return `<span class="text-[10px] text-gray-500">${groupLabel.charAt(0)}: <span class="text-gray-300">${tagLabel}</span></span>`;
     }).join(' ');
 
@@ -1011,7 +1012,7 @@ function renderPurchaseItem(item) {
                     </div>
                     <span class="text-[10px] text-gray-400 tracking-tight">${labelText}</span>
                 </div>
-                <div class="font-semibold text-white">${item.name}</div>
+                <div class="font-semibold text-white">${escapeHtml(item.name)}</div>
                 ${itemTagsHtml ? `<div class="flex flex-wrap gap-x-2 gap-y-0.5 mt-0.5">${itemTagsHtml}</div>` : ''}
             </div>
             <div class="font-bold text-white whitespace-nowrap text-base">${formatAmount(item.price || 0)}</div>

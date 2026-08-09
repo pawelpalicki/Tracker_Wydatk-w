@@ -1,6 +1,6 @@
 import state from '../core/state.js';
 import { apiCall } from '../core/api.js';
-import { formatAmount } from '../shared/format.js';
+import { formatAmount, escapeHTML } from '../shared/format.js';
 import { getTagGroups, getTagGroupLabel, getTagLabel } from '../shared/tags.js';
 import { renderCategoryDetailsModal, switchTab } from '../shared/ui.js';
 import { isCategoryExcluded } from '../shared/categories.js';
@@ -450,7 +450,7 @@ async function renderHomeSavings() {
                             <i class="fas ${goal.icon || 'fa-piggy-bank'} text-xs"></i>
                         </div>
                         <div class="min-w-0">
-                            <p class="text-[10px] font-bold text-white truncate leading-tight">${goal.name}</p>
+                            <p class="text-[10px] font-bold text-white truncate leading-tight">${escapeHTML(goal.name)}</p>
                             <p class="text-[8px] text-gray-400 font-medium">${percent}%</p>
                         </div>
                     </div>
@@ -517,7 +517,7 @@ function renderHomeCategoryTiles(purchases, budgets = {}) {
                 <i class="fas ${icon} text-lg relative z-10" style="color:${color}"></i>
             </div>
             <div class="flex flex-col items-center w-full min-w-0">
-                <p class="text-[10px] text-gray-300 font-bold leading-tight w-full truncate px-1">${cat}</p>
+                <p class="text-[10px] text-gray-300 font-bold leading-tight w-full truncate px-1">${escapeHTML(cat)}</p>
                 <div class="flex items-center justify-center gap-1 mt-0.5">
                     <p class="text-xs font-extrabold text-white whitespace-nowrap">${formatAmount(amount).replace(' zł', '').replace(' zl', '')}</p>
                     ${budget > 0 ? `<span class="text-[9px] font-bold ${pct >= 100 ? 'text-red-400' : pct >= 80 ? 'text-yellow-400' : 'text-brand-400'}">${pct}%</span>` : ''}
@@ -581,7 +581,7 @@ function renderHomeSubCategoryTiles(purchases) {
             <div class="w-8 h-8 rounded-full flex items-center justify-center mb-1" style="background-color:${color}22;color:${color}">
                 <i class="fas ${icon} text-xs"></i>
             </div>
-            <p class="text-[11px] text-gray-300 font-medium leading-tight max-w-[90px] truncate">${subCat}</p>
+            <p class="text-[11px] text-gray-300 font-medium leading-tight max-w-[90px] truncate">${escapeHTML(subCat)}</p>
             <p class="text-xs font-bold text-white whitespace-nowrap">${formatAmount(data.amount)}</p>
         `;
 
@@ -628,11 +628,11 @@ async function renderHomeRecentTransactions(prefetchedPurchases = null) {
             const total = (purchase.items || []).reduce((sum, item) => sum + (item.price || 0), 0);
             const specialBudgetName = purchase.specialBudgetId ? (state.allSpecialBudgets.find(b => b.id === purchase.specialBudgetId) || {}).name : null;
             const specialBudgetIcon = specialBudgetName
-                ? `<p class="text-[9px] text-brand-400 font-bold uppercase tracking-wider flex items-center gap-1 mb-1"><i class="fas fa-tag text-[8px]"></i><span>${specialBudgetName}</span></p>`
+                ? `<p class="text-[9px] text-brand-400 font-bold uppercase tracking-wider flex items-center gap-1 mb-1"><i class="fas fa-tag text-[8px]"></i><span>${escapeHTML(specialBudgetName)}</span></p>`
                 : '';
             const date = new Date(purchase.date).toLocaleDateString('pl-PL', { day: 'numeric', month: 'short' });
-            const shopName = purchase.shop || 'Nieznany';
-            const firstLetter = shopName.charAt(0).toUpperCase();
+            const shopName = escapeHTML(purchase.shop || 'Nieznany');
+            const firstLetter = (purchase.shop || 'N').charAt(0).toUpperCase();
 
             const el = document.createElement('div');
             el.className = 'bg-white/5 hover:bg-white/10 rounded-2xl border border-white/5 transition-all overflow-hidden';
@@ -691,7 +691,7 @@ function renderRecentTransactionItem(item) {
             <div class="flex justify-between items-center text-[12px]">
                 <div class="flex items-center gap-2 min-w-0 pr-4">
                     <i class="fas ${itemIcon} text-[9px]" style="color:${itemColor}"></i>
-                    <span class="text-gray-200 truncate font-medium">${item.name}</span>
+                    <span class="text-gray-200 truncate font-medium">${escapeHTML(item.name)}</span>
                 </div>
                 <span class="text-white font-bold whitespace-nowrap">${formatAmount(item.price)}</span>
             </div>
@@ -699,8 +699,8 @@ function renderRecentTransactionItem(item) {
                 ${getTagGroups().map(group => {
         const val = item.tags?.[group];
         if (!val) return '';
-        const groupLabel = getTagGroupLabel(group);
-        const tagLabel = getTagLabel(group, val);
+        const groupLabel = escapeHTML(getTagGroupLabel(group));
+        const tagLabel = escapeHTML(getTagLabel(group, val));
         return `<span class="text-[10px] text-gray-500">${groupLabel.charAt(0).toUpperCase()}: <span class="text-gray-400">${tagLabel}</span></span>`;
     }).join('')}
             </div>

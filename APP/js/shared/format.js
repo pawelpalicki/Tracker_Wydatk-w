@@ -18,3 +18,17 @@ export function formatNumber(num) {
     parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
     return parts.join('.');
 }
+
+/**
+ * Konwertuje znaki specjalne na encje HTML, zapobiegając atakom XSS przy użyciu innerHTML.
+ */
+export function escapeHTML(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+

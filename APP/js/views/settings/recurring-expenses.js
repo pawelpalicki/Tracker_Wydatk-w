@@ -3,7 +3,7 @@
  */
 import state from '../../core/state.js';
 import { apiCall } from '../../core/api.js';
-import { formatAmount } from '../../shared/format.js';
+import { formatAmount, escapeHTML } from '../../shared/format.js';
 import { openSelectionDrawer } from '../../shared/ui.js';
 import Drawer from '../../shared/drawer.js';
 import { openHierarchicalCategoryDrawer, applyCategorySelectionState } from '../../shared/categories.js';
@@ -53,8 +53,8 @@ export function renderRecurringExpenses() {
 
         expenseEl.innerHTML = `
             <div>
-                <p class="font-semibold text-white">${expense.name}</p>
-                <p class="text-xs text-gray-500 mt-0.5">${formatAmount(expense.amount)} • ${fullCategoryText}</p>
+                <p class="font-semibold text-white">${escapeHTML(expense.name)}</p>
+                <p class="text-xs text-gray-500 mt-0.5">${formatAmount(expense.amount)} • ${escapeHTML(fullCategoryText)}</p>
                 <p class="text-[10px] text-brand-400/80 font-medium uppercase tracking-wider mt-1">${scheduleText}</p>
             </div>
             <div class="flex items-center space-x-1">

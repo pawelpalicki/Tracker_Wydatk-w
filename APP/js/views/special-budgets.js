@@ -5,7 +5,7 @@
 
 import state from '../core/state.js';
 import { apiCall } from '../core/api.js';
-import { formatAmount } from '../shared/format.js';
+import { formatAmount, escapeHTML } from '../shared/format.js';
 import { switchTab } from '../shared/ui.js';
 import Drawer from '../shared/drawer.js';
 import { fetchInitialData } from '../core/data-loader.js';
@@ -223,7 +223,7 @@ export function renderSpecialBudgetsList() {
         budgetEl.className = 'w-full flex items-center justify-between p-3.5 bg-white/5 hover:bg-white/10 rounded-xl border border-white/5 transition-all group';
         budgetEl.innerHTML = `
             <div>
-                <span class="font-medium text-white">${budget.name}</span>
+                <span class="font-medium text-white">${escapeHTML(budget.name)}</span>
                 <span class="text-sm text-gray-400 ml-2">${formatAmount(budget.amount)}</span>
             </div>
             <div class="flex items-center space-x-2">

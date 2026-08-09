@@ -30,6 +30,7 @@ import { initTagsManager } from '../views/settings/tags-manager.js';
 import { initNotifications } from '../shared/notifications.js';
 import { initHomeDashboardControls } from '../views/dashboard.js';
 import { initThemeSettings } from '../views/settings/theme.js';
+import { initPrivacySettings } from '../shared/privacy-consent.js';
 
 // Importy serwisu danych
 import { fetchInitialDataFast } from './data-loader.js';
@@ -95,6 +96,7 @@ function setupAppEventListeners() {
     initMonthlyBudget();
     initCategoriesManager();
     initTagsManager();
+    initPrivacySettings();
 
     // Globalny listener dla zdarzeń zmiany zakładki (używany przez dynamiczne komponenty)
     document.addEventListener('switchTab', (e) => {
@@ -137,6 +139,7 @@ function setupInlineClickHandlers() {
         { id: 'settings-special-link', tab: 'settings-special' },
         { id: 'settings-recurring-link', tab: 'settings-recurring' },
         { id: 'settings-theme-link', tab: 'settings-theme' },
+        { id: 'settings-privacy-link', tab: 'settings-privacy' },
         { id: 'more-savings-btn', tab: 'savings-goals' }
     ];
 

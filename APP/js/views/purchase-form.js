@@ -5,7 +5,7 @@
  */
 import state from '../core/state.js';
 import { apiCall, apiCallWithFile } from '../core/api.js';
-import { formatAmount } from '../shared/format.js';
+import { formatAmount, escapeHTML } from '../shared/format.js';
 import { switchTab, acquireOverlayNavigationLock, releaseOverlayNavigationLock, registerBlockingOverlay, openSelectionDrawer } from '../shared/ui.js';
 import { applyCategorySelectionState, openHierarchicalCategoryDrawer } from '../shared/categories.js';
 import { fetchInitialData } from '../core/data-loader.js';
@@ -127,8 +127,8 @@ export function renderPurchaseItems() {
             ? getTagGroups()
                 .filter(group => item.tags[group])
                 .map(group => {
-                    const groupLabel = getTagGroupLabel(group);
-                    const tagLabel = getTagLabel(group, item.tags[group]) || item.tags[group];
+                    const groupLabel = escapeHTML(getTagGroupLabel(group));
+                    const tagLabel = escapeHTML(getTagLabel(group, item.tags[group]) || item.tags[group]);
                     return `<span class="px-2 py-1 rounded-lg bg-white/5 border border-white/10 text-[11px] text-gray-400">${groupLabel.charAt(0)}: <span class="text-gray-200 font-medium">${tagLabel}</span></span>`;
                 }).join('')
             : '';
@@ -141,8 +141,8 @@ export function renderPurchaseItems() {
                 <div class="flex-1 min-w-0">
                     <div class="flex justify-between items-start gap-2">
                         <div class="min-w-0">
-                            <p class="text-[10px] text-gray-500 uppercase tracking-widest font-semibold truncate mb-0.5">${labelText}</p>
-                            <h4 class="text-sm font-bold text-white leading-tight break-words pr-1">${item.name}</h4>
+                            <p class="text-[10px] text-gray-500 uppercase tracking-widest font-semibold truncate mb-0.5">${escapeHTML(labelText)}</p>
+                            <h4 class="text-sm font-bold text-white leading-tight break-words pr-1">${escapeHTML(item.name)}</h4>
                         </div>
                         <div class="text-right shrink-0">
                             <p class="text-sm font-black text-white">${formatAmount(item.price || 0)}</p>
@@ -788,7 +788,7 @@ export function renderShopAutocomplete(query) {
     }
 
     list.innerHTML = filteredShops
-        .map(shop => `<div class="p-2 hover:bg-gray-100 dark:hover:bg-gray-500 cursor-pointer">${shop}</div>`)
+        .map(shop => `<div class="p-2 hover:bg-gray-100 dark:hover:bg-gray-500 cursor-pointer">${escapeHTML(shop)}</div>`)
         .join('');
     list.classList.remove('hidden');
 }

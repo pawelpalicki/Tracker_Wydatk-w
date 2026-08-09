@@ -10,7 +10,7 @@
  */
 import state from '../core/state.js';
 import { apiCall } from '../core/api.js';
-import { formatAmount } from './format.js';
+import { formatAmount, escapeHTML } from './format.js';
 import Drawer from './drawer.js';
 
 let notificationsInitialized = false;
@@ -162,7 +162,7 @@ function notificationTemplate(n) {
                     <i class="fas ${icon} text-lg"></i>
                 </div>
                 <div class="flex-1 min-w-0">
-                    <p class="text-xs font-bold text-white mb-0.5 leading-snug">${n.message}</p>
+                    <p class="text-xs font-bold text-white mb-0.5 leading-snug">${escapeHTML(n.message)}</p>
                     <p class="text-[10px] text-gray-500">${date}</p>
                 </div>
             </div>
