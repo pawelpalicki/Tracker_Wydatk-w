@@ -13,6 +13,19 @@ const purchasesCollection = db.collection('expenses');
 router.get('/statistics', authMiddleware, asyncHandler(async (req, res) => {
     const { year, month } = req.query;
     const metadata = await getUserMetadata(req.userId);
+    const structuredCats = metadata.structuredCategories || [];
+
+    const isCategoryExcluded = (catName, subCatName = '') => {
+        if (!catName) return false;
+        const parent = structuredCats.find(c => (c.name || '').toLowerCase() === catName.toLowerCase() && !c.parentId);
+        if (parent && parent.excludeFromExpenses) return true;
+        if (subCatName && parent) {
+            const sub = structuredCats.find(c => (c.name || '').toLowerCase() === subCatName.toLowerCase() && c.parentId === parent.id);
+            if (sub && sub.excludeFromExpenses) return true;
+        }
+        return false;
+    };
+
     const targetDate = (year && month) ? new Date(parseInt(year), parseInt(month) - 1, 15) : new Date();
     const start = new Date(targetDate.getFullYear(), targetDate.getMonth(), 1).toISOString().split('T')[0];
     const end = new Date(targetDate.getFullYear(), targetDate.getMonth() + 1, 0).toISOString().split('T')[0];
@@ -24,9 +37,23 @@ router.get('/statistics', authMiddleware, asyncHandler(async (req, res) => {
         .get();
         
     const monthlyPurchases = snapshot.docs.map(doc => doc.data()).filter(p => !p.specialBudgetId);
-    const monthlyTotal = monthlyPurchases.reduce((sum, p) => sum + (p.totalAmount || 0), 0);
+    const monthlyTotal = monthlyPurchases.reduce((sum, p) => {
+        const items = p.items || [];
+        if (items.length === 0) {
+            return isCategoryExcluded(p.category) ? sum : sum + (p.totalAmount || 0);
+        }
+        const validSum = items.reduce((iSum, item) => {
+            if (isCategoryExcluded(item.category || 'inne', item.subCategory || '')) {
+                return iSum;
+            }
+            return iSum + (item.price || 0);
+        }, 0);
+        return sum + validSum;
+    }, 0);
+
     const spendingByCategory = monthlyPurchases.flatMap(p => p.items || []).reduce((acc, item) => {
         const cat = item.category || 'inne';
+        if (isCategoryExcluded(cat, item.subCategory || '')) return acc;
         acc[cat] = (acc[cat] || 0) + (item.price || 0);
         return acc;
     }, {});
@@ -69,6 +96,20 @@ router.get('/statistics/comparison', authMiddleware, asyncHandler(async (req, re
         .where('date', '>=', startDateStr)
         .where('date', '<=', endDateStr)
         .get();
+
+    const metadata = await getUserMetadata(req.userId);
+    const structuredCats = metadata.structuredCategories || [];
+
+    const isCategoryExcluded = (catName, subCatName = '') => {
+        if (!catName) return false;
+        const parent = structuredCats.find(c => (c.name || '').toLowerCase() === catName.toLowerCase() && !c.parentId);
+        if (parent && parent.excludeFromExpenses) return true;
+        if (subCatName && parent) {
+            const sub = structuredCats.find(c => (c.name || '').toLowerCase() === subCatName.toLowerCase() && c.parentId === parent.id);
+            if (sub && sub.excludeFromExpenses) return true;
+        }
+        return false;
+    };
         
     if (snapshot.empty) {
         return res.json({ monthlyTotals: expectedMonths.map(month => ({ month, total: 0 })) });
@@ -97,7 +138,17 @@ router.get('/statistics/comparison', authMiddleware, asyncHandler(async (req, re
                 return match;
             }).reduce((sum, item) => sum + (item.price || 0), 0);
         } else {
-            amount = p.totalAmount || 0;
+            const items = p.items || [];
+            if (items.length === 0) {
+                amount = isCategoryExcluded(p.category) ? 0 : (p.totalAmount || 0);
+            } else {
+                amount = items.reduce((sum, item) => {
+                    if (isCategoryExcluded(item.category || 'inne', item.subCategory || '')) {
+                        return sum;
+                    }
+                    return sum + (item.price || 0);
+                }, 0);
+            }
         }
 
         if (amount === 0) return acc;
