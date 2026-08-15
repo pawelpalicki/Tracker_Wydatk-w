@@ -38,6 +38,7 @@ const { shouldAddExpenseToday } = require('./recurring-service');
 
 // --- Konfiguracja Express ---
 const app = express();
+app.set('trust proxy', 1); // Zaufaj proxy Google Cloud dla poprawnego IP w rate-limit
 
 // Security Headers z Helmet
 app.use(helmet({
@@ -64,7 +65,6 @@ app.use(cors({
     },
     credentials: true
 }));
-
 app.use(express.json({ limit: '10mb' }));
 
 // --- Konfiguracja Rate Limiterów ---

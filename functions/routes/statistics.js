@@ -3,7 +3,7 @@ const router = express.Router();
 const { getFirestore } = require('firebase-admin/firestore');
 const { authMiddleware, asyncHandler } = require('../middleware');
 const { getUserMetadata } = require('../categories-service');
-const { normalizeTagValue } = require('../utils');
+const { normalizeTagValue, getExcludeChecker } = require('../utils');
 
 const db = getFirestore();
 const purchasesCollection = db.collection('expenses');
@@ -13,19 +13,6 @@ const purchasesCollection = db.collection('expenses');
 router.get('/statistics', authMiddleware, asyncHandler(async (req, res) => {
     const { year, month } = req.query;
     const metadata = await getUserMetadata(req.userId);
-    const structuredCats = metadata.structuredCategories || [];
-
-    const isCategoryExcluded = (catName, subCatName = '') => {
-        if (!catName) return false;
-        const parent = structuredCats.find(c => (c.name || '').toLowerCase() === catName.toLowerCase() && !c.parentId);
-        if (parent && parent.excludeFromExpenses) return true;
-        if (subCatName && parent) {
-            const sub = structuredCats.find(c => (c.name || '').toLowerCase() === subCatName.toLowerCase() && c.parentId === parent.id);
-            if (sub && sub.excludeFromExpenses) return true;
-        }
-        return false;
-    };
-
     const targetDate = (year && month) ? new Date(parseInt(year), parseInt(month) - 1, 15) : new Date();
     const start = new Date(targetDate.getFullYear(), targetDate.getMonth(), 1).toISOString().split('T')[0];
     const end = new Date(targetDate.getFullYear(), targetDate.getMonth() + 1, 0).toISOString().split('T')[0];
@@ -36,14 +23,15 @@ router.get('/statistics', authMiddleware, asyncHandler(async (req, res) => {
         .where('date', '<=', end)
         .get();
         
+    const isExcluded = getExcludeChecker(metadata.structuredCategories);
     const monthlyPurchases = snapshot.docs.map(doc => doc.data()).filter(p => !p.specialBudgetId);
     const monthlyTotal = monthlyPurchases.reduce((sum, p) => {
         const items = p.items || [];
         if (items.length === 0) {
-            return isCategoryExcluded(p.category) ? sum : sum + (p.totalAmount || 0);
+            return isExcluded(p.category) ? sum : sum + (p.totalAmount || 0);
         }
         const validSum = items.reduce((iSum, item) => {
-            if (isCategoryExcluded(item.category || 'inne', item.subCategory || '')) {
+            if (isExcluded(item.category || 'inne', item.subCategory || '')) {
                 return iSum;
             }
             return iSum + (item.price || 0);
@@ -53,7 +41,7 @@ router.get('/statistics', authMiddleware, asyncHandler(async (req, res) => {
 
     const spendingByCategory = monthlyPurchases.flatMap(p => p.items || []).reduce((acc, item) => {
         const cat = item.category || 'inne';
-        if (isCategoryExcluded(cat, item.subCategory || '')) return acc;
+        if (isExcluded(cat, item.subCategory || '')) return acc;
         acc[cat] = (acc[cat] || 0) + (item.price || 0);
         return acc;
     }, {});
@@ -66,6 +54,8 @@ router.get('/statistics/comparison', authMiddleware, asyncHandler(async (req, re
     const isMtdMode = mtd === 'true' || mode === 'mtd';
     const today = new Date();
     const targetDay = today.getDate();
+    const metadata = await getUserMetadata(req.userId);
+    const isExcluded = getExcludeChecker(metadata.structuredCategories);
     let startDateStr, endDateStr, expectedMonths = [];
 
     if (mode === '6months') {
@@ -97,20 +87,6 @@ router.get('/statistics/comparison', authMiddleware, asyncHandler(async (req, re
         .where('date', '<=', endDateStr)
         .get();
 
-    const metadata = await getUserMetadata(req.userId);
-    const structuredCats = metadata.structuredCategories || [];
-
-    const isCategoryExcluded = (catName, subCatName = '') => {
-        if (!catName) return false;
-        const parent = structuredCats.find(c => (c.name || '').toLowerCase() === catName.toLowerCase() && !c.parentId);
-        if (parent && parent.excludeFromExpenses) return true;
-        if (subCatName && parent) {
-            const sub = structuredCats.find(c => (c.name || '').toLowerCase() === subCatName.toLowerCase() && c.parentId === parent.id);
-            if (sub && sub.excludeFromExpenses) return true;
-        }
-        return false;
-    };
-        
     if (snapshot.empty) {
         return res.json({ monthlyTotals: expectedMonths.map(month => ({ month, total: 0 })) });
     }
@@ -140,10 +116,10 @@ router.get('/statistics/comparison', authMiddleware, asyncHandler(async (req, re
         } else {
             const items = p.items || [];
             if (items.length === 0) {
-                amount = isCategoryExcluded(p.category) ? 0 : (p.totalAmount || 0);
+                amount = isExcluded(p.category) ? 0 : (p.totalAmount || 0);
             } else {
                 amount = items.reduce((sum, item) => {
-                    if (isCategoryExcluded(item.category || 'inne', item.subCategory || '')) {
+                    if (isExcluded(item.category || 'inne', item.subCategory || '')) {
                         return sum;
                     }
                     return sum + (item.price || 0);

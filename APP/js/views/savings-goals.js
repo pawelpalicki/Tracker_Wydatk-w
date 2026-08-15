@@ -251,17 +251,15 @@ async function updateSavingsGoalsList() {
                     </div>
                     
                     <!-- Progress Bar Container -->
-                    <div class="w-full bg-white/5 h-2.5 rounded-full overflow-hidden border border-white/5 relative">
+                    <div class="w-full bg-white/10 h-3 rounded-full overflow-hidden border border-white/5 relative progress-container-fixed">
                         <!-- Actual Progress Bar -->
-                        <div class="progress-bar-fill h-full rounded-full transition-all duration-1000 ease-out absolute left-0 top-0 z-10" 
-                             style="width: 0%; background: ${goal.color}" 
-                             data-target-width="${isDeficit ? (percent - potentialPercent) : percent}%"></div>
+                        <div class="progress-bar-fill h-full rounded-full animate-grow absolute left-0 top-0 z-10" 
+                             style="width: ${isDeficit ? (percent - potentialPercent) : percent}%; background-color: ${goal.color || '#10b981'}; height: 100%;"></div>
                         
                         <!-- Potential/Deficit Bar -->
                         ${!isCompleted && potentialPercent > 0 ? `
-                            <div class="h-full transition-all duration-1000 ease-out absolute top-0 ${isDeficit ? 'progress-bar-deficit' : 'progress-bar-potential'} z-0" 
-                                 style="width: 0%; left: ${isDeficit ? (percent - potentialPercent) : percent}%; background: ${isDeficit ? '#ef4444' : goal.color}; opacity: ${isDeficit ? 0.6 : 0.4}" 
-                                 data-target-width="${potentialPercent}%"></div>
+                            <div class="h-full animate-grow absolute top-0 ${isDeficit ? 'progress-bar-deficit' : 'progress-bar-potential'} z-0" 
+                                 style="width: ${potentialPercent}%; left: ${isDeficit ? (percent - potentialPercent) : percent}%; background-color: ${isDeficit ? '#ef4444' : (goal.color || '#10b981')}; opacity: ${isDeficit ? 0.6 : 0.4}; height: 100%;"></div>
                         ` : ''}
                     </div>
                     
@@ -352,13 +350,6 @@ async function updateSavingsGoalsList() {
     }
 
     listContainer.innerHTML = html;
-
-    // Uruchomienie mikro-animacji paska postępu
-    setTimeout(() => {
-        listContainer.querySelectorAll('.progress-bar-fill, .progress-bar-potential, .progress-bar-deficit').forEach(fill => {
-            fill.style.width = fill.dataset.targetWidth;
-        });
-    }, 50);
 
     // Podłączenie listenerów do przycisków na kartach
     listContainer.querySelectorAll('.deposit-btn').forEach(btn => {

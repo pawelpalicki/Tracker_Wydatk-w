@@ -16,6 +16,7 @@ const router = express.Router();
 const { getFirestore, FieldValue } = require('firebase-admin/firestore');
 const { authMiddleware, asyncHandler } = require('../middleware');
 const { getUserMetadata } = require('../categories-service');
+const { getExcludeChecker } = require('../utils');
 
 const db = getFirestore();
 const purchasesCollection = db.collection('expenses');
@@ -103,6 +104,8 @@ router.get('/init', authMiddleware, asyncHandler(async (req, res) => {
 
     // --- Faza 2: Przetwarzanie danych ---
 
+    const isExcluded = getExcludeChecker(metadata.structuredCategories);
+
     // Budżet
     const budgets = budgetDoc.exists ? (budgetDoc.data().budgets || {}) : {};
 
@@ -125,27 +128,15 @@ router.get('/init', authMiddleware, asyncHandler(async (req, res) => {
         .map(doc => doc.data())
         .filter(p => !p.specialBudgetId);
 
-    const structuredCats = metadata.structuredCategories || [];
-    const isCategoryExcluded = (catName, subCatName = '') => {
-        if (!catName) return false;
-        const parent = structuredCats.find(c => (c.name || '').toLowerCase() === catName.toLowerCase() && !c.parentId);
-        if (parent && parent.excludeFromExpenses) return true;
-        if (subCatName && parent) {
-            const sub = structuredCats.find(c => (c.name || '').toLowerCase() === subCatName.toLowerCase() && c.parentId === parent.id);
-            if (sub && sub.excludeFromExpenses) return true;
-        }
-        return false;
-    };
-
     const monthlyTotalsMap = sixMonthPurchases.reduce((acc, p) => {
         const month = p.date.substring(0, 7);
         const items = p.items || [];
         let amount = 0;
         if (items.length === 0) {
-            amount = isCategoryExcluded(p.category) ? 0 : (p.totalAmount || 0);
+            amount = isExcluded(p.category) ? 0 : (p.totalAmount || 0);
         } else {
             amount = items.reduce((sum, item) => {
-                if (isCategoryExcluded(item.category || 'inne', item.subCategory || '')) {
+                if (isExcluded(item.category || 'inne', item.subCategory || '')) {
                     return sum;
                 }
                 return sum + (item.price || 0);
