@@ -59,6 +59,15 @@ function escapeHtml(value = '') {
         .replace(/'/g, '&#039;');
 }
 
+function uniqPurchasesById(arr) {
+    const map = new Map();
+    for (const p of arr || []) {
+        if (!p || !p.id) continue;
+        if (!map.has(p.id)) map.set(p.id, p);
+    }
+    return Array.from(map.values());
+}
+
 function localDateContext() {
     const now = new Date();
     return {
@@ -786,6 +795,7 @@ export async function loadInitialPurchases() {
             const batch = purchases || [];
             lastNext = nextCursor || null;
             state.allPurchases.push(...batch);
+            state.allPurchases = uniqPurchasesById(state.allPurchases);
             lastCursorParam = lastNext || '';
 
             if (!hasFilters) break;
@@ -837,6 +847,7 @@ export async function fetchMorePurchases() {
             if (batch.length > 0) {
                 const hadNoRows = state.allPurchases.length === 0;
                 state.allPurchases.push(...batch);
+                state.allPurchases = uniqPurchasesById(state.allPurchases);
                 if (hadNoRows) {
                     renderPurchasesList(state.allPurchases, false);
                 } else {

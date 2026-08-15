@@ -21,8 +21,14 @@ function applyPurchaseFilters(purchases, { keyword, category, subCategory, shop,
     if (minAmount) out = out.filter(p => p.totalAmount >= parseFloat(minAmount));
     if (maxAmount) out = out.filter(p => p.totalAmount <= parseFloat(maxAmount));
     if (keyword) {
-        const lowerKeyword = String(keyword).toLowerCase();
-        out = out.filter(p => (p.items || []).some(item => (item.name || '').toLowerCase().includes(lowerKeyword)));
+        const lowerKeyword = String(keyword).toLowerCase().trim();
+        const tokens = lowerKeyword.split(/\s+/).filter(Boolean);
+        out = out.filter(p => (p.items || []).some(item => {
+            const name = (item.name || '').toLowerCase();
+            const words = name.split(/\W+/).filter(Boolean);
+            // require that every token appears as a whole word or as a prefix of a word in the item name
+            return tokens.every(tok => words.some(w => w === tok || w.startsWith(tok)));
+        }));
     }
     if (category || subCategory) {
         out = out.filter(p => (p.items || []).some(item => {
