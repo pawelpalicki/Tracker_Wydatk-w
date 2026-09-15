@@ -267,11 +267,16 @@ async function renderHomeSummary(dashboardData = null) {
         const barWrapper = document.getElementById('home-budget-bar-wrapper');
         const progressEl = document.getElementById('home-budget-progress');
         const pctEl = document.getElementById('home-budget-pct');
+        const projectionBarEl = document.getElementById('home-budget-projection-bar');
         
         if (totalBudget > 0) {
             const spentPct = Math.round((totalSpent / totalBudget) * 100);
             const resPctValue = Math.round((reservationsTotal / totalBudget) * 100);
             const totalPct = spentPct + resPctValue;
+            
+            // Pobierz dane o projekcji z cache'u
+            const projectedTotal = (isCurrentMonth && projection) ? (projection.projectedTotal || 0) : 0;
+            const projectedPct = Math.round((projectedTotal / totalBudget) * 100);
 
             if (barWrapper) barWrapper.classList.remove('hidden');
             
@@ -303,6 +308,16 @@ async function renderHomeSummary(dashboardData = null) {
                 }
             }
 
+            // Pasek projekcji (Ghost Bar)
+            if (projectionBarEl) {
+                if (isCurrentMonth && projectedTotal > totalSpent) {
+                    projectionBarEl.style.width = Math.min(projectedPct, 100) + '%';
+                    projectionBarEl.classList.remove('hidden');
+                } else {
+                    projectionBarEl.classList.add('hidden');
+                }
+            }
+
             // Wyświetlanie procentów: Spent% (Total%)
             if (pctEl) {
                 if (isCurrentMonth && reservationsTotal !== 0) {
@@ -326,6 +341,13 @@ async function renderHomeSummary(dashboardData = null) {
             const categoryTotals = {};
             purchases.forEach(p => (p.items || []).forEach(i => {
                 const cat = i.category || 'inne';
+                const subCat = i.subCategory || '';
+                
+                // Ignoruj wydatki z wykluczonych kategorii/podkategorii
+                if (isCategoryExcluded(cat, subCat)) {
+                    return;
+                }
+                
                 categoryTotals[cat] = (categoryTotals[cat] || 0) + (i.price || 0);
             }));
 
@@ -376,6 +398,11 @@ async function renderHomeMobilizationInsights(purchases, totalBudget, isCurrentM
         const projectionData = await getMonthlyProjection({ purchases, totalBudget });
         const { projectedTotal, diff, dailyLimit, wants } = projectionData;
 
+        // Oblicz pozostałe dni
+        const now = new Date();
+        const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+        const rem = daysInMonth - now.getDate();
+
         const dailyLimitEl = document.getElementById('insight-daily-limit');
         const projectionEl = document.getElementById('insight-projection');
         const wantsEl = document.getElementById('insight-wants');
@@ -385,19 +412,67 @@ async function renderHomeMobilizationInsights(purchases, totalBudget, isCurrentM
         if (projectionEl) projectionEl.textContent = formatAmount(projectedTotal);
         if (wantsEl) wantsEl.textContent = formatAmount(wants);
 
+        // Wizualna gradacja alarmu
+        section.className = 'px-3 py-2 rounded-lg transition-all duration-300 bg-white/[0.02] border';
+        if (diff < 0) {
+            // Alert (Prognoza > Budżet)
+            section.classList.add('border-2', 'border-red-500', 'shadow-[0_0_15px_rgba(239,68,68,0.15)]');
+        } else if (projectedTotal > totalBudget * 0.9) {
+            // Ryzyko (Prognoza > 90% budżetu)
+            section.classList.add('border-2', 'border-yellow-500/70');
+        } else {
+            // Bezpiecznie
+            section.classList.add('border-white/10');
+        }
+
+        // Komunikat pod kwotą prognozy (tylko gdy jest zapas, aby nie dublować z alertem na dole)
         if (diffEl) {
-            diffEl.textContent = `${formatAmount(Math.abs(diff))} ${diff >= 0 ? 'zapasu' : 'przekroczenia'}`;
-            diffEl.className = `text-[9px] font-bold leading-tight mt-0.5 break-words ${diff >= 0 ? 'text-green-400' : 'text-red-400'}`;
+            if (diff >= 0) {
+                diffEl.textContent = `${formatAmount(Math.abs(diff))} zapasu`;
+                diffEl.className = 'text-[9px] font-bold leading-tight mt-0.5 break-words text-green-400';
+                diffEl.classList.remove('hidden');
+            } else {
+                diffEl.classList.add('hidden'); // Ukrywamy, bo alert będzie na dole
+            }
         }
 
         const textContainer = document.getElementById('insight-text-container');
         if (textContainer) {
             textContainer.innerHTML = '';
-            if (projectedTotal > totalBudget) {
+            
+            if (diff < 0) {
+                // Konkretne działanie: Dzienny ratunek
+                const dailyReduction = Math.abs(diff) / (rem + 1);
+                
                 const warning = document.createElement('div');
-                warning.className = 'text-[8px] text-red-300 font-bold flex items-center gap-1';
-                warning.innerHTML = `<i class="fas fa-triangle-exclamation"></i> Przekroczysz o ~${formatAmount(projectedTotal - totalBudget)}`;
+                warning.className = 'text-[9px] text-red-400 font-bold space-y-1';
+                
+                let html = `
+                    <div class="flex items-center gap-1">
+                        <i class="fas fa-triangle-exclamation animate-pulse"></i> 
+                        <span>Przekroczysz o ok. ${formatAmount(Math.abs(diff))}</span>
+                    </div>
+                    <div class="text-gray-400 font-medium leading-tight">
+                        Wydawaj o <span class="text-white">${formatAmount(dailyReduction)} mniej</span> dziennie, aby uratować budżet.
+                    </div>
+                `;
+
+                // Analiza Przyjemności
+                if (wants > 0) {
+                    html += `
+                        <div class="text-[8px] text-gray-500 italic mt-1 border-t border-white/5 pt-1">
+                            Pamiętaj, że w tym miesiącu na "przyjemności" wydano już ${formatAmount(wants)}.
+                        </div>
+                    `;
+                }
+                
+                warning.innerHTML = html;
                 textContainer.appendChild(warning);
+            } else if (dailyLimit === 0 && totalBudget > 0) {
+                const info = document.createElement('div');
+                info.className = 'text-[9px] text-yellow-400 font-bold flex items-center gap-1';
+                info.innerHTML = `<i class="fas fa-circle-info"></i> Brak wolnych środków na wydatki elastyczne.`;
+                textContainer.appendChild(info);
             }
         }
 

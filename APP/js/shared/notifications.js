@@ -12,6 +12,7 @@ import state from '../core/state.js';
 import { apiCall } from '../core/api.js';
 import { formatAmount, escapeHTML } from './format.js';
 import Drawer from './drawer.js';
+import { isCategoryExcluded } from './categories.js';
 
 let notificationsInitialized = false;
 let currentNotifications = [];
@@ -242,6 +243,11 @@ export async function checkAndGenerateNotifications(data) {
 
     if (data.budgets) {
         Object.entries(data.budgets).forEach(([catName, budget]) => {
+            // Ignoruj kategorie oznaczone jako wykluczone z wydatków
+            if (isCategoryExcluded(catName)) {
+                return;
+            }
+
             if (budget > 0) {
                 const spent = data.categoryTotals[catName] || 0;
                 const pct = (spent / budget) * 100;
