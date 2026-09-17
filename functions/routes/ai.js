@@ -168,7 +168,20 @@ function filterPurchasesForNaturalSearch(purchases, filters) {
     );
 
     return purchases.reduce((out, purchase) => {
-        if (shop && !normalizeSearchText(purchase.shop).includes(shop)) return out;
+        let shopMatched = !shop || normalizeSearchText(purchase.shop).includes(shop);
+
+        // Specjalna obsluga wydatkow cyklicznych - nazwa uslugi/firmy (np. Netflix, Trade Republic)
+        // jest czesto zapisana w nazwie produktu, a pole shop to "Wydatek cykliczny".
+        if (!shopMatched && shop && (purchase.shop === 'Wydatek cykliczny' || purchase.isRecurring)) {
+            const anyItemMatchesShop = (purchase.items || []).some(item =>
+                normalizeSearchText(item.name).includes(shop)
+            );
+            if (anyItemMatchesShop) {
+                shopMatched = true;
+            }
+        }
+
+        if (!shopMatched) return out;
         if (!purchaseMatchesAmount(purchase, filters)) return out;
 
         const items = Array.isArray(purchase.items) ? purchase.items : [];
