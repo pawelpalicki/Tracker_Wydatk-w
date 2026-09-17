@@ -19,6 +19,8 @@ let currentFilterType = null;
 let currentFilterOnApply = null;
 let aiSearchMode = false;
 let aiSearchRequestId = 0;
+let searchRequestId = 0;
+let filterDebounceTimer = null;
 let aiSearchResult = null;
 
 const AI_SEARCH_PLACEHOLDER = 'Zapytaj AI i nacisnij Enter, np. Ile wydalem na slodycze?';
@@ -287,7 +289,11 @@ export function initPurchaseListFilters() {
             setText('filter-amount-label', 'Kwota');
             setFilterButtonState(amountBtn, amountClear, false);
         }
-        handleFilterChange();
+        
+        clearTimeout(filterDebounceTimer);
+        filterDebounceTimer = setTimeout(() => {
+            handleFilterChange();
+        }, 100);
     };
 
     [
@@ -312,7 +318,10 @@ export function initPurchaseListFilters() {
             }
             return;
         }
-        handleFilterChange();
+        clearTimeout(filterDebounceTimer);
+        filterDebounceTimer = setTimeout(() => {
+            handleFilterChange();
+        }, 300);
     });
     keywordInput?.addEventListener('keydown', (event) => {
         if (!aiSearchMode || event.key !== 'Enter') return;
@@ -777,6 +786,7 @@ function purchasesListUrl(params) {
 }
 
 export async function loadInitialPurchases() {
+    const requestId = ++searchRequestId;
     state.isLoadingPurchases = true;
     removeEventListener('scroll', handleInfiniteScroll);
     teardownPurchasesLoadMoreObserver();
@@ -784,7 +794,7 @@ export async function loadInitialPurchases() {
         const query = getFilterQueryParams();
         const hasFilters = Boolean(query);
         const maxPrefetch = hasFilters ? 25 : 1;
-        state.allPurchases = [];
+        let accumulatedPurchases = [];
         let lastCursorParam = '';
         let lastNext = null;
 
@@ -792,10 +802,13 @@ export async function loadInitialPurchases() {
             const params = new URLSearchParams(query);
             if (lastCursorParam) params.set('lastVisible', lastCursorParam);
             const { purchases, nextCursor } = await apiCall(purchasesListUrl(params));
+            
+            if (requestId !== searchRequestId) return;
+
             const batch = purchases || [];
             lastNext = nextCursor || null;
-            state.allPurchases.push(...batch);
-            state.allPurchases = uniqPurchasesById(state.allPurchases);
+            accumulatedPurchases.push(...batch);
+            accumulatedPurchases = uniqPurchasesById(accumulatedPurchases);
             lastCursorParam = lastNext || '';
 
             if (!hasFilters) break;
@@ -803,7 +816,9 @@ export async function loadInitialPurchases() {
             if (batch.length > 0) break;
         }
 
+        state.allPurchases = accumulatedPurchases;
         state.nextPurchaseCursor = lastNext || null;
+
         if (state.allPurchases.length === 0 && state.nextPurchaseCursor) {
             const list = el('purchases-list');
             if (list) {
@@ -817,6 +832,7 @@ export async function loadInitialPurchases() {
             setupPurchasesLoadMoreObserver();
         }
     } catch (error) {
+        if (requestId !== searchRequestId) return;
         console.error('Blad ladowania poczatkowych zakupow:', error);
         const list = el('purchases-list');
         if (list) list.innerHTML = '<div class="text-center py-12 text-red-500">Wystapil blad podczas ladowania listy zakupow.</div>';
@@ -825,7 +841,9 @@ export async function loadInitialPurchases() {
         teardownPurchasesLoadMoreObserver();
         removeEventListener('scroll', handleInfiniteScroll);
     } finally {
-        state.isLoadingPurchases = false;
+        if (requestId === searchRequestId) {
+            state.isLoadingPurchases = false;
+        }
     }
 }
 
@@ -833,6 +851,7 @@ export async function fetchMorePurchases() {
     if (aiSearchMode) return;
     if (state.isLoadingPurchases || !state.nextPurchaseCursor) return;
 
+    const requestId = searchRequestId;
     state.isLoadingPurchases = true;
     try {
         const maxEmptySkips = 25;
@@ -841,6 +860,9 @@ export async function fetchMorePurchases() {
             const params = new URLSearchParams(getFilterQueryParams());
             params.set('lastVisible', state.nextPurchaseCursor);
             const { purchases, nextCursor } = await apiCall(purchasesListUrl(params));
+            
+            if (requestId !== searchRequestId) return;
+
             const batch = purchases || [];
             state.nextPurchaseCursor = nextCursor || null;
 
@@ -865,12 +887,15 @@ export async function fetchMorePurchases() {
             teardownPurchasesLoadMoreObserver();
         }
     } catch (error) {
+        if (requestId !== searchRequestId) return;
         console.error('Blad doladowywania zakupow:', error);
         removeEventListener('scroll', handleInfiniteScroll);
         teardownPurchasesLoadMoreObserver();
         state.nextPurchaseCursor = null;
     } finally {
-        state.isLoadingPurchases = false;
+        if (requestId === searchRequestId) {
+            state.isLoadingPurchases = false;
+        }
     }
 }
 
