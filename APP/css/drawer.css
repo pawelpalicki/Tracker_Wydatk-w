@@ -449,3 +449,20 @@
 .notif-content-layer.swiping {
     transition: none;
 }
+
+/* ─── Wykluczone kategorie badge ────────────────────────────── */
+.category-excluded-badge {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.15rem 0.55rem;
+    border-radius: 9999px;
+    font-size: 0.65rem;
+    font-weight: 600;
+    line-height: 1.2;
+    color: #fcd34d !important;
+    background-color: rgba(245, 158, 11, 0.15) !important;
+    border: 1px solid rgba(245, 158, 11, 0.35) !important;
+    white-space: nowrap;
+    flex-shrink: 0;
+}

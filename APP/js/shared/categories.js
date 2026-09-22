@@ -15,7 +15,11 @@ export function getParentCategoryByName(parentName) {
     if (!parentName || !state.structuredCategories || !Array.isArray(state.structuredCategories)) {
         return null;
     }
-    return state.structuredCategories.find(category => category.name === parentName && !category.parentId) || null;
+    const clean = String(parentName).trim();
+    const exact = state.structuredCategories.find(category => category.name === clean && !category.parentId);
+    if (exact) return exact;
+    const lower = clean.toLowerCase();
+    return state.structuredCategories.find(category => !category.parentId && category.name && category.name.trim().toLowerCase() === lower) || null;
 }
 
 export function getSubCategoryByName(parentName, subCategoryName) {
@@ -24,7 +28,11 @@ export function getSubCategoryByName(parentName, subCategoryName) {
     if (!parentCategory || !state.structuredCategories || !Array.isArray(state.structuredCategories)) {
         return null;
     }
-    return state.structuredCategories.find(category => category.name === subCategoryName && category.parentId === parentCategory.id) || null;
+    const cleanSub = String(subCategoryName).trim();
+    const exact = state.structuredCategories.find(category => category.name === cleanSub && category.parentId === parentCategory.id);
+    if (exact) return exact;
+    const lowerSub = cleanSub.toLowerCase();
+    return state.structuredCategories.find(category => category.parentId === parentCategory.id && category.name && category.name.trim().toLowerCase() === lowerSub) || null;
 }
 
 export function getCategorySelectionState(parentName = '', subCategoryName = '', fallbackLabel = 'Wybierz kategorię') {
@@ -136,11 +144,18 @@ export function openHierarchicalCategoryDrawer(row, currentCategory, currentSubC
 
 export function isCategoryExcluded(parentName, subCategoryName = '') {
     if (!parentName) return false;
-    const parent = getParentCategoryByName(parentName);
-    if (parent && parent.excludeFromExpenses) return true;
-    if (subCategoryName) {
-        const sub = getSubCategoryByName(parentName, subCategoryName);
-        if (sub && sub.excludeFromExpenses) return true;
+    let pName = parentName;
+    let sName = subCategoryName;
+    if (!sName && typeof pName === 'string' && pName.includes(' / ')) {
+        const parts = pName.split(' / ');
+        pName = parts[0];
+        sName = parts[1];
+    }
+    const parent = getParentCategoryByName(pName);
+    if (parent && (parent.excludeFromExpenses === true || parent.excludeFromExpenses === 'true')) return true;
+    if (sName) {
+        const sub = getSubCategoryByName(pName, sName);
+        if (sub && (sub.excludeFromExpenses === true || sub.excludeFromExpenses === 'true')) return true;
     }
     return false;
 }

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tracker-wydatkow-cache-v14';
+const CACHE_NAME = 'tracker-wydatkow-cache-v15';
 
 // Tylko pliki faktycznie serwowane z hostingu (APP/). Brak 404 = cala instalacja SW nie pada.
 const urlsToCache = [

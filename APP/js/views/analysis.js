@@ -354,12 +354,23 @@ function getAllComparisonCategoryPaths() {
     return getComparisonParentCategories().flatMap(getPathsForComparisonParent);
 }
 
+function isPathExcluded(path) {
+    const [catName, subName] = JSON.parse(path);
+    return isCategoryExcluded(catName, subName);
+}
+
+function getNonExcludedPaths() {
+    return getAllComparisonCategoryPaths().filter(path => !isPathExcluded(path));
+}
+
 function isComparisonPathSelected(path) {
-    return currentComparisonCategorySelection.allSelected || currentComparisonCategorySelection.selectedPaths.has(path);
+    if (currentComparisonCategorySelection.allSelected) {
+        return !isPathExcluded(path);
+    }
+    return currentComparisonCategorySelection.selectedPaths.has(path);
 }
 
 function matchesComparisonCategoryFilter(categoryName, subCategoryName = '') {
-    if (isCategoryExcluded(categoryName, subCategoryName)) return false;
     return isComparisonPathSelected(getComparisonCategoryPath(categoryName, subCategoryName));
 }
 
@@ -520,12 +531,12 @@ function legacyOpenComparisonCategoryFilterDrawer() {
             icon.style.color = category.color || '#64748b';
             icon.innerHTML = `<i class="fas ${category.icon || 'fa-tag'}"></i>`;
             const label = document.createElement('span');
-            label.className = 'category-name-label flex-1 text-left';
+            label.className = 'category-name-label flex-1 text-left flex items-center flex-wrap gap-2';
             label.textContent = category.name;
-            if (isCategoryExcluded(category.name)) {
+            if (isCategoryExcluded(category.name) || Boolean(category.excludeFromExpenses)) {
                 const globalBadge = document.createElement('span');
-                globalBadge.className = 'ml-2 rounded-full border border-amber-400/20 bg-amber-400/10 px-2 py-0.5 text-[10px] text-amber-300';
-                globalBadge.textContent = 'wykluczona globalnie';
+                globalBadge.className = 'category-excluded-badge';
+                globalBadge.innerHTML = '<i class="fas fa-ban text-[9px]"></i><span>wykluczona globalnie</span>';
                 label.appendChild(globalBadge);
             }
             const check = document.createElement('span');
@@ -627,10 +638,13 @@ function openComparisonCategoryFilterDrawer() {
     const ensureCustomSelection = () => {
         if (!draftAllSelected) return;
         draftAllSelected = false;
-        draftPaths = new Set(getAllComparisonCategoryPaths());
+        draftPaths = new Set(getNonExcludedPaths());
     };
-    const isDraftSelected = path => draftAllSelected || draftPaths.has(path);
-    const selectedCount = () => draftAllSelected ? getAllComparisonCategoryPaths().length : draftPaths.size;
+    const isDraftSelected = path => {
+        if (draftAllSelected) return !isPathExcluded(path);
+        return draftPaths.has(path);
+    };
+    const selectedCount = () => draftAllSelected ? getNonExcludedPaths().length : draftPaths.size;
 
     const createCheckbox = (selected, partiallySelected = false) => {
         const checkbox = document.createElement('span');
@@ -684,13 +698,29 @@ function openComparisonCategoryFilterDrawer() {
             icon.style.backgroundColor = `${category.color || '#64748b'}25`;
             icon.style.color = category.color || '#64748b';
             icon.innerHTML = `<i class="fas ${category.icon || 'fa-tag'}"></i>`;
-            const label = document.createElement('span');
-            label.className = 'flex-1 truncate text-sm font-medium text-white';
-            label.textContent = category.name;
-            if (isCategoryExcluded(category.name)) {
+            const label = document.createElement('div');
+            label.className = 'flex-1 min-w-0 flex items-center flex-wrap gap-2';
+            const labelText = document.createElement('span');
+            labelText.className = 'text-sm font-medium text-white';
+            labelText.textContent = category.name;
+            label.appendChild(labelText);
+
+            const isSubcategoryExcluded = sub => Boolean(sub.excludeFromExpenses) || isCategoryExcluded(category.name, sub.name);
+            const excludedSubCategories = subCategories.filter(isSubcategoryExcluded);
+            const isParentDirectlyExcluded = Boolean(category.excludeFromExpenses) || isCategoryExcluded(category.name);
+            const allSubsExcluded = subCategories.length > 0 && excludedSubCategories.length === subCategories.length;
+            const someSubsExcluded = subCategories.length > 0 && !allSubsExcluded && excludedSubCategories.length > 0;
+            const isCategoryGloballyExcluded = isParentDirectlyExcluded || allSubsExcluded;
+
+            if (isCategoryGloballyExcluded) {
                 const badge = document.createElement('span');
-                badge.className = 'ml-2 text-[10px] font-normal text-amber-300';
-                badge.textContent = 'wykluczona globalnie';
+                badge.className = 'category-excluded-badge';
+                badge.innerHTML = '<i class="fas fa-ban text-[9px]"></i><span>wykluczona globalnie</span>';
+                label.appendChild(badge);
+            } else if (someSubsExcluded) {
+                const badge = document.createElement('span');
+                badge.className = 'category-excluded-badge';
+                badge.innerHTML = `<i class="fas fa-ban text-[9px]"></i><span>wykluczone podkat. (${excludedSubCategories.length})</span>`;
                 label.appendChild(badge);
             }
             parentRow.append(selectParent, icon, label);
@@ -721,9 +751,19 @@ function openComparisonCategoryFilterDrawer() {
                     child.className = 'flex w-full items-center gap-3 px-4 py-2.5 pl-14 text-left hover:bg-white/[0.04]';
                     child.setAttribute('aria-pressed', String(childSelected));
                     child.append(createCheckbox(childSelected));
-                    const childLabel = document.createElement('span');
-                    childLabel.className = 'flex-1 truncate text-sm text-gray-300';
-                    childLabel.textContent = subCategory.name;
+                    const childLabel = document.createElement('div');
+                    childLabel.className = 'flex-1 min-w-0 flex items-center flex-wrap gap-2';
+                    const childText = document.createElement('span');
+                    childText.className = 'text-sm text-gray-300';
+                    childText.textContent = subCategory.name;
+                    childLabel.appendChild(childText);
+                    const isSubExcluded = isParentDirectlyExcluded || isSubcategoryExcluded(subCategory);
+                    if (isSubExcluded) {
+                        const subBadge = document.createElement('span');
+                        subBadge.className = 'category-excluded-badge';
+                        subBadge.innerHTML = '<i class="fas fa-ban text-[9px]"></i><span>wykluczona globalnie</span>';
+                        childLabel.appendChild(subBadge);
+                    }
                     child.appendChild(childLabel);
                     child.addEventListener('click', () => {
                         ensureCustomSelection();
