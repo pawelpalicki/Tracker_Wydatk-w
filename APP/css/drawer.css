@@ -363,6 +363,42 @@
     font-size: 0.9rem;
 }
 
+/* Wielokrotny wybór kategorii w widoku analizy. */
+.comparison-category-multi-item {
+    text-align: left;
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+.comparison-category-multi-item.active {
+    border-color: rgba(99, 102, 241, 0.8);
+    background: rgba(99, 102, 241, 0.12);
+}
+
+.comparison-category-multi-check {
+    display: inline-flex;
+    width: 1.5rem;
+    height: 1.5rem;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 9999px;
+    color: transparent;
+    transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+}
+
+.comparison-category-multi-check.is-selected {
+    border-color: #6366f1;
+    background: #6366f1;
+    color: #fff;
+}
+
+.comparison-category-multi-check.is-partial {
+    border-color: #6366f1;
+    background: rgba(99, 102, 241, 0.25);
+    color: #c7d2fe;
+}
+
 /* ─── Style Swipe (Powiadomienia) ────────────────────────────── */
 
 .notif-swipe-wrapper {

@@ -6,8 +6,8 @@
 import state from '../core/state.js';
 import { apiCall } from '../core/api.js';
 import { formatAmount, escapeHTML } from '../shared/format.js';
-import { renderCategoryDetailsModal, openSelectionDrawer } from '../shared/ui.js';
-import { getParentCategoryByName, getSubCategoryByName, applyCategorySelectionState, isCategoryExcluded } from '../shared/categories.js';
+import { renderCategoryDetailsModal } from '../shared/ui.js';
+import { isCategoryExcluded } from '../shared/categories.js';
 import { buildTagsSummary, openTagsDrawer, getTagGroups, getTagLabel, getTagGroupLabel } from '../shared/tags.js';
 import Drawer from '../shared/drawer.js';
 
@@ -18,8 +18,10 @@ import Drawer from '../shared/drawer.js';
 let longTermBudgetChart = null;
 let longTermBudgetInitialized = false;
 
-let currentComparisonCategory = null;
-let currentComparisonSubCategory = null;
+let currentComparisonCategorySelection = {
+    allSelected: true,
+    selectedPaths: new Set()
+};
 let currentComparisonTags = {};
 
 let comparisonAvailableMonths = [];
@@ -32,9 +34,6 @@ let comparisonLongPressTimer = null;
 let comparisonLongPressTriggered = false;
 let comparisonSuppressNextClick = false;
 let comparisonTouchMoved = false;
-let comparisonParentChipsScrollLeft = 0;
-let comparisonSubChipsScrollLeft = 0;
-let comparisonShouldPreserveChipScroll = false;
 let comparisonSwipeStartX = 0;
 let comparisonSwipeStartY = 0;
 let comparisonSwipeLocked = false;
@@ -149,12 +148,8 @@ async function fetchAnalysisData(startDate, endDate, monthKeys) {
 
 function getBudgetValueForMonth(budgetMap, monthKey) {
     const monthBudget = budgetMap.get(monthKey) || {};
-    if (currentComparisonCategory) {
-        return Number(monthBudget[currentComparisonCategory] || 0);
-    }
-    // Wyklucz budżety dla kategorii oznaczonych jako wykluczone
     return Object.entries(monthBudget).reduce((sum, [catName, value]) => {
-        if (isCategoryExcluded(catName)) return sum;
+        if (!matchesComparisonCategoryFilter(catName)) return sum;
         return sum + (Number(value) || 0);
     }, 0);
 }
@@ -168,20 +163,7 @@ function getFilteredPurchaseItems(purchases) {
         const purchaseTags = purchase.tags || {};
         return (purchase.items || [])
             .filter(item => {
-                if (currentComparisonCategory && (item.category || 'inne') !== currentComparisonCategory) {
-                    return false;
-                }
-                if (currentComparisonSubCategory && (item.subCategory || '') !== currentComparisonSubCategory) {
-                    return false;
-                }
-
-                // Wyklucz pozycje z kategorii oznaczonych jako wykluczonych, chyba że
-                // użytkownik aktywnie filtruje właśnie po tej kategorii/podkategorii
-                if (!currentComparisonCategory && !currentComparisonSubCategory) {
-                    if (isCategoryExcluded(item.category || 'inne', item.subCategory || '')) {
-                        return false;
-                    }
-                }
+                if (!matchesComparisonCategoryFilter(item.category || 'inne', item.subCategory || '')) return false;
 
                 for (const [group, expectedValue] of Object.entries(currentComparisonTags || {})) {
                     if (!expectedValue) continue;
@@ -335,192 +317,445 @@ function hasActiveComparisonTagFilters() {
 function canShowBudgetComparison() {
     return (comparisonPeriod === 'month' || comparisonPeriod === '6months' || comparisonPeriod === 'year') &&
         !hasActiveComparisonTagFilters() &&
-        !currentComparisonSubCategory;
+        !hasPartialComparisonCategorySelection();
 }
 
 function getComparisonParentCategories() {
-    if (!Array.isArray(state.structuredCategories)) return [];
-    return state.structuredCategories.filter(category => !category.parentId);
+    const structured = Array.isArray(state.structuredCategories)
+        ? state.structuredCategories.filter(category => !category.parentId)
+        : [];
+    if (structured.length > 0) return structured;
+
+    return (state.allCategories || []).map((name, index) => ({
+        id: `legacy-${index}`,
+        name,
+        color: '#64748b',
+        icon: 'fa-tag'
+    }));
 }
 
-function getComparisonSelectedParentCategory() {
-    return getParentCategoryByName(currentComparisonCategory || '');
-}
-
-function getComparisonSubCategories() {
-    const parentCategory = getComparisonSelectedParentCategory();
+function getComparisonSubCategories(parentCategory) {
     if (!parentCategory || !Array.isArray(state.structuredCategories)) return [];
     return state.structuredCategories.filter(category => category.parentId === parentCategory.id);
 }
 
-function getComparisonSelectedSubCategory() {
-    return getSubCategoryByName(currentComparisonCategory || '', currentComparisonSubCategory || '');
+function getComparisonCategoryPath(categoryName, subCategoryName = '') {
+    return JSON.stringify([categoryName || 'inne', subCategoryName || '']);
+}
+
+function getPathsForComparisonParent(parentCategory) {
+    return [
+        getComparisonCategoryPath(parentCategory.name),
+        ...getComparisonSubCategories(parentCategory).map(subCategory => getComparisonCategoryPath(parentCategory.name, subCategory.name))
+    ];
+}
+
+function getAllComparisonCategoryPaths() {
+    return getComparisonParentCategories().flatMap(getPathsForComparisonParent);
+}
+
+function isComparisonPathSelected(path) {
+    return currentComparisonCategorySelection.allSelected || currentComparisonCategorySelection.selectedPaths.has(path);
+}
+
+function matchesComparisonCategoryFilter(categoryName, subCategoryName = '') {
+    if (isCategoryExcluded(categoryName, subCategoryName)) return false;
+    return isComparisonPathSelected(getComparisonCategoryPath(categoryName, subCategoryName));
+}
+
+function isComparisonParentFullySelected(parentCategory) {
+    return getPathsForComparisonParent(parentCategory).every(isComparisonPathSelected);
+}
+
+function hasPartialComparisonCategorySelection() {
+    if (currentComparisonCategorySelection.allSelected) return false;
+    return getComparisonParentCategories().some(parent => {
+        const paths = getPathsForComparisonParent(parent);
+        const selectedCount = paths.filter(path => currentComparisonCategorySelection.selectedPaths.has(path)).length;
+        return selectedCount > 0 && selectedCount < paths.length;
+    });
+}
+
+function resetComparisonCategoryFilter() {
+    currentComparisonCategorySelection = { allSelected: true, selectedPaths: new Set() };
 }
 
 // =====================================================================
 // RENDEROWANIE CHIPÓW KATEGORII
 // =====================================================================
 
-function renderComparisonCategoryChips() {
+function legacyRenderComparisonCategoryChips() {
     const container = document.getElementById('comparison-category-filters');
     if (!container) return;
 
-    const previousParentScroller = document.getElementById('comparison-parent-chips');
-    const previousSubScroller = document.getElementById('comparison-subcategory-chips');
-    if (previousParentScroller && !comparisonShouldPreserveChipScroll) {
-        comparisonParentChipsScrollLeft = previousParentScroller.scrollLeft;
-    }
-    if (previousSubScroller && !comparisonShouldPreserveChipScroll) {
-        comparisonSubChipsScrollLeft = previousSubScroller.scrollLeft;
-    }
-
-    const parents = getComparisonParentCategories();
+    const isFiltered = currentComparisonCategoryFilter.mode !== 'all';
+    const selectedParentName = getSingleIncludedComparisonCategoryName();
+    const selectedParent = getComparisonParentCategories().find(category => category.name === selectedParentName);
     const subCategories = getComparisonSubCategories();
-    const selectedParent = getComparisonSelectedParentCategory();
+    container.innerHTML = `
+        <div class="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
+            <button id="comparison-category-filter-open" type="button" class="shrink-0 rounded-full border px-3 py-2 text-[11px] transition-colors ${isFiltered ? 'border-brand-500 bg-brand-500/15 text-white' : 'border-white/10 bg-white/[0.04] text-gray-300 hover:bg-white/10 hover:text-white'}">
+                <span class="flex items-center gap-2"><i class="fas fa-layer-group"></i><span>${escapeHTML(getComparisonCategoryFilterSummary())}</span></span>
+            </button>
+            ${isFiltered ? '<button id="comparison-category-filter-clear" type="button" class="shrink-0 rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-2 text-[11px] text-gray-400 hover:bg-white/10 hover:text-white" aria-label="Wyczyść filtr kategorii" title="Wyczyść filtr kategorii"><i class="fas fa-xmark"></i></button>' : ''}
+        </div>
+        ${subCategories.length ? `
+            <div class="mt-2 flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
+                <button id="comparison-subcategory-all" type="button" class="shrink-0 rounded-full border px-2.5 py-1.5 text-[10px] transition-colors ${!currentComparisonSubCategory ? 'border-brand-500 bg-brand-500/15 text-white' : 'border-white/10 bg-white/[0.04] text-gray-300 hover:bg-white/10 hover:text-white'}">Wszystkie podkategorie</button>
+                ${subCategories.map((subCategory, index) => `<button type="button" data-subcategory-index="${index}" class="shrink-0 rounded-full border px-2.5 py-1.5 text-[10px] transition-colors ${currentComparisonSubCategory === subCategory.name ? 'border-brand-500 bg-brand-500/15 text-white' : 'border-white/10 bg-white/[0.04] text-gray-300 hover:bg-white/10 hover:text-white'}"><i class="fas ${subCategory.icon || selectedParent?.icon || 'fa-tag'} mr-1" style="color:${selectedParent?.color || '#64748b'}"></i>${escapeHTML(subCategory.name)}</button>`).join('')}
+            </div>
+        ` : ''}
+    `;
 
-    const createChipButton = ({ label, isActive, onClick, compact = false, color = '#64748b', icon = 'fa-tag', preserveScroll = null }) => {
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.tabIndex = -1;
-        button.className = [
-            'shrink-0 rounded-full border transition-colors whitespace-nowrap',
-            compact ? 'px-2.5 py-1.5 text-[10px]' : 'px-3 py-2 text-[11px]',
-            isActive
-                ? 'border-brand-500 bg-brand-500/15 text-white'
-                : 'border-white/10 bg-white/[0.04] text-gray-300 hover:bg-white/10 hover:text-white'
-        ].join(' ');
-        button.innerHTML = `
-            <span class="flex items-center gap-2">
-                <span class="flex h-5 w-5 items-center justify-center rounded-full text-[10px]" style="background:${isActive ? color : `${color}22`}; color:${isActive ? '#ffffff' : color};">
-                    <i class="fas ${icon}"></i>
-                </span>
-                <span>${escapeHTML(label)}</span>
-            </span>
-        `;
-        button.addEventListener('pointerdown', (event) => {
-            event.preventDefault();
-            comparisonShouldPreserveChipScroll = true;
-            if (typeof preserveScroll === 'function') {
-                preserveScroll();
-            }
-        });
-        button.addEventListener('click', onClick);
-        return button;
-    };
-
-    const parentSection = document.createElement('div');
-    parentSection.className = 'block';
-    const parentScroller = document.createElement('div');
-    parentScroller.id = 'comparison-parent-chips';
-    parentScroller.className = 'flex w-full gap-2 overflow-x-auto pb-1 scrollbar-hide';
-    parentScroller.addEventListener('scroll', () => {
-        comparisonParentChipsScrollLeft = parentScroller.scrollLeft;
-    }, { passive: true });
-    parentScroller.appendChild(createChipButton({ label: 'Wszystkie', isActive: !currentComparisonCategory, preserveScroll: () => {
-        comparisonParentChipsScrollLeft = parentScroller.scrollLeft;
-    }, onClick: async () => {
-        currentComparisonCategory = null;
+    container.querySelector('#comparison-category-filter-open')?.addEventListener('click', openComparisonCategoryFilterDrawer);
+    container.querySelector('#comparison-category-filter-clear')?.addEventListener('click', async () => {
+        resetComparisonCategoryFilter();
+        updateComparisonControlsVisibility();
+        updateComparisonCategoryFilterUI();
+        await renderUnifiedComparisonChart();
+    });
+    container.querySelector('#comparison-subcategory-all')?.addEventListener('click', async () => {
         currentComparisonSubCategory = null;
         updateComparisonCategoryFilterUI();
         await renderUnifiedComparisonChart();
-    }, color: '#64748b', icon: 'fa-layer-group' }));
-
-    parents.forEach(parent => {
-        parentScroller.appendChild(createChipButton({
-            label: parent.name,
-            isActive: currentComparisonCategory === parent.name,
-            color: parent.color || '#64748b',
-            icon: parent.icon || 'fa-tag',
-            preserveScroll: () => {
-                comparisonParentChipsScrollLeft = parentScroller.scrollLeft;
-            },
-            onClick: async () => {
-            currentComparisonCategory = currentComparisonCategory === parent.name ? null : parent.name;
-            currentComparisonSubCategory = null;
-            updateComparisonControlsVisibility();
-            updateComparisonCategoryFilterUI();
-            await renderUnifiedComparisonChart();
-        }}));
     });
-    parentSection.appendChild(parentScroller);
+    container.querySelectorAll('[data-subcategory-index]').forEach(button => {
+        button.addEventListener('click', async () => {
+            const subCategory = subCategories[Number(button.dataset.subcategoryIndex)];
+            if (!subCategory) return;
+            currentComparisonSubCategory = currentComparisonSubCategory === subCategory.name ? null : subCategory.name;
+            updateComparisonCategoryFilterUI();
+            await renderUnifiedComparisonChart();
+        });
+    });
+}
 
-    const fragment = document.createDocumentFragment();
-    fragment.appendChild(parentSection);
+function legacyOpenComparisonCategoryFilterDrawer() {
+    const categories = getComparisonParentCategories();
+    if (!categories.length) return;
 
-    if (currentComparisonCategory && subCategories.length > 0) {
-        const subSection = document.createElement('div');
-        subSection.className = 'block mt-2';
-        const subScroller = document.createElement('div');
-        subScroller.id = 'comparison-subcategory-chips';
-        subScroller.className = 'flex w-full gap-2 overflow-x-auto pb-1 scrollbar-hide';
-        subScroller.addEventListener('scroll', () => {
-            comparisonSubChipsScrollLeft = subScroller.scrollLeft;
-        }, { passive: true });
-        subScroller.appendChild(createChipButton({
-            label: 'Wszystkie podkategorie',
-            isActive: !currentComparisonSubCategory,
-            preserveScroll: () => {
-            comparisonParentChipsScrollLeft = parentScroller.scrollLeft;
-            comparisonSubChipsScrollLeft = subScroller.scrollLeft;
-        },
-            onClick: async () => {
-            currentComparisonCategory = selectedParent?.name || currentComparisonCategory;
-            currentComparisonSubCategory = null;
+    let draftMode = currentComparisonCategoryFilter.mode;
+    let draftNames = new Set(currentComparisonCategoryFilter.categoryNames);
+    const wrapper = document.createElement('div');
+    wrapper.className = 'space-y-4 pb-2';
+    wrapper.innerHTML = `
+        <div class="grid grid-cols-3 gap-1 rounded-2xl border border-white/10 bg-white/[0.04] p-1" role="group" aria-label="Tryb filtra kategorii">
+            <button type="button" data-category-filter-mode="all" class="comparison-filter-mode-btn rounded-xl px-2 py-2 text-[11px] font-medium transition-colors">Wszystkie</button>
+            <button type="button" data-category-filter-mode="include" class="comparison-filter-mode-btn rounded-xl px-2 py-2 text-[11px] font-medium transition-colors">Tylko wybrane</button>
+            <button type="button" data-category-filter-mode="exclude" class="comparison-filter-mode-btn rounded-xl px-2 py-2 text-[11px] font-medium transition-colors">Wyklucz wybrane</button>
+        </div>
+        <p id="comparison-category-filter-help" class="px-1 text-xs leading-relaxed text-gray-400"></p>
+        ${categories.length > 5 ? '<input id="comparison-category-filter-search" type="search" class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white outline-none transition-colors placeholder:text-gray-500 focus:border-brand-500 focus:bg-white/10" placeholder="Szukaj kategorii...">' : ''}
+        <div class="flex items-center justify-between px-1">
+            <span id="comparison-category-filter-count" class="text-xs text-gray-400"></span>
+            <div class="flex gap-3">
+                <button id="comparison-category-filter-select-all" type="button" class="text-xs font-medium text-brand-400 hover:text-brand-300">Zaznacz wszystkie</button>
+                <button id="comparison-category-filter-clear-all" type="button" class="text-xs font-medium text-gray-400 hover:text-white">Wyczyść</button>
+            </div>
+        </div>
+        <div id="comparison-category-filter-list" class="drawer-list-layout !px-0 !py-0"></div>
+    `;
+
+    const drawer = Drawer.open({
+        title: 'Filtr kategorii',
+        content: wrapper,
+        size: 'lg',
+        cancelLabel: 'Anuluj',
+        confirmLabel: 'Zastosuj',
+        onConfirm: async () => {
+            if (draftMode === 'include' && draftNames.size === 0) return;
+            currentComparisonCategoryFilter = { mode: draftMode, categoryNames: new Set(draftNames) };
+            if (!getSingleIncludedComparisonCategoryName()) currentComparisonSubCategory = null;
             updateComparisonControlsVisibility();
             updateComparisonCategoryFilterUI();
             await renderUnifiedComparisonChart();
-        }, compact: true, color: selectedParent?.color || '#64748b', icon: selectedParent?.icon || 'fa-tag' }));
+            Drawer.close();
+        }
+    });
 
-        subCategories.forEach(subCategory => {
-            subScroller.appendChild(createChipButton({
-                label: subCategory.name,
-                isActive: currentComparisonSubCategory === subCategory.name,
-                color: selectedParent?.color || '#64748b',
-                icon: subCategory.icon || selectedParent?.icon || 'fa-tag',
-                preserveScroll: () => {
-                comparisonParentChipsScrollLeft = parentScroller.scrollLeft;
-                comparisonSubChipsScrollLeft = subScroller.scrollLeft;
-            },
-                onClick: async () => {
-                currentComparisonCategory = selectedParent?.name || currentComparisonCategory;
-                currentComparisonSubCategory = currentComparisonSubCategory === subCategory.name ? null : subCategory.name;
-                updateComparisonControlsVisibility();
-                updateComparisonCategoryFilterUI();
-                await renderUnifiedComparisonChart();
-            }, compact: true }));
+    const list = wrapper.querySelector('#comparison-category-filter-list');
+    const help = wrapper.querySelector('#comparison-category-filter-help');
+    const count = wrapper.querySelector('#comparison-category-filter-count');
+    const applyButton = drawer.panel.querySelector('.btn-primary');
+
+    const render = (query = '') => {
+        const normalizedQuery = query.trim().toLocaleLowerCase('pl-PL');
+        const filtered = categories.filter(category => category.name.toLocaleLowerCase('pl-PL').includes(normalizedQuery));
+        const selectedCount = draftNames.size;
+        const modeText = draftMode === 'include'
+            ? 'Zaznacz kategorie, które mają być uwzględnione na wykresach.'
+            : draftMode === 'exclude'
+                ? 'Zaznacz kategorie, które mają być pominięte na wykresach.'
+                : 'Pokazujemy wszystkie kategorie z uwzględnieniem globalnych wykluczeń.';
+
+        help.textContent = modeText;
+        count.textContent = draftMode === 'all' ? 'Brak dodatkowego filtra' : `Zaznaczone: ${selectedCount}`;
+        applyButton.disabled = draftMode === 'include' && selectedCount === 0;
+        applyButton.classList.toggle('opacity-40', applyButton.disabled);
+
+        wrapper.querySelectorAll('.comparison-filter-mode-btn').forEach(button => {
+            const active = button.dataset.categoryFilterMode === draftMode;
+            button.setAttribute('aria-pressed', String(active));
+            button.classList.toggle('bg-brand-500', active);
+            button.classList.toggle('text-white', active);
+            button.classList.toggle('text-gray-400', !active);
         });
 
-        subSection.appendChild(subScroller);
-        fragment.appendChild(subSection);
+        list.replaceChildren();
+        if (!filtered.length) {
+            list.innerHTML = '<p class="py-6 text-center text-sm text-gray-500">Nie znaleziono kategorii.</p>';
+            return;
+        }
+
+        filtered.forEach(category => {
+            const isSelected = draftNames.has(category.name);
+            const item = document.createElement('button');
+            item.type = 'button';
+            item.className = `category-drawer-item comparison-category-multi-item${isSelected ? ' active' : ''}`;
+            item.setAttribute('aria-pressed', String(isSelected));
+
+            const icon = document.createElement('span');
+            icon.className = 'category-icon-wrapper';
+            icon.style.backgroundColor = `${category.color || '#64748b'}25`;
+            icon.style.color = category.color || '#64748b';
+            icon.innerHTML = `<i class="fas ${category.icon || 'fa-tag'}"></i>`;
+            const label = document.createElement('span');
+            label.className = 'category-name-label flex-1 text-left';
+            label.textContent = category.name;
+            if (isCategoryExcluded(category.name)) {
+                const globalBadge = document.createElement('span');
+                globalBadge.className = 'ml-2 rounded-full border border-amber-400/20 bg-amber-400/10 px-2 py-0.5 text-[10px] text-amber-300';
+                globalBadge.textContent = 'wykluczona globalnie';
+                label.appendChild(globalBadge);
+            }
+            const check = document.createElement('span');
+            check.className = `comparison-category-multi-check${isSelected ? ' is-selected' : ''}`;
+            check.innerHTML = '<i class="fas fa-check"></i>';
+
+            item.append(icon, label, check);
+            item.addEventListener('click', () => {
+                if (draftMode === 'all') draftMode = 'include';
+                if (draftNames.has(category.name)) draftNames.delete(category.name);
+                else draftNames.add(category.name);
+                render(wrapper.querySelector('#comparison-category-filter-search')?.value || '');
+            });
+            list.appendChild(item);
+        });
+    };
+
+    wrapper.querySelectorAll('.comparison-filter-mode-btn').forEach(button => {
+        button.addEventListener('click', () => {
+            draftMode = button.dataset.categoryFilterMode;
+            if (draftMode === 'all') draftNames.clear();
+            render(wrapper.querySelector('#comparison-category-filter-search')?.value || '');
+        });
+    });
+    wrapper.querySelector('#comparison-category-filter-search')?.addEventListener('input', event => render(event.target.value));
+    wrapper.querySelector('#comparison-category-filter-select-all')?.addEventListener('click', () => {
+        categories.forEach(category => draftNames.add(category.name));
+        if (draftMode === 'all') draftMode = 'include';
+        render(wrapper.querySelector('#comparison-category-filter-search')?.value || '');
+    });
+    wrapper.querySelector('#comparison-category-filter-clear-all')?.addEventListener('click', () => {
+        draftNames.clear();
+        render(wrapper.querySelector('#comparison-category-filter-search')?.value || '');
+    });
+
+    render();
+}
+
+function renderComparisonCategoryChips() {
+    const button = document.getElementById('analysis-filter-categories-btn');
+    const indicator = document.getElementById('analysis-filter-categories-indicator');
+    if (!button) return;
+
+    const isFiltered = !currentComparisonCategorySelection.allSelected;
+    button.classList.toggle('border-brand-500', isFiltered);
+    button.classList.toggle('text-white', isFiltered);
+    button.classList.toggle('bg-brand-500/15', isFiltered);
+    button.classList.toggle('text-gray-300', !isFiltered);
+    button.classList.toggle('bg-white/5', !isFiltered);
+    button.title = isFiltered ? 'Filtr kategorii jest aktywny' : 'Filtr kategorii';
+    indicator?.classList.toggle('hidden', !isFiltered);
+
+    if (button.dataset.initialized !== 'true') {
+        button.dataset.initialized = 'true';
+        button.addEventListener('click', openComparisonCategoryFilterDrawer);
     }
+}
 
-    container.replaceChildren(fragment);
+function openComparisonCategoryFilterDrawer() {
+    const categories = getComparisonParentCategories();
+    if (!categories.length) return;
 
-    requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-            const nextParentScroller = document.getElementById('comparison-parent-chips');
-            const nextSubScroller = document.getElementById('comparison-subcategory-chips');
+    let draftAllSelected = currentComparisonCategorySelection.allSelected;
+    let draftPaths = new Set(currentComparisonCategorySelection.selectedPaths);
+    const expandedParents = new Set();
+    const wrapper = document.createElement('div');
+    wrapper.className = 'space-y-4 pb-2';
+    wrapper.innerHTML = `
+        ${categories.length > 5 ? '<input id="comparison-category-filter-search" type="search" class="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white outline-none transition-colors placeholder:text-gray-500 focus:border-brand-500 focus:bg-white/10" placeholder="Szukaj kategorii...">' : ''}
+        <div class="flex items-center justify-between px-1">
+            <span id="comparison-category-filter-count" class="text-xs text-gray-400"></span>
+            <div class="flex gap-3">
+                <button id="comparison-category-filter-select-all" type="button" class="text-xs font-medium text-brand-400 hover:text-brand-300">Zaznacz wszystkie</button>
+                <button id="comparison-category-filter-clear-all" type="button" class="text-xs font-medium text-gray-400 hover:text-white">Odznacz wszystkie</button>
+            </div>
+        </div>
+        <div id="comparison-category-filter-list" class="space-y-2"></div>
+    `;
 
-            if (nextParentScroller) {
-                nextParentScroller.scrollLeft = comparisonParentChipsScrollLeft;
-            }
-
-            if (nextSubScroller) {
-                nextSubScroller.scrollLeft = comparisonSubChipsScrollLeft;
-            } else {
-                comparisonSubChipsScrollLeft = 0;
-            }
-
-            comparisonShouldPreserveChipScroll = false;
-        });
+    const drawer = Drawer.open({
+        title: 'Kategorie na wykresach',
+        content: wrapper,
+        size: 'lg',
+        cancelLabel: 'Anuluj',
+        confirmLabel: 'Zastosuj',
+        onConfirm: async () => {
+            currentComparisonCategorySelection = {
+                allSelected: draftAllSelected,
+                selectedPaths: new Set(draftPaths)
+            };
+            updateComparisonCategoryFilterUI();
+            await renderUnifiedComparisonChart();
+            Drawer.close();
+        }
     });
+
+    const list = wrapper.querySelector('#comparison-category-filter-list');
+    const count = wrapper.querySelector('#comparison-category-filter-count');
+    const ensureCustomSelection = () => {
+        if (!draftAllSelected) return;
+        draftAllSelected = false;
+        draftPaths = new Set(getAllComparisonCategoryPaths());
+    };
+    const isDraftSelected = path => draftAllSelected || draftPaths.has(path);
+    const selectedCount = () => draftAllSelected ? getAllComparisonCategoryPaths().length : draftPaths.size;
+
+    const createCheckbox = (selected, partiallySelected = false) => {
+        const checkbox = document.createElement('span');
+        checkbox.className = `comparison-category-multi-check${selected ? ' is-selected' : ''}${partiallySelected ? ' is-partial' : ''}`;
+        checkbox.innerHTML = `<i class="fas ${partiallySelected ? 'fa-minus' : 'fa-check'}"></i>`;
+        return checkbox;
+    };
+
+    const render = (query = '') => {
+        const normalizedQuery = query.trim().toLocaleLowerCase('pl-PL');
+        const visibleCategories = categories.filter(category => {
+            if (!normalizedQuery) return true;
+            return category.name.toLocaleLowerCase('pl-PL').includes(normalizedQuery) ||
+                getComparisonSubCategories(category).some(sub => sub.name.toLocaleLowerCase('pl-PL').includes(normalizedQuery));
+        });
+        count.textContent = `${selectedCount()} z ${getAllComparisonCategoryPaths().length}`;
+        list.replaceChildren();
+
+        if (!visibleCategories.length) {
+            list.innerHTML = '<p class="py-6 text-center text-sm text-gray-500">Nie znaleziono kategorii.</p>';
+            return;
+        }
+
+        visibleCategories.forEach(category => {
+            const paths = getPathsForComparisonParent(category);
+            const selectedPaths = paths.filter(isDraftSelected);
+            const parentSelected = selectedPaths.length === paths.length;
+            const parentPartial = selectedPaths.length > 0 && !parentSelected;
+            const subCategories = getComparisonSubCategories(category);
+            const shouldExpand = expandedParents.has(category.id) || Boolean(normalizedQuery);
+            const group = document.createElement('div');
+            group.className = 'overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03]';
+
+            const parentRow = document.createElement('div');
+            parentRow.className = 'flex items-center gap-3 px-3 py-3';
+            const selectParent = document.createElement('button');
+            selectParent.type = 'button';
+            selectParent.className = 'shrink-0';
+            selectParent.setAttribute('aria-label', `${parentSelected ? 'Odznacz' : 'Zaznacz'} ${category.name}`);
+            selectParent.setAttribute('aria-pressed', String(parentSelected));
+            selectParent.appendChild(createCheckbox(parentSelected, parentPartial));
+            selectParent.addEventListener('click', () => {
+                ensureCustomSelection();
+                const shouldSelect = !paths.every(path => draftPaths.has(path));
+                paths.forEach(path => shouldSelect ? draftPaths.add(path) : draftPaths.delete(path));
+                render(wrapper.querySelector('#comparison-category-filter-search')?.value || '');
+            });
+
+            const icon = document.createElement('span');
+            icon.className = 'category-icon-wrapper';
+            icon.style.backgroundColor = `${category.color || '#64748b'}25`;
+            icon.style.color = category.color || '#64748b';
+            icon.innerHTML = `<i class="fas ${category.icon || 'fa-tag'}"></i>`;
+            const label = document.createElement('span');
+            label.className = 'flex-1 truncate text-sm font-medium text-white';
+            label.textContent = category.name;
+            if (isCategoryExcluded(category.name)) {
+                const badge = document.createElement('span');
+                badge.className = 'ml-2 text-[10px] font-normal text-amber-300';
+                badge.textContent = 'wykluczona globalnie';
+                label.appendChild(badge);
+            }
+            parentRow.append(selectParent, icon, label);
+
+            if (subCategories.length) {
+                const expand = document.createElement('button');
+                expand.type = 'button';
+                expand.className = 'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-gray-400 hover:bg-white/10 hover:text-white';
+                expand.setAttribute('aria-label', `${shouldExpand ? 'Zwiń' : 'Rozwiń'} podkategorie: ${category.name}`);
+                expand.innerHTML = `<i class="fas ${shouldExpand ? 'fa-chevron-up' : 'fa-chevron-down'} text-xs"></i>`;
+                expand.addEventListener('click', () => {
+                    if (expandedParents.has(category.id)) expandedParents.delete(category.id);
+                    else expandedParents.add(category.id);
+                    render(wrapper.querySelector('#comparison-category-filter-search')?.value || '');
+                });
+                parentRow.appendChild(expand);
+            }
+            group.appendChild(parentRow);
+
+            if (subCategories.length && shouldExpand) {
+                const children = document.createElement('div');
+                children.className = 'border-t border-white/8 bg-black/10';
+                subCategories.forEach(subCategory => {
+                    const childPath = getComparisonCategoryPath(category.name, subCategory.name);
+                    const childSelected = isDraftSelected(childPath);
+                    const child = document.createElement('button');
+                    child.type = 'button';
+                    child.className = 'flex w-full items-center gap-3 px-4 py-2.5 pl-14 text-left hover:bg-white/[0.04]';
+                    child.setAttribute('aria-pressed', String(childSelected));
+                    child.append(createCheckbox(childSelected));
+                    const childLabel = document.createElement('span');
+                    childLabel.className = 'flex-1 truncate text-sm text-gray-300';
+                    childLabel.textContent = subCategory.name;
+                    child.appendChild(childLabel);
+                    child.addEventListener('click', () => {
+                        ensureCustomSelection();
+                        if (draftPaths.has(childPath)) draftPaths.delete(childPath);
+                        else draftPaths.add(childPath);
+                        render(wrapper.querySelector('#comparison-category-filter-search')?.value || '');
+                    });
+                    children.appendChild(child);
+                });
+                group.appendChild(children);
+            }
+            list.appendChild(group);
+        });
+    };
+
+    wrapper.querySelector('#comparison-category-filter-search')?.addEventListener('input', event => render(event.target.value));
+    wrapper.querySelector('#comparison-category-filter-select-all')?.addEventListener('click', () => {
+        draftAllSelected = true;
+        draftPaths.clear();
+        render(wrapper.querySelector('#comparison-category-filter-search')?.value || '');
+    });
+    wrapper.querySelector('#comparison-category-filter-clear-all')?.addEventListener('click', () => {
+        draftAllSelected = false;
+        draftPaths.clear();
+        render(wrapper.querySelector('#comparison-category-filter-search')?.value || '');
+    });
+    render();
 }
 
 function updateComparisonControlsVisibility() {
     const yearWrapper = document.getElementById('comparison-year-wrapper');
     const toggleWrapper = document.getElementById('comparison-mode-toggle-wrapper');
-    const subCategoryButton = document.getElementById('analysis-filter-subcategory-btn');
-    const subCategories = getComparisonSubCategories();
 
     if (yearWrapper) {
         yearWrapper.classList.add('hidden');
@@ -530,9 +765,6 @@ function updateComparisonControlsVisibility() {
         toggleWrapper.classList.toggle('hidden', !(comparisonPeriod === '6months' || comparisonPeriod === 'year'));
     }
 
-    if (subCategoryButton) {
-        subCategoryButton.classList.toggle('hidden', subCategories.length === 0);
-    }
 }
 
 function updateComparisonSummary(totalSpending, totalBudget) {
@@ -553,34 +785,6 @@ function updateComparisonSummary(totalSpending, totalBudget) {
 }
 
 function updateComparisonCategoryFilterUI() {
-    const parentButton = document.getElementById('analysis-filter-category-btn');
-    const labelEl = document.getElementById('analysis-filter-category-label');
-    const iconEl = document.getElementById('analysis-filter-category-icon');
-    const clearBtn = document.getElementById('analysis-filter-category-clear');
-    const subCategoryLabelEl = document.getElementById('analysis-filter-subcategory-label');
-    const selectedParent = getComparisonSelectedParentCategory();
-    const subCategories = getComparisonSubCategories();
-
-    if (parentButton && labelEl && iconEl) {
-        applyCategorySelectionState({
-            buttonEl: parentButton,
-            labelEl,
-            iconEl
-        }, currentComparisonCategory || '', '', 'Wszystkie kategorie');
-    }
-
-    if (subCategoryLabelEl) {
-        if (!selectedParent || subCategories.length === 0) {
-            subCategoryLabelEl.textContent = 'Wszystkie podkategorie';
-        } else {
-            subCategoryLabelEl.textContent = currentComparisonSubCategory || 'Wszystkie podkategorie';
-        }
-    }
-
-    if (clearBtn) {
-        clearBtn.classList.toggle('hidden', !currentComparisonCategory);
-    }
-
     renderComparisonCategoryChips();
 }
 
@@ -650,8 +854,10 @@ function captureAnalysisInsightContext(filteredItems, enrichedBuckets, startDate
             toDateMode: shouldUseToDateMode()
         },
         filtersApplied: {
-            category: currentComparisonCategory || null,
-            subCategory: currentComparisonSubCategory || null,
+            categories: {
+                allSelected: currentComparisonCategorySelection.allSelected,
+                selectedPaths: Array.from(currentComparisonCategorySelection.selectedPaths)
+            },
             tags: tagFilterDescription
         },
         totals: {
@@ -1479,9 +1685,6 @@ function initializeComparisonPeriodControls() {
     const yearPopup = document.getElementById('comparison-year-popup');
     const yearLabel = document.getElementById('comparison-year-label');
     const yearButton = document.getElementById('comparison-year-dropdown-btn');
-    const categoryButton = document.getElementById('analysis-filter-category-btn');
-    const subCategoryButton = document.getElementById('analysis-filter-subcategory-btn');
-    const clearCategoryButton = document.getElementById('analysis-filter-category-clear');
     const modeToggle = document.getElementById('comparison-mode-toggle');
 
     if (!periodSelect || !yearSelect || !yearPopup || !yearLabel || !yearButton || !modeToggle) {
@@ -1538,54 +1741,6 @@ function initializeComparisonPeriodControls() {
     });
 
     modeToggle.addEventListener('change', async () => {
-        await renderUnifiedComparisonChart();
-    });
-
-    categoryButton?.addEventListener('click', () => {
-        const parents = getComparisonParentCategories();
-        if (!parents.length) return;
-
-        openSelectionDrawer('Wybierz kategorie', parents.map(parent => ({
-            value: parent.id,
-            label: parent.name,
-            icon: `<i class="fas ${parent.icon || 'fa-tag'}"></i>`,
-            color: (parent.color || '#64748b') + '20'
-        })), async (parentId) => {
-            const parent = parents.find(category => category.id === parentId);
-            currentComparisonCategory = parent ? parent.name : null;
-            currentComparisonSubCategory = null;
-            updateComparisonControlsVisibility();
-            updateComparisonCategoryFilterUI();
-            await renderUnifiedComparisonChart();
-        }, getComparisonSelectedParentCategory()?.id || null, 'grid', false, true);
-    });
-
-    subCategoryButton?.addEventListener('click', () => {
-        const parentCategory = getComparisonSelectedParentCategory();
-        const subCategories = getComparisonSubCategories();
-        if (!parentCategory || !subCategories.length) return;
-
-        openSelectionDrawer(`${parentCategory.name} -> Podkategoria`, [
-            { value: '', label: 'Wszystkie podkategorie' },
-            ...subCategories.map(subCategory => ({
-                value: subCategory.id,
-                label: subCategory.name,
-                icon: `<i class="fas ${subCategory.icon || parentCategory.icon || 'fa-tag'}"></i>`,
-                color: (parentCategory.color || '#64748b') + '20'
-            }))
-        ], async (subCategoryId) => {
-            const selectedSubCategory = subCategories.find(category => category.id === subCategoryId);
-            currentComparisonSubCategory = selectedSubCategory ? selectedSubCategory.name : null;
-            updateComparisonCategoryFilterUI();
-            await renderUnifiedComparisonChart();
-        }, getComparisonSelectedSubCategory()?.id || '', 'grid', false, true);
-    });
-
-    clearCategoryButton?.addEventListener('click', async (event) => {
-        event.stopPropagation();
-        currentComparisonCategory = null;
-        currentComparisonSubCategory = null;
-        updateComparisonCategoryFilterUI();
         await renderUnifiedComparisonChart();
     });
 

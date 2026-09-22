@@ -553,15 +553,22 @@
                     </div>
 
                     <!-- Meta informacje i nawigacja -->
-                    <div id="comparison-chart-meta" class="mb-2 flex items-center gap-2">
-                        <button id="comparison-nav-prev"
-                            class="flex w-7 h-7 items-center justify-center rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
-                            aria-label="Poprzedni okres">
-                            <i class="fas fa-chevron-left text-xs"></i>
-                        </button>
-                        <div id="comparison-selected-range"
-                            class="flex-1 text-center text-[11px] sm:text-xs font-medium text-gray-400"></div>
-                        <div class="ml-auto flex items-center gap-3 shrink-0">
+                    <div id="comparison-chart-meta" class="mb-2 flex flex-col gap-2">
+                        <div class="flex items-center gap-2">
+                            <button id="comparison-nav-prev"
+                                class="flex w-7 h-7 items-center justify-center rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+                                aria-label="Poprzedni okres">
+                                <i class="fas fa-chevron-left text-xs"></i>
+                            </button>
+                            <div id="comparison-selected-range"
+                                class="flex-1 text-center text-[11px] sm:text-xs font-medium text-gray-400"></div>
+                            <button id="comparison-nav-next"
+                                class="flex w-7 h-7 shrink-0 items-center justify-center rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+                                aria-label="Następny okres">
+                                <i class="fas fa-chevron-right text-xs"></i>
+                            </button>
+                        </div>
+                        <div class="flex items-center justify-end gap-3 shrink-0">
                             <!-- Toggle "Tylko do dziś" -->
                             <div id="comparison-mode-toggle-wrapper"
                                 class="hidden items-center gap-2 px-0 py-0 self-center">
@@ -575,6 +582,13 @@
                                 </label>
                             </div>
                             <!-- Filtr tagów -->
+                            <button id="analysis-filter-categories-btn" type="button"
+                                class="relative inline-flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-gray-300 shadow-sm hover:bg-white/10 hover:text-white transition-colors"
+                                title="Filtr kategorii" aria-label="Filtr kategorii">
+                                <i class="fas fa-filter text-sm"></i>
+                                <span id="analysis-filter-categories-indicator"
+                                    class="hidden absolute -right-1 -top-1 h-3 w-3 rounded-full bg-brand-500 ring-2 ring-[#0a0a0a]"></span>
+                            </button>
                             <button id="analysis-filter-tags-btn" type="button"
                                 class="relative inline-flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-gray-300 shadow-sm hover:bg-white/10 hover:text-white transition-colors"
                                 title="Filtr tagów" aria-label="Filtr tagów">
@@ -587,11 +601,6 @@
                                 class="relative inline-flex h-9 w-9 items-center justify-center rounded-xl border border-brand-500/25 bg-brand-500/10 text-brand-400 shadow-sm hover:bg-brand-500/20 hover:text-brand-300 transition-colors disabled:pointer-events-none"
                                 title="Wnioski AI dla tego zakresu" aria-label="Wnioski AI — analiza okresu">
                                 <i class="fas fa-wand-magic-sparkles text-sm"></i>
-                            </button>
-                            <button id="comparison-nav-next"
-                                class="flex w-7 h-7 items-center justify-center rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
-                                aria-label="Następny okres">
-                                <i class="fas fa-chevron-right text-xs"></i>
                             </button>
                         </div>
                     </div>
@@ -622,12 +631,6 @@
                             <option value="year">Rok</option>
                         </select>
                         <div id="comparison-chart-title">Suma wydatków</div>
-                        <button id="analysis-filter-category-btn"></button>
-                        <button id="analysis-filter-subcategory-btn"></button>
-                        <button id="analysis-filter-category-clear"></button>
-                        <span id="analysis-filter-subcategory-label"></span>
-                        <span id="analysis-filter-category-label"></span>
-                        <span id="analysis-filter-category-icon"></span>
                     </div>
 
                     <!-- Wykres -->
@@ -640,10 +643,6 @@
                     </div>
 
                     <!-- Chipsy kategorii -->
-                    <div id="comparison-category-filters"
-                        class="mt-2.5 border-t border-white/8 pt-1.5 space-y-2 overflow-visible">
-                        <!-- Generowane przez JS -->
-                    </div>
                 </div>
 
                 <!-- Wykres wydatków w sklepach -->
